@@ -19,69 +19,86 @@ interface PatchNote {
 const patchNotes: PatchNote[] = [
   {
     version: "0.4.0",
-    date: "Coming Soon",
+    date: "Planned",
     status: "coming-soon",
-    title: "Equation Balancing Beta",
+    title: "Equation Balancing & More Isomers",
     changes: [
-      "Added equation balancing beta",
-      "Added support for (aq), (l), (s), (g) state symbols",
-      "Added reversible reaction arrows ⇌",
-      "Improved reaction parsing system",
-      "Added coefficient detection and validation",
+      "Add automatic equation balancing",
+      "Add more isomer support (branched alkanes)",
+      "Add ester generation from alcohols + acids",
+      "Add benzene derivatives (toluene, xylene)",
+      "Add user history saving",
     ],
   },
   {
     version: "0.3.0",
-    date: "Coming Soon",
+    date: "Planned",
     status: "coming-soon",
-    title: "Functional Group Recognition",
+    title: "Proper 2D Molecule Renderer",
     changes: [
-      "Added alcohol functional group recognition (-OH)",
-      "Added carboxylic acid recognition (-COOH)",
-      "Added esterification reaction suggestions",
-      "Added lone pair visualization placeholders",
-      "Improved organic compound detection",
+      "Replace text-art with canvas/SVG renderer",
+      "Add bond angle visualization",
+      "Add lone pair display",
+      "Add partial charge visualization (δ+/δ-)",
+      "Add hydrogen bonding site highlighting",
     ],
   },
   {
     version: "0.2.0",
-    date: "Coming Soon",
-    status: "beta",
-    title: "Alkane Generation",
+    date: "Current",
+    status: "released",
+    title: "Rule-Based Chemistry Engine",
     changes: [
-      "Added alkane generation up to 20 carbons long",
-      "Basic condensed formula parser implemented",
-      "Added support for cycloalkanes",
-      "Improved molecule rendering performance",
-      "Added branched alkane support (iso-, neo-)",
+      "Added alkanes C1-C20 with auto-generated formulas",
+      "Added alkenes C2-C20 with double bond structures",
+      "Added alkynes C2-C20 with triple bond structures",
+      "Added primary alcohols C1-C20",
+      "Added secondary alcohols (propan-2-ol, butan-2-ol)",
+      "Added carboxylic acids C1-C20",
+      "Added simple esters (methyl/ethyl/propyl ethanoate)",
+      "Added benzene, phenol, glucose, glycogen",
+      "Added molecule search by name, alias, or formula",
+      "Added 2D text-art structure visualization",
+      "Added 2D/3D view toggle (3D placeholder)",
+      "Added IB-level reaction templates",
+      "Added combustion reaction recognition",
+      "Added hydrogenation (alkene + H2)",
+      "Added bromination (alkene + Br2)",
+      "Added esterification recognition",
+      "Added neutralization (acid + base)",
+      "Added acid + carbonate reactions",
+      "Added metal + acid reactions",
+      "Added autocomplete suggestions in search",
+      "Added polarity and H-bonding indicators",
     ],
   },
   {
     version: "0.1.0",
-    date: "Current",
+    date: "Initial",
     status: "released",
     title: "Initial ARSHLAB Launch",
     changes: [
-      "Landing page completed with modern design",
-      "Molecule Builder UI added with input system",
-      "Reaction Lab UI added with equation input",
-      "Account system placeholder added",
-      "Patch notes system implemented",
+      "Landing page with modern design",
+      "Molecule Builder UI with input system",
+      "Reaction Lab UI with equation input",
+      "Account system placeholder",
+      "Patch notes system",
       "Responsive mobile-friendly layout",
       "Navigation between all sections",
+      "Floating atoms animation",
     ],
   },
 ]
 
 const roadmap = [
-  { label: "2D Structure Rendering", status: "in-progress" as const },
+  { label: "Canvas/SVG 2D Renderer", status: "planned" as const },
   { label: "3D Molecule Visualization", status: "planned" as const },
+  { label: "Equation Auto-Balancing", status: "planned" as const },
+  { label: "More Isomers & Branching", status: "planned" as const },
   { label: "Polarity Calculations", status: "planned" as const },
   { label: "Bond Angle Display", status: "planned" as const },
   { label: "Hybridization Detection", status: "planned" as const },
-  { label: "Reaction Mechanism Diagrams", status: "planned" as const },
   { label: "User Account System", status: "planned" as const },
-  { label: "Saved Molecule History", status: "planned" as const },
 ]
 
 const statusConfig = {
@@ -112,7 +129,7 @@ function VersionCard({ note, defaultExpanded = false }: { note: PatchNote; defau
       >
         <CardHeader className="flex flex-row items-center justify-between gap-4 p-5 hover:bg-secondary/30 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground font-mono font-bold">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground font-mono font-bold text-sm">
               {note.version}
             </div>
             <div>
@@ -143,6 +160,11 @@ function VersionCard({ note, defaultExpanded = false }: { note: PatchNote; defau
 }
 
 export default function PatchNotesPage() {
+  const totalChanges = patchNotes.reduce((acc, n) => acc + n.changes.length, 0)
+  const releasedChanges = patchNotes
+    .filter((n) => n.status === "released")
+    .reduce((acc, n) => acc + n.changes.length, 0)
+
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
@@ -177,7 +199,7 @@ export default function PatchNotesPage() {
             className="space-y-4"
           >
             {patchNotes.map((note, i) => (
-              <VersionCard key={note.version} note={note} defaultExpanded={i === patchNotes.length - 1} />
+              <VersionCard key={note.version} note={note} defaultExpanded={i === 2} />
             ))}
           </motion.div>
 
@@ -199,21 +221,10 @@ export default function PatchNotesPage() {
               <CardContent className="space-y-3">
                 {roadmap.map((item) => (
                   <div key={item.label} className="flex items-center gap-3">
-                    <div className={cn(
-                      "h-2.5 w-2.5 rounded-full",
-                      item.status === "in-progress" ? "bg-yellow-500" : "bg-muted-foreground/30"
-                    )} />
-                    <span className={cn(
-                      "text-sm",
-                      item.status === "in-progress" ? "text-foreground font-medium" : "text-muted-foreground"
-                    )}>
+                    <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" />
+                    <span className="text-sm text-muted-foreground">
                       {item.label}
                     </span>
-                    {item.status === "in-progress" && (
-                      <span className="text-xs bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full">
-                        In Progress
-                      </span>
-                    )}
                   </div>
                 ))}
               </CardContent>
@@ -230,28 +241,33 @@ export default function PatchNotesPage() {
                   <p className="text-sm opacity-80">Versions</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold">{patchNotes.reduce((acc, n) => acc + n.changes.length, 0)}</p>
-                  <p className="text-sm opacity-80">Changes</p>
+                  <p className="text-3xl font-bold">{releasedChanges}</p>
+                  <p className="text-sm opacity-80">Released</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold">{totalChanges}</p>
+                  <p className="text-sm opacity-80">Total Changes</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold">{roadmap.length}</p>
                   <p className="text-sm opacity-80">Planned</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold">1</p>
-                  <p className="text-sm opacity-80">In Progress</p>
-                </div>
               </CardContent>
             </Card>
 
-            {/* Contribute */}
+            {/* Compound Stats */}
             <Card className="rounded-2xl border-dashed">
-              <CardContent className="p-5 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Have a feature request or found a bug? 
-                  <br />
-                  <span className="text-foreground font-medium">Feedback coming soon!</span>
-                </p>
+              <CardContent className="p-5">
+                <h3 className="font-medium text-foreground mb-3">Database Stats</h3>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>• 20 Alkanes (C1-C20)</p>
+                  <p>• 19 Alkenes (C2-C20)</p>
+                  <p>• 19 Alkynes (C2-C20)</p>
+                  <p>• 20 Alcohols (C1-C20)</p>
+                  <p>• 20 Carboxylic Acids</p>
+                  <p>• 7 Reaction Types</p>
+                  <p className="font-medium text-foreground pt-2">~100+ compounds total</p>
+                </div>
               </CardContent>
             </Card>
           </motion.div>

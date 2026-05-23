@@ -1,19 +1,21 @@
 "use client"
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Atom, RotateCcw, History, Eye, Zap, Hexagon, Droplets, Ruler, Triangle } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Atom, RotateCcw, History, Eye, Zap, Hexagon, Droplets, Ruler, Triangle, Search, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { searchCompound, getSuggestions, type Compound } from "@/lib/chemistry/compounds"
+import { MoleculeResultCard } from "@/components/molecule-result-card"
 
 const examples = [
   "propan-1-ol",
   "ethanoic acid",
-  "CH3-CH2-CH2-OH",
+  "ethanol",
   "benzene",
-  "2-methylpropane",
-  "cyclohexane",
+  "methane",
+  "glucose",
 ]
 
 const futureFeatures = [
@@ -28,14 +30,55 @@ const futureFeatures = [
 export default function MoleculeBuilderPage() {
   const [moleculeInput, setMoleculeInput] = useState("")
   const [history, setHistory] = useState<string[]>([])
+  const [result, setResult] = useState<Compound | null>(null)
+  const [notFound, setNotFound] = useState(false)
+  const [viewMode, setViewMode] = useState<"2d" | "3d">("2d")
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
-  function handleGenerate() {
-    if (!moleculeInput.trim()) return
-    setHistory((prev) => [moleculeInput.trim(), ...prev.slice(0, 5)])
+  // Get suggestions based on input
+  const suggestions = useMemo(() => {
+    if (!moleculeInput.trim() || moleculeInput.length < 2) return []
+    return getSuggestions(moleculeInput, 6)
+  }, [moleculeInput])
+
+  // Hide suggestions when clicking outside
+  useEffect(() => {
+    const handleClick = () => setShowSuggestions(false)
+    document.addEventListener("click", handleClick)
+    return () => document.removeEventListener("click", handleClick)
+  }, [])
+
+  function handleSearch(query?: string) {
+    const searchQuery = query || moleculeInput
+    if (!searchQuery.trim()) return
+
+    const compound = searchCompound(searchQuery)
+    
+    if (compound) {
+      setResult(compound)
+      setNotFound(false)
+      setMoleculeInput(compound.name)
+      // Add to history if not already there
+      setHistory((prev) => {
+        const filtered = prev.filter((h) => h.toLowerCase() !== compound.name.toLowerCase())
+        return [compound.name, ...filtered.slice(0, 5)]
+      })
+    } else {
+      setResult(null)
+      setNotFound(true)
+    }
+    setShowSuggestions(false)
   }
 
   function handleClear() {
     setMoleculeInput("")
+    setResult(null)
+    setNotFound(false)
+  }
+
+  function handleSuggestionClick(compound: Compound) {
+    setMoleculeInput(compound.name)
+    handleSearch(compound.name)
   }
 
   return (
@@ -50,7 +93,7 @@ export default function MoleculeBuilderPage() {
             Molecule Builder
           </h1>
           <p className="mt-2 text-lg text-muted-foreground">
-            Type an IUPAC name, condensed formula, or SMILES string to visualize molecular structures.
+            Search by IUPAC name, common name, or formula to explore molecular structures.
           </p>
         </motion.div>
 
@@ -64,24 +107,61 @@ export default function MoleculeBuilderPage() {
           >
             <Card className="rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-lg">Molecule Input</CardTitle>
+                <CardTitle className="text-lg">Molecule Search</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Input
-                    value={moleculeInput}
-                    onChange={(e) => setMoleculeInput(e.target.value)}
-                    placeholder="Example: propan-1-ol or CH3-CH2-CH2-OH"
-                    className="h-12 rounded-xl text-base"
-                    onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-                  />
-                  <div className="flex gap-2">
-                    <Button onClick={handleGenerate} className="h-12 rounded-xl px-6">
-                      Generate Structure
-                    </Button>
-                    <Button onClick={handleClear} variant="outline" className="h-12 w-12 rounded-xl p-0">
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
+                <div className="relative">
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <div className="relative flex-1">
+                      <Input
+                        value={moleculeInput}
+                        onChange={(e) => {
+                          setMoleculeInput(e.target.value)
+                          setShowSuggestions(true)
+                          setNotFound(false)
+                        }}
+                        onFocus={() => setShowSuggestions(true)}
+                        placeholder="Example: propan-1-ol, ethanol, CH3COOH"
+                        className="h-12 rounded-xl text-base pr-10"
+                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      />
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      
+                      {/* Suggestions Dropdown */}
+                      <AnimatePresence>
+                        {showSuggestions && suggestions.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute top-full left-0 right-0 z-50 mt-2 rounded-xl border border-border bg-card shadow-lg overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {suggestions.map((compound) => (
+                              <button
+                                key={compound.name}
+                                onClick={() => handleSuggestionClick(compound)}
+                                className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-secondary/50 transition-colors border-b border-border last:border-0"
+                              >
+                                <div>
+                                  <p className="font-medium text-foreground capitalize">{compound.name}</p>
+                                  <p className="text-xs text-muted-foreground">{compound.family} • {compound.formula}</p>
+                                </div>
+                                <span className="text-xs text-muted-foreground font-mono">{compound.formula}</span>
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={() => handleSearch()} className="h-12 rounded-xl px-6">
+                        Search
+                      </Button>
+                      <Button onClick={handleClear} variant="outline" className="h-12 w-12 rounded-xl p-0">
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -89,7 +169,10 @@ export default function MoleculeBuilderPage() {
                   {examples.map((ex) => (
                     <button
                       key={ex}
-                      onClick={() => setMoleculeInput(ex)}
+                      onClick={() => {
+                        setMoleculeInput(ex)
+                        handleSearch(ex)
+                      }}
                       className="rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
                       {ex}
@@ -99,30 +182,62 @@ export default function MoleculeBuilderPage() {
               </CardContent>
             </Card>
 
-            {/* Structure Preview Placeholder */}
-            <Card className="rounded-2xl">
-              <CardHeader>
-                <CardTitle className="text-lg">Structure Preview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex min-h-[300px] sm:min-h-[400px] items-center justify-center rounded-xl border-2 border-dashed border-border bg-secondary/30 p-6">
-                  <div className="text-center">
-                    <Atom className="mx-auto h-16 w-16 text-muted-foreground/50 mb-4" />
-                    <h3 className="text-lg font-semibold text-foreground">Future Molecule Canvas</h3>
-                    <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                      This area will display 2D/3D molecular structures with interactive controls
-                      for rotating, zooming, and toggling visualization options.
-                    </p>
-                    {moleculeInput && (
-                      <div className="mt-6 rounded-xl bg-primary px-6 py-4 text-primary-foreground">
-                        <p className="text-sm opacity-80">Current input:</p>
-                        <p className="mt-1 font-mono text-lg font-semibold">{moleculeInput}</p>
+            {/* Result or Placeholder */}
+            <AnimatePresence mode="wait">
+              {result ? (
+                <MoleculeResultCard
+                  key={result.name}
+                  compound={result}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                />
+              ) : notFound ? (
+                <motion.div
+                  key="not-found"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <Card className="rounded-2xl border-destructive/30 bg-destructive/5">
+                    <CardContent className="flex items-center gap-4 p-6">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-destructive/10">
+                        <AlertCircle className="h-6 w-6 text-destructive" />
                       </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                      <div>
+                        <h3 className="font-semibold text-foreground">Molecule Not Found</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          &quot;{moleculeInput}&quot; is not in the ARSHLAB database yet. Try searching for common alkanes, alkenes, alcohols, or carboxylic acids.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="placeholder"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <Card className="rounded-2xl">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Structure Preview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex min-h-[300px] items-center justify-center rounded-xl border-2 border-dashed border-border bg-secondary/30 p-6">
+                        <div className="text-center">
+                          <Atom className="mx-auto h-16 w-16 text-muted-foreground/50 mb-4" />
+                          <h3 className="text-lg font-semibold text-foreground">Search for a Molecule</h3>
+                          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                            Type a molecule name or formula above, or click an example to get started.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Future Features Grid */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -160,17 +275,20 @@ export default function MoleculeBuilderPage() {
               <CardContent>
                 {history.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Your recent molecules will appear here after you generate them.
+                    Your recent molecules will appear here after you search them.
                   </p>
                 ) : (
                   <div className="space-y-2">
                     {history.map((item, index) => (
                       <button
                         key={`${item}-${index}`}
-                        onClick={() => setMoleculeInput(item)}
+                        onClick={() => {
+                          setMoleculeInput(item)
+                          handleSearch(item)
+                        }}
                         className="flex w-full items-center justify-between rounded-xl border border-border bg-secondary/50 px-4 py-3 text-left transition-colors hover:bg-secondary"
                       >
-                        <span className="font-mono text-sm text-foreground">{item}</span>
+                        <span className="text-sm text-foreground capitalize">{item}</span>
                         <span className="text-xs text-muted-foreground">Open</span>
                       </button>
                     ))}
@@ -179,20 +297,29 @@ export default function MoleculeBuilderPage() {
               </CardContent>
             </Card>
 
-            {/* Visualization Toggles Placeholder */}
+            {/* Supported Compounds */}
             <Card className="rounded-2xl bg-primary text-primary-foreground">
               <CardHeader>
-                <CardTitle className="text-lg">Visualization Toggles</CardTitle>
+                <CardTitle className="text-lg">Supported Compounds</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm opacity-80 mb-4">
-                  These toggles will control what&apos;s displayed on the molecule:
+                  ARSHLAB currently supports:
                 </p>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  {["Lone pairs", "Partial charges", "Polarity", "Bond lengths", "Bond angles", "Functional groups"].map((toggle) => (
-                    <div key={toggle} className="flex items-center gap-2 opacity-60">
-                      <div className="h-4 w-4 rounded border border-primary-foreground/30" />
-                      <span>{toggle}</span>
+                <div className="space-y-2 text-sm">
+                  {[
+                    "Alkanes (C1-C20)",
+                    "Alkenes (C2-C20)",
+                    "Alkynes (C2-C20)",
+                    "Alcohols (C1-C20)",
+                    "Carboxylic Acids (C1-C20)",
+                    "Simple Esters",
+                    "Benzene & Phenol",
+                    "Glucose & Glycogen",
+                  ].map((family) => (
+                    <div key={family} className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground/50" />
+                      <span className="opacity-90">{family}</span>
                     </div>
                   ))}
                 </div>

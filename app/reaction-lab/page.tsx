@@ -1,18 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
-import { FlaskConical, Scale, Lightbulb, ArrowRight, Beaker, BookOpen, Sparkles } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { FlaskConical, Scale, Lightbulb, ArrowRight, Beaker, BookOpen, Sparkles, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
+import { analyzeReaction, getSupportedReactions, type ReactionResult } from "@/lib/chemistry/reactions"
+import { ReactionResultCard } from "@/components/reaction-result-card"
 
 const reactionExamples = [
-  "CH4(g) + 2O2(g) → CO2(g) + 2H2O(g)",
-  "ethanol(l) + ethanoic acid(aq) ⇌ ethyl ethanoate(l) + water(l)",
-  "NaCl(aq) + AgNO3(aq) → AgCl(s) + NaNO3(aq)",
-  "2H2(g) + O2(g) → 2H2O(l)",
-  "C6H12O6(aq) + 6O2(g) → 6CO2(g) + 6H2O(l)",
+  "CH4 + O2 → CO2 + H2O",
+  "ethanol + ethanoic acid ⇌ ester + water",
+  "C2H4 + H2 → C2H6",
+  "C2H4 + Br2 → C2H4Br2",
+  "HCl + NaOH → NaCl + H2O",
+  "Mg + HCl → MgCl2 + H2",
 ]
 
 const syntaxGuide = [
@@ -29,8 +32,8 @@ const syntaxGuide = [
 const futureFeatures = [
   {
     icon: Sparkles,
-    title: "Reaction Prediction",
-    description: "AI-powered suggestions for likely products based on reactant types",
+    title: "Auto-Balancing",
+    description: "Automatically balance chemical equations with coefficients",
   },
   {
     icon: ArrowRight,
@@ -39,18 +42,27 @@ const futureFeatures = [
   },
   {
     icon: Lightbulb,
-    title: "Product Suggestions",
-    description: "Predict what forms when common compounds react",
+    title: "Product Prediction",
+    description: "AI-powered suggestions for likely products",
   },
   {
     icon: BookOpen,
-    title: "Reaction Explanations",
-    description: "Learn why reactions occur with detailed explanations",
+    title: "Reaction Library",
+    description: "Browse common reactions by category",
   },
 ]
 
 export default function ReactionLabPage() {
   const [reactionInput, setReactionInput] = useState("")
+  const [result, setResult] = useState<ReactionResult | null>(null)
+
+  const handleAnalyze = () => {
+    if (!reactionInput.trim()) return
+    const analysisResult = analyzeReaction(reactionInput)
+    setResult(analysisResult)
+  }
+
+  const supportedReactions = getSupportedReactions()
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
@@ -64,7 +76,7 @@ export default function ReactionLabPage() {
             Reaction Lab
           </h1>
           <p className="mt-2 text-lg text-muted-foreground">
-            Input chemical equations, balance them, and explore reaction products.
+            Input chemical equations to identify reaction types and explore products.
           </p>
         </motion.div>
 
@@ -85,22 +97,19 @@ export default function ReactionLabPage() {
                 <Textarea
                   value={reactionInput}
                   onChange={(e) => setReactionInput(e.target.value)}
-                  placeholder="Example: CH4(g) + 2O2(g) → CO2(g) + 2H2O(g)"
+                  placeholder="Example: CH4 + O2 → CO2 + H2O"
                   className="min-h-[120px] rounded-xl font-mono text-base resize-none"
                 />
 
                 <div className="flex flex-wrap gap-3">
-                  <Button className="rounded-xl">
+                  <Button onClick={handleAnalyze} className="rounded-xl">
                     <FlaskConical className="mr-2 h-4 w-4" />
                     Analyze Reaction
                   </Button>
-                  <Button variant="outline" className="rounded-xl">
+                  <Button variant="outline" className="rounded-xl" disabled>
                     <Scale className="mr-2 h-4 w-4" />
                     Balance Equation
-                  </Button>
-                  <Button variant="outline" className="rounded-xl">
-                    <Lightbulb className="mr-2 h-4 w-4" />
-                    Suggest Products
+                    <span className="ml-2 text-xs bg-secondary px-1.5 py-0.5 rounded">Soon</span>
                   </Button>
                 </div>
 
@@ -110,7 +119,11 @@ export default function ReactionLabPage() {
                     {reactionExamples.map((ex) => (
                       <button
                         key={ex}
-                        onClick={() => setReactionInput(ex)}
+                        onClick={() => {
+                          setReactionInput(ex)
+                          const analysisResult = analyzeReaction(ex)
+                          setResult(analysisResult)
+                        }}
                         className="rounded-lg border border-border bg-secondary/50 px-3 py-2 text-left text-xs font-mono text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                       >
                         {ex}
@@ -121,26 +134,31 @@ export default function ReactionLabPage() {
               </CardContent>
             </Card>
 
-            {/* Analysis Placeholders */}
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                { title: "Reactants", description: "Future parser will identify compounds, coefficients, and states." },
-                { title: "Products", description: "Future engine will suggest or verify reaction products." },
-                { title: "Explanation", description: "Future mode will explain the reaction mechanism." },
-              ].map((section) => (
-                <Card key={section.title} className="rounded-2xl">
-                  <CardContent className="p-5">
-                    <h3 className="font-semibold text-foreground">{section.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">{section.description}</p>
-                    {reactionInput && (
-                      <div className="mt-4 rounded-lg bg-secondary/50 p-3">
-                        <p className="text-xs text-muted-foreground">Placeholder for parsed data</p>
+            {/* Result */}
+            <AnimatePresence mode="wait">
+              {result ? (
+                <ReactionResultCard key="result" result={result} />
+              ) : (
+                <motion.div
+                  key="placeholder"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <Card className="rounded-2xl">
+                    <CardContent className="flex min-h-[200px] items-center justify-center p-6">
+                      <div className="text-center">
+                        <FlaskConical className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                        <h3 className="text-lg font-semibold text-foreground">Enter a Reaction</h3>
+                        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                          Type a chemical equation above or click an example to analyze the reaction type.
+                        </p>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Future Features */}
             <div className="grid gap-4 sm:grid-cols-2">
@@ -189,17 +207,21 @@ export default function ReactionLabPage() {
               </CardContent>
             </Card>
 
-            {/* Quick Tips */}
+            {/* Supported Reactions */}
             <Card className="rounded-2xl bg-primary text-primary-foreground">
               <CardHeader>
-                <CardTitle className="text-lg">Quick Tips</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Info className="h-5 w-5" />
+                  Supported Reactions
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm opacity-90">
-                <p>• Use standard chemical formulas (H2O, CO2, NaCl)</p>
-                <p>• Include state symbols for accurate analysis</p>
-                <p>• Coefficients go before the formula (2H2O)</p>
-                <p>• Use → for one-way and ⇌ for reversible reactions</p>
-                <p>• Type IUPAC names for organic compounds</p>
+              <CardContent className="space-y-3">
+                {supportedReactions.map((reaction) => (
+                  <div key={reaction.type} className="text-sm">
+                    <p className="font-medium opacity-90">{reaction.type}</p>
+                    <p className="font-mono text-xs opacity-70 mt-0.5">{reaction.example}</p>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </motion.div>
