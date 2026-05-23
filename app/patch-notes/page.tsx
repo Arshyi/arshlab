@@ -18,7 +18,7 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "0.4.0",
+    version: "0.5.0",
     date: "Planned",
     status: "coming-soon",
     title: "Equation Balancing & More Isomers",
@@ -31,16 +31,39 @@ const patchNotes: PatchNote[] = [
     ],
   },
   {
+    version: "0.4.0",
+    date: "Current",
+    status: "released",
+    title: "3D Molecule Viewer Alpha",
+    changes: [
+      "Added interactive 3D molecule viewer using Three.js",
+      "Added mouse rotation, zoom, and pan controls",
+      "Added hard-coded 3D structures for 15 common molecules",
+      "Supported molecules: water, CO2, ammonia, methane, ethane, propane",
+      "Supported molecules: ethene, ethyne, methanol, ethanol",
+      "Supported molecules: propan-1-ol, propan-2-ol, ethanoic acid, benzene",
+      "Added show/hide hydrogens toggle",
+      "Added atom labels with element symbols",
+      "Added lone pair visualization (purple dots)",
+      "Added bond angle arc labels",
+      "Added bond length display",
+      "Added ball-and-stick mode (default)",
+      "Added space-filling mode (van der Waals radii)",
+      "Added 2D/3D view toggle in molecule result card",
+      "3D button disabled for molecules without 3D data",
+      "Added loading animation during 3D generation",
+    ],
+  },
+  {
     version: "0.3.0",
-    date: "Planned",
-    status: "coming-soon",
+    date: "Previous",
+    status: "released",
     title: "Proper 2D Molecule Renderer",
     changes: [
-      "Replace text-art with canvas/SVG renderer",
-      "Add bond angle visualization",
-      "Add lone pair display",
-      "Add partial charge visualization (δ+/δ-)",
-      "Add hydrogen bonding site highlighting",
+      "Improved text-art structure rendering",
+      "Better bond visualization",
+      "Improved molecule card layout",
+      "Added search suggestions",
     ],
   },
   {
@@ -91,14 +114,14 @@ const patchNotes: PatchNote[] = [
 ]
 
 const roadmap = [
-  { label: "Canvas/SVG 2D Renderer", status: "planned" as const },
-  { label: "3D Molecule Visualization", status: "planned" as const },
+  { label: "More 3D Molecules", status: "planned" as const },
   { label: "Equation Auto-Balancing", status: "planned" as const },
   { label: "More Isomers & Branching", status: "planned" as const },
   { label: "Polarity Calculations", status: "planned" as const },
-  { label: "Bond Angle Display", status: "planned" as const },
+  { label: "Partial Charge Display", status: "planned" as const },
   { label: "Hybridization Detection", status: "planned" as const },
   { label: "User Account System", status: "planned" as const },
+  { label: "Canvas/SVG 2D Renderer", status: "planned" as const },
 ]
 
 const statusConfig = {
