@@ -529,26 +529,139 @@ export const molecules3D: Molecule3D[] = [
       { atoms: [5, 0, 1], angle: "120°" },
     ],
   },
+
+  // Methylamine
+  {
+    name: "methylamine",
+    aliases: ["CH3NH2", "CH3-NH2", "aminomethane"],
+    formula: "CH5N",
+    atoms: [
+      { element: "C", x: -0.55, y: 0, z: 0 },
+      { element: "N", x: 0.85, y: 0, z: 0 },
+      { element: "H", x: 1.25, y: 0.88, z: 0 },
+      { element: "H", x: 1.25, y: -0.88, z: 0 },
+      { element: "H", x: -0.95, y: 0.63, z: 0.78 },
+      { element: "H", x: -0.95, y: 0.37, z: -0.93 },
+      { element: "H", x: -0.95, y: -1, z: 0.15 },
+    ],
+    bonds: [
+      { a: 0, b: 1, order: 1 },
+      { a: 1, b: 2, order: 1 },
+      { a: 1, b: 3, order: 1 },
+      { a: 0, b: 4, order: 1 },
+      { a: 0, b: 5, order: 1 },
+      { a: 0, b: 6, order: 1 },
+    ],
+    lonePairs: [{ atomIndex: 1, count: 1 }],
+    bondAngles: [{ atoms: [0, 1, 2], angle: "107°" }],
+  },
+
+  // Ethylamine
+  {
+    name: "ethylamine",
+    aliases: ["CH3CH2NH2", "aminoethane", "C2H7N"],
+    formula: "C2H7N",
+    atoms: [
+      { element: "C", x: -1.27, y: -0.26, z: 0 },
+      { element: "C", x: 0, y: 0.55, z: 0 },
+      { element: "N", x: 1.2, y: -0.2, z: 0 },
+      { element: "H", x: 1.95, y: 0.38, z: 0 },
+      { element: "H", x: 1.95, y: -0.38, z: -0.5 },
+      { element: "H", x: -1.27, y: -0.9, z: 0.88 },
+      { element: "H", x: -1.27, y: -0.9, z: -0.88 },
+      { element: "H", x: -2.15, y: 0.4, z: 0 },
+      { element: "H", x: 0, y: 1.19, z: 0.88 },
+      { element: "H", x: 0, y: 1.19, z: -0.88 },
+    ],
+    bonds: [
+      { a: 0, b: 1, order: 1 },
+      { a: 1, b: 2, order: 1 },
+      { a: 2, b: 3, order: 1 },
+      { a: 2, b: 4, order: 1 },
+      { a: 0, b: 5, order: 1 },
+      { a: 0, b: 6, order: 1 },
+      { a: 0, b: 7, order: 1 },
+      { a: 1, b: 8, order: 1 },
+      { a: 1, b: 9, order: 1 },
+    ],
+    lonePairs: [{ atomIndex: 2, count: 1 }],
+    bondAngles: [
+      { atoms: [0, 1, 2], angle: "109.5°" },
+      { atoms: [1, 2, 3], angle: "107°" },
+    ],
+  },
+
+  // Propylamine
+  {
+    name: "propylamine",
+    aliases: ["CH3CH2CH2NH2", "1-aminopropane", "C3H9N"],
+    formula: "C3H9N",
+    atoms: [
+      { element: "C", x: -1.9, y: -0.3, z: 0 },
+      { element: "C", x: -0.55, y: 0.4, z: 0 },
+      { element: "C", x: 0.75, y: -0.4, z: 0 },
+      { element: "N", x: 2, y: 0.3, z: 0 },
+      { element: "H", x: 2.75, y: 0.9, z: 0 },
+      { element: "H", x: 2.75, y: -0.3, z: -0.5 },
+      { element: "H", x: -1.9, y: -0.95, z: 0.88 },
+      { element: "H", x: -1.9, y: -0.95, z: -0.88 },
+      { element: "H", x: -2.8, y: 0.35, z: 0 },
+      { element: "H", x: -0.55, y: 1.05, z: 0.88 },
+      { element: "H", x: -0.55, y: 1.05, z: -0.88 },
+      { element: "H", x: 0.75, y: -1.05, z: 0.88 },
+      { element: "H", x: 0.75, y: -1.05, z: -0.88 },
+    ],
+    bonds: [
+      { a: 0, b: 1, order: 1 },
+      { a: 1, b: 2, order: 1 },
+      { a: 2, b: 3, order: 1 },
+      { a: 3, b: 4, order: 1 },
+      { a: 3, b: 5, order: 1 },
+      { a: 0, b: 6, order: 1 },
+      { a: 0, b: 7, order: 1 },
+      { a: 0, b: 8, order: 1 },
+      { a: 1, b: 9, order: 1 },
+      { a: 1, b: 10, order: 1 },
+      { a: 2, b: 11, order: 1 },
+      { a: 2, b: 12, order: 1 },
+    ],
+    lonePairs: [{ atomIndex: 3, count: 1 }],
+    bondAngles: [
+      { atoms: [0, 1, 2], angle: "109.5°" },
+      { atoms: [2, 3, 4], angle: "107°" },
+    ],
+  },
 ]
 
 // Search function to find a 3D molecule by name or alias
 export function findMolecule3D(query: string): Molecule3D | null {
-  const normalizedQuery = query.toLowerCase().trim().replace(/[-\s]/g, "")
-  
+  const normalizedQuery = query.toLowerCase().trim().replace(/[\s\-—–]/g, "")
+
   for (const molecule of molecules3D) {
-    // Check main name
-    if (molecule.name.toLowerCase().replace(/[-\s]/g, "") === normalizedQuery) {
+    if (molecule.name.toLowerCase().replace(/[\s\-—–]/g, "") === normalizedQuery) {
       return molecule
     }
-    
-    // Check aliases
+
     for (const alias of molecule.aliases) {
-      if (alias.toLowerCase().replace(/[-\s]/g, "") === normalizedQuery) {
+      if (alias.toLowerCase().replace(/[\s\-—–]/g, "") === normalizedQuery) {
         return molecule
       }
     }
   }
-  
+
+  return null
+}
+
+/** Resolve 3D data from a compound record (name + aliases) */
+export function findMolecule3DForCompound(name: string, aliases: string[] = []): Molecule3D | null {
+  const fromName = findMolecule3D(name)
+  if (fromName) return fromName
+
+  for (const alias of aliases) {
+    const match = findMolecule3D(alias)
+    if (match) return match
+  }
+
   return null
 }
 

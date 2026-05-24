@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, Calculator, Beaker } from "lucide-react"
+import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, Calculator, Beaker, Layers, Radio } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,7 +11,17 @@ const features = [
   {
     icon: Atom,
     title: "Molecule Builder",
-    description: "Type IUPAC names, condensed formulas, or SMILES strings to visualize molecular structures.",
+    description: "Search by IUPAC name, formula, or functional group category. Visualize 2D/3D with symmetry and study mode.",
+  },
+  {
+    icon: Layers,
+    title: "Functional Groups",
+    description: "Explore all 9 IB HL functional groups with properties, naming rules, and spectroscopy hints.",
+  },
+  {
+    icon: Radio,
+    title: "Spectroscopy Lab",
+    description: "Educational IR, mass spectrometry, and proton NMR data for common molecules.",
   },
   {
     icon: FlaskConical,
@@ -21,22 +31,12 @@ const features = [
   {
     icon: Eye,
     title: "Structure Visualization",
-    description: "See 2D/3D molecular structures with lone pairs, partial charges, and polarity overlays.",
-  },
-  {
-    icon: Zap,
-    title: "Bond Analysis",
-    description: "Explore bond angles, hybridization states, and hydrogen bonding interactions.",
-  },
-  {
-    icon: Calculator,
-    title: "Equation Balancing",
-    description: "Automatically balance chemical equations with support for all states of matter.",
+    description: "See 2D text-art and 3D models with lone pairs, functional group tags, and classifications.",
   },
   {
     icon: Beaker,
-    title: "Reaction Prediction",
-    description: "Get suggestions for reaction products and mechanism explanations.",
+    title: "IB HL Study Tools",
+    description: "Study mode, primary/secondary classification, and functional-group-aware search.",
   },
 ]
 
@@ -94,8 +94,13 @@ export default function HomePage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="rounded-xl px-8 h-12 text-base">
-                <Link href="/reaction-lab">
-                  Open Reaction Lab
+                <Link href="/functional-groups">
+                  Functional Groups
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="rounded-xl px-8 h-12 text-base">
+                <Link href="/spectroscopy-lab">
+                  Spectroscopy Lab
                 </Link>
               </Button>
             </div>

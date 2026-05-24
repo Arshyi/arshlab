@@ -14,6 +14,8 @@ import { ATOM_COLORS, ATOM_RADII, VDW_RADII, getBondLength } from "@/lib/chemist
 interface MoleculeViewer3DProps {
   molecule: Molecule3D
   className?: string
+  showLonePairs?: boolean
+  onShowLonePairsChange?: (value: boolean) => void
 }
 
 interface ViewerSettings {
@@ -427,16 +429,24 @@ function LoadingAnimation() {
   )
 }
 
-export function MoleculeViewer3D({ molecule, className }: MoleculeViewer3DProps) {
+export function MoleculeViewer3D({
+  molecule,
+  className,
+  showLonePairs: showLonePairsProp,
+  onShowLonePairsChange,
+}: MoleculeViewer3DProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [settings, setSettings] = useState<ViewerSettings>({
     showHydrogens: true,
-    showLonePairs: false,
+    showLonePairs: showLonePairsProp ?? false,
     showBondAngles: false,
     showAtomLabels: true,
     showBondLengths: false,
     spaceFillingMode: false,
   })
+
+  const showLonePairs = showLonePairsProp ?? settings.showLonePairs
+  const viewerSettings = { ...settings, showLonePairs }
   
   // Simulate loading
   useState(() => {
@@ -445,7 +455,11 @@ export function MoleculeViewer3D({ molecule, className }: MoleculeViewer3DProps)
   })
   
   const toggleSetting = (key: keyof ViewerSettings) => {
-    setSettings(prev => ({ ...prev, [key]: !prev[key] }))
+    if (key === "showLonePairs" && onShowLonePairsChange) {
+      onShowLonePairsChange(!showLonePairs)
+      return
+    }
+    setSettings((prev) => ({ ...prev, [key]: !prev[key] }))
   }
   
   return (
@@ -461,7 +475,7 @@ export function MoleculeViewer3D({ molecule, className }: MoleculeViewer3DProps)
           style={{ background: "transparent" }}
           onCreated={() => setTimeout(() => setIsLoading(false), 500)}
         >
-          <MoleculeScene molecule={molecule} settings={settings} />
+          <MoleculeScene molecule={molecule} settings={viewerSettings} />
         </Canvas>
         
         {/* Molecule name overlay */}
@@ -483,7 +497,7 @@ export function MoleculeViewer3D({ molecule, className }: MoleculeViewer3DProps)
           <ControlButton
             icon={Circle}
             label="Lone Pairs"
-            active={settings.showLonePairs}
+            active={showLonePairs}
             onClick={() => toggleSetting("showLonePairs")}
           />
           <ControlButton

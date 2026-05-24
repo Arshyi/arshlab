@@ -18,7 +18,46 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
+    version: "0.6.0",
+    date: "Current",
+    status: "released",
+    title: "Functional Groups & Spectroscopy",
+    changes: [
+      "Added all 9 IB HL functional groups",
+      "Added Functional Group Explorer",
+      "Added Spectroscopy Lab learning section",
+      "Added educational IR visualization",
+      "Added mass spectrometry basics",
+      "Added proton NMR basics",
+      "Added functional-group-aware search",
+      "Added amides and ethers",
+      "Added aromatic/phenyl support (toluene)",
+      "Added halogenoalkanes, aldehydes, and ketones",
+      "Added Study Mode on molecule cards",
+      "Added functional group highlighting",
+      "Added primary/secondary classifications",
+    ],
+  },
+  {
     version: "0.5.0",
+    date: "Previous",
+    status: "released",
+    title: "Amines, Symmetry, and Better 2D Structures",
+    changes: [
+      "Added NH2 / primary amine support",
+      "Added ammonia, methylamine, ethylamine, propylamine, and aniline",
+      "Added condensed formula normalization",
+      "Added support for reversed formulas such as H3C-CH3",
+      "Added symmetry notes for common molecules",
+      "Improved 2D text-art structures",
+      "Added double bond = support in text-art",
+      "Added triple bond ≡ support in text-art",
+      "Added lone pair toggle for 2D and 3D views",
+      "Added symmetry toggle",
+    ],
+  },
+  {
+    version: "0.7.0",
     date: "Planned",
     status: "coming-soon",
     title: "Equation Balancing & More Isomers",
@@ -26,13 +65,14 @@ const patchNotes: PatchNote[] = [
       "Add automatic equation balancing",
       "Add more isomer support (branched alkanes)",
       "Add ester generation from alcohols + acids",
-      "Add benzene derivatives (toluene, xylene)",
+      "Add benzene derivatives (xylene)",
       "Add user history saving",
+      "Add spectroscopy quiz cards",
     ],
   },
   {
     version: "0.4.0",
-    date: "Current",
+    date: "Previous",
     status: "released",
     title: "3D Molecule Viewer Alpha",
     changes: [
@@ -222,7 +262,7 @@ export default function PatchNotesPage() {
             className="space-y-4"
           >
             {patchNotes.map((note, i) => (
-              <VersionCard key={note.version} note={note} defaultExpanded={i === 2} />
+              <VersionCard key={note.version} note={note} defaultExpanded={i === 0} />
             ))}
           </motion.div>
 
@@ -288,6 +328,8 @@ export default function PatchNotesPage() {
                   <p>• 19 Alkynes (C2-C20)</p>
                   <p>• 20 Alcohols (C1-C20)</p>
                   <p>• 20 Carboxylic Acids</p>
+                  <p>• 9 IB HL Functional Groups</p>
+                  <p>• Spectroscopy Data (12+ molecules)</p>
                   <p>• 7 Reaction Types</p>
                   <p className="font-medium text-foreground pt-2">~100+ compounds total</p>
                 </div>

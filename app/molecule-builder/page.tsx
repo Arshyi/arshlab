@@ -1,26 +1,28 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Atom, RotateCcw, History, Eye, Zap, Hexagon, Droplets, Ruler, Triangle, Search, AlertCircle } from "lucide-react"
+import { Atom, RotateCcw, History, Eye, Zap, Hexagon, Droplets, Ruler, Triangle, Search, AlertCircle, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { searchCompound, getSuggestions, type Compound } from "@/lib/chemistry/compounds"
+import { getSuggestions, type Compound } from "@/lib/chemistry/compounds"
+import { searchExtended, type CategorySearchResult } from "@/lib/chemistry/functional-group-detection"
 import { MoleculeResultCard } from "@/components/molecule-result-card"
 
 const examples = [
-  "propan-1-ol",
-  "ethanoic acid",
   "ethanol",
+  "amine",
+  "ketone",
+  "propanone",
+  "methyl ethanoate",
   "benzene",
-  "methane",
-  "glucose",
 ]
 
 const futureFeatures = [
   { icon: Eye, label: "Partial Charges", description: "Visualize δ+ and δ- on atoms" },
-  { icon: Droplets, label: "Lone Pairs", description: "Display non-bonding electron pairs" },
   { icon: Zap, label: "Polarity", description: "Show molecular dipole moments" },
   { icon: Ruler, label: "Bond Angles", description: "Display precise bond angles" },
   { icon: Hexagon, label: "Hybridization", description: "sp, sp², sp³ orbital states" },
@@ -28,12 +30,32 @@ const futureFeatures = [
 ]
 
 export default function MoleculeBuilderPage() {
-  const [moleculeInput, setMoleculeInput] = useState("")
+  return (
+    <Suspense fallback={<motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="p-8 text-center text-muted-foreground">Loading...</motion.div>}>
+      <MoleculeBuilderContent />
+    </Suspense>
+  )
+}
+
+function MoleculeBuilderContent() {
+  const searchParams = useSearchParams()
+  const initialQuery = searchParams.get("q") ?? ""
+
+  const [moleculeInput, setMoleculeInput] = useState(initialQuery)
   const [history, setHistory] = useState<string[]>([])
   const [result, setResult] = useState<Compound | null>(null)
+  const [categoryResult, setCategoryResult] = useState<CategorySearchResult | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [viewMode, setViewMode] = useState<"2d" | "3d">("2d")
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [showLonePairs, setShowLonePairs] = useState(false)
+  const [showSymmetry, setShowSymmetry] = useState(true)
+  const [showStudyMode, setShowStudyMode] = useState(false)
+  const [alternateOrientation, setAlternateOrientation] = useState(false)
 
   // Get suggestions based on input
   const suggestions = useMemo(() => {
@@ -48,23 +70,37 @@ export default function MoleculeBuilderPage() {
     return () => document.removeEventListener("click", handleClick)
   }, [])
 
+  useEffect(() => {
+    if (initialQuery) handleSearch(initialQuery)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery])
+
   function handleSearch(query?: string) {
     const searchQuery = query || moleculeInput
     if (!searchQuery.trim()) return
 
-    const compound = searchCompound(searchQuery)
-    
-    if (compound) {
-      setResult(compound)
+    const extended = searchExtended(searchQuery)
+
+    if (extended?.type === "compound" && extended.compoundResult) {
+      setResult(extended.compoundResult.compound)
+      setCategoryResult(null)
+      setAlternateOrientation(extended.compoundResult.alternateOrientation ?? false)
       setNotFound(false)
-      setMoleculeInput(compound.name)
-      // Add to history if not already there
+      setMoleculeInput(extended.compoundResult.compound.name)
       setHistory((prev) => {
-        const filtered = prev.filter((h) => h.toLowerCase() !== compound.name.toLowerCase())
-        return [compound.name, ...filtered.slice(0, 5)]
+        const filtered = prev.filter((h) => h.toLowerCase() !== extended.compoundResult!.compound.name.toLowerCase())
+        return [extended.compoundResult!.compound.name, ...filtered.slice(0, 5)]
       })
+    } else if (extended?.type === "category" && extended.category) {
+      setResult(null)
+      setCategoryResult(extended.category)
+      setAlternateOrientation(false)
+      setNotFound(false)
+      setMoleculeInput(searchQuery)
     } else {
       setResult(null)
+      setCategoryResult(null)
+      setAlternateOrientation(false)
       setNotFound(true)
     }
     setShowSuggestions(false)
@@ -73,7 +109,9 @@ export default function MoleculeBuilderPage() {
   function handleClear() {
     setMoleculeInput("")
     setResult(null)
+    setCategoryResult(null)
     setNotFound(false)
+    setAlternateOrientation(false)
   }
 
   function handleSuggestionClick(compound: Compound) {
@@ -190,7 +228,52 @@ export default function MoleculeBuilderPage() {
                   compound={result}
                   viewMode={viewMode}
                   onViewModeChange={setViewMode}
+                  alternateOrientation={alternateOrientation}
+                  showLonePairs={showLonePairs}
+                  onShowLonePairsChange={setShowLonePairs}
+                  showSymmetry={showSymmetry}
+                  onShowSymmetryChange={setShowSymmetry}
+                  showStudyMode={showStudyMode}
+                  onShowStudyModeChange={setShowStudyMode}
                 />
+              ) : categoryResult ? (
+                <motion.div
+                  key="category"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <Card className="rounded-2xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Layers className="h-5 w-5" />
+                        {categoryResult.categoryName}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {categoryResult.compounds.length} molecules in this category
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {categoryResult.compounds.slice(0, 12).map((c) => (
+                          <button
+                            key={c.name}
+                            onClick={() => handleSearch(c.name)}
+                            className="flex items-center justify-between rounded-xl border border-border bg-secondary/30 px-4 py-3 text-left hover:bg-secondary transition-colors"
+                          >
+                            <span className="capitalize font-medium">{c.name}</span>
+                            <span className="text-xs font-mono text-muted-foreground">{c.formula}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <Link href="/functional-groups" className="inline-block mt-4">
+                        <Button variant="outline" size="sm" className="rounded-lg">
+                          Explore functional group details
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ) : notFound ? (
                 <motion.div
                   key="not-found"
@@ -313,6 +396,10 @@ export default function MoleculeBuilderPage() {
                     "Alkynes (C2-C20)",
                     "Alcohols (C1-C20)",
                     "Carboxylic Acids (C1-C20)",
+                    "Primary Amines (NH2)",
+                    "Halogenoalkanes",
+                    "Aldehydes & Ketones",
+                    "Ethers & Amides",
                     "Simple Esters",
                     "Benzene & Phenol",
                     "Glucose & Glycogen",
