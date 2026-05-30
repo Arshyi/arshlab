@@ -18,12 +18,17 @@ interface MoleculeViewer3DProps {
   onShowLonePairsChange?: (value: boolean) => void
 }
 
+type ViewMode = "ball-and-stick" | "space-filling" | "wireframe"
+
 interface ViewerSettings {
   showHydrogens: boolean
   showLonePairs: boolean
   showBondAngles: boolean
   showAtomLabels: boolean
   showBondLengths: boolean
+  showDipole: boolean
+  viewMode: ViewMode
+  /** @deprecated use viewMode === 'space-filling' */
   spaceFillingMode: boolean
 }
 
@@ -33,20 +38,21 @@ function AtomSphere({
   index,
   showLabel,
   spaceFilling,
+  wireframe = false,
   visible = true,
 }: { 
   atom: Atom3D
   index: number
   showLabel: boolean
   spaceFilling: boolean
+  wireframe?: boolean
   visible?: boolean
 }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const color = ATOM_COLORS[atom.element] || "#888888"
-  const radius = spaceFilling 
+  const radius = spaceFilling
     ? (VDW_RADII[atom.element] || 1.5) * 0.5
     : (ATOM_RADII[atom.element] || 0.3)
-  
   if (!visible) return null
   
   return (
@@ -57,6 +63,7 @@ function AtomSphere({
           color={color} 
           roughness={0.3}
           metalness={0.1}
+          wireframe={wireframe}
         />
       </mesh>
       {showLabel && (
@@ -301,7 +308,18 @@ function MoleculeScene({
   molecule: Molecule3D
   settings: ViewerSettings
 }) {
-  const { showHydrogens, showLonePairs, showBondAngles, showAtomLabels, showBondLengths, spaceFillingMode } = settings
+  const {
+    showHydrogens,
+    showLonePairs,
+    showBondAngles,
+    showAtomLabels,
+    showBondLengths,
+    showDipole,
+    viewMode,
+    spaceFillingMode,
+  } = settings
+  const spaceFilling = viewMode === "space-filling" || spaceFillingMode
+  const wireframe = viewMode === "wireframe"
   
   // Filter atoms based on hydrogen visibility
   const visibleAtomIndices = useMemo(() => {
@@ -325,13 +343,27 @@ function MoleculeScene({
             atom={atom}
             index={i}
             showLabel={showAtomLabels}
-            spaceFilling={spaceFillingMode}
+            spaceFilling={spaceFilling}
+            wireframe={wireframe}
             visible={visibleAtomIndices[i].visible}
           />
         ))}
         
         {/* Bonds */}
-        {!spaceFillingMode && molecule.bonds.map((bond, i) => {
+        {showDipole && (
+          <group>
+            <mesh position={[0, 0, 0.6]}>
+              <cylinderGeometry args={[0.04, 0.04, 1.2, 8]} />
+              <meshBasicMaterial color="#f97316" />
+            </mesh>
+            <mesh position={[0, 0, 1.3]}>
+              <coneGeometry args={[0.12, 0.25, 8]} />
+              <meshBasicMaterial color="#f97316" />
+            </mesh>
+          </group>
+        )}
+
+        {!spaceFilling && molecule.bonds.map((bond, i) => {
           const atom1 = molecule.atoms[bond.a]
           const atom2 = molecule.atoms[bond.b]
           const visible = (showHydrogens || atom1.element !== "H") && (showHydrogens || atom2.element !== "H")
@@ -442,6 +474,8 @@ export function MoleculeViewer3D({
     showBondAngles: false,
     showAtomLabels: true,
     showBondLengths: false,
+    showDipole: false,
+    viewMode: "ball-and-stick",
     spaceFillingMode: false,
   })
 
@@ -523,8 +557,25 @@ export function MoleculeViewer3D({
           <ControlButton
             icon={Box}
             label="Space-Filling"
-            active={settings.spaceFillingMode}
-            onClick={() => toggleSetting("spaceFillingMode")}
+            active={viewerSettings.viewMode === "space-filling"}
+            onClick={() =>
+              setSettings((prev) => ({
+                ...prev,
+                viewMode: prev.viewMode === "space-filling" ? "ball-and-stick" : "space-filling",
+                spaceFillingMode: prev.viewMode !== "space-filling",
+              }))
+            }
+          />
+          <ControlButton
+            icon={Circle}
+            label="Wireframe"
+            active={viewerSettings.viewMode === "wireframe"}
+            onClick={() =>
+              setSettings((prev) => ({
+                ...prev,
+                viewMode: prev.viewMode === "wireframe" ? "ball-and-stick" : "wireframe",
+              }))
+            }
           />
         </div>
       </div>

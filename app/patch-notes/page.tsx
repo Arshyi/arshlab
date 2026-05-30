@@ -18,8 +18,30 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "0.8.0",
+    version: "1.0.0",
     date: "Current",
+    status: "released",
+    title: "Massive Chemistry Engine Release",
+    changes: [
+      "Master Chemistry Database with scalable TypeScript architecture",
+      "Complete periodic table (118 elements) with interactive viewer",
+      "Expanded molecule database (organic generators + inorganic seeds)",
+      "Lewis structure engine with templates and formal charge analysis",
+      "VSEPR engine with all major molecular geometries",
+      "Orbital viewer expansion including 6f orbitals and ml quantum numbers",
+      "Spectroscopy infrastructure (IR, NMR, MS records + FG fallbacks)",
+      "Reaction family database (combustion through redox)",
+      "Global chemistry search engine",
+      "Question generation metadata foundation (no AI questions yet)",
+      "Future-ready user account schema",
+      "Local analytics tracker",
+      "Education Hub infrastructure (lessons, practice, past papers — planned)",
+      "Chemistry Hub dashboard at /chemistry-hub",
+    ],
+  },
+  {
+    version: "0.8.0",
+    date: "Previous",
     status: "released",
     title: "Full Periodic Table Orbital Viewer",
     changes: [

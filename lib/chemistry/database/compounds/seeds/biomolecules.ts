@@ -1,0 +1,96 @@
+import type { CompoundRecord } from "../../types"
+
+const boards = ["ib-hl", "ap", "a-level", "university-intro"] as const
+
+function seed(
+  s: Omit<CompoundRecord, "kind" | "examBoards" | "topics" | "subtopics" | "tags"> &
+    Partial<Pick<CompoundRecord, "topics" | "subtopics" | "tags">>,
+): CompoundRecord {
+  return {
+    kind: "compound",
+    examBoards: [...boards, "high-school", "ib-sl"],
+    topics: s.topics ?? ["biochemistry"],
+    subtopics: s.subtopics ?? [],
+    tags: s.tags ?? [s.family],
+    ...s,
+  }
+}
+
+export const BIOMOLECULE_SEEDS: CompoundRecord[] = [
+  seed({
+    id: "compound-glucose",
+    name: "glucose",
+    aliases: ["glucose", "C6H12O6", "dextrose", "blood sugar"],
+    formula: "C6H12O6",
+    condensed: "C6H12O6",
+    family: "Carbohydrate",
+    functionalGroup: "Hydroxyl / hemiacetal",
+    polarity: "Polar",
+    hydrogenBonding: true,
+    explanation: "Six-carbon aldohexose; primary fuel for cellular respiration.",
+    structureArt: "HOCH2—(CHOH)4—CHO",
+    commonReactions: ["Fermentation", "Respiration", "Glycosidic bond formation"],
+    subtopics: ["monosaccharides"],
+  }),
+  seed({
+    id: "compound-glycogen",
+    name: "glycogen",
+    aliases: ["glycogen", "animal starch"],
+    formula: "(C6H10O5)n",
+    condensed: "polymer of glucose",
+    family: "Carbohydrate",
+    functionalGroup: "Glycosidic",
+    polarity: "Polar",
+    hydrogenBonding: true,
+    explanation: "Branched glucose polymer for energy storage in animals.",
+    structureArt: "[Glc]n branched",
+    commonReactions: ["Hydrolysis to glucose"],
+    subtopics: ["polysaccharides"],
+  }),
+  seed({
+    id: "compound-benzene",
+    name: "benzene",
+    aliases: ["benzene", "C6H6", "benzol"],
+    formula: "C6H6",
+    condensed: "C6H6",
+    family: "Aromatic",
+    functionalGroup: "Aromatic ring",
+    polarity: "Nonpolar",
+    hydrogenBonding: false,
+    explanation: "Planar hexagonal ring with delocalized π electrons.",
+    structureArt: "  ╱‾‾‾╲\n ╱     ╲",
+    commonReactions: ["Electrophilic substitution", "Combustion"],
+    molecule3dId: "benzene",
+    subtopics: ["aromatics"],
+  }),
+  seed({
+    id: "compound-glycine",
+    name: "glycine",
+    aliases: ["glycine", "aminoacetic acid"],
+    formula: "C2H5NO2",
+    condensed: "H2N—CH2—COOH",
+    family: "Amino acid",
+    functionalGroup: "Amino + carboxyl",
+    polarity: "Polar",
+    hydrogenBonding: true,
+    explanation: "Simplest amino acid; zwitterionic in neutral solution.",
+    structureArt: "H2N—CH2—COOH",
+    commonReactions: ["Peptide bond formation"],
+    subtopics: ["amino-acids", "proteins"],
+  }),
+  seed({
+    id: "compound-alanine",
+    name: "alanine",
+    aliases: ["alanine", "2-aminopropanoic acid"],
+    formula: "C3H7NO2",
+    condensed: "H2N—CH(CH3)—COOH",
+    family: "Amino acid",
+    functionalGroup: "Amino + carboxyl",
+    polarity: "Polar",
+    hydrogenBonding: true,
+    explanation: "Non-polar side-chain amino acid.",
+    structureArt: "H2N—CH(CH3)—COOH",
+    commonReactions: ["Peptide bond formation"],
+    subtopics: ["amino-acids"],
+  }),
+]

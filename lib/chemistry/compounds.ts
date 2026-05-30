@@ -902,3 +902,8 @@ export function getSuggestions(query: string, limit: number = 6): Compound[] {
   
   return matches.slice(0, limit)
 }
+
+// Master database exports (v1.0 infrastructure)
+export { ALL_COMPOUNDS, getCompoundById, getCompoundsByFamily } from "./database/compounds"
+export { searchChemistry } from "./database/search/engine"
+export { getDatabaseMeta } from "./database/registry"
