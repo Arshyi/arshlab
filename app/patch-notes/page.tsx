@@ -18,8 +18,27 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "0.6.0",
+    version: "0.8.0",
     date: "Current",
+    status: "released",
+    title: "Full Periodic Table Orbital Viewer",
+    changes: [
+      "Added s orbitals from 1s to 7s",
+      "Added p orbitals from 2p to 7p",
+      "Added d orbitals from 3d to 6d",
+      "Added f orbitals from 4f to 5f",
+      "Added radial node visualization",
+      "Added angular node visualization",
+      "Added node/asymptote surface toggle",
+      "Added phase coloring",
+      "Added orbital quantum number cards",
+      "Added orbital filtering by family and principal quantum number",
+      "Added educational explanations for nodes and phases",
+    ],
+  },
+  {
+    version: "0.6.0",
+    date: "Previous",
     status: "released",
     title: "Functional Groups & Spectroscopy",
     changes: [

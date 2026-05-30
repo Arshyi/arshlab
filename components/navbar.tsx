@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Atom, FlaskConical, Home, User, FileText, Menu, X, Layers, Radio } from "lucide-react"
+import { Atom, FlaskConical, Home, User, FileText, Menu, X, Layers, Radio, Orbit } from "lucide-react"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -12,6 +12,7 @@ const navItems = [
   { href: "/molecule-builder", label: "Molecule Builder", icon: Atom },
   { href: "/functional-groups", label: "Functional Groups", icon: Layers },
   { href: "/spectroscopy-lab", label: "Spectroscopy Lab", icon: Radio },
+  { href: "/orbital-viewer", label: "Orbital Viewer", icon: Orbit },
   { href: "/reaction-lab", label: "Reaction Lab", icon: FlaskConical },
   { href: "/patch-notes", label: "Patch Notes", icon: FileText },
   { href: "/account", label: "Account", icon: User },
