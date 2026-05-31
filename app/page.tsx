@@ -1,11 +1,38 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, Calculator, Beaker, Layers, Radio } from "lucide-react"
+import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, Beaker, Layers, Radio, FileText, PlayCircle, Map, User } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { FloatingAtoms } from "@/components/floating-atoms"
+
+const learningEcosystem = [
+  {
+    icon: User,
+    title: "About the Creator",
+    description: "Meet the engineering student behind ARSHLAB and learn about the mission.",
+    href: "/about-creator",
+  },
+  {
+    icon: FileText,
+    title: "Practice Papers",
+    description: "Original practice sets designed to promote understanding over memorization.",
+    href: "/past-papers",
+  },
+  {
+    icon: PlayCircle,
+    title: "Video Solutions",
+    description: "Step-by-step walkthroughs focused on reasoning, derivations, and visualization.",
+    href: "/video-solutions",
+  },
+  {
+    icon: Map,
+    title: "Roadmap",
+    description: "See what's completed, in development, and planned for the platform.",
+    href: "/roadmap",
+  },
+]
 
 const features = [
   {
@@ -82,8 +109,8 @@ export default function HomePage() {
             </p>
 
             <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              A modern chemistry sandbox for students and curious learners. Build molecules, 
-              visualize structures, analyze reactions, and explore chemistry concepts interactively.
+              A chemistry-first educational platform for students and curious learners. Build molecules, 
+              visualize structures, analyze reactions, and explore STEM concepts interactively.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -144,6 +171,55 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Learning Ecosystem Section */}
+      <section className="relative px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Learning Ecosystem
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+              Explore the creator story, practice resources, video solutions, and platform roadmap
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            {learningEcosystem.map((ecosystemItem) => (
+              <motion.div key={ecosystemItem.title} variants={item}>
+                <Link href={ecosystemItem.href} className="block h-full group">
+                  <Card className="h-full rounded-2xl border-border/50 bg-card/80 backdrop-blur-sm transition-all hover:shadow-lg hover:border-accent/30 group-hover:-translate-y-0.5">
+                    <CardContent className="p-6">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground mb-4">
+                        <ecosystemItem.icon className="h-6 w-6" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-foreground">{ecosystemItem.title}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                        {ecosystemItem.description}
+                      </p>
+                      <span className="mt-4 inline-flex items-center text-sm font-medium text-accent group-hover:gap-2 transition-all">
+                        Explore
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </span>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
           </motion.div>
         </div>
       </section>

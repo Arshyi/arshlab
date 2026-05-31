@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.0.0",
+    version: "1.1.0",
     date: "Current",
+    status: "released",
+    title: "Creator and Learning Ecosystem Release",
+    changes: [
+      "About Creator page with profile, biography, and mission statement",
+      "Social links section (YouTube channel linked)",
+      "Practice Papers hub with filters and sample metadata entries",
+      "Video Solutions hub with category browsing and coming soon entries",
+      "Roadmap page with completed, in development, and planned features",
+      "Learning Ecosystem section on homepage",
+      "High School → First Year University curriculum architecture",
+      "Future AI question generation hierarchy (Subject → Topic → Subtopic → Concept → Templates)",
+    ],
+  },
+  {
+    version: "1.0.0",
+    date: "Previous",
     status: "released",
     title: "Massive Chemistry Engine Release",
     changes: [
