@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.2.0",
+    version: "1.3.0",
     date: "Current",
+    status: "released",
+    title: "Element Profile Upgrade",
+    changes: [
+      "Added richer element profile cards",
+      "Added electron configuration and noble gas notation",
+      "Added orbital box diagrams",
+      "Added periodic property panels",
+      "Added oxidation state data",
+      "Added natural elemental forms",
+      "Added octet-rule exception examples",
+      "Added transition metal color and wavelength cards",
+    ],
+  },
+  {
+    version: "1.2.0",
+    date: "Previous",
     status: "released",
     title: "Temporary Guest History",
     changes: [

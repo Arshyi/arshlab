@@ -96,6 +96,25 @@ export type ElementCategory =
 
 export type ElementBlock = "s" | "p" | "d" | "f"
 
+export type OctetRuleCategory =
+  | "normal-octet"
+  | "incomplete-octet"
+  | "expanded-octet"
+  | "odd-electron"
+  | "noble-gas-compounds"
+
+export interface OrbitalSubshellDiagram {
+  label: string
+  boxes: string[]
+}
+
+export interface TransitionMetalColorEntry {
+  species: string
+  color: string
+  wavelengthRange?: string
+  notes?: string
+}
+
 export interface ElementRecord extends SearchableRecord {
   kind: "element"
   symbol: string
@@ -106,6 +125,7 @@ export interface ElementRecord extends SearchableRecord {
   block: ElementBlock
   electronConfiguration: string
   shorthandConfiguration?: string
+  orbitalDiagram: OrbitalSubshellDiagram[]
   valenceElectrons: number
   electronegativity: number | null
   atomicRadiusPm: number | null
@@ -117,6 +137,11 @@ export interface ElementRecord extends SearchableRecord {
   densityGcm3: number | null
   oxidationStates: number[]
   commonIons: string[]
+  naturalForm: string | null
+  octetRuleCategory: OctetRuleCategory
+  octetRuleExamples: string[]
+  exampleCompounds: string[]
+  transitionMetalColors: TransitionMetalColorEntry[]
   category: ElementCategory
   isMetal: boolean
   isNonmetal: boolean

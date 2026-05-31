@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ALL_ELEMENTS, getElementGridPosition } from "@/lib/chemistry/database/periodic-table"
+import { ALL_ELEMENTS, getElementBySymbol, getElementGridPosition } from "@/lib/chemistry/database/periodic-table"
 import type { ElementRecord } from "@/lib/chemistry/database/types"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ElementProfilePanel } from "@/components/element-profile-panel"
 import { cn } from "@/lib/utils"
 import { analytics } from "@/lib/chemistry/database/analytics/tracker"
 
@@ -22,8 +22,21 @@ const CATEGORY_COLORS: Record<string, string> = {
   unknown: "bg-muted border-border",
 }
 
-export function PeriodicTableGrid() {
+interface PeriodicTableGridProps {
+  focusSymbol?: string | null
+}
+
+export function PeriodicTableGrid({ focusSymbol }: PeriodicTableGridProps) {
   const [selected, setSelected] = useState<ElementRecord | null>(null)
+
+  useEffect(() => {
+    if (!focusSymbol) return
+    const el = getElementBySymbol(focusSymbol)
+    if (el) {
+      setSelected(el)
+      analytics.track("view_element", { entityId: el.id })
+    }
+  }, [focusSymbol])
 
   const mainElements = ALL_ELEMENTS.filter(
     (e) =>
@@ -89,48 +102,16 @@ export function PeriodicTableGrid() {
 
       <AnimatePresence>
         {selected && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <Card className="rounded-2xl">
-              <CardHeader>
-                <CardTitle>
-                  {selected.name} ({selected.symbol})
-                </CardTitle>
-                <p className="text-sm text-muted-foreground capitalize">{selected.category.replace(/-/g, " ")}</p>
-              </CardHeader>
-              <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm">
-                <Info label="Atomic number" value={String(selected.atomicNumber)} />
-                <Info label="Atomic mass" value={`${selected.atomicMass} u`} />
-                <Info label="Period" value={String(selected.period)} />
-                <Info label="Group" value={selected.group ? String(selected.group) : "—"} />
-                <Info label="Block" value={selected.block} />
-                <Info label="Configuration" value={selected.shorthandConfiguration ?? selected.electronConfiguration} />
-                <Info label="Valence e⁻" value={String(selected.valenceElectrons)} />
-                <Info
-                  label="Electronegativity"
-                  value={selected.electronegativity?.toString() ?? "—"}
-                />
-                <Info
-                  label="Oxidation states"
-                  value={selected.oxidationStates.length ? selected.oxidationStates.join(", ") : "—"}
-                />
-                <Info
-                  label="Common ions"
-                  value={selected.commonIons.length ? selected.commonIons.join(", ") : "—"}
-                />
-              </CardContent>
-            </Card>
+          <motion.div
+            key={selected.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            <ElementProfilePanel element={selected} />
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  )
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-secondary/20 px-3 py-2">
-      <p className="text-[10px] uppercase text-muted-foreground">{label}</p>
-      <p className="font-mono text-sm">{value}</p>
     </div>
   )
 }

@@ -29,8 +29,8 @@ const ORBITAL_CAPACITY: Record<string, number> = {
   f: 14,
 }
 
-/** Known exceptions for IB/AP/A-Level teaching */
-const CONFIG_EXCEPTIONS: Record<number, string> = {
+/** Noble gas shorthand exceptions for IB/AP/A-Level teaching */
+const SHORTHAND_EXCEPTIONS: Record<number, string> = {
   24: "[Ar] 4s¹ 3d⁵",
   29: "[Ar] 4s¹ 3d¹⁰",
   41: "[Kr] 5s¹ 4d⁴",
@@ -44,6 +44,23 @@ const CONFIG_EXCEPTIONS: Record<number, string> = {
   64: "[Xe] 6s² 4f⁷ 5d¹",
   78: "[Xe] 6s¹ 4f¹⁴ 5d⁹",
   79: "[Xe] 6s¹ 4f¹⁴ 5d¹⁰",
+}
+
+/** Full configuration strings for common teaching exceptions */
+const FULL_EXCEPTIONS: Record<number, string> = {
+  24: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s¹ 3d⁵",
+  29: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s¹ 3d¹⁰",
+  41: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁴ 4p⁶ 5s¹ 4d⁴",
+  42: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁵ 4p⁶ 5s¹ 4d⁵",
+  44: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁵ 4p⁶ 5s¹ 4d⁷",
+  45: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁵ 4p⁶ 5s¹ 4d⁸",
+  46: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁵ 4p⁶ 4d¹⁰",
+  47: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁵ 4p⁶ 5s¹ 4d¹⁰",
+  57: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹ 5p⁶ 6s² 5d¹",
+  58: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹ 5p⁶ 6s² 4f¹ 5d¹",
+  64: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹ 5p⁶ 6s² 4f⁷ 5d¹",
+  78: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d⁵ 5p⁶ 6s¹ 4f¹⁴ 5d⁹",
+  79: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d⁵ 5p⁶ 6s¹ 4f¹⁴ 5d¹⁰",
 }
 
 function nobleGasCore(z: number): { core: string; remaining: number } | null {
@@ -61,42 +78,6 @@ function nobleGasCore(z: number): { core: string; remaining: number } | null {
     if (z > nz) return { core: sym, remaining: z - nz }
   }
   return null
-}
-
-export function buildElectronConfiguration(z: number): {
-  full: string
-  shorthand: string
-  valenceElectrons: number
-  block: "s" | "p" | "d" | "f"
-} {
-  if (CONFIG_EXCEPTIONS[z]) {
-    const shorthand = CONFIG_EXCEPTIONS[z]
-    const valence = estimateValenceFromConfig(z)
-    const block = getBlockFromZ(z)
-    return { full: shorthand, shorthand, valenceElectrons: valence, block }
-  }
-
-  let remaining = z
-  const filled: string[] = []
-
-  for (const orbital of ORBITAL_ORDER) {
-    if (remaining <= 0) break
-    const type = orbital.slice(-1)
-    const cap = ORBITAL_CAPACITY[type] ?? 2
-    const add = Math.min(remaining, cap)
-    if (add > 0) {
-      filled.push(`${orbital}${superscript(add)}`)
-      remaining -= add
-    }
-  }
-
-  const full = filled.join(" ")
-  const core = nobleGasCore(z)
-  const shorthand = core ? `[${core.core}] ${buildElectronConfiguration(core.remaining).full}` : full
-  const valenceElectrons = estimateValenceFromZ(z)
-  const block = getBlockFromZ(z)
-
-  return { full, shorthand, valenceElectrons, block }
 }
 
 function superscript(n: number): string {
@@ -118,6 +99,86 @@ function superscript(n: number): string {
     .join("")
 }
 
+function parseConfigString(config: string): Map<string, number> {
+  const map = new Map<string, number>()
+  const parts = config.split(/\s+/).filter(Boolean)
+  for (const part of parts) {
+    const match = part.match(/^(\d[spdf])([⁰¹²³⁴⁵⁶⁷⁸⁹]+|\d+)$/)
+    if (!match) continue
+    const orbital = match[1]
+    const countStr = match[2]
+    const count = countStr.split("").reduce((acc, ch) => {
+      const digit = "⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(ch)
+      return acc * 10 + (digit >= 0 ? digit : parseInt(ch, 10))
+    }, 0)
+    map.set(orbital, (map.get(orbital) ?? 0) + count)
+  }
+  return map
+}
+
+function buildAufbauOccupancy(z: number): Map<string, number> {
+  let remaining = z
+  const map = new Map<string, number>()
+
+  for (const orbital of ORBITAL_ORDER) {
+    if (remaining <= 0) break
+    const type = orbital.slice(-1)
+    const cap = ORBITAL_CAPACITY[type] ?? 2
+    const add = Math.min(remaining, cap)
+    if (add > 0) {
+      map.set(orbital, add)
+      remaining -= add
+    }
+  }
+
+  return map
+}
+
+function mapToFullString(map: Map<string, number>): string {
+  const parts: string[] = []
+  for (const orbital of ORBITAL_ORDER) {
+    const count = map.get(orbital)
+    if (count && count > 0) parts.push(`${orbital}${superscript(count)}`)
+  }
+  return parts.join(" ")
+}
+
+/** Returns ordered orbital occupancy respecting Aufbau exceptions */
+export function getOrbitalOccupancy(z: number): Map<string, number> {
+  if (FULL_EXCEPTIONS[z]) {
+    return parseConfigString(FULL_EXCEPTIONS[z])
+  }
+  return buildAufbauOccupancy(z)
+}
+
+export function buildElectronConfiguration(z: number): {
+  full: string
+  shorthand: string
+  valenceElectrons: number
+  block: "s" | "p" | "d" | "f"
+} {
+  const occupancy = getOrbitalOccupancy(z)
+  const full = FULL_EXCEPTIONS[z] ?? mapToFullString(occupancy)
+
+  let shorthand: string
+  if (SHORTHAND_EXCEPTIONS[z]) {
+    shorthand = SHORTHAND_EXCEPTIONS[z]
+  } else {
+    const core = nobleGasCore(z)
+    if (core) {
+      const valenceConfig = buildElectronConfiguration(core.remaining).full
+      shorthand = `[${core.core}] ${valenceConfig}`
+    } else {
+      shorthand = full
+    }
+  }
+
+  const valenceElectrons = estimateValenceFromZ(z)
+  const block = getBlockFromZ(z)
+
+  return { full, shorthand, valenceElectrons, block }
+}
+
 function getBlockFromZ(z: number): "s" | "p" | "d" | "f" {
   if (z === 1 || z === 2) return "s"
   if ((z >= 57 && z <= 71) || (z >= 89 && z <= 103)) return "f"
@@ -132,30 +193,24 @@ function estimateValenceFromZ(z: number): number {
   if (group === 18) return 0
   if (group === 1 || group === 2) return group
   if (group >= 13) return group - 10
-  if (group >= 3 && group <= 12) return 2 // simplified for transition metals
+  if (group >= 3 && group <= 12) return 2
   return 0
-}
-
-function estimateValenceFromConfig(z: number): number {
-  return estimateValenceFromZ(z)
 }
 
 export function getGroupFromZ(z: number): number | null {
   if (z === 1) return 1
   if (z === 2) return 18
   if (z >= 3 && z <= 4) return z
-  if (z >= 5 && z <= 10) return z - 10 + 13 // B-Ne -> 13-18
-  if (z >= 11 && z <= 12) return z - 10
-  if (z >= 13 && z <= 18) return z - 10
+  if (z >= 5 && z <= 10) return z - 10 + 13
+  if (z >= 11 && z <= 18) return z - 10
   if (z >= 19 && z <= 36) {
     if (z <= 20) return z - 18
-    if (z <= 30) return z - 18 // transition - simplified
+    if (z <= 30) return z - 18
     return z - 18
   }
-  // Use standard layout for higher periods
   const periodRow = getPeriodFromZ(z)
   if (periodRow >= 4) {
-    if (z >= 57 && z <= 71) return null // f-block
+    if (z >= 57 && z <= 71) return null
     if (z >= 89 && z <= 103) return null
   }
   return null

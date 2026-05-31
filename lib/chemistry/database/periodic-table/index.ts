@@ -1,6 +1,13 @@
 import type { ElementRecord, ExamBoard } from "../types"
 import { ELEMENT_NAMES, PROPERTY_OVERRIDES, inferCategory, inferGroup } from "./element-seeds"
 import { buildElectronConfiguration, getPeriodFromZ } from "./electron-config"
+import { buildOrbitalBoxDiagram } from "./orbital-diagram"
+import {
+  getElementProfileSeed,
+  getOctetRuleDefaults,
+  inferDefaultExampleCompounds,
+  inferDefaultNaturalForm,
+} from "./element-profiles"
 
 const ALL_BOARDS: ExamBoard[] = [
   "high-school",
@@ -19,7 +26,9 @@ function buildElement(z: number): ElementRecord {
   const period = getPeriodFromZ(z)
   const config = buildElectronConfiguration(z)
   const override = PROPERTY_OVERRIDES[z] ?? {}
+  const profileSeed = getElementProfileSeed(z)
   const category = override.category ?? inferCategory(z, group)
+  const octet = getOctetRuleDefaults(z, category)
 
   const isMetal =
     category === "alkali-metal" ||
@@ -45,17 +54,26 @@ function buildElement(z: number): ElementRecord {
     block: config.block,
     electronConfiguration: config.full,
     shorthandConfiguration: config.shorthand,
+    orbitalDiagram: buildOrbitalBoxDiagram(z),
     valenceElectrons: config.valenceElectrons,
-    electronegativity: override.electronegativity ?? null,
-    atomicRadiusPm: override.atomicRadiusPm ?? null,
+    electronegativity:
+      profileSeed.electronegativity ?? override.electronegativity ?? null,
+    atomicRadiusPm: profileSeed.atomicRadiusPm ?? override.atomicRadiusPm ?? null,
     ionicRadiusPm: null,
-    ionizationEnergyKjMol: override.ionizationEnergyKjMol ?? null,
-    electronAffinityKjMol: null,
-    meltingPointC: override.meltingPointC ?? null,
-    boilingPointC: override.boilingPointC ?? null,
+    ionizationEnergyKjMol:
+      profileSeed.ionizationEnergyKjMol ?? override.ionizationEnergyKjMol ?? null,
+    electronAffinityKjMol: profileSeed.electronAffinityKjMol ?? null,
+    meltingPointC: profileSeed.meltingPointC ?? override.meltingPointC ?? null,
+    boilingPointC: profileSeed.boilingPointC ?? override.boilingPointC ?? null,
     densityGcm3: null,
-    oxidationStates: override.oxidationStates ?? [],
-    commonIons: override.commonIons ?? [],
+    oxidationStates:
+      profileSeed.oxidationStates ?? override.oxidationStates ?? [],
+    commonIons: profileSeed.commonIons ?? override.commonIons ?? [],
+    naturalForm: inferDefaultNaturalForm(z, category),
+    octetRuleCategory: octet.category,
+    octetRuleExamples: octet.examples,
+    exampleCompounds: inferDefaultExampleCompounds(z, base.symbol, category),
+    transitionMetalColors: profileSeed.transitionMetalColors ?? [],
     category,
     isMetal,
     isNonmetal,
@@ -65,7 +83,7 @@ function buildElement(z: number): ElementRecord {
     tags: [category, config.block + "-block", `period-${period}`, ...(group ? [`group-${group}`] : [])],
     examBoards: ALL_BOARDS,
     topics: ["periodic-table", "atomic-structure"],
-    subtopics: ["electron-configuration", "periodic-trends"],
+    subtopics: ["electron-configuration", "periodic-trends", "octet-rule"],
   }
 }
 
@@ -97,3 +115,4 @@ export function getElementGridPosition(z: number): { row: number; col: number } 
 }
 
 export { ELEMENT_NAMES, inferGroup, getPeriodFromZ }
+export { TRANSITION_METAL_COLOR_DISCLAIMER } from "./element-profiles"
