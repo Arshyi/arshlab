@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { analyzeReaction, getSupportedReactions, type ReactionResult } from "@/lib/chemistry/reactions"
 import { ReactionResultCard } from "@/components/reaction-result-card"
+import { addReactionHistory } from "@/lib/guest-history"
 
 const reactionExamples = [
   "CH4 + O2 → CO2 + H2O",
@@ -60,6 +61,11 @@ export default function ReactionLabPage() {
     if (!reactionInput.trim()) return
     const analysisResult = analyzeReaction(reactionInput)
     setResult(analysisResult)
+    addReactionHistory({
+      query: reactionInput.trim(),
+      reactionType: analysisResult.recognized ? analysisResult.type : "Unrecognized",
+      predictedProducts: analysisResult.products,
+    })
   }
 
   const supportedReactions = getSupportedReactions()

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { getSuggestions, type Compound } from "@/lib/chemistry/compounds"
 import { searchExtended, type CategorySearchResult } from "@/lib/chemistry/functional-group-detection"
 import { MoleculeResultCard } from "@/components/molecule-result-card"
+import { addMoleculeHistory } from "@/lib/guest-history"
 
 const examples = [
   "ethanol",
@@ -82,14 +83,21 @@ function MoleculeBuilderContent() {
     const extended = searchExtended(searchQuery)
 
     if (extended?.type === "compound" && extended.compoundResult) {
-      setResult(extended.compoundResult.compound)
+      const compound = extended.compoundResult.compound
+      setResult(compound)
       setCategoryResult(null)
       setAlternateOrientation(extended.compoundResult.alternateOrientation ?? false)
       setNotFound(false)
-      setMoleculeInput(extended.compoundResult.compound.name)
+      setMoleculeInput(compound.name)
       setHistory((prev) => {
-        const filtered = prev.filter((h) => h.toLowerCase() !== extended.compoundResult!.compound.name.toLowerCase())
-        return [extended.compoundResult!.compound.name, ...filtered.slice(0, 5)]
+        const filtered = prev.filter((h) => h.toLowerCase() !== compound.name.toLowerCase())
+        return [compound.name, ...filtered.slice(0, 5)]
+      })
+      addMoleculeHistory({
+        query: searchQuery.trim(),
+        resolvedName: compound.name,
+        formula: compound.formula,
+        family: compound.family,
       })
     } else if (extended?.type === "category" && extended.category) {
       setResult(null)

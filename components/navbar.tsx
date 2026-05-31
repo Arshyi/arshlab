@@ -15,6 +15,7 @@ import {
   Orbit,
   TableProperties,
   GraduationCap,
+  History,
 } from "lucide-react"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/spectroscopy-lab", label: "Spectroscopy Lab", icon: Radio },
   { href: "/orbital-viewer", label: "Orbital Viewer", icon: Orbit },
   { href: "/reaction-lab", label: "Reaction Lab", icon: FlaskConical },
+  { href: "/history", label: "History", icon: History },
   { href: "/patch-notes", label: "Patch Notes", icon: FileText },
   { href: "/account", label: "Account", icon: User },
 ]

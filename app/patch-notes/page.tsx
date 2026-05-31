@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.1.0",
+    version: "1.2.0",
     date: "Current",
+    status: "released",
+    title: "Temporary Guest History",
+    changes: [
+      "Added temporary guest history",
+      "Added History page",
+      "Molecule searches now save locally for the current session",
+      "Reaction searches now save locally for the current session",
+      "Added clear history controls",
+      "No account required",
+    ],
+  },
+  {
+    version: "1.1.0",
+    date: "Previous",
     status: "released",
     title: "Creator and Learning Ecosystem Release",
     changes: [
