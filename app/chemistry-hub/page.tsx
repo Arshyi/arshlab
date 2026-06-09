@@ -15,11 +15,13 @@ import { analytics } from "@/lib/chemistry/database/analytics/tracker"
 
 const LAB_LINKS = [
   { href: "/molecule-builder", label: "Molecule Builder" },
+  { href: "/electron-configurations", label: "Electron Configuration Builder" },
   { href: "/orbital-viewer", label: "Orbital Viewer" },
   { href: "/spectroscopy-lab", label: "Spectroscopy Lab" },
   { href: "/functional-groups", label: "Functional Groups" },
   { href: "/reaction-lab", label: "Reaction Lab" },
   { href: "/periodic-table", label: "Periodic Table" },
+  { href: "/periodic-trends-quiz", label: "Periodic Trends Quiz" },
 ]
 
 export default function ChemistryHubPage() {

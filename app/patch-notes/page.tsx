@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.3.0",
+    version: "1.4.0",
     date: "Current",
+    status: "released",
+    title: "Electron Configurations & Periodic Trends",
+    changes: [
+      "Added Interactive Electron Configuration Builder",
+      "Added orbital filling animation",
+      "Added teaching exceptions for Cr, Cu, Ag, Au, and Mo",
+      "Added periodic trend heatmaps",
+      "Added trend comparison tool",
+      "Added Periodic Trends Quiz",
+      "Added educational trend explanations",
+    ],
+  },
+  {
+    version: "1.3.0",
+    date: "Previous",
     status: "released",
     title: "Element Profile Upgrade",
     changes: [
@@ -195,7 +210,7 @@ const patchNotes: PatchNote[] = [
   },
   {
     version: "0.2.0",
-    date: "Current",
+    date: "Previous",
     status: "released",
     title: "Rule-Based Chemistry Engine",
     changes: [

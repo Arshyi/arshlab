@@ -1,8 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ALL_ELEMENTS, getElementBySymbol, getElementGridPosition } from "@/lib/chemistry/database/periodic-table"
+import {
+  ALL_ELEMENTS,
+  getElementBySymbol,
+  getElementGridPosition,
+  getElementTrendValue,
+  getTrendRange,
+  PERIODIC_TREND_METRICS,
+} from "@/lib/chemistry/database/periodic-table"
+import type { TrendMode } from "@/lib/chemistry/database/periodic-table"
 import type { ElementRecord } from "@/lib/chemistry/database/types"
 import { ElementProfilePanel } from "@/components/element-profile-panel"
 import { cn } from "@/lib/utils"
@@ -22,11 +30,50 @@ const CATEGORY_COLORS: Record<string, string> = {
   unknown: "bg-muted border-border",
 }
 
-interface PeriodicTableGridProps {
-  focusSymbol?: string | null
+const HEATMAP_HUES: Record<TrendMode, number> = {
+  atomicRadius: 172,
+  electronegativity: 205,
+  ionizationEnergy: 265,
+  electronAffinity: 145,
 }
 
-export function PeriodicTableGrid({ focusSymbol }: PeriodicTableGridProps) {
+interface PeriodicTableGridProps {
+  focusSymbol?: string | null
+  heatmapMode?: TrendMode | null
+  comparisonMode?: boolean
+  comparisonSymbols?: string[]
+  onComparisonToggle?: (element: ElementRecord) => void
+}
+
+function normalizeTrendValue(value: number, min: number, max: number): number {
+  if (max === min) return 0
+  return (value - min) / (max - min)
+}
+
+function heatmapStyle(mode: TrendMode, normalized: number): React.CSSProperties {
+  const hue = HEATMAP_HUES[mode]
+  const lightness = 94 - normalized * 48
+  const borderLightness = Math.max(34, lightness - 18)
+
+  return {
+    backgroundColor: `hsl(${hue} 72% ${lightness}%)`,
+    borderColor: `hsl(${hue} 72% ${borderLightness}%)`,
+    color: normalized > 0.62 ? "white" : "hsl(222 35% 12%)",
+  }
+}
+
+function formatCompactValue(mode: TrendMode, value: number): string {
+  if (mode === "electronegativity") return value.toFixed(2)
+  return String(Math.round(value))
+}
+
+export function PeriodicTableGrid({
+  focusSymbol,
+  heatmapMode = null,
+  comparisonMode = false,
+  comparisonSymbols = [],
+  onComparisonToggle,
+}: PeriodicTableGridProps) {
   const [selected, setSelected] = useState<ElementRecord | null>(null)
 
   useEffect(() => {
@@ -38,6 +85,11 @@ export function PeriodicTableGrid({ focusSymbol }: PeriodicTableGridProps) {
     }
   }, [focusSymbol])
 
+  const trendRange = useMemo(
+    () => (heatmapMode ? getTrendRange(ALL_ELEMENTS, heatmapMode) : null),
+    [heatmapMode],
+  )
+
   const mainElements = ALL_ELEMENTS.filter(
     (e) =>
       !(e.atomicNumber >= 57 && e.atomicNumber <= 71) &&
@@ -47,29 +99,63 @@ export function PeriodicTableGrid({ focusSymbol }: PeriodicTableGridProps) {
   const actinides = ALL_ELEMENTS.filter((e) => e.atomicNumber >= 89 && e.atomicNumber <= 103)
 
   function handleSelect(el: ElementRecord) {
+    if (comparisonMode && onComparisonToggle) {
+      onComparisonToggle(el)
+      return
+    }
+
     setSelected(el)
     analytics.track("view_element", { entityId: el.id })
   }
 
   function renderCell(el: ElementRecord, row: number, col: number) {
-    const color = CATEGORY_COLORS[el.category] ?? CATEGORY_COLORS.unknown
+    const mode = heatmapMode
+    const categoryColor = CATEGORY_COLORS[el.category] ?? CATEGORY_COLORS.unknown
+    const comparisonIndex = comparisonSymbols.indexOf(el.symbol)
+    const isCompared = comparisonIndex >= 0
+    const trendValue = mode ? getElementTrendValue(el, mode) : null
+    const normalized =
+      mode && trendRange && trendValue !== null
+        ? normalizeTrendValue(trendValue, trendRange.min, trendRange.max)
+        : 0
+    const metric = mode ? PERIODIC_TREND_METRICS[mode] : null
+    const cellStyle: React.CSSProperties = {
+      gridRow: row,
+      gridColumn: col,
+      ...(mode ? heatmapStyle(mode, normalized) : {}),
+    }
+    const mutedText =
+      heatmapMode && normalized > 0.62 ? "text-white/75" : "text-muted-foreground"
+
     return (
       <button
         key={el.id}
         type="button"
         onClick={() => handleSelect(el)}
         className={cn(
-          "flex h-12 w-12 flex-col items-center justify-center rounded-lg border text-xs transition-all sm:h-14 sm:w-14",
-          color,
-          selected?.id === el.id && "ring-2 ring-primary",
+          "relative flex h-12 w-12 flex-col items-center justify-center rounded-lg border text-xs transition-all sm:h-14 sm:w-14",
+          heatmapMode ? "hover:brightness-95" : categoryColor,
+          selected?.id === el.id && !comparisonMode && "ring-2 ring-primary",
+          isCompared && "ring-2 ring-primary ring-offset-2 ring-offset-background",
         )}
-        style={{ gridRow: row, gridColumn: col }}
-        title={el.name}
+        style={cellStyle}
+        title={
+          mode && metric && trendValue !== null
+            ? `${el.name}: ${metric.label} ${formatCompactValue(mode, trendValue)} ${metric.unit}`
+            : el.name
+        }
       >
-        <span className="text-[9px] text-muted-foreground">{el.atomicNumber}</span>
-        <span className="font-bold font-mono">{el.symbol}</span>
-        <span className="hidden text-[8px] text-muted-foreground sm:block">
-          {el.atomicMass.toFixed(1)}
+        {isCompared && (
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm">
+            {comparisonIndex + 1}
+          </span>
+        )}
+        <span className={cn("text-[9px]", mutedText)}>{el.atomicNumber}</span>
+        <span className="font-mono font-bold">{el.symbol}</span>
+        <span className={cn("hidden text-[8px] sm:block", mutedText)}>
+          {mode && trendValue !== null
+            ? formatCompactValue(mode, trendValue)
+            : el.atomicMass.toFixed(1)}
         </span>
       </button>
     )
@@ -101,7 +187,7 @@ export function PeriodicTableGrid({ focusSymbol }: PeriodicTableGridProps) {
       </div>
 
       <AnimatePresence>
-        {selected && (
+        {selected && !comparisonMode && (
           <motion.div
             key={selected.id}
             initial={{ opacity: 0, y: 8 }}

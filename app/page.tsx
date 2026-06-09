@@ -41,6 +41,11 @@ const features = [
     description: "Search by IUPAC name, formula, or functional group category. Visualize 2D/3D with symmetry and study mode.",
   },
   {
+    icon: Atom,
+    title: "Electron Configuration Builder",
+    description: "Search elements, animate orbital filling, and study Aufbau, Hund, Pauli, and d-block exceptions.",
+  },
+  {
     icon: Layers,
     title: "Functional Groups",
     description: "Explore all 9 IB HL functional groups with properties, naming rules, and spectroscopy hints.",
@@ -64,6 +69,11 @@ const features = [
     icon: Beaker,
     title: "IB HL Study Tools",
     description: "Study mode, primary/secondary classification, and functional-group-aware search.",
+  },
+  {
+    icon: BookOpen,
+    title: "Periodic Trend Practice",
+    description: "Use heatmaps, comparison mode, and quiz questions to reason through periodic trends.",
   },
 ]
 

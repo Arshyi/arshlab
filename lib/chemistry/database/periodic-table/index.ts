@@ -2,6 +2,7 @@ import type { ElementRecord, ExamBoard } from "../types"
 import { ELEMENT_NAMES, PROPERTY_OVERRIDES, inferCategory, inferGroup } from "./element-seeds"
 import { buildElectronConfiguration, getPeriodFromZ } from "./electron-config"
 import { buildOrbitalBoxDiagram } from "./orbital-diagram"
+import { getEducationalTrendDefaults } from "./trends"
 import {
   getElementProfileSeed,
   getOctetRuleDefaults,
@@ -29,6 +30,7 @@ function buildElement(z: number): ElementRecord {
   const profileSeed = getElementProfileSeed(z)
   const category = override.category ?? inferCategory(z, group)
   const octet = getOctetRuleDefaults(z, category)
+  const trendDefaults = getEducationalTrendDefaults(z, group, period, category)
 
   const isMetal =
     category === "alkali-metal" ||
@@ -57,12 +59,18 @@ function buildElement(z: number): ElementRecord {
     orbitalDiagram: buildOrbitalBoxDiagram(z),
     valenceElectrons: config.valenceElectrons,
     electronegativity:
-      profileSeed.electronegativity ?? override.electronegativity ?? null,
-    atomicRadiusPm: profileSeed.atomicRadiusPm ?? override.atomicRadiusPm ?? null,
+      profileSeed.electronegativity ??
+      override.electronegativity ??
+      trendDefaults.electronegativity,
+    atomicRadiusPm:
+      profileSeed.atomicRadiusPm ?? override.atomicRadiusPm ?? trendDefaults.atomicRadiusPm,
     ionicRadiusPm: null,
     ionizationEnergyKjMol:
-      profileSeed.ionizationEnergyKjMol ?? override.ionizationEnergyKjMol ?? null,
-    electronAffinityKjMol: profileSeed.electronAffinityKjMol ?? null,
+      profileSeed.ionizationEnergyKjMol ??
+      override.ionizationEnergyKjMol ??
+      trendDefaults.ionizationEnergyKjMol,
+    electronAffinityKjMol:
+      profileSeed.electronAffinityKjMol ?? trendDefaults.electronAffinityKjMol,
     meltingPointC: profileSeed.meltingPointC ?? override.meltingPointC ?? null,
     boilingPointC: profileSeed.boilingPointC ?? override.boilingPointC ?? null,
     densityGcm3: null,
@@ -116,3 +124,5 @@ export function getElementGridPosition(z: number): { row: number; col: number } 
 
 export { ELEMENT_NAMES, inferGroup, getPeriodFromZ }
 export { TRANSITION_METAL_COLOR_DISCLAIMER } from "./element-profiles"
+export * from "./trends"
+export { getElectronConfigurationException, TEACHING_CONFIGURATION_EXCEPTIONS } from "./electron-config"

@@ -10,6 +10,7 @@ export interface ElementSeed {
   electronegativity?: number | null
   atomicRadiusPm?: number | null
   ionizationEnergyKjMol?: number | null
+  electronAffinityKjMol?: number | null
   meltingPointC?: number | null
   boilingPointC?: number | null
   oxidationStates?: number[]

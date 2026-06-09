@@ -1,10 +1,10 @@
 {
   "name": "my-project",
-  "version": "0.1.0",
+  "version": "1.4.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/next-dev.cjs",
+    "build": "node scripts/next-build.cjs",
     "start": "next start",
     "lint": "eslint ."
   },
@@ -65,6 +65,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@next/swc-wasm-nodejs": "^16.2.6",
     "@tailwindcss/postcss": "^4.2.0",
     "@types/node": "^22",
     "@types/react": "^19",
