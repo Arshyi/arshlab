@@ -171,6 +171,9 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
     devDependencies:
+      '@next/swc-wasm-nodejs':
+        specifier: 16.2.6
+        version: 16.2.6
       '@tailwindcss/postcss':
         specifier: ^4.2.0
         version: 4.2.0
@@ -454,6 +457,9 @@ packages:
     cpu: [x64]
     os: [linux]
     libc: [musl]
+
+  '@next/swc-wasm-nodejs@16.2.6':
+    resolution: {integrity: sha512-hwa9pdxfzDsug/m4eukZiy2bOXasDAlZG41YCNHqJfXaVQ0c544ox6MvAbvJn7GaVHDrkD+pwVeJz2djKjcsUA==}
 
   '@next/swc-win32-arm64-msvc@16.2.6':
     resolution: {integrity: sha512-LZXpTlPyS5v7HhSmnvsLGP3iIYgYOBnc8r8ArlT55sGHV89bR2HlDdBjWQ+PY6SJMmk8TuVGFuxalnP3k/0Dwg==}
@@ -1853,6 +1859,7 @@ packages:
   recharts@2.15.0:
     resolution: {integrity: sha512-cIvMxDfpAmqAmVgc4yb7pgm/O1tmmkl/CjrvXuW+62/+7jj/iF9Ykm+hb/UJt42TREHMyd3gb+pkgoa2MxgDIw==}
     engines: {node: '>=14'}
+    deprecated: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
     peerDependencies:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -2243,6 +2250,8 @@ snapshots:
 
   '@next/swc-linux-x64-musl@16.2.6':
     optional: true
+
+  '@next/swc-wasm-nodejs@16.2.6': {}
 
   '@next/swc-win32-arm64-msvc@16.2.6':
     optional: true
