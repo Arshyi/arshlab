@@ -16,7 +16,11 @@ const sections = [
   },
   {
     title: "Clearing Saved History",
-    body: "Logged-in users can clear saved molecule history, reaction history, or all saved history from the History page. Guest history remains temporary browser sessionStorage and can also be cleared from the History page.",
+    body: "Logged-in users can delete individual history entries, clear saved molecule history, clear saved reaction history, or clear all saved history from the History page. Guest history remains temporary browser sessionStorage and can also be cleared from the History page.",
+  },
+  {
+    title: "Exporting History",
+    body: "Users can export currently visible history from the History page as JSON or CSV for their own educational records.",
   },
   {
     title: "Personal Data",

@@ -342,6 +342,27 @@ export function clearAllUserHistory() {
   return clearUserHistory()
 }
 
+export async function deleteUserHistoryEntry(id: string): Promise<HistoryResult<{ deleted: boolean }>> {
+  const auth = await getAuthenticatedClient()
+  if (!auth.ok) return auth
+
+  const { error } = await auth.data.supabase
+    .from("user_search_history")
+    .delete()
+    .eq("user_id", auth.data.user.id)
+    .eq("id", id)
+
+  if (error) {
+    return {
+      ok: false,
+      reason: "supabase-error",
+      error: error.message,
+    }
+  }
+
+  return { ok: true, data: { deleted: true } }
+}
+
 export async function syncGuestHistoryToUser(): Promise<HistoryResult<SyncGuestHistoryResult>> {
   const auth = await getAuthenticatedClient()
   if (!auth.ok) return auth

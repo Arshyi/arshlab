@@ -22,6 +22,7 @@ import {
   clearAllGuestHistory,
   clearMoleculeHistory,
   clearReactionHistory,
+  deleteGuestHistoryEntry,
   formatHistoryTimestamp,
   getGuestHistory,
   getMoleculeSummary,
@@ -35,6 +36,7 @@ import {
   clearAllUserHistory,
   clearUserMoleculeHistory,
   clearUserReactionHistory,
+  deleteUserHistoryEntry,
   getUserHistory,
   syncGuestHistoryToUser,
   type UserHistoryEntry,
@@ -129,6 +131,63 @@ function FilterButton({
   )
 }
 
+function formatFriendlyTimestamp(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffSeconds = Math.max(0, Math.floor(diffMs / 1000))
+  const diffMinutes = Math.floor(diffSeconds / 60)
+  const diffHours = Math.floor(diffMinutes / 60)
+
+  if (diffSeconds < 60) return "Just now"
+  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes === 1 ? "" : "s"} ago`
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`
+
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  if (
+    date.getFullYear() === yesterday.getFullYear() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getDate() === yesterday.getDate()
+  ) {
+    return "Yesterday"
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date)
+}
+
+function getEmptyStateTitle(filter: GuestHistoryFilter, error: string | null): string {
+  if (error) return "History could not be loaded."
+  if (filter === "molecule") return "No molecule history yet."
+  if (filter === "reaction") return "No reaction history yet."
+  return "No history yet."
+}
+
+function getEmptyStateBody(filter: GuestHistoryFilter, mode: HistoryMode): string {
+  const scope = mode === "account" ? "saved account history" : "guest session history"
+  if (filter === "molecule") return `Molecule searches will appear in your ${scope}.`
+  if (filter === "reaction") return `Reaction analyses will appear in your ${scope}.`
+  return `Search a molecule or analyze a reaction to start building your ${scope}.`
+}
+
+function csvEscape(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`
+}
+
+function toCsv(entries: DisplayHistoryEntry[]): string {
+  const header = ["type", "query", "title", "summary", "createdAt"]
+  const rows = entries.map((entry) =>
+    [entry.type, entry.query, entry.title, entry.summary, entry.createdAt].map(csvEscape).join(","),
+  )
+  return [header.join(","), ...rows].join("\n")
+}
+
 export default function HistoryPage() {
   const [filter, setFilter] = useState<GuestHistoryFilter>("all")
   const [mode, setMode] = useState<HistoryMode>("guest")
@@ -139,6 +198,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [clearing, setClearing] = useState<ClearScope | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
@@ -259,6 +319,57 @@ export default function HistoryPage() {
     setGuestSyncCount(0)
     setSuccess("Temporary guest history cleared.")
     if (mode === "guest") void loadHistory()
+  }
+
+  async function handleDeleteEntry(entry: DisplayHistoryEntry) {
+    setDeletingId(entry.id)
+    setError(null)
+    setSuccess(null)
+
+    if (mode === "account") {
+      const result = await deleteUserHistoryEntry(entry.id)
+      if (!result.ok) {
+        setError(result.error)
+        setDeletingId(null)
+        return
+      }
+    } else {
+      const deleted = deleteGuestHistoryEntry(entry.id)
+      if (!deleted) {
+        setError("That history entry could not be found.")
+        setDeletingId(null)
+        return
+      }
+    }
+
+    setEntries((current) => current.filter((item) => item.id !== entry.id))
+    setSuccess(`${entry.type === "molecule" ? "Molecule" : "Reaction"} history entry deleted.`)
+    setDeletingId(null)
+  }
+
+  function exportHistory(format: "json" | "csv") {
+    setError(null)
+    setSuccess(null)
+
+    if (filteredEntries.length === 0) {
+      setError("There is no visible history to export.")
+      return
+    }
+
+    const filename = format === "json" ? "arshlab-history.json" : "arshlab-history.csv"
+    const content =
+      format === "json"
+        ? JSON.stringify(filteredEntries, null, 2)
+        : toCsv(filteredEntries)
+    const type = format === "json" ? "application/json" : "text/csv"
+    const blob = new Blob([content], { type: `${type};charset=utf-8` })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(url)
+    setSuccess(`Exported ${filteredEntries.length} visible history item${filteredEntries.length === 1 ? "" : "s"}.`)
   }
 
   return (
@@ -393,6 +504,24 @@ export default function HistoryPage() {
               <Trash2 className="h-3.5 w-3.5" />
               {clearing === "all" ? "Clearing..." : "Clear All History"}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-lg"
+              onClick={() => exportHistory("json")}
+              disabled={filteredEntries.length === 0}
+            >
+              Export JSON
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-lg"
+              onClick={() => exportHistory("csv")}
+              disabled={filteredEntries.length === 0}
+            >
+              Export CSV
+            </Button>
           </CardContent>
         </Card>
 
@@ -407,20 +536,20 @@ export default function HistoryPage() {
             <Card className="rounded-2xl">
               <CardContent className="py-12 text-center">
                 <History className="mx-auto mb-4 h-10 w-10 text-muted-foreground/50" />
-                <p className="text-muted-foreground">
-                  {error ? "History could not be loaded." : "No history yet."}
+                <p className="font-medium text-foreground">
+                  {getEmptyStateTitle(filter, error)}
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Search molecules in{" "}
-                  <Link href="/molecule-builder" className="text-accent hover:underline">
-                    Molecule Builder
-                  </Link>{" "}
-                  or analyze reactions in{" "}
-                  <Link href="/reaction-lab" className="text-accent hover:underline">
-                    Reaction Lab
-                  </Link>
-                  .
+                  {getEmptyStateBody(filter, mode)}
                 </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  <Button asChild className="rounded-xl">
+                    <Link href="/molecule-builder">Try Molecule Builder</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="rounded-xl">
+                    <Link href="/reaction-lab">Try Reaction Lab</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : (
@@ -454,8 +583,11 @@ export default function HistoryPage() {
                             <Badge variant="secondary" className="capitalize">
                               {entry.type}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {formatHistoryTimestamp(entry.createdAt)}
+                            <span
+                              className="text-xs text-muted-foreground"
+                              title={formatHistoryTimestamp(entry.createdAt)}
+                            >
+                              {formatFriendlyTimestamp(entry.createdAt)}
                             </span>
                           </div>
                           <p className="truncate text-sm font-medium text-foreground">
@@ -475,6 +607,17 @@ export default function HistoryPage() {
                         >
                           {entry.type === "molecule" ? "View" : "Open Lab"}
                         </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 rounded-lg text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteEntry(entry)}
+                        disabled={deletingId === entry.id}
+                        aria-label={`Delete ${entry.type} history entry`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        {deletingId === entry.id ? "Deleting..." : "Delete"}
                       </Button>
                     </div>
                   </CardContent>

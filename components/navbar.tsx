@@ -23,9 +23,11 @@ import {
   GraduationCap,
   History,
   Waves,
+  LogOut,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
@@ -67,10 +69,14 @@ const secondaryNavItems = [
 
 export function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [loggingOut, setLoggingOut] = useState(false)
   const accountItem = { href: "/account", label: "Account", icon: User }
-  const mobileNavItems = [...primaryNavItems, ...chemistryToolItems, ...secondaryNavItems, accountItem]
+  const mobileNavItems = userEmail
+    ? [...primaryNavItems, ...chemistryToolItems, ...secondaryNavItems]
+    : [...primaryNavItems, ...chemistryToolItems, ...secondaryNavItems, accountItem]
 
   const isActivePath = (href: string) => {
     if (href === "/") return pathname === "/"
@@ -99,6 +105,22 @@ export function Navbar() {
       subscription.unsubscribe()
     }
   }, [])
+
+  async function handleLogout() {
+    if (!isSupabaseConfigured()) return
+
+    setLoggingOut(true)
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      setUserEmail(null)
+      setMobileMenuOpen(false)
+      router.push("/account")
+      router.refresh()
+    } finally {
+      setLoggingOut(false)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -140,23 +162,27 @@ export function Navbar() {
             <NavDropdown label="Tools" active={toolsActive} items={chemistryToolItems} />
             <NavDropdown label="More" active={moreActive} items={secondaryNavItems} />
 
-            <Link
-              href="/account"
-              className={cn(
-                "flex min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
-                isActivePath("/account")
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              )}
-            >
-              <User className="h-4 w-4 shrink-0" />
-              <span className="whitespace-nowrap">{userEmail ? "Account" : "Account / Sign in"}</span>
-              {userEmail && (
-                <span className="hidden max-w-24 truncate rounded-full bg-teal-500/10 px-2 py-0.5 text-[10px] text-teal-700 dark:text-teal-300 xl:inline">
-                  {userEmail}
-                </span>
-              )}
-            </Link>
+            {userEmail ? (
+              <AccountDropdown
+                email={userEmail}
+                active={isActivePath("/account") || isActivePath("/history")}
+                loggingOut={loggingOut}
+                onLogout={handleLogout}
+              />
+            ) : (
+              <Link
+                href="/account"
+                className={cn(
+                  "flex min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                  isActivePath("/account")
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                )}
+              >
+                <User className="h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap">Sign in / Account</span>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -181,6 +207,38 @@ export function Navbar() {
             className="xl:hidden border-t border-border bg-background"
           >
             <div className="max-h-[calc(100vh-4rem)] space-y-1 overflow-y-auto px-4 py-4">
+              {userEmail && (
+                <div className="mb-3 rounded-xl border border-border bg-secondary/20 p-3">
+                  <p className="mb-2 truncate text-xs font-medium text-muted-foreground" title={userEmail}>
+                    {shortenEmail(userEmail)}
+                  </p>
+                  <div className="grid gap-2">
+                    <MobileAccountLink
+                      href="/account"
+                      icon={User}
+                      label="Account"
+                      active={isActivePath("/account")}
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
+                    <MobileAccountLink
+                      href="/history"
+                      icon={History}
+                      label="History"
+                      active={isActivePath("/history")}
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      disabled={loggingOut}
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium text-muted-foreground transition-all hover:bg-secondary hover:text-foreground disabled:opacity-60"
+                    >
+                      <LogOut className="h-5 w-5 shrink-0" />
+                      <span>{loggingOut ? "Logging out..." : "Logout"}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
               {mobileNavItems.map((item) => {
                 const isActive = isActivePath(item.href)
                 const Icon = item.icon
@@ -252,5 +310,101 @@ function NavDropdown({
         })}
       </DropdownMenuContent>
     </DropdownMenu>
+  )
+}
+
+function shortenEmail(email: string): string {
+  const [name, domain] = email.split("@")
+  if (!domain) return email
+  const shortName = name.length > 12 ? `${name.slice(0, 10)}...` : name
+  return `${shortName}@${domain}`
+}
+
+function AccountDropdown({
+  email,
+  active,
+  loggingOut,
+  onLogout,
+}: {
+  email: string
+  active: boolean
+  loggingOut: boolean
+  onLogout: () => void
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className={cn(
+          "flex min-w-0 max-w-48 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          active
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+        )}
+      >
+        <User className="h-4 w-4 shrink-0" />
+        <span className="truncate" title={email}>
+          {shortenEmail(email)}
+        </span>
+        <ChevronDown className="h-4 w-4 shrink-0" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <div className="px-2 py-1.5 text-xs text-muted-foreground" title={email}>
+          {shortenEmail(email)}
+        </div>
+        <DropdownMenuItem asChild>
+          <Link href="/account" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span>Account</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/history" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            <span>History</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault()
+            onLogout()
+          }}
+          disabled={loggingOut}
+          className="text-destructive focus:text-destructive"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>{loggingOut ? "Logging out..." : "Logout"}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+function MobileAccountLink({
+  href,
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  href: string
+  icon: React.ElementType
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all",
+        active
+          ? "bg-primary text-primary-foreground"
+          : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+      )}
+    >
+      <Icon className="h-5 w-5 shrink-0" />
+      <span>{label}</span>
+    </Link>
   )
 }

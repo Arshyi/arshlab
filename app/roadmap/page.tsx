@@ -159,7 +159,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v1.9.0 - Permanent Account History
+          ARSHLAB v1.9.1 - Account and History Polish
         </motion.p>
       </div>
     </div>

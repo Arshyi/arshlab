@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.9.0",
+    version: "1.9.1",
     date: "Current",
+    status: "released",
+    title: "Account and History Polish",
+    changes: [
+      "Added account dropdown",
+      "Added individual history item deletion",
+      "Added friendly timestamps",
+      "Added JSON and CSV history export",
+      "Added better empty states",
+      "Improved account history summary",
+      "Updated privacy wording",
+    ],
+  },
+  {
+    version: "1.9.0",
+    date: "Previous",
     status: "released",
     title: "Permanent Account History",
     changes: [

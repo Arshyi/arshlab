@@ -447,6 +447,14 @@ function SignedInPanel({
             </AlertDescription>
           </Alert>
 
+          <Alert className="rounded-2xl">
+            <ShieldCheck className="h-4 w-4" />
+            <AlertTitle>Private saved history</AlertTitle>
+            <AlertDescription>
+              Your saved history is private and protected by Supabase Row Level Security.
+            </AlertDescription>
+          </Alert>
+
           <HistoryStatsPanel stats={historyStats} />
 
           <div className="flex flex-wrap gap-3">
@@ -473,7 +481,7 @@ function SignedInPanel({
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>Email/password sign up, login, logout, and persisted sessions are enabled.</p>
-          <p>No service role key is used, and no user database tables are created in this release.</p>
+          <p>No service role key is used in the browser. Saved history rows are scoped to your authenticated user.</p>
         </CardContent>
       </Card>
     </div>

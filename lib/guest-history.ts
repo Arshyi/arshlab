@@ -121,6 +121,14 @@ export function clearReactionHistory(): void {
   writeEntries(readEntries().filter((entry) => entry.type !== "reaction"))
 }
 
+export function deleteGuestHistoryEntry(id: string): boolean {
+  const entries = readEntries()
+  const nextEntries = entries.filter((entry) => entry.id !== id)
+  if (nextEntries.length === entries.length) return false
+  writeEntries(nextEntries)
+  return true
+}
+
 export function clearAllGuestHistory(): void {
   if (!isBrowser()) return
   try {
