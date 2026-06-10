@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.7.0",
+    version: "1.8.0",
     date: "Current",
+    status: "released",
+    title: "Hybridization Builder Alpha",
+    changes: [
+      "Added Interactive Hybridization Builder",
+      "Added sp, sp2, sp3, sp3d, and sp3d2 modes",
+      "Added 3D hybrid orbital visualization",
+      "Added outer atom placement",
+      "Added conceptual orbital overlap detection",
+      "Added sigma overlap labels",
+      "Added example presets for BeCl2, BF3, CH4, NH3, H2O, PCl5, SF6, and XeF4",
+      "Added electron geometry vs molecular geometry explanations",
+    ],
+  },
+  {
+    version: "1.7.0",
+    date: "Previous",
     status: "released",
     title: "Supabase Authentication Alpha",
     changes: [

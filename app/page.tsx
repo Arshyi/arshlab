@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves } from "lucide-react"
+import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -49,6 +49,12 @@ const features = [
     icon: Waves,
     title: "Bonding Explorer",
     description: "Move atoms together, inspect sigma and pi overlap, and connect bond length to potential energy.",
+  },
+  {
+    icon: Orbit,
+    title: "Hybridization Builder",
+    description: "Build hybrid orbitals, add outer atoms, and compare electron geometry with molecular geometry.",
+    href: "/hybridization-builder",
   },
   {
     icon: Layers,
@@ -263,8 +269,8 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
           >
-            {features.map((feature) => (
-              <motion.div key={feature.title} variants={item}>
+            {features.map((feature) => {
+              const card = (
                 <Card className="h-full rounded-2xl border-border/50 bg-card/80 backdrop-blur-sm transition-all hover:shadow-lg hover:border-accent/30">
                   <CardContent className="p-6">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground mb-4">
@@ -276,8 +282,20 @@ export default function HomePage() {
                     </p>
                   </CardContent>
                 </Card>
-              </motion.div>
-            ))}
+              )
+
+              return (
+                <motion.div key={feature.title} variants={item}>
+                  {"href" in feature && feature.href ? (
+                    <Link href={feature.href} className="block h-full">
+                      {card}
+                    </Link>
+                  ) : (
+                    card
+                  )}
+                </motion.div>
+              )
+            })}
           </motion.div>
         </div>
       </section>

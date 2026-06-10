@@ -30,6 +30,7 @@ const navItems = [
   { href: "/periodic-table", label: "Periodic Table", icon: TableProperties },
   { href: "/electron-configurations", label: "Electron Configs", icon: Atom },
   { href: "/bonding-explorer", label: "Bonding Explorer", icon: Waves },
+  { href: "/hybridization-builder", label: "Hybridization Builder", icon: Orbit },
   { href: "/molecule-builder", label: "Molecule Builder", icon: Atom },
   { href: "/functional-groups", label: "Functional Groups", icon: Layers },
   { href: "/spectroscopy-lab", label: "Spectroscopy Lab", icon: Radio },

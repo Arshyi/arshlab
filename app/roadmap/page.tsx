@@ -14,6 +14,7 @@ const completed = [
   "Periodic Table",
   "Chemistry Database",
   "Chemistry Hub",
+  "Hybridization Builder Alpha",
 ]
 
 const inDevelopment = [
@@ -27,7 +28,6 @@ const planned = [
   "Search History",
   "Saved Compounds",
   "Saved Reactions",
-  "Hybridization Builder",
   "AI Question Generation",
   "Mobile Application",
   "Community Features",
@@ -135,19 +135,19 @@ export default function RoadmapPage() {
           transition={{ delay: 0.2 }}
           className="mt-6"
         >
-          <Card className="rounded-2xl border-dashed">
+          <Card className="rounded-2xl border-green-500/20 bg-green-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
-                  <Lightbulb className="h-4 w-4" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
+                  <Check className="h-4 w-4" />
                 </div>
-                Hybridization Builder
+                Hybridization Builder Alpha
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Build atoms and orbitals interactively, hybridize s/p orbitals, drag atoms together,
-                and visualize sigma/pi overlap.
+                Now available: build atoms and orbitals interactively, hybridize s/p orbitals, drag atoms
+                together, and visualize sigma/pi overlap.
               </p>
             </CardContent>
           </Card>
@@ -159,7 +159,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v1.1 — Creator and Learning Ecosystem Release
+          ARSHLAB v1.8.0 - Hybridization Builder Alpha
         </motion.p>
       </div>
     </div>

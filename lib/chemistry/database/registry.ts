@@ -2,6 +2,7 @@ import type { DatabaseMeta, EntityKind } from "./types"
 import { ALL_COMPOUNDS } from "./compounds"
 import { ALL_ELEMENTS } from "./periodic-table"
 import { ALL_IONS } from "./ions"
+import { HYBRIDIZATION_PRESETS } from "./hybridization"
 import { ALL_FUNCTIONAL_GROUPS } from "./functional-groups"
 import { ALL_ORBITALS } from "./orbitals"
 import { ALL_SPECTROSCOPY } from "./spectroscopy"
@@ -11,7 +12,7 @@ import { ALL_LEWIS_STRUCTURES } from "./lewis/templates"
 import { QUESTION_TOPICS } from "./questions/topics"
 import { EDUCATION_HUB_SECTIONS } from "./education/hub"
 
-export const DATABASE_VERSION = "1.7.0"
+export const DATABASE_VERSION = "1.8.0"
 
 export function getDatabaseMeta(): DatabaseMeta {
   return {
@@ -21,6 +22,7 @@ export function getDatabaseMeta(): DatabaseMeta {
       compounds: ALL_COMPOUNDS.length,
       elements: ALL_ELEMENTS.length,
       ions: ALL_IONS.length,
+      hybridizationPresets: HYBRIDIZATION_PRESETS.length,
       functionalGroups: ALL_FUNCTIONAL_GROUPS.length,
       orbitals: ALL_ORBITALS.length,
       spectroscopy: ALL_SPECTROSCOPY.length,
@@ -58,6 +60,7 @@ export {
   ALL_COMPOUNDS,
   ALL_ELEMENTS,
   ALL_IONS,
+  HYBRIDIZATION_PRESETS,
   ALL_FUNCTIONAL_GROUPS,
   ALL_ORBITALS,
   ALL_SPECTROSCOPY,

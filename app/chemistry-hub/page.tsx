@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Atom, BookOpen, Database, Search, GraduationCap } from "lucide-react"
+import { Atom, BookOpen, Database, Search, GraduationCap, Orbit } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -17,6 +17,7 @@ const LAB_LINKS = [
   { href: "/molecule-builder", label: "Molecule Builder" },
   { href: "/electron-configurations", label: "Electron Configuration Builder" },
   { href: "/bonding-explorer", label: "Bonding Explorer" },
+  { href: "/hybridization-builder", label: "Hybridization Builder" },
   { href: "/orbital-viewer", label: "Orbital Viewer" },
   { href: "/spectroscopy-lab", label: "Spectroscopy Lab" },
   { href: "/functional-groups", label: "Functional Groups" },
@@ -116,6 +117,29 @@ export default function ChemistryHubPage() {
               className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
             >
               Open Periodic Table
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl mb-8 border-teal-500/20 bg-teal-500/5">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <Orbit className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Hybridization Builder</h2>
+                <p className="text-sm text-muted-foreground">
+                  Build atoms and orbitals interactively, hybridize s/p orbitals, drag atoms together,
+                  and visualize sigma/pi overlap.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/hybridization-builder"
+              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Open Builder
             </Link>
           </CardContent>
         </Card>
