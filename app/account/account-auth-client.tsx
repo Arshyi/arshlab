@@ -227,7 +227,8 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
             <ShieldCheck className="h-4 w-4" />
             <AlertTitle>Supabase is not configured</AlertTitle>
             <AlertDescription>
-              Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to enable authentication.
+              Add NEXT_PUBLIC_SUPABASE_URL and either NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or
+              NEXT_PUBLIC_SUPABASE_ANON_KEY to enable authentication.
             </AlertDescription>
           </Alert>
         )}
