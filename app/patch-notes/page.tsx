@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.9.1",
+    version: "2.0.0",
     date: "Current",
+    status: "released",
+    title: "Free AI Chemistry Assistant Alpha",
+    changes: [
+      "Added AI Assistant page",
+      "Added zero-cost guardrails",
+      "Added free-model-only enforcement",
+      "Added usage limits",
+      "Added no paid fallback policy",
+      "Added educational disclaimer",
+    ],
+  },
+  {
+    version: "1.9.1",
+    date: "Previous",
     status: "released",
     title: "Account and History Polish",
     changes: [

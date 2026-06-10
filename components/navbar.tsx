@@ -24,6 +24,7 @@ import {
   History,
   Waves,
   LogOut,
+  Bot,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -48,6 +49,7 @@ const primaryNavItems = [
 ]
 
 const chemistryToolItems = [
+  { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
   { href: "/bonding-explorer", label: "Bonding Explorer", icon: Waves },
   { href: "/hybridization-builder", label: "Hybridization Builder", icon: Orbit },
   { href: "/functional-groups", label: "Functional Groups", icon: Layers },

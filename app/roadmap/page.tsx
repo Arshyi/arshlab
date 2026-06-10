@@ -159,7 +159,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v1.9.1 - Account and History Polish
+          ARSHLAB v2.0.0 - Free AI Chemistry Assistant Alpha
         </motion.p>
       </div>
     </div>
