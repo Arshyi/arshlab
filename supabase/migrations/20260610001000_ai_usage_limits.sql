@@ -2,8 +2,8 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.ai_usage_limits (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid nullable references auth.users(id) on delete cascade,
-  anon_id text nullable,
+  user_id uuid references auth.users(id) on delete cascade,
+  anon_id text,
   date text not null,
   request_count integer default 0,
   created_at timestamptz default now(),
