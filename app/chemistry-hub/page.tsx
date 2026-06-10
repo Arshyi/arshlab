@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { BookOpen, Database, Search, GraduationCap } from "lucide-react"
+import { Atom, BookOpen, Database, Search, GraduationCap } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -96,6 +96,29 @@ export default function ChemistryHubPage() {
             </Card>
           ))}
         </div>
+
+        <Card className="rounded-2xl mb-8 border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <Atom className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Element Pokédex</h2>
+                <p className="text-sm text-muted-foreground">
+                  Explore electron configurations, trends, ionization energies, oxidation states,
+                  natural forms, and transition-metal colors.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/periodic-table"
+              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Open Periodic Table
+            </Link>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 lg:grid-cols-2 mb-8">
           <Card className="rounded-2xl">

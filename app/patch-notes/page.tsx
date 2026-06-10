@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.5.0",
+    version: "1.6.0",
     date: "Current",
+    status: "released",
+    title: "Element Pokédex Expansion",
+    changes: [
+      "Added successive ionization energy graphs",
+      "Added electron affinity panels",
+      "Added property comparison graphs",
+      "Added data completeness indicators",
+      "Expanded natural form and allotrope data",
+      "Expanded transition metal color cards",
+      "Added radioactive/synthetic element badges",
+      "Improved element profile organization",
+    ],
+  },
+  {
+    version: "1.5.0",
+    date: "Previous",
     status: "released",
     title: "Bond Energy & Orbital Overlap Explorer",
     changes: [

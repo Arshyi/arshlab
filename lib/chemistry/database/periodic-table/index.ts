@@ -5,9 +5,14 @@ import { buildOrbitalBoxDiagram } from "./orbital-diagram"
 import { getEducationalTrendDefaults } from "./trends"
 import {
   getElementProfileSeed,
+  getDefaultNuclearInfo,
+  inferDefaultCommonIons,
   getOctetRuleDefaults,
   inferDefaultExampleCompounds,
   inferDefaultNaturalForm,
+  inferDefaultNotes,
+  inferDefaultOxidationStates,
+  inferDefaultStateAtRoomTemperature,
 } from "./element-profiles"
 
 const ALL_BOARDS: ExamBoard[] = [
@@ -38,7 +43,7 @@ function buildElement(z: number): ElementRecord {
     category === "transition-metal" ||
     category === "lanthanide" ||
     category === "actinide" ||
-    (category === "post-transition-metal" as never)
+    category === "post-transition-metal"
 
   const isNonmetal =
     category === "nonmetal" || category === "halogen" || category === "noble-gas"
@@ -73,14 +78,25 @@ function buildElement(z: number): ElementRecord {
       profileSeed.electronAffinityKjMol ?? trendDefaults.electronAffinityKjMol,
     meltingPointC: profileSeed.meltingPointC ?? override.meltingPointC ?? null,
     boilingPointC: profileSeed.boilingPointC ?? override.boilingPointC ?? null,
-    densityGcm3: null,
+    densityGcm3: profileSeed.densityGcm3 ?? null,
+    stateAtRoomTemperature: inferDefaultStateAtRoomTemperature(z),
     oxidationStates:
-      profileSeed.oxidationStates ?? override.oxidationStates ?? [],
-    commonIons: profileSeed.commonIons ?? override.commonIons ?? [],
+      profileSeed.oxidationStates ??
+      override.oxidationStates ??
+      inferDefaultOxidationStates(z, group, category),
+    commonIons:
+      profileSeed.commonIons ??
+      override.commonIons ??
+      inferDefaultCommonIons(base.symbol, group, category),
     naturalForm: inferDefaultNaturalForm(z, category),
     octetRuleCategory: octet.category,
     octetRuleExamples: octet.examples,
     exampleCompounds: inferDefaultExampleCompounds(z, base.symbol, category),
+    notes: inferDefaultNotes(z, base.symbol, category),
+    nuclear: {
+      ...getDefaultNuclearInfo(z, base.symbol, base.mass),
+      ...profileSeed.nuclear,
+    },
     transitionMetalColors: profileSeed.transitionMetalColors ?? [],
     category,
     isMetal,
@@ -125,4 +141,5 @@ export function getElementGridPosition(z: number): { row: number; col: number } 
 export { ELEMENT_NAMES, inferGroup, getPeriodFromZ }
 export { TRANSITION_METAL_COLOR_DISCLAIMER } from "./element-profiles"
 export * from "./trends"
+export * from "./pokedex"
 export { getElectronConfigurationException, TEACHING_CONFIGURATION_EXCEPTIONS } from "./electron-config"

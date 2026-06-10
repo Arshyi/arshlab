@@ -163,6 +163,9 @@ export function inferCategory(z: number, group: number | null): import("../types
   if (z >= 89 && z <= 103) return "actinide"
   if (group !== null && group >= 3 && group <= 12) return "transition-metal"
   if ([5, 14, 32, 33, 51, 52, 84].includes(z)) return "metalloid"
+  if ([13, 31, 49, 50, 81, 82, 83, 113, 114, 115, 116].includes(z)) {
+    return "post-transition-metal"
+  }
   if (group !== null && group >= 13 && group <= 16) return "nonmetal"
   return "unknown"
 }

@@ -83,13 +83,13 @@ export default function PeriodicTablePage() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Periodic Table</h1>
               <p className="text-muted-foreground">
-                All {meta.counts.elements} elements - profiles, trends, and comparisons
+                All {meta.counts.elements} elements - Pokédex profiles, trends, and comparisons
               </p>
             </div>
           </div>
           <p className="text-lg text-muted-foreground max-w-3xl mt-4">
-            Interactive periodic table with electron configurations, orbital diagrams, periodic
-            properties, trend heatmaps, and teaching-focused exception examples.
+            Interactive periodic table with Element Pokédex profiles, electron configurations,
+            ionization graphs, periodic properties, trend heatmaps, and teaching-focused examples.
           </p>
         </motion.div>
 

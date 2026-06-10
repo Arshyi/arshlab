@@ -115,6 +115,16 @@ export interface TransitionMetalColorEntry {
   notes?: string
 }
 
+export type RoomTemperatureState = "solid" | "liquid" | "gas" | "unknown"
+
+export interface ElementNuclearInfo {
+  isRadioactive: boolean
+  isSynthetic: boolean
+  mostStableIsotope: string | null
+  halfLife: string | null
+  decayModes: string[]
+}
+
 export interface ElementRecord extends SearchableRecord {
   kind: "element"
   symbol: string
@@ -135,12 +145,15 @@ export interface ElementRecord extends SearchableRecord {
   meltingPointC: number | null
   boilingPointC: number | null
   densityGcm3: number | null
+  stateAtRoomTemperature: RoomTemperatureState
   oxidationStates: number[]
   commonIons: string[]
   naturalForm: string | null
   octetRuleCategory: OctetRuleCategory
   octetRuleExamples: string[]
   exampleCompounds: string[]
+  notes: string[]
+  nuclear: ElementNuclearInfo
   transitionMetalColors: TransitionMetalColorEntry[]
   category: ElementCategory
   isMetal: boolean

@@ -1,6 +1,8 @@
 import type {
   ElementCategory,
+  ElementNuclearInfo,
   OctetRuleCategory,
+  RoomTemperatureState,
   TransitionMetalColorEntry,
 } from "../types"
 
@@ -18,11 +20,48 @@ export interface ElementProfileSeed {
   commonIons?: string[]
   meltingPointC?: number | null
   boilingPointC?: number | null
+  densityGcm3?: number | null
+  stateAtRoomTemperature?: RoomTemperatureState
+  notes?: string[]
+  nuclear?: Partial<ElementNuclearInfo>
 }
 
 const DIATOMIC = new Set([1, 7, 8, 9, 17, 35, 53])
 
 const NOBLE_GASES = new Set([2, 10, 18, 36, 54, 86, 118])
+
+const ROOM_TEMPERATURE_GASES = new Set([1, 2, 7, 8, 9, 10, 17, 18, 36, 54, 86])
+
+const ROOM_TEMPERATURE_LIQUIDS = new Set([35, 80])
+
+const SYNTHETIC_ELEMENTS = new Set([
+  43, 61, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108,
+  109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
+])
+
+const RADIOACTIVE_ELEMENTS = new Set([
+  43, 61, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101,
+  102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117,
+  118,
+])
+
+const NUCLEAR_OVERRIDES: Partial<Record<number, Partial<ElementNuclearInfo>>> = {
+  43: { mostStableIsotope: "Tc-98", halfLife: "about 4.2 million years", decayModes: ["beta decay"] },
+  61: { mostStableIsotope: "Pm-145", halfLife: "about 17.7 years", decayModes: ["electron capture"] },
+  84: { mostStableIsotope: "Po-209", halfLife: "about 125 years", decayModes: ["alpha decay"] },
+  85: { mostStableIsotope: "At-210", halfLife: "about 8.1 hours", decayModes: ["alpha decay"] },
+  86: { mostStableIsotope: "Rn-222", halfLife: "about 3.8 days", decayModes: ["alpha decay"] },
+  87: { mostStableIsotope: "Fr-223", halfLife: "about 22 minutes", decayModes: ["beta decay"] },
+  88: { mostStableIsotope: "Ra-226", halfLife: "about 1600 years", decayModes: ["alpha decay"] },
+  89: { mostStableIsotope: "Ac-227", halfLife: "about 21.8 years", decayModes: ["beta decay", "alpha decay"] },
+  90: { mostStableIsotope: "Th-232", halfLife: "about 14 billion years", decayModes: ["alpha decay"] },
+  91: { mostStableIsotope: "Pa-231", halfLife: "about 32,760 years", decayModes: ["alpha decay"] },
+  92: { mostStableIsotope: "U-238", halfLife: "about 4.47 billion years", decayModes: ["alpha decay"] },
+  93: { mostStableIsotope: "Np-237", halfLife: "about 2.14 million years", decayModes: ["alpha decay"] },
+  94: { mostStableIsotope: "Pu-244", halfLife: "about 80 million years", decayModes: ["alpha decay"] },
+  95: { mostStableIsotope: "Am-243", halfLife: "about 7370 years", decayModes: ["alpha decay"] },
+  96: { mostStableIsotope: "Cm-247", halfLife: "about 15.6 million years", decayModes: ["alpha decay"] },
+}
 
 /** Rich profile overrides keyed by atomic number */
 export const ELEMENT_PROFILES: Partial<Record<number, ElementProfileSeed>> = {
@@ -230,11 +269,106 @@ export function inferDefaultNaturalForm(z: number, category: ElementCategory): s
   if (NOBLE_GASES.has(z)) return "Monatomic gas"
   if (z === 15) return "P₄ (allotrope)"
   if (z === 16) return "S₈ (allotrope)"
-  if (category === "transition-metal" || category === "alkali-metal" || category === "alkaline-earth-metal")
-    return "Solid metal"
+  if (
+    category === "transition-metal" ||
+    category === "alkali-metal" ||
+    category === "alkaline-earth-metal" ||
+    category === "post-transition-metal" ||
+    category === "lanthanide" ||
+    category === "actinide"
+  )
+    return z === 80 ? "Hg (liquid metallic lattice)" : "Metallic lattice"
   if (category === "halogen") return "Diatomic molecule"
   if (category === "nonmetal" || category === "metalloid") return "Varies by allotrope"
   return null
+}
+
+export function inferDefaultStateAtRoomTemperature(z: number): RoomTemperatureState {
+  const profile = ELEMENT_PROFILES[z]
+  if (profile?.stateAtRoomTemperature) return profile.stateAtRoomTemperature
+  if (ROOM_TEMPERATURE_LIQUIDS.has(z)) return "liquid"
+  if (ROOM_TEMPERATURE_GASES.has(z)) return "gas"
+  if (z >= 104) return "unknown"
+  return "solid"
+}
+
+export function inferDefaultNotes(
+  z: number,
+  symbol: string,
+  category: ElementCategory,
+): string[] {
+  const notes = [...(ELEMENT_PROFILES[z]?.notes ?? [])]
+
+  if (RADIOACTIVE_ELEMENTS.has(z)) {
+    notes.push("Radioactive element; nuclear data is shown for educational purposes.")
+  }
+  if (SYNTHETIC_ELEMENTS.has(z)) {
+    notes.push("Synthetic or mostly synthetic element; bulk chemistry data may be limited.")
+  }
+  if (category === "lanthanide") notes.push("Lanthanide chemistry commonly features +3 ions.")
+  if (category === "actinide") notes.push("Actinide chemistry often includes multiple oxidation states.")
+  if (category === "noble-gas") notes.push(`${symbol} is monatomic under ordinary conditions.`)
+
+  return notes
+}
+
+export function getDefaultNuclearInfo(
+  z: number,
+  symbol: string,
+  mass: number,
+): ElementNuclearInfo {
+  const override = NUCLEAR_OVERRIDES[z] ?? {}
+  const isRadioactive = Boolean(override.isRadioactive ?? RADIOACTIVE_ELEMENTS.has(z))
+  const isSynthetic = Boolean(override.isSynthetic ?? SYNTHETIC_ELEMENTS.has(z))
+
+  return {
+    isRadioactive,
+    isSynthetic,
+    mostStableIsotope:
+      override.mostStableIsotope ?? (isRadioactive ? `${symbol}-${Math.round(mass)}` : null),
+    halfLife: override.halfLife ?? (isRadioactive ? "varies by isotope" : null),
+    decayModes: override.decayModes ?? (isRadioactive ? ["radioactive decay"] : []),
+  }
+}
+
+export function inferDefaultOxidationStates(
+  z: number,
+  group: number | null,
+  category: ElementCategory,
+): number[] {
+  const profile = ELEMENT_PROFILES[z]
+  if (profile?.oxidationStates) return profile.oxidationStates
+
+  if (category === "noble-gas") return [0]
+  if (category === "alkali-metal") return [1]
+  if (category === "alkaline-earth-metal") return [2]
+  if (category === "halogen") return z === 9 ? [-1] : [-1, 1, 3, 5, 7]
+  if (category === "lanthanide") return [3]
+  if (category === "actinide") return [3, 4, 5, 6]
+  if (category === "transition-metal") return [2, 3]
+  if (group === 13) return [3]
+  if (group === 14) return [-4, 2, 4]
+  if (group === 15) return [-3, 3, 5]
+  if (group === 16) return [-2, 4, 6]
+
+  return []
+}
+
+export function inferDefaultCommonIons(
+  symbol: string,
+  group: number | null,
+  category: ElementCategory,
+): string[] {
+  if (category === "noble-gas") return []
+  if (category === "alkali-metal") return [`${symbol}+`]
+  if (category === "alkaline-earth-metal") return [`${symbol}2+`]
+  if (category === "halogen") return [`${symbol}-`]
+  if (category === "lanthanide") return [`${symbol}3+`]
+  if (category === "actinide") return [`${symbol}3+`, `${symbol}4+`]
+  if (category === "transition-metal") return [`${symbol}2+`, `${symbol}3+`]
+  if (group === 13) return [`${symbol}3+`]
+  if (group === 16) return [`${symbol}2-`]
+  return []
 }
 
 export function inferDefaultExampleCompounds(
