@@ -66,6 +66,20 @@ function getRedirectUrl() {
   return `${window.location.origin}/account`
 }
 
+function formatAuthError(message: string): string {
+  const normalized = message.toLowerCase()
+  if (normalized.includes("invalid login") || normalized.includes("invalid credentials")) {
+    return "That email and password did not match an account. Check your details and try again."
+  }
+  if (normalized.includes("email not confirmed")) {
+    return "Please confirm your email address before signing in."
+  }
+  if (normalized.includes("password")) {
+    return message
+  }
+  return message || "Authentication could not be completed. Please try again."
+}
+
 export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClientProps) {
   const router = useRouter()
   const [user, setUser] = useState<AccountUser | null>(initialUser)
@@ -117,7 +131,7 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
       setMessage({
         kind: "error",
         title: "Could not create account",
-        body: error.message,
+        body: formatAuthError(error.message),
       })
       return
     }
@@ -160,7 +174,7 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
       setMessage({
         kind: "error",
         title: "Could not sign in",
-        body: error.message,
+        body: formatAuthError(error.message),
       })
       return
     }
@@ -187,7 +201,7 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
       setMessage({
         kind: "error",
         title: "Could not log out",
-        body: error.message,
+        body: formatAuthError(error.message),
       })
       return
     }
@@ -417,6 +431,8 @@ function AuthFormCard({
   onPasswordChange: (value: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }) {
+  const idPrefix = title.includes("Create") ? "signup" : "login"
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <Card className="h-full rounded-2xl">
@@ -430,10 +446,13 @@ function AuthFormCard({
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Email</label>
+              <label htmlFor={`${idPrefix}-email`} className="text-sm font-medium text-foreground">
+                Email
+              </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
+                  id={`${idPrefix}-email`}
                   type="email"
                   value={email}
                   onChange={(event) => onEmailChange(event.target.value)}
@@ -446,10 +465,13 @@ function AuthFormCard({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Password</label>
+              <label htmlFor={`${idPrefix}-password`} className="text-sm font-medium text-foreground">
+                Password
+              </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
+                  id={`${idPrefix}-password`}
                   type="password"
                   value={password}
                   onChange={(event) => onPasswordChange(event.target.value)}

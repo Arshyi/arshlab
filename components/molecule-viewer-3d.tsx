@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useMemo } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { OrbitControls, Text, Html } from "@react-three/drei"
 import * as THREE from "three"
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Molecule3D, Atom3D, Bond3D, LonePair } from "@/lib/chemistry/molecules3d"
 import { ATOM_COLORS, ATOM_RADII, VDW_RADII, getBondLength } from "@/lib/chemistry/molecules3d"
+import { useWebGLSupport, WebGLFallback } from "@/components/webgl-fallback"
 
 interface MoleculeViewer3DProps {
   molecule: Molecule3D
@@ -467,6 +468,7 @@ export function MoleculeViewer3D({
   showLonePairs: showLonePairsProp,
   onShowLonePairsChange,
 }: MoleculeViewer3DProps) {
+  const webglSupported = useWebGLSupport()
   const [isLoading, setIsLoading] = useState(true)
   const [settings, setSettings] = useState<ViewerSettings>({
     showHydrogens: true,
@@ -482,11 +484,11 @@ export function MoleculeViewer3D({
   const showLonePairs = showLonePairsProp ?? settings.showLonePairs
   const viewerSettings = { ...settings, showLonePairs }
   
-  // Simulate loading
-  useState(() => {
+  useEffect(() => {
+    setIsLoading(true)
     const timer = setTimeout(() => setIsLoading(false), 800)
     return () => clearTimeout(timer)
-  })
+  }, [molecule.name])
   
   const toggleSetting = (key: keyof ViewerSettings) => {
     if (key === "showLonePairs" && onShowLonePairsChange) {
@@ -494,6 +496,14 @@ export function MoleculeViewer3D({
       return
     }
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  if (webglSupported === false) {
+    return (
+      <div className={cn("relative", className)}>
+        <WebGLFallback className="aspect-square" />
+      </div>
+    )
   }
   
   return (

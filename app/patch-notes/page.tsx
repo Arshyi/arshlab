@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.8.0",
+    version: "1.8.1",
     date: "Current",
+    status: "released",
+    title: "Stability and Polish Pass",
+    changes: [
+      "Added navigation polish",
+      "Added mobile usability improvements",
+      "Improved legal/footer consistency",
+      "Completed account page QA",
+      "Completed guest history QA",
+      "Added 3D tool layout and WebGL fallback fixes",
+      "Added periodic table layout polish",
+      "Added accessibility improvements",
+      "Completed production build verification",
+    ],
+  },
+  {
+    version: "1.8.0",
+    date: "Previous",
     status: "released",
     title: "Hybridization Builder Alpha",
     changes: [

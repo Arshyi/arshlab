@@ -163,27 +163,29 @@ export function PeriodicTableGrid({
 
   return (
     <div className="space-y-6">
-      <div
-        className="grid gap-1 overflow-x-auto pb-2"
-        style={{
-          gridTemplateColumns: "repeat(18, minmax(2.5rem, 1fr))",
-          gridTemplateRows: "repeat(9, minmax(2.5rem, 1fr))",
-        }}
-      >
-        {mainElements.map((el) => {
-          const pos = getElementGridPosition(el.atomicNumber)
-          if (!pos) return null
-          return renderCell(el, pos.row, pos.col)
-        })}
+      <div className="overflow-x-auto pb-2">
+        <div
+          className="grid min-w-[720px] gap-1"
+          style={{
+            gridTemplateColumns: "repeat(18, minmax(2.5rem, 1fr))",
+            gridTemplateRows: "repeat(9, minmax(2.5rem, 1fr))",
+          }}
+        >
+          {mainElements.map((el) => {
+            const pos = getElementGridPosition(el.atomicNumber)
+            if (!pos) return null
+            return renderCell(el, pos.row, pos.col)
+          })}
+        </div>
       </div>
 
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground">Lanthanides</p>
-        <div className="flex flex-wrap gap-1">{lanthanides.map((el) => renderCell(el, 1, 1))}</div>
+        <div className="flex gap-1 overflow-x-auto pb-1">{lanthanides.map((el) => renderCell(el, 1, 1))}</div>
       </div>
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground">Actinides</p>
-        <div className="flex flex-wrap gap-1">{actinides.map((el) => renderCell(el, 1, 1))}</div>
+        <div className="flex gap-1 overflow-x-auto pb-1">{actinides.map((el) => renderCell(el, 1, 1))}</div>
       </div>
 
       <AnimatePresence>

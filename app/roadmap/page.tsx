@@ -159,7 +159,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v1.8.0 - Hybridization Builder Alpha
+          ARSHLAB v1.8.1 - Stability and Polish Pass
         </motion.p>
       </div>
     </div>

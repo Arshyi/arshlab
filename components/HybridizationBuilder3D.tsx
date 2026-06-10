@@ -12,6 +12,7 @@ import {
   type HybridizationMode,
   type OuterHybridAtom,
 } from "@/lib/chemistry/database/hybridization"
+import { useWebGLSupport, WebGLFallback } from "@/components/webgl-fallback"
 
 type Vec3 = [number, number, number]
 
@@ -431,9 +432,18 @@ export function HybridizationBuilder3D({
   onOuterAtomDistanceChange,
   className,
 }: HybridizationBuilder3DProps) {
+  const webglSupported = useWebGLSupport()
   const controlsRef = useRef<OrbitControlsImpl | null>(null)
   const geometry = getHybridizationGeometry(mode)
   const activeOverlapCount = outerAtoms.filter((atom) => classifyOverlap(atom.distance) === "overlap").length
+
+  if (webglSupported === false) {
+    return (
+      <div className={className}>
+        <WebGLFallback className="aspect-[4/3] lg:aspect-square" />
+      </div>
+    )
+  }
 
   return (
     <div className={className}>

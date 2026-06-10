@@ -4,15 +4,21 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   Atom,
+  BookOpen,
+  ChevronDown,
   FlaskConical,
   Home,
+  Info,
   User,
   FileText,
   Menu,
+  Map,
   X,
   Layers,
   Radio,
   Orbit,
+  PlayCircle,
+  ScrollText,
   TableProperties,
   GraduationCap,
   History,
@@ -23,29 +29,56 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-const navItems = [
+const primaryNavItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/chemistry-hub", label: "Chemistry Hub", icon: GraduationCap },
   { href: "/periodic-table", label: "Periodic Table", icon: TableProperties },
   { href: "/electron-configurations", label: "Electron Configs", icon: Atom },
+  { href: "/molecule-builder", label: "Molecule Builder", icon: Atom },
+  { href: "/reaction-lab", label: "Reaction Lab", icon: FlaskConical },
+]
+
+const chemistryToolItems = [
   { href: "/bonding-explorer", label: "Bonding Explorer", icon: Waves },
   { href: "/hybridization-builder", label: "Hybridization Builder", icon: Orbit },
-  { href: "/molecule-builder", label: "Molecule Builder", icon: Atom },
   { href: "/functional-groups", label: "Functional Groups", icon: Layers },
   { href: "/spectroscopy-lab", label: "Spectroscopy Lab", icon: Radio },
   { href: "/orbital-viewer", label: "Orbital Viewer", icon: Orbit },
-  { href: "/reaction-lab", label: "Reaction Lab", icon: FlaskConical },
   { href: "/periodic-trends-quiz", label: "Trend Quiz", icon: GraduationCap },
   { href: "/history", label: "History", icon: History },
+]
+
+const secondaryNavItems = [
+  { href: "/about-creator", label: "About", icon: Info },
+  { href: "/past-papers", label: "Past Papers", icon: BookOpen },
+  { href: "/video-solutions", label: "Video Solutions", icon: PlayCircle },
+  { href: "/roadmap", label: "Roadmap", icon: Map },
+  { href: "/privacy", label: "Privacy", icon: ScrollText },
+  { href: "/terms", label: "Terms", icon: FileText },
   { href: "/patch-notes", label: "Patch Notes", icon: FileText },
-  { href: "/account", label: "Account", icon: User },
 ]
 
 export function Navbar() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const accountItem = { href: "/account", label: "Account", icon: User }
+  const mobileNavItems = [...primaryNavItems, ...chemistryToolItems, ...secondaryNavItems, accountItem]
+
+  const isActivePath = (href: string) => {
+    if (href === "/") return pathname === "/"
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
+  const toolsActive = chemistryToolItems.some((item) => isActivePath(item.href))
+  const moreActive = secondaryNavItems.some((item) => isActivePath(item.href))
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return
@@ -83,12 +116,10 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href
+          <div className="hidden xl:flex min-w-0 items-center gap-1">
+            {primaryNavItems.map((item) => {
+              const isActive = isActivePath(item.href)
               const Icon = item.icon
-              const isAccount = item.href === "/account"
-              const label = isAccount && !userEmail ? "Account / Sign in" : item.label
               return (
                 <Link
                   key={item.href}
@@ -101,21 +132,39 @@ export function Navbar() {
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  <span>{label}</span>
-                  {isAccount && userEmail && (
-                    <span className="max-w-24 truncate rounded-full bg-teal-500/10 px-2 py-0.5 text-[10px] text-teal-700 dark:text-teal-300">
-                      {userEmail}
-                    </span>
-                  )}
+                  <span className="whitespace-nowrap">{item.label}</span>
                 </Link>
               )
             })}
+
+            <NavDropdown label="Tools" active={toolsActive} items={chemistryToolItems} />
+            <NavDropdown label="More" active={moreActive} items={secondaryNavItems} />
+
+            <Link
+              href="/account"
+              className={cn(
+                "flex min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                isActivePath("/account")
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              )}
+            >
+              <User className="h-4 w-4 shrink-0" />
+              <span className="whitespace-nowrap">{userEmail ? "Account" : "Account / Sign in"}</span>
+              {userEmail && (
+                <span className="hidden max-w-24 truncate rounded-full bg-teal-500/10 px-2 py-0.5 text-[10px] text-teal-700 dark:text-teal-300 xl:inline">
+                  {userEmail}
+                </span>
+              )}
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-foreground"
+            className="xl:hidden flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card text-foreground"
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -129,11 +178,11 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-border bg-background"
+            className="xl:hidden border-t border-border bg-background"
           >
-            <div className="px-4 py-4 space-y-1">
-              {navItems.map((item) => {
-                const isActive = pathname === item.href
+            <div className="max-h-[calc(100vh-4rem)] space-y-1 overflow-y-auto px-4 py-4">
+              {mobileNavItems.map((item) => {
+                const isActive = isActivePath(item.href)
                 const Icon = item.icon
                 const isAccount = item.href === "/account"
                 const label = isAccount && !userEmail ? "Account / Sign in" : item.label
@@ -149,8 +198,8 @@ export function Navbar() {
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
                   >
-                    <Icon className="h-5 w-5" />
-                    <span>{label}</span>
+                    <Icon className="h-5 w-5 shrink-0" />
+                    <span className="min-w-0 truncate">{label}</span>
                     {isAccount && userEmail && (
                       <span className="ml-auto max-w-40 truncate rounded-full bg-teal-500/10 px-2 py-0.5 text-[10px] text-teal-700 dark:text-teal-300">
                         {userEmail}
@@ -164,5 +213,44 @@ export function Navbar() {
         )}
       </AnimatePresence>
     </header>
+  )
+}
+
+function NavDropdown({
+  label,
+  active,
+  items,
+}: {
+  label: string
+  active: boolean
+  items: Array<{ href: string; label: string; icon: React.ElementType }>
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className={cn(
+          "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          active
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+        )}
+      >
+        <span>{label}</span>
+        <ChevronDown className="h-4 w-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        {items.map((item) => {
+          const Icon = item.icon
+          return (
+            <DropdownMenuItem key={item.href} asChild>
+              <Link href={item.href} className="flex items-center gap-2">
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
+            </DropdownMenuItem>
+          )
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

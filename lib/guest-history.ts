@@ -43,10 +43,22 @@ function readEntries(): GuestHistoryEntry[] {
   }
 }
 
+function notifyHistoryUpdated(): void {
+  try {
+    window.dispatchEvent(new CustomEvent(GUEST_HISTORY_UPDATED_EVENT))
+  } catch {
+    // Ignore browser event failures; history should never block chemistry tools.
+  }
+}
+
 function writeEntries(entries: GuestHistoryEntry[]): void {
   if (!isBrowser()) return
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
-  window.dispatchEvent(new CustomEvent(GUEST_HISTORY_UPDATED_EVENT))
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
+    notifyHistoryUpdated()
+  } catch {
+    notifyHistoryUpdated()
+  }
 }
 
 export function getGuestHistory(): GuestHistoryEntry[] {
@@ -111,8 +123,12 @@ export function clearReactionHistory(): void {
 
 export function clearAllGuestHistory(): void {
   if (!isBrowser()) return
-  sessionStorage.removeItem(STORAGE_KEY)
-  window.dispatchEvent(new CustomEvent(GUEST_HISTORY_UPDATED_EVENT))
+  try {
+    sessionStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // Some browsers block sessionStorage; clearing should fail quietly.
+  }
+  notifyHistoryUpdated()
 }
 
 export function getMoleculeSummary(entry: MoleculeHistoryEntry): string {

@@ -17,6 +17,7 @@ import {
   ANGULAR_NODE_COLOR,
   type LobeSpec,
 } from "@/lib/orbitalMath"
+import { useWebGLSupport, WebGLFallback } from "@/components/webgl-fallback"
 
 export type OrbitalViewerSettings = {
   showPhaseColors: boolean
@@ -396,7 +397,16 @@ interface OrbitalViewer3DProps {
 }
 
 export function OrbitalViewer3D({ orbital, settings, resetToken = 0, className }: OrbitalViewer3DProps) {
+  const webglSupported = useWebGLSupport()
   const controlsRef = useRef<OrbitControlsImpl | null>(null)
+
+  if (webglSupported === false) {
+    return (
+      <div className={className}>
+        <WebGLFallback className="aspect-[4/3] lg:aspect-square" />
+      </div>
+    )
+  }
 
   return (
     <div className={className}>

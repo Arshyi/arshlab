@@ -15,6 +15,7 @@ import {
   classifyInteractionRegime,
   getAtomVisual,
 } from "@/lib/chemistry/database/bonding"
+import { useWebGLSupport, WebGLFallback } from "@/components/webgl-fallback"
 
 export type BondingViewerSettings = {
   visualizationMode: BondVisualizationMode
@@ -502,8 +503,17 @@ export function BondingExplorer3D({
   settings,
   className,
 }: BondingExplorer3DProps) {
+  const webglSupported = useWebGLSupport()
   const cameraDistance = useMemo(() => Math.max(5.5, distance + 3.8), [distance])
   const controlsRef = useRef<OrbitControlsImpl | null>(null)
+
+  if (webglSupported === false) {
+    return (
+      <div className={className}>
+        <WebGLFallback className="aspect-[4/3] lg:aspect-square" />
+      </div>
+    )
+  }
 
   return (
     <div className={className}>
