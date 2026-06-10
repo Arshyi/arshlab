@@ -3,6 +3,7 @@ import { Inter, Space_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { Navbar } from '@/components/navbar'
+import { SiteFooter } from '@/components/site-footer'
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -55,6 +56,7 @@ export default function RootLayout({
       <body className="font-sans antialiased min-h-screen">
         <Navbar />
         <main>{children}</main>
+        <SiteFooter />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

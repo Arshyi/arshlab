@@ -22,13 +22,13 @@ import type { ElementType, ReactNode } from "react"
 import type { ElementRecord, OctetRuleCategory } from "@/lib/chemistry/database/types"
 import {
   ALL_ELEMENTS,
-  getElementPokedexProfile,
+  getElementExplorerProfile,
   getPropertyComparisonMetrics,
   getSuccessiveIonizationSeries,
   TRANSITION_METAL_COLOR_DISCLAIMER,
   type ElementProfileCompleteness,
   type IonizationEnergyPoint,
-  type PokedexNumberValue,
+  type ElementProfileNumberValue,
   type PropertyComparisonMetric,
 } from "@/lib/chemistry/database/periodic-table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -74,7 +74,7 @@ interface ElementProfilePanelProps {
 
 export function ElementProfilePanel({ element }: ElementProfilePanelProps) {
   const [activeTab, setActiveTab] = useState<TabId>("overview")
-  const pokedex = useMemo(() => getElementPokedexProfile(element), [element])
+  const elementProfile = useMemo(() => getElementExplorerProfile(element), [element])
   const ionizationSeries = useMemo(() => getSuccessiveIonizationSeries(element), [element])
   const comparisonMetrics = useMemo(
     () => getPropertyComparisonMetrics(element, ALL_ELEMENTS),
@@ -99,8 +99,8 @@ export function ElementProfilePanel({ element }: ElementProfilePanelProps) {
               <Badge variant="secondary" className="font-mono">
                 Z = {element.atomicNumber}
               </Badge>
-              <Badge className={cn("border", COMPLETENESS_STYLES[pokedex.completeness])}>
-                {COMPLETENESS_LABELS[pokedex.completeness]}
+              <Badge className={cn("border", COMPLETENESS_STYLES[elementProfile.completeness])}>
+                {COMPLETENESS_LABELS[elementProfile.completeness]}
               </Badge>
               {element.nuclear.isRadioactive && (
                 <Badge variant="outline" className="border-rose-500/30 text-rose-600">
@@ -115,14 +115,14 @@ export function ElementProfilePanel({ element }: ElementProfilePanelProps) {
             </div>
           </div>
         </CardHeader>
-        {pokedex.completeness !== "complete" && (
+        {elementProfile.completeness !== "complete" && (
           <CardContent className="pt-0">
             <div className="rounded-xl border border-dashed border-border bg-background/60 px-4 py-3 text-sm text-muted-foreground">
               Some advanced data is not available yet for this element.
-              {pokedex.missingFields.length > 0 && (
+              {elementProfile.missingFields.length > 0 && (
                 <span className="ml-1">
-                  Missing or approximate: {pokedex.missingFields.slice(0, 5).join(", ")}
-                  {pokedex.missingFields.length > 5 ? "." : "."}
+                  Missing or approximate: {elementProfile.missingFields.slice(0, 5).join(", ")}
+                  {elementProfile.missingFields.length > 5 ? "." : "."}
                 </span>
               )}
             </div>
@@ -154,10 +154,10 @@ export function ElementProfilePanel({ element }: ElementProfilePanelProps) {
         </div>
       </div>
 
-      {activeTab === "overview" && <OverviewSection element={element} pokedex={pokedex} />}
+      {activeTab === "overview" && <OverviewSection element={element} elementProfile={elementProfile} />}
       {activeTab === "configuration" && <ConfigurationSection element={element} />}
       {activeTab === "properties" && (
-        <PeriodicPropertiesSection element={element} pokedex={pokedex} metrics={comparisonMetrics} />
+        <PeriodicPropertiesSection element={element} elementProfile={elementProfile} metrics={comparisonMetrics} />
       )}
       {activeTab === "ionization" && (
         <IonizationAffinitySection
@@ -166,12 +166,12 @@ export function ElementProfilePanel({ element }: ElementProfilePanelProps) {
           ionizationNote={ionizationSeries.note}
           dataIncomplete={ionizationSeries.dataIncomplete}
           affinityMetric={comparisonMetrics.find((metric) => metric.key === "electronAffinity")}
-          pokedex={pokedex}
+          elementProfile={elementProfile}
         />
       )}
       {activeTab === "compounds" && <CompoundsSection element={element} />}
-      {activeTab === "natural" && <NaturalFormSection element={element} pokedex={pokedex} />}
-      {activeTab === "colors" && <ColorsSection element={element} colors={pokedex.transitionMetalColors} />}
+      {activeTab === "natural" && <NaturalFormSection element={element} elementProfile={elementProfile} />}
+      {activeTab === "colors" && <ColorsSection element={element} colors={elementProfile.transitionMetalColors} />}
       {activeTab === "nuclear" && <NuclearSection element={element} />}
     </motion.div>
   )
@@ -179,10 +179,10 @@ export function ElementProfilePanel({ element }: ElementProfilePanelProps) {
 
 function OverviewSection({
   element,
-  pokedex,
+  elementProfile,
 }: {
   element: ElementRecord
-  pokedex: ReturnType<typeof getElementPokedexProfile>
+  elementProfile: ReturnType<typeof getElementExplorerProfile>
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
@@ -193,15 +193,15 @@ function OverviewSection({
           <PropertyItem label="Atomic number" value={String(element.atomicNumber)} />
           <PropertyItem label="Atomic mass" value={`${element.atomicMass} u`} />
           <PropertyItem label="Category" value={element.category.replace(/-/g, " ")} />
-          <PropertyItem label="State at room temp" value={pokedex.stateLabel} />
+          <PropertyItem label="State at room temp" value={elementProfile.stateLabel} />
         </div>
       </ProfileCard>
 
       <ProfileCard icon={Scale} title="Physical Snapshot" description="Catalogued values where available">
         <div className="grid gap-2">
-          <ValueItem label="Melting point" value={pokedex.meltingPoint} />
-          <ValueItem label="Boiling point" value={pokedex.boilingPoint} />
-          <ValueItem label="Density" value={pokedex.density} />
+          <ValueItem label="Melting point" value={elementProfile.meltingPoint} />
+          <ValueItem label="Boiling point" value={elementProfile.boilingPoint} />
+          <ValueItem label="Density" value={elementProfile.density} />
           <PropertyItem label="Natural form" value={element.naturalForm ?? "Not catalogued"} />
         </div>
       </ProfileCard>
@@ -280,11 +280,11 @@ function ConfigurationSection({ element }: { element: ElementRecord }) {
 
 function PeriodicPropertiesSection({
   element,
-  pokedex,
+  elementProfile,
   metrics,
 }: {
   element: ElementRecord
-  pokedex: ReturnType<typeof getElementPokedexProfile>
+  elementProfile: ReturnType<typeof getElementExplorerProfile>
   metrics: PropertyComparisonMetric[]
 }) {
   return (
@@ -294,9 +294,9 @@ function PeriodicPropertiesSection({
           <PropertyItem label="Atomic radius" value={formatNullable(element.atomicRadiusPm, "pm")} />
           <PropertyItem label="Electronegativity" value={formatNullable(element.electronegativity, "")} />
           <PropertyItem label="First ionization energy" value={formatNullable(element.ionizationEnergyKjMol, "kJ/mol")} />
-          <ValueItem label="Electron affinity" value={pokedex.electronAffinity} />
-          <ValueItem label="Melting point" value={pokedex.meltingPoint} />
-          <ValueItem label="Boiling point" value={pokedex.boilingPoint} />
+          <ValueItem label="Electron affinity" value={elementProfile.electronAffinity} />
+          <ValueItem label="Melting point" value={elementProfile.meltingPoint} />
+          <ValueItem label="Boiling point" value={elementProfile.boilingPoint} />
         </div>
       </ProfileCard>
 
@@ -317,14 +317,14 @@ function IonizationAffinitySection({
   ionizationNote,
   dataIncomplete,
   affinityMetric,
-  pokedex,
+  elementProfile,
 }: {
   element: ElementRecord
   ionizationPoints: IonizationEnergyPoint[]
   ionizationNote: string
   dataIncomplete: boolean
   affinityMetric?: PropertyComparisonMetric
-  pokedex: ReturnType<typeof getElementPokedexProfile>
+  elementProfile: ReturnType<typeof getElementExplorerProfile>
 }) {
   const jumpCount = ionizationPoints.filter((point) => point.largeJump).length
 
@@ -350,9 +350,9 @@ function IonizationAffinitySection({
       <div className="space-y-4">
         <ProfileCard icon={Zap} title="Electron Affinity" description="Energy change when one electron is added">
           <div className="space-y-3">
-            <ValueItem label="Electron affinity" value={pokedex.electronAffinity} />
+            <ValueItem label="Electron affinity" value={elementProfile.electronAffinity} />
             <p className="text-sm leading-relaxed text-muted-foreground">
-              {pokedex.electronAffinityExplanation}
+              {elementProfile.electronAffinityExplanation}
             </p>
           </div>
         </ProfileCard>
@@ -451,17 +451,17 @@ function CompoundsSection({ element }: { element: ElementRecord }) {
 
 function NaturalFormSection({
   element,
-  pokedex,
+  elementProfile,
 }: {
   element: ElementRecord
-  pokedex: ReturnType<typeof getElementPokedexProfile>
+  elementProfile: ReturnType<typeof getElementExplorerProfile>
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <ProfileCard icon={Gem} title="Natural Form / Allotropes" description="How the element is commonly encountered">
         <div className="space-y-3">
           <p className="text-lg font-semibold">{element.naturalForm ?? "Not catalogued"}</p>
-          <PropertyItem label="State at room temperature" value={pokedex.stateLabel} />
+          <PropertyItem label="State at room temperature" value={elementProfile.stateLabel} />
           <p className="text-sm leading-relaxed text-muted-foreground">
             Diatomic elements are shown as molecules, noble gases as monatomic gases, carbon with major allotropes,
             phosphorus and sulfur with common molecular allotropes, and metals as metallic lattices where appropriate.
@@ -493,7 +493,7 @@ function ColorsSection({
   colors,
 }: {
   element: ElementRecord
-  colors: ReturnType<typeof getElementPokedexProfile>["transitionMetalColors"]
+  colors: ReturnType<typeof getElementExplorerProfile>["transitionMetalColors"]
 }) {
   if (colors.length === 0) {
     return (
@@ -685,20 +685,20 @@ function PropertyItem({ label, value }: { label: string; value: string }) {
   )
 }
 
-function ValueItem({ label, value }: { label: string; value: PokedexNumberValue }) {
+function ValueItem({ label, value }: { label: string; value: ElementProfileNumberValue }) {
   return (
     <div className="rounded-xl border border-border bg-secondary/20 px-3 py-2">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] uppercase text-muted-foreground">{label}</p>
         {value.source === "estimated" && <Badge variant="outline">approx</Badge>}
       </div>
-      <p className="font-mono text-sm">{formatPokedexValue(value)}</p>
+      <p className="font-mono text-sm">{formatElementProfileValue(value)}</p>
       {value.note && <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{value.note}</p>}
     </div>
   )
 }
 
-function formatPokedexValue(value: PokedexNumberValue): string {
+function formatElementProfileValue(value: ElementProfileNumberValue): string {
   if (value.value === null) return "Unavailable"
   if (value.unit === "") return formatNumber(value.value)
   return `${formatNumber(value.value)} ${value.unit}`

@@ -2,12 +2,12 @@ import type { ElementRecord, TransitionMetalColorEntry } from "../types"
 
 export type ElementProfileCompleteness = "complete" | "partial" | "basic-only"
 
-export type PokedexValueSource = "catalogued" | "estimated" | "unavailable"
+export type ElementProfileValueSource = "catalogued" | "estimated" | "unavailable"
 
-export interface PokedexNumberValue {
+export interface ElementProfileNumberValue {
   value: number | null
   unit: string
-  source: PokedexValueSource
+  source: ElementProfileValueSource
   note?: string
 }
 
@@ -15,7 +15,7 @@ export interface IonizationEnergyPoint {
   step: number
   label: string
   energy: number
-  source: Exclude<PokedexValueSource, "unavailable">
+  source: Exclude<ElementProfileValueSource, "unavailable">
   largeJump: boolean
   jumpExplanation?: string
 }
@@ -26,14 +26,14 @@ export interface IonizationSeries {
   note: string
 }
 
-export interface ElementPokedexProfile {
+export interface ElementExplorerProfile {
   completeness: ElementProfileCompleteness
   missingFields: string[]
   stateLabel: string
-  meltingPoint: PokedexNumberValue
-  boilingPoint: PokedexNumberValue
-  density: PokedexNumberValue
-  electronAffinity: PokedexNumberValue
+  meltingPoint: ElementProfileNumberValue
+  boilingPoint: ElementProfileNumberValue
+  density: ElementProfileNumberValue
+  electronAffinity: ElementProfileNumberValue
   electronAffinityExplanation: string
   transitionMetalColors: TransitionMetalColorEntry[]
 }
@@ -51,7 +51,7 @@ export interface PropertyComparisonMetric {
   values: {
     element: ElementRecord
     value: number | null
-    source: PokedexValueSource
+    source: ElementProfileValueSource
   }[]
   note?: string
 }
@@ -239,10 +239,10 @@ function estimatePhysicalValue(
   return property === "meltingPoint" ? roundTo(-120 + period * 90, 10) : roundTo(80 + period * 160, 25)
 }
 
-export function getPokedexPhysicalValue(
+export function getElementProfilePhysicalValue(
   element: ElementRecord,
   property: "meltingPoint" | "boilingPoint" | "density",
-): PokedexNumberValue {
+): ElementProfileNumberValue {
   if (property === "meltingPoint" && element.meltingPointC !== null) {
     return { value: element.meltingPointC, unit: "deg C", source: "catalogued" }
   }
@@ -300,7 +300,7 @@ function estimateSuccessiveIonizationSeries(element: ElementRecord): number[] {
 
 export function getSuccessiveIonizationSeries(element: ElementRecord): IonizationSeries {
   const catalogued = SUCCESSIVE_IE_DATA[element.atomicNumber]
-  const source: Exclude<PokedexValueSource, "unavailable"> = catalogued ? "catalogued" : "estimated"
+  const source: Exclude<ElementProfileValueSource, "unavailable"> = catalogued ? "catalogued" : "estimated"
   const values = catalogued ?? estimateSuccessiveIonizationSeries(element)
   const valence = Math.max(1, Math.min(8, element.valenceElectrons || 1))
 
@@ -330,7 +330,7 @@ export function getSuccessiveIonizationSeries(element: ElementRecord): Ionizatio
   }
 }
 
-export function getElectronAffinityValue(element: ElementRecord): PokedexNumberValue {
+export function getElectronAffinityValue(element: ElementRecord): ElementProfileNumberValue {
   if (element.electronAffinityKjMol === null) {
     return {
       value: null,
@@ -416,7 +416,7 @@ export function getPropertyComparisonMetrics(
       label: "Melting point",
       unit: "deg C",
       values: neighbors.map((neighbor) => {
-        const value = getPokedexPhysicalValue(neighbor, "meltingPoint")
+        const value = getElementProfilePhysicalValue(neighbor, "meltingPoint")
         return { element: neighbor, value: value.value, source: value.source }
       }),
       note: "Estimated values are rounded teaching approximations where exact data is not catalogued.",
@@ -426,7 +426,7 @@ export function getPropertyComparisonMetrics(
       label: "Boiling point",
       unit: "deg C",
       values: neighbors.map((neighbor) => {
-        const value = getPokedexPhysicalValue(neighbor, "boilingPoint")
+        const value = getElementProfilePhysicalValue(neighbor, "boilingPoint")
         return { element: neighbor, value: value.value, source: value.source }
       }),
       note: "Estimated values are rounded teaching approximations where exact data is not catalogued.",
@@ -442,10 +442,10 @@ export function getExpandedTransitionMetalColors(element: ElementRecord): Transi
   return [...bySpecies.values()]
 }
 
-export function getElementPokedexProfile(element: ElementRecord): ElementPokedexProfile {
-  const meltingPoint = getPokedexPhysicalValue(element, "meltingPoint")
-  const boilingPoint = getPokedexPhysicalValue(element, "boilingPoint")
-  const density = getPokedexPhysicalValue(element, "density")
+export function getElementExplorerProfile(element: ElementRecord): ElementExplorerProfile {
+  const meltingPoint = getElementProfilePhysicalValue(element, "meltingPoint")
+  const boilingPoint = getElementProfilePhysicalValue(element, "boilingPoint")
+  const density = getElementProfilePhysicalValue(element, "density")
   const electronAffinity = getElectronAffinityValue(element)
   const missingFields: string[] = []
 

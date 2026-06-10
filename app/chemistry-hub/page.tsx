@@ -104,7 +104,7 @@ export default function ChemistryHubPage() {
                 <Atom className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="font-semibold">Element Pokédex</h2>
+                <h2 className="font-semibold">Element Explorer</h2>
                 <p className="text-sm text-muted-foreground">
                   Explore electron configurations, trends, ionization energies, oxidation states,
                   natural forms, and transition-metal colors.

@@ -34,7 +34,7 @@ const patchNotes: PatchNote[] = [
     version: "1.6.0",
     date: "Previous",
     status: "released",
-    title: "Element Pokédex Expansion",
+    title: "Element Profile Expansion",
     changes: [
       "Added successive ionization energy graphs",
       "Added electron affinity panels",

@@ -141,5 +141,5 @@ export function getElementGridPosition(z: number): { row: number; col: number } 
 export { ELEMENT_NAMES, inferGroup, getPeriodFromZ }
 export { TRANSITION_METAL_COLOR_DISCLAIMER } from "./element-profiles"
 export * from "./trends"
-export * from "./pokedex"
+export * from "./element-profile"
 export { getElectronConfigurationException, TEACHING_CONFIGURATION_EXCEPTIONS } from "./electron-config"
