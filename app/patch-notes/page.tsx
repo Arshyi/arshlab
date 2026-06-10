@@ -18,8 +18,27 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.4.0",
+    version: "1.5.0",
     date: "Current",
+    status: "released",
+    title: "Bond Energy & Orbital Overlap Explorer",
+    changes: [
+      "Added Interactive Bonding Explorer",
+      "Added potential energy vs internuclear distance graph",
+      "Added sigma overlap visualization",
+      "Added pi overlap visualization",
+      "Added electron cloud overlap mode",
+      "Added space-filling mode",
+      "Added force arrows for attraction and repulsion",
+      "Added bond length marker",
+      "Added Morse-potential-style educational curve",
+      "Added presets for H-H, H-F, F-F, Cl-Cl, O=O, N2, C=C, C2, He-He, and Ne-Ne",
+      "Added educational explanations for bond formation",
+    ],
+  },
+  {
+    version: "1.4.0",
+    date: "Previous",
     status: "released",
     title: "Electron Configurations & Periodic Trends",
     changes: [

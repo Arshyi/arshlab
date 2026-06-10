@@ -16,6 +16,7 @@ import { analytics } from "@/lib/chemistry/database/analytics/tracker"
 const LAB_LINKS = [
   { href: "/molecule-builder", label: "Molecule Builder" },
   { href: "/electron-configurations", label: "Electron Configuration Builder" },
+  { href: "/bonding-explorer", label: "Bonding Explorer" },
   { href: "/orbital-viewer", label: "Orbital Viewer" },
   { href: "/spectroscopy-lab", label: "Spectroscopy Lab" },
   { href: "/functional-groups", label: "Functional Groups" },

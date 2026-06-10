@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, Beaker, Layers, Radio, FileText, PlayCircle, Map, User } from "lucide-react"
+import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -44,6 +44,11 @@ const features = [
     icon: Atom,
     title: "Electron Configuration Builder",
     description: "Search elements, animate orbital filling, and study Aufbau, Hund, Pauli, and d-block exceptions.",
+  },
+  {
+    icon: Waves,
+    title: "Bonding Explorer",
+    description: "Move atoms together, inspect sigma and pi overlap, and connect bond length to potential energy.",
   },
   {
     icon: Layers,

@@ -16,6 +16,7 @@ import {
   TableProperties,
   GraduationCap,
   History,
+  Waves,
 } from "lucide-react"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/chemistry-hub", label: "Chemistry Hub", icon: GraduationCap },
   { href: "/periodic-table", label: "Periodic Table", icon: TableProperties },
   { href: "/electron-configurations", label: "Electron Configs", icon: Atom },
+  { href: "/bonding-explorer", label: "Bonding Explorer", icon: Waves },
   { href: "/molecule-builder", label: "Molecule Builder", icon: Atom },
   { href: "/functional-groups", label: "Functional Groups", icon: Layers },
   { href: "/spectroscopy-lab", label: "Spectroscopy Lab", icon: Radio },
