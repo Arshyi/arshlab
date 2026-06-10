@@ -19,6 +19,10 @@ const sections = [
     body: "Do not misuse, scrape, overload, abuse, reverse engineer, or attempt to attack the service. User accounts may be removed for abuse or behavior that harms the project or other users.",
   },
   {
+    title: "Saved History",
+    body: "Saved history is provided for educational convenience. Users should not store sensitive personal information in molecule, reaction, or search fields. ARSHLAB may remove abusive accounts or data.",
+  },
+  {
     title: "No Professional Advice",
     body: "ARSHLAB does not provide professional, legal, medical, financial, safety, or regulatory advice. It is an educational chemistry learning platform.",
   },

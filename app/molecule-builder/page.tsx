@@ -12,6 +12,7 @@ import { getSuggestions, type Compound } from "@/lib/chemistry/compounds"
 import { searchExtended, type CategorySearchResult } from "@/lib/chemistry/functional-group-detection"
 import { MoleculeResultCard } from "@/components/molecule-result-card"
 import { addMoleculeHistory } from "@/lib/guest-history"
+import { addUserMoleculeHistory } from "@/lib/supabase/history"
 
 const examples = [
   "ethanol",
@@ -76,6 +77,30 @@ function MoleculeBuilderContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery])
 
+  async function saveMoleculeSearch({
+    query,
+    compound,
+  }: {
+    query: string
+    compound: Compound
+  }) {
+    const saved = await addUserMoleculeHistory({
+      query,
+      resolvedName: compound.name,
+      formula: compound.formula,
+      family: compound.family,
+    })
+
+    if (!saved.ok && (saved.reason === "not-authenticated" || saved.reason === "not-configured")) {
+      addMoleculeHistory({
+        query,
+        resolvedName: compound.name,
+        formula: compound.formula,
+        family: compound.family,
+      })
+    }
+  }
+
   function handleSearch(query?: string) {
     const searchQuery = query || moleculeInput
     if (!searchQuery.trim()) return
@@ -93,12 +118,7 @@ function MoleculeBuilderContent() {
         const filtered = prev.filter((h) => h.toLowerCase() !== compound.name.toLowerCase())
         return [compound.name, ...filtered.slice(0, 5)]
       })
-      addMoleculeHistory({
-        query: searchQuery.trim(),
-        resolvedName: compound.name,
-        formula: compound.formula,
-        family: compound.family,
-      })
+      void saveMoleculeSearch({ query: searchQuery.trim(), compound })
     } else if (extended?.type === "category" && extended.category) {
       setResult(null)
       setCategoryResult(extended.category)

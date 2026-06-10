@@ -8,11 +8,15 @@ const sections = [
   },
   {
     title: "Accounts And Authentication",
-    body: "Accounts use Supabase Auth. ARSHLAB may collect your email address, Supabase user ID, login/session data, and future saved history if those features are enabled later.",
+    body: "Accounts use Supabase Auth. ARSHLAB may collect your email address, Supabase user ID, and login/session data needed to keep you signed in.",
   },
   {
     title: "Guest And Saved History",
-    body: "Guest history is stored locally in your browser sessionStorage. Logged-in saved history is planned but is not active unless it has been separately implemented and announced.",
+    body: "Guest history is stored locally in your browser sessionStorage. Logged-in users may have molecule and reaction search history saved to Supabase so it can be viewed across devices.",
+  },
+  {
+    title: "Clearing Saved History",
+    body: "Logged-in users can clear saved molecule history, reaction history, or all saved history from the History page. Guest history remains temporary browser sessionStorage and can also be cleared from the History page.",
   },
   {
     title: "Personal Data",

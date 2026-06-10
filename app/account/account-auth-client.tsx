@@ -1,6 +1,7 @@
 "use client"
 
 import { FormEvent, useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
+import { getUserHistory } from "@/lib/supabase/history"
 
 export interface AccountUser {
   id: string
@@ -40,6 +42,14 @@ interface AuthMessage {
 interface AccountAuthClientProps {
   initialUser: AccountUser | null
   isConfigured: boolean
+}
+
+interface HistoryStats {
+  loading: boolean
+  molecules: number
+  reactions: number
+  total: number
+  error: string | null
 }
 
 function mapSupabaseUser(user: SupabaseUser | null): AccountUser | null {
@@ -89,6 +99,13 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
   const [signupPassword, setSignupPassword] = useState("")
   const [loading, setLoading] = useState<AuthMode>(null)
   const [message, setMessage] = useState<AuthMessage | null>(null)
+  const [historyStats, setHistoryStats] = useState<HistoryStats>({
+    loading: false,
+    molecules: 0,
+    reactions: 0,
+    total: 0,
+    error: null,
+  })
 
   const supabase = useMemo(() => {
     if (!isConfigured) return null
@@ -109,6 +126,44 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
       subscription.unsubscribe()
     }
   }, [router, supabase])
+
+  useEffect(() => {
+    if (!user || !supabase) {
+      setHistoryStats({ loading: false, molecules: 0, reactions: 0, total: 0, error: null })
+      return
+    }
+
+    let mounted = true
+    setHistoryStats((current) => ({ ...current, loading: true, error: null }))
+
+    getUserHistory().then((result) => {
+      if (!mounted) return
+      if (!result.ok) {
+        setHistoryStats({
+          loading: false,
+          molecules: 0,
+          reactions: 0,
+          total: 0,
+          error: result.error,
+        })
+        return
+      }
+
+      const molecules = result.data.filter((entry) => entry.type === "molecule").length
+      const reactions = result.data.filter((entry) => entry.type === "reaction").length
+      setHistoryStats({
+        loading: false,
+        molecules,
+        reactions,
+        total: result.data.length,
+        error: null,
+      })
+    })
+
+    return () => {
+      mounted = false
+    }
+  }, [supabase, user])
 
   async function handleSignUp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -141,7 +196,7 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
       setMessage({
         kind: "success",
         title: "Account created",
-        body: "You are signed in. Permanent saved history coming later.",
+        body: "You are signed in. Permanent saved history is now enabled.",
       })
       router.replace("/account")
       router.refresh()
@@ -232,7 +287,7 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
             </div>
           </div>
           <p className="max-w-2xl text-lg text-muted-foreground">
-            Email/password accounts are live. Permanent saved history coming later.
+            Email/password accounts are live. Permanent saved history is now enabled.
           </p>
         </motion.div>
 
@@ -259,7 +314,12 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
         )}
 
         {user ? (
-          <SignedInPanel user={user} loading={loading === "logout"} onLogout={handleLogout} />
+          <SignedInPanel
+            user={user}
+            loading={loading === "logout"}
+            historyStats={historyStats}
+            onLogout={handleLogout}
+          />
         ) : (
           <SignedOutPanel
             isConfigured={isConfigured}
@@ -338,7 +398,7 @@ function SignedOutPanel({
       <Card className="rounded-2xl border-dashed lg:col-span-2">
         <CardContent className="grid gap-4 p-5 sm:grid-cols-3">
           <AuthNote icon={Atom} title="Chemistry stays open" text="All current ARSHLAB tools remain usable without auth." />
-          <AuthNote icon={History} title="History later" text="Permanent saved history coming later. No chemistry history is stored yet." />
+          <AuthNote icon={History} title="Saved history" text="Sign in to save molecule and reaction history permanently." />
           <AuthNote icon={ShieldCheck} title="Safe key usage" text="Only the Supabase publishable key is used in the browser." />
         </CardContent>
       </Card>
@@ -349,10 +409,12 @@ function SignedOutPanel({
 function SignedInPanel({
   user,
   loading,
+  historyStats,
   onLogout,
 }: {
   user: AccountUser
   loading: boolean
+  historyStats: HistoryStats
   onLogout: () => void
 }) {
   return (
@@ -378,17 +440,27 @@ function SignedInPanel({
 
           <Alert className="rounded-2xl">
             <History className="h-4 w-4" />
-            <AlertTitle>Permanent saved history coming later.</AlertTitle>
+            <AlertTitle>Permanent saved history is now enabled.</AlertTitle>
             <AlertDescription>
-              This release only adds authentication. Molecule history, reaction history, friends, subscriptions,
-              payments, and social features are intentionally not implemented yet.
+              Molecule and reaction searches can now be saved to your Supabase-backed ARSHLAB account.
+              Friends, subscriptions, payments, and social features are intentionally not implemented yet.
             </AlertDescription>
           </Alert>
 
-          <Button onClick={onLogout} disabled={loading} variant="outline" className="h-12 rounded-xl">
-            <LogOut className="h-4 w-4" />
-            {loading ? "Logging out..." : "Log out"}
-          </Button>
+          <HistoryStatsPanel stats={historyStats} />
+
+          <div className="flex flex-wrap gap-3">
+            <Button asChild className="h-12 rounded-xl">
+              <Link href="/history">
+                <History className="h-4 w-4" />
+                View Saved History
+              </Link>
+            </Button>
+            <Button onClick={onLogout} disabled={loading} variant="outline" className="h-12 rounded-xl">
+              <LogOut className="h-4 w-4" />
+              {loading ? "Logging out..." : "Log out"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -491,6 +563,43 @@ function AuthFormCard({
         </CardContent>
       </Card>
     </motion.div>
+  )
+}
+
+function HistoryStatsPanel({ stats }: { stats: HistoryStats }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card/70 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h3 className="font-semibold">Saved History</h3>
+          <p className="text-sm text-muted-foreground">
+            {stats.loading ? "Loading saved history counts..." : "Permanent account history counts"}
+          </p>
+        </div>
+        <Badge variant="secondary">{stats.total}</Badge>
+      </div>
+
+      {stats.error ? (
+        <p className="rounded-xl border border-dashed border-border bg-secondary/20 px-3 py-2 text-sm text-muted-foreground">
+          History stats are unavailable until the Supabase history table is set up.
+        </p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <AccountStat label="Molecules" value={stats.molecules} />
+          <AccountStat label="Reactions" value={stats.reactions} />
+          <AccountStat label="Total" value={stats.total} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AccountStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-border bg-secondary/20 px-3 py-2">
+      <p className="text-[10px] uppercase text-muted-foreground">{label}</p>
+      <p className="font-mono text-2xl font-bold">{value}</p>
+    </div>
   )
 }
 

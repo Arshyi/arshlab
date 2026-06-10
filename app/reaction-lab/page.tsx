@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { analyzeReaction, getSupportedReactions, type ReactionResult } from "@/lib/chemistry/reactions"
 import { ReactionResultCard } from "@/components/reaction-result-card"
 import { addReactionHistory } from "@/lib/guest-history"
+import { addUserReactionHistory } from "@/lib/supabase/history"
 
 const reactionExamples = [
   "CH4 + O2 → CO2 + H2O",
@@ -57,15 +58,29 @@ export default function ReactionLabPage() {
   const [reactionInput, setReactionInput] = useState("")
   const [result, setResult] = useState<ReactionResult | null>(null)
 
-  const handleAnalyze = () => {
-    if (!reactionInput.trim()) return
-    const analysisResult = analyzeReaction(reactionInput)
-    setResult(analysisResult)
-    addReactionHistory({
-      query: reactionInput.trim(),
+  async function saveReactionSearch(query: string, analysisResult: ReactionResult) {
+    const saved = await addUserReactionHistory({
+      query,
       reactionType: analysisResult.recognized ? analysisResult.type : "Unrecognized",
       predictedProducts: analysisResult.products,
     })
+
+    if (!saved.ok && (saved.reason === "not-authenticated" || saved.reason === "not-configured")) {
+      addReactionHistory({
+        query,
+        reactionType: analysisResult.recognized ? analysisResult.type : "Unrecognized",
+        predictedProducts: analysisResult.products,
+      })
+    }
+  }
+
+  const handleAnalyze = (input?: string) => {
+    const query = input ?? reactionInput
+    if (!query.trim()) return
+    setReactionInput(query)
+    const analysisResult = analyzeReaction(query)
+    setResult(analysisResult)
+    void saveReactionSearch(query.trim(), analysisResult)
   }
 
   const supportedReactions = getSupportedReactions()
@@ -108,7 +123,7 @@ export default function ReactionLabPage() {
                 />
 
                 <div className="flex flex-wrap gap-3">
-                  <Button onClick={handleAnalyze} className="rounded-xl">
+                  <Button onClick={() => handleAnalyze()} className="rounded-xl">
                     <FlaskConical className="mr-2 h-4 w-4" />
                     Analyze Reaction
                   </Button>
@@ -126,9 +141,7 @@ export default function ReactionLabPage() {
                       <button
                         key={ex}
                         onClick={() => {
-                          setReactionInput(ex)
-                          const analysisResult = analyzeReaction(ex)
-                          setResult(analysisResult)
+                          handleAnalyze(ex)
                         }}
                         className="rounded-lg border border-border bg-secondary/50 px-3 py-2 text-left text-xs font-mono text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                       >

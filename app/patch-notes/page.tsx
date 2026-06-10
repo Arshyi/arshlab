@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.8.1",
+    version: "1.9.0",
     date: "Current",
+    status: "released",
+    title: "Permanent Account History",
+    changes: [
+      "Added Supabase-backed saved molecule history",
+      "Added Supabase-backed saved reaction history",
+      "Added history sync for logged-in users",
+      "Added guest-to-account history migration",
+      "Added clear saved molecule history",
+      "Added clear saved reaction history",
+      "Added clear all saved history",
+      "Added account history statistics",
+      "Updated privacy and terms for saved history",
+    ],
+  },
+  {
+    version: "1.8.1",
+    date: "Previous",
     status: "released",
     title: "Stability and Polish Pass",
     changes: [
