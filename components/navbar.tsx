@@ -18,9 +18,11 @@ import {
   History,
   Waves,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
+import { isSupabaseConfigured } from "@/lib/supabase/env"
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -42,6 +44,27 @@ const navItems = [
 export function Navbar() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return
+
+    const supabase = createClient()
+
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email ?? null)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user.email ?? null)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -63,6 +86,8 @@ export function Navbar() {
             {navItems.map((item) => {
               const isActive = pathname === item.href
               const Icon = item.icon
+              const isAccount = item.href === "/account"
+              const label = isAccount && !userEmail ? "Account / Sign in" : item.label
               return (
                 <Link
                   key={item.href}
@@ -75,7 +100,12 @@ export function Navbar() {
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  {item.label}
+                  <span>{label}</span>
+                  {isAccount && userEmail && (
+                    <span className="max-w-24 truncate rounded-full bg-teal-500/10 px-2 py-0.5 text-[10px] text-teal-700 dark:text-teal-300">
+                      {userEmail}
+                    </span>
+                  )}
                 </Link>
               )
             })}
@@ -104,6 +134,8 @@ export function Navbar() {
               {navItems.map((item) => {
                 const isActive = pathname === item.href
                 const Icon = item.icon
+                const isAccount = item.href === "/account"
+                const label = isAccount && !userEmail ? "Account / Sign in" : item.label
                 return (
                   <Link
                     key={item.href}
@@ -117,7 +149,12 @@ export function Navbar() {
                     )}
                   >
                     <Icon className="h-5 w-5" />
-                    {item.label}
+                    <span>{label}</span>
+                    {isAccount && userEmail && (
+                      <span className="ml-auto max-w-40 truncate rounded-full bg-teal-500/10 px-2 py-0.5 text-[10px] text-teal-700 dark:text-teal-300">
+                        {userEmail}
+                      </span>
+                    )}
                   </Link>
                 )
               })}

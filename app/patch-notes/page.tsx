@@ -18,8 +18,21 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "1.6.0",
+    version: "1.7.0",
     date: "Current",
+    status: "released",
+    title: "Supabase Authentication Alpha",
+    changes: [
+      "Added email/password sign up",
+      "Added login/logout",
+      "Added persistent Supabase sessions",
+      "Updated Account page",
+      "Prepared future permanent user history",
+    ],
+  },
+  {
+    version: "1.6.0",
+    date: "Previous",
     status: "released",
     title: "Element Pokédex Expansion",
     changes: [
