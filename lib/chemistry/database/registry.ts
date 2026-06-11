@@ -12,7 +12,7 @@ import { ALL_LEWIS_STRUCTURES } from "./lewis/templates"
 import { QUESTION_TOPICS } from "./questions/topics"
 import { EDUCATION_HUB_SECTIONS } from "./education/hub"
 
-export const DATABASE_VERSION = "2.1.0"
+export const DATABASE_VERSION = "2.1.1"
 
 export function getDatabaseMeta(): DatabaseMeta {
   return {

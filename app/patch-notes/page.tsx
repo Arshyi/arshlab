@@ -18,8 +18,26 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "2.1.0",
+    version: "2.1.1",
     date: "Current",
+    status: "released",
+    title: "Practice Generator Improvements",
+    changes: [
+      "Added question set generation",
+      "Added study session mode",
+      "Added self-marking",
+      "Added session score summary",
+      "Added copy entire set",
+      "Added copy questions only",
+      "Added copy answer key",
+      "Added stronger validation",
+      "Added topic-specific generation guidance",
+      "Added quality warnings",
+    ],
+  },
+  {
+    version: "2.1.0",
+    date: "Previous",
     status: "released",
     title: "Practice Generator Alpha",
     changes: [

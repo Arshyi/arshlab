@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 const UNAVAILABLE_MESSAGE = "AI Assistant temporarily unavailable"
 const MAX_PROMPT_LENGTH = 1600
 const MAX_OUTPUT_TOKENS = 500
-const PRACTICE_MAX_OUTPUT_TOKENS = 800
+const PRACTICE_MAX_OUTPUT_TOKENS = 1800
 const guestUsage = new Map<string, { date: string; count: number }>()
 
 const PRACTICE_TOPICS = [
@@ -36,6 +36,8 @@ const PRACTICE_CURRICULUM_STYLES = [
   "CHEM 121 / First Year Chemistry",
 ] as const
 
+const PRACTICE_QUESTION_COUNTS = [1, 3, 5] as const
+
 interface AiUsageRow {
   id: string
   request_count: number
@@ -46,6 +48,7 @@ interface PracticeRequest {
   questionType: string
   difficulty: string
   curriculumStyle: string
+  questionCount: number
 }
 
 interface PracticeChoice {
@@ -53,19 +56,21 @@ interface PracticeChoice {
   text: string
 }
 
-interface PracticeResult {
+interface PracticeQuestion {
+  id: string
   topic: string
   questionType: string
   difficulty: string
   curriculumStyle: string
-  question: string
+  prompt: string
   choices?: PracticeChoice[]
-  correctChoice?: string
-  answer: string
+  correctAnswer: string
   explanation: string
-  misconceptionNotes?: string
-  markingGuidance?: string
-  keyPoints?: string[]
+  misconceptionNote?: string
+}
+
+interface PracticeSet {
+  questions: PracticeQuestion[]
 }
 
 function todayKey(): string {
@@ -83,6 +88,10 @@ function isAllowedFreeModel(model: string): boolean {
 
 function isAllowedValue(value: unknown, allowed: readonly string[]): value is string {
   return typeof value === "string" && allowed.includes(value)
+}
+
+function isAllowedQuestionCount(value: unknown): value is number {
+  return typeof value === "number" && PRACTICE_QUESTION_COUNTS.includes(value as 1 | 3 | 5)
 }
 
 function unavailable(status = 503) {
@@ -199,6 +208,9 @@ function parsePracticeRequest(body: unknown): PracticeRequest | null {
   const questionType = record.questionType
   const difficulty = record.difficulty
   const curriculumStyle = record.curriculumStyle
+  const numericQuestionCount =
+    typeof record.questionCount === "string" ? Number(record.questionCount) : record.questionCount
+  const questionCount = isAllowedQuestionCount(numericQuestionCount) ? numericQuestionCount : 1
 
   if (
     !isAllowedValue(topic, PRACTICE_TOPICS) ||
@@ -209,20 +221,47 @@ function parsePracticeRequest(body: unknown): PracticeRequest | null {
     return null
   }
 
-  return { topic, questionType, difficulty, curriculumStyle }
+  return { topic, questionType, difficulty, curriculumStyle, questionCount }
+}
+
+function topicGuidance(topic: string): string {
+  switch (topic) {
+    case "Functional group identification":
+      return "Seed concepts: alcohols, amines, aldehydes, ketones, carboxylic acids, esters, amides, haloalkanes, and alkenes."
+    case "Hybridization":
+      return "Seed concepts: sp, sp2, sp3, sp3d, sp3d2; examples CO2, BF3, CH4, NH3, H2O, PCl5, SF6, XeF4."
+    case "VSEPR geometry":
+      return "Seed concepts: linear, trigonal planar, tetrahedral, trigonal pyramidal, bent, trigonal bipyramidal, octahedral, square planar."
+    case "Periodic trends":
+      return "Seed concepts: atomic radius, electronegativity, first ionization energy, electron affinity; compare across periods and groups."
+    case "Electron configuration":
+      return "Seed concepts: noble gas shorthand, orbital filling, Aufbau/Hund/Pauli, and common exceptions such as Cr and Cu when appropriate."
+    case "IR spectroscopy peak identification":
+      return "Seed concepts: broad O-H around 3200-3600 cm^-1, C=O around 1650-1750 cm^-1, N-H around 3300 cm^-1, C-H regions, and fingerprint region concept."
+    default:
+      return "Use accurate chemistry examples suitable for the selected curriculum style."
+  }
 }
 
 function buildPracticePrompt(request: PracticeRequest): string {
   return [
-    `Generate one original ${request.questionType} chemistry practice question.`,
+    `Generate exactly ${request.questionCount} original ${request.questionType} chemistry practice question${request.questionCount === 1 ? "" : "s"}.`,
     `Topic: ${request.topic}. Difficulty: ${request.difficulty}. Curriculum style: ${request.curriculumStyle}.`,
-    "Do not mention official past papers, do not copy known exam material, and do not imply endorsement by any exam board.",
-    "For multiple choice, create exactly four choices labeled A, B, C, D with exactly one correct choice and realistic misconception distractors.",
-    "For short answer, include expected answer, marking guidance, and explanation.",
-    "For explanation prompts, include a model explanation and key points a student should mention.",
-    "Return only JSON in this exact shape:",
-    '{"question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctChoice":"A","answer":"...","explanation":"...","misconceptionNotes":"...","markingGuidance":"...","keyPoints":["..."]}',
-    "For non-multiple-choice questions, use an empty choices array and null correctChoice.",
+    topicGuidance(request.topic),
+    "Produce original questions only.",
+    "Do not copy official exam-board, university, or past-paper questions.",
+    "Do not mention being based on past papers.",
+    "Avoid ambiguous wording.",
+    "Use clean formulas with plain text or Unicode subscripts where possible.",
+    "Keep questions suitable for the selected curriculum style and difficulty.",
+    "For multiple choice, create exactly four choices labeled A, B, C, D with exactly one answer correct.",
+    "Multiple choice distractors should reflect realistic misconceptions.",
+    "For short answer, make the correctAnswer an expected student answer and explain the marking logic in the explanation.",
+    "For explanation prompts, make the correctAnswer a concise model explanation and include the most important key points in the explanation.",
+    "Return valid JSON only, with no markdown and no surrounding prose.",
+    "Return this exact top-level shape:",
+    '{"questions":[{"id":"q1","topic":"...","questionType":"...","difficulty":"...","curriculumStyle":"...","prompt":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
+    "For non-multiple-choice questions, use an empty choices array and put the expected answer in correctAnswer.",
   ].join("\n")
 }
 
@@ -234,8 +273,12 @@ function stringField(record: Record<string, unknown>, key: string): string {
 function parseGeneratedJson(text: string): unknown | null {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i)
   const candidate = fenced?.[1] ?? text
-  const start = candidate.indexOf("{")
-  const end = candidate.lastIndexOf("}")
+  const objectStart = candidate.indexOf("{")
+  const arrayStart = candidate.indexOf("[")
+  const starts = [objectStart, arrayStart].filter((index) => index >= 0)
+  if (starts.length === 0) return null
+  const start = Math.min(...starts)
+  const end = candidate.lastIndexOf(candidate[start] === "[" ? "]" : "}")
   if (start === -1 || end <= start) return null
 
   try {
@@ -249,6 +292,10 @@ function normalizeChoices(value: unknown): PracticeChoice[] | null {
   if (!Array.isArray(value) || value.length !== 4) return null
   const expectedLabels = ["A", "B", "C", "D"]
   const choices = value.map((item, index) => {
+    if (typeof item === "string") {
+      const text = item.trim().replace(/^[A-D][.)]\s*/i, "")
+      return text ? { label: expectedLabels[index], text } : null
+    }
     if (!item || typeof item !== "object") return null
     const record = item as Record<string, unknown>
     const label = stringField(record, "label").toUpperCase()
@@ -261,43 +308,60 @@ function normalizeChoices(value: unknown): PracticeChoice[] | null {
   return choices as PracticeChoice[]
 }
 
-function validatePracticeResult(data: unknown, request: PracticeRequest): PracticeResult | null {
+function answerMatchesChoices(correctAnswer: string, choices: PracticeChoice[]): boolean {
+  const normalized = correctAnswer.trim().toLowerCase()
+  return choices.some((choice) => {
+    const label = choice.label.toLowerCase()
+    const text = choice.text.trim().toLowerCase()
+    return normalized === label || normalized === text || normalized === `${label}. ${text}`
+  })
+}
+
+function validatePracticeSet(data: unknown, request: PracticeRequest): PracticeSet | null {
   if (!data || typeof data !== "object") return null
   const record = data as Record<string, unknown>
-  const question = stringField(record, "question")
-  const answer = stringField(record, "answer")
-  const explanation = stringField(record, "explanation")
-  const misconceptionNotes = stringField(record, "misconceptionNotes")
-  const markingGuidance = stringField(record, "markingGuidance")
-  const keyPoints = Array.isArray(record.keyPoints)
-    ? record.keyPoints.filter((point): point is string => typeof point === "string" && point.trim().length > 0).map((point) => point.trim())
-    : []
+  const rawQuestions = Array.isArray(record.questions) ? record.questions : Array.isArray(data) ? data : null
+  if (!rawQuestions || rawQuestions.length !== request.questionCount) return null
 
-  if (!question || !answer || !explanation) return null
+  const questions = rawQuestions.map((item, index) => {
+    if (!item || typeof item !== "object") return null
+    const questionRecord = item as Record<string, unknown>
+    const prompt = stringField(questionRecord, "prompt") || stringField(questionRecord, "question")
+    const correctAnswer =
+      stringField(questionRecord, "correctAnswer") ||
+      stringField(questionRecord, "answer") ||
+      stringField(questionRecord, "correctChoice")
+    const explanation = stringField(questionRecord, "explanation")
+    const misconceptionNote =
+      stringField(questionRecord, "misconceptionNote") ||
+      stringField(questionRecord, "misconceptionNotes")
 
-  const result: PracticeResult = {
-    ...request,
-    question,
-    answer,
-    explanation,
-  }
+    if (!prompt || !correctAnswer || !explanation) return null
 
-  if (misconceptionNotes) result.misconceptionNotes = misconceptionNotes
-  if (markingGuidance) result.markingGuidance = markingGuidance
-  if (keyPoints.length) result.keyPoints = keyPoints
+    const question: PracticeQuestion = {
+      id: stringField(questionRecord, "id") || `q${index + 1}`,
+      topic: request.topic,
+      questionType: request.questionType,
+      difficulty: request.difficulty,
+      curriculumStyle: request.curriculumStyle,
+      prompt,
+      correctAnswer,
+      explanation,
+    }
 
-  if (request.questionType === "Multiple choice") {
-    const choices = normalizeChoices(record.choices)
-    const correctChoice = stringField(record, "correctChoice").toUpperCase()
-    if (!choices || !["A", "B", "C", "D"].includes(correctChoice)) return null
-    result.choices = choices
-    result.correctChoice = correctChoice
-  }
+    if (misconceptionNote) question.misconceptionNote = misconceptionNote
 
-  if (request.questionType === "Short answer" && !markingGuidance) return null
-  if (request.questionType === "Explanation prompt" && keyPoints.length === 0) return null
+    if (request.questionType === "Multiple choice") {
+      const choices = normalizeChoices(questionRecord.choices)
+      if (!choices || !answerMatchesChoices(correctAnswer, choices)) return null
+      question.choices = choices
+    }
 
-  return result
+    return question
+  })
+
+  if (questions.some((question) => question === null)) return null
+  return { questions: questions as PracticeQuestion[] }
 }
 
 export async function POST(request: NextRequest) {
@@ -406,14 +470,14 @@ export async function POST(request: NextRequest) {
 
     if (practiceRequest) {
       const generatedJson = parseGeneratedJson(answer)
-      const practice = validatePracticeResult(generatedJson, practiceRequest)
+      const practiceSet = validatePracticeSet(generatedJson, practiceRequest)
 
-      if (!practice) {
+      if (!practiceSet) {
         return NextResponse.json(
           {
             ok: false,
             validationFailed: true,
-            message: "Generated practice question did not pass validation. Try again.",
+            message: "Generated practice set did not pass validation. Try again.",
           },
           { status: 422 },
         )
@@ -421,7 +485,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         ok: true,
-        practice,
+        practiceSet,
         remaining: limitResult.remaining,
         disclaimer:
           "Generated practice questions are original educational materials and may contain mistakes. Verify important answers independently.",
