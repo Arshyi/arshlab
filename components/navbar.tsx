@@ -27,6 +27,7 @@ import {
   Bot,
   Sparkles,
   BarChart3,
+  FileQuestion,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -53,6 +54,7 @@ const primaryNavItems = [
 const chemistryToolItems = [
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
   { href: "/practice-generator", label: "Practice Generator", icon: Sparkles },
+  { href: "/exam-generator", label: "Exam Generator", icon: FileQuestion },
   { href: "/progress", label: "My Progress", icon: BarChart3 },
   { href: "/bonding-explorer", label: "Bonding Explorer", icon: Waves },
   { href: "/hybridization-builder", label: "Hybridization Builder", icon: Orbit },

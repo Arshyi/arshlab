@@ -5,6 +5,7 @@ const UNAVAILABLE_MESSAGE = "AI Assistant temporarily unavailable"
 const MAX_PROMPT_LENGTH = 1600
 const MAX_OUTPUT_TOKENS = 500
 const PRACTICE_MAX_OUTPUT_TOKENS = 5000
+const EXAM_MAX_OUTPUT_TOKENS = 9000
 const guestUsage = new Map<string, { date: string; count: number }>()
 
 const PRACTICE_TOPICS = [
@@ -37,6 +38,22 @@ const PRACTICE_CURRICULUM_STYLES = [
 ] as const
 
 const PRACTICE_QUESTION_COUNTS = [1, 5, 10, 20] as const
+
+const EXAM_CURRICULA = [
+  "CHEM 121",
+  "IB Chemistry Style",
+  "AP Chemistry Style",
+  "A-Level Chemistry Style",
+  "General First-Year Chemistry",
+] as const
+
+const EXAM_LENGTHS = [10, 20, 30, 50] as const
+
+const EXAM_QUESTION_TYPES = [
+  "Multiple Choice Only",
+  "Mixed Exam",
+  "Short Answer Only",
+] as const
 
 interface AiUsageRow {
   id: string
@@ -73,6 +90,31 @@ interface PracticeSet {
   questions: PracticeQuestion[]
 }
 
+type ExamQuestionType = "multiple_choice" | "short_answer"
+
+interface ExamRequest {
+  curriculum: string
+  examLength: number
+  difficulty: string
+  questionType: string
+  targetTopic?: string
+}
+
+interface ExamQuestion {
+  questionNumber: number
+  type: ExamQuestionType
+  topic: string
+  question: string
+  choices: string[]
+  correctAnswer: string
+  explanation: string
+}
+
+interface GeneratedExam {
+  title: string
+  questions: ExamQuestion[]
+}
+
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10)
 }
@@ -92,6 +134,10 @@ function isAllowedValue(value: unknown, allowed: readonly string[]): value is st
 
 function isAllowedQuestionCount(value: unknown): value is number {
   return typeof value === "number" && PRACTICE_QUESTION_COUNTS.includes(value as 1 | 5 | 10 | 20)
+}
+
+function isAllowedExamLength(value: unknown): value is number {
+  return typeof value === "number" && EXAM_LENGTHS.includes(value as 10 | 20 | 30 | 50)
 }
 
 function unavailable(status = 503) {
@@ -202,6 +248,17 @@ function buildPracticeSystemPrompt(): string {
   ].join(" ")
 }
 
+function buildExamSystemPrompt(): string {
+  return [
+    "You are ARSHLAB's free chemistry exam generator alpha.",
+    "Generate original chemistry practice exams only.",
+    "Do not copy or imitate official exam-board, university, or past-paper questions.",
+    "Do not claim the exam is affiliated with or endorsed by any institution.",
+    "Keep wording clear and avoid ambiguity.",
+    "Return only valid JSON with no markdown.",
+  ].join(" ")
+}
+
 function parsePracticeRequest(body: unknown): PracticeRequest | null {
   const record = body as Record<string, unknown>
   const topic = record.topic
@@ -224,6 +281,33 @@ function parsePracticeRequest(body: unknown): PracticeRequest | null {
   }
 
   return { topic, questionType, difficulty, curriculumStyle, questionCount }
+}
+
+function parseExamRequest(body: unknown): ExamRequest | null {
+  const record = body as Record<string, unknown>
+  const curriculum = record.curriculum
+  const difficulty = record.difficulty
+  const questionType = record.questionType
+  const numericExamLength =
+    typeof record.examLength === "string" ? Number(record.examLength) : record.examLength
+  const targetTopic = typeof record.targetTopic === "string" ? record.targetTopic.trim() : ""
+
+  if (
+    !isAllowedValue(curriculum, EXAM_CURRICULA) ||
+    !isAllowedValue(difficulty, PRACTICE_DIFFICULTIES) ||
+    !isAllowedValue(questionType, EXAM_QUESTION_TYPES) ||
+    !isAllowedExamLength(numericExamLength)
+  ) {
+    return null
+  }
+
+  return {
+    curriculum,
+    examLength: numericExamLength,
+    difficulty,
+    questionType,
+    ...(targetTopic ? { targetTopic } : {}),
+  }
 }
 
 function topicGuidance(topic: string): string {
@@ -264,6 +348,35 @@ function buildPracticePrompt(request: PracticeRequest): string {
     "Return this exact top-level shape:",
     '{"questions":[{"id":"q1","topic":"...","questionType":"...","difficulty":"...","curriculumStyle":"...","question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
     "For non-multiple-choice questions, use an empty choices array and put the expected answer in correctAnswer.",
+  ].join("\n")
+}
+
+function buildExamPrompt(request: ExamRequest): string {
+  const typeRule =
+    request.questionType === "Multiple Choice Only"
+      ? "Every question must have type multiple_choice."
+      : request.questionType === "Short Answer Only"
+        ? "Every question must have type short_answer."
+        : "Use a useful mix of multiple_choice and short_answer questions."
+
+  const targetRule = request.targetTopic
+    ? `This is a recovery exam focused on this topic: ${request.targetTopic}. Keep every question connected to that topic.`
+    : "Cover a balanced spread of core chemistry topics suitable for the selected curriculum."
+
+  return [
+    `Generate exactly ${request.examLength} original chemistry practice exam questions.`,
+    `Curriculum: ${request.curriculum}. Difficulty: ${request.difficulty}. Question type mode: ${request.questionType}.`,
+    targetRule,
+    typeRule,
+    "Questions are AI-generated educational material, not official exam-board or university material.",
+    "Do not mention past papers, official exams, or copied source material.",
+    "For multiple_choice questions, choices must be exactly four strings and correctAnswer must be A, B, C, D, or the exact correct choice text.",
+    "For short_answer questions, choices must be an empty array and correctAnswer must contain the expected answer.",
+    "Every question must include questionNumber, type, question, choices, correctAnswer, explanation.",
+    "You may include a concise topic field for progress tracking.",
+    "Keep explanations concise enough that the whole exam fits in JSON.",
+    "Return valid JSON only in this exact shape:",
+    '{"title":"Practice Midterm","questions":[{"questionNumber":1,"type":"multiple_choice","topic":"Stoichiometry","question":"...","choices":["A. ...","B. ...","C. ...","D. ..."],"correctAnswer":"A","explanation":"..."}]}',
   ].join("\n")
 }
 
@@ -367,6 +480,87 @@ function validatePracticeSet(data: unknown, request: PracticeRequest): PracticeS
   return { questions: questions as PracticeQuestion[] }
 }
 
+function normalizeExamChoices(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null
+  const choices = value.map((choice) => {
+    if (typeof choice === "string") return choice.trim()
+    if (choice && typeof choice === "object") {
+      const record = choice as Record<string, unknown>
+      const label = stringField(record, "label")
+      const text = stringField(record, "text")
+      return [label, text].filter(Boolean).join(". ").trim()
+    }
+    return ""
+  })
+
+  if (choices.some((choice) => !choice)) return null
+  return choices
+}
+
+function examAnswerMatchesChoices(correctAnswer: string, choices: string[]): boolean {
+  const normalizedAnswer = correctAnswer.trim().toLowerCase()
+  return choices.some((choice, index) => {
+    const label = String.fromCharCode(65 + index).toLowerCase()
+    const normalizedChoice = choice.trim().toLowerCase()
+    const withoutLabel = normalizedChoice.replace(/^[a-d][.)]\s*/i, "")
+    return (
+      normalizedAnswer === label ||
+      normalizedAnswer === normalizedChoice ||
+      normalizedAnswer === withoutLabel ||
+      normalizedAnswer === `${label}. ${withoutLabel}`
+    )
+  })
+}
+
+function validateGeneratedExam(data: unknown, request: ExamRequest): GeneratedExam | null {
+  if (!data || typeof data !== "object") return null
+  const record = data as Record<string, unknown>
+  const title = stringField(record, "title") || "Practice Exam"
+  const rawQuestions = Array.isArray(record.questions) ? record.questions : null
+
+  if (!rawQuestions || rawQuestions.length !== request.examLength) return null
+
+  const questions = rawQuestions.map((item, index) => {
+    if (!item || typeof item !== "object") return null
+    const questionRecord = item as Record<string, unknown>
+    const rawType = stringField(questionRecord, "type")
+    const type: ExamQuestionType =
+      rawType === "multiple_choice" || rawType === "short_answer"
+        ? rawType
+        : request.questionType === "Short Answer Only"
+          ? "short_answer"
+          : "multiple_choice"
+
+    if (request.questionType === "Multiple Choice Only" && type !== "multiple_choice") return null
+    if (request.questionType === "Short Answer Only" && type !== "short_answer") return null
+
+    const question = stringField(questionRecord, "question")
+    const correctAnswer = stringField(questionRecord, "correctAnswer") || stringField(questionRecord, "answer")
+    const explanation = stringField(questionRecord, "explanation")
+    const topic = stringField(questionRecord, "topic") || request.targetTopic || "General chemistry exam"
+
+    if (!question || !correctAnswer || !explanation) return null
+
+    const choices = normalizeExamChoices(questionRecord.choices)
+    if (type === "multiple_choice") {
+      if (!choices || choices.length !== 4 || !examAnswerMatchesChoices(correctAnswer, choices)) return null
+    }
+
+    return {
+      questionNumber: index + 1,
+      type,
+      topic,
+      question,
+      choices: type === "multiple_choice" ? choices ?? [] : [],
+      correctAnswer,
+      explanation,
+    }
+  })
+
+  if (questions.some((question) => question === null)) return null
+  return { title, questions: questions as ExamQuestion[] }
+}
+
 export async function POST(request: NextRequest) {
   if (process.env.ARSHLAB_AI_ENABLED !== "true") {
     return unavailable()
@@ -396,22 +590,32 @@ export async function POST(request: NextRequest) {
   const task = typeof (body as { task?: unknown }).task === "string"
     ? (body as { task: string }).task
     : "assistant"
+  if (!["assistant", "practice-generator", "exam-generator"].includes(task)) {
+    return NextResponse.json({ ok: false, message: "Invalid AI task." }, { status: 400 })
+  }
+
   const practiceRequest = task === "practice-generator" ? parsePracticeRequest(body) : null
+  const examRequest = task === "exam-generator" ? parseExamRequest(body) : null
   if (task === "practice-generator" && !practiceRequest) {
     return NextResponse.json({ ok: false, message: "Invalid practice generator request." }, { status: 400 })
   }
+  if (task === "exam-generator" && !examRequest) {
+    return NextResponse.json({ ok: false, message: "Invalid exam generator request." }, { status: 400 })
+  }
 
-  const prompt = practiceRequest
-    ? buildPracticePrompt(practiceRequest)
-    : typeof (body as { prompt?: unknown }).prompt === "string"
-      ? (body as { prompt: string }).prompt.trim()
-      : ""
+  const prompt = examRequest
+    ? buildExamPrompt(examRequest)
+    : practiceRequest
+      ? buildPracticePrompt(practiceRequest)
+      : typeof (body as { prompt?: unknown }).prompt === "string"
+        ? (body as { prompt: string }).prompt.trim()
+        : ""
 
   if (!prompt) {
     return NextResponse.json({ ok: false, message: "Enter a chemistry question first." }, { status: 400 })
   }
 
-  if (!practiceRequest && prompt.length > MAX_PROMPT_LENGTH) {
+  if (!practiceRequest && !examRequest && prompt.length > MAX_PROMPT_LENGTH) {
     return NextResponse.json(
       { ok: false, message: `Prompt is too long. Keep it under ${MAX_PROMPT_LENGTH} characters.` },
       { status: 400 },
@@ -447,10 +651,21 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: practiceRequest ? buildPracticeSystemPrompt() : buildSystemPrompt() },
+          {
+            role: "system",
+            content: examRequest
+              ? buildExamSystemPrompt()
+              : practiceRequest
+                ? buildPracticeSystemPrompt()
+                : buildSystemPrompt(),
+          },
           { role: "user", content: prompt },
         ],
-        max_tokens: practiceRequest ? PRACTICE_MAX_OUTPUT_TOKENS : MAX_OUTPUT_TOKENS,
+        max_tokens: examRequest
+          ? EXAM_MAX_OUTPUT_TOKENS
+          : practiceRequest
+            ? PRACTICE_MAX_OUTPUT_TOKENS
+            : MAX_OUTPUT_TOKENS,
         temperature: 0.4,
       }),
     })
@@ -470,6 +685,30 @@ export async function POST(request: NextRequest) {
         : ""
 
     if (!answer) return unavailable()
+
+    if (examRequest) {
+      const generatedJson = parseGeneratedJson(answer)
+      const exam = validateGeneratedExam(generatedJson, examRequest)
+
+      if (!exam) {
+        return NextResponse.json(
+          {
+            ok: false,
+            validationFailed: true,
+            message: "Generated exam did not pass validation. Try again.",
+          },
+          { status: 422 },
+        )
+      }
+
+      return NextResponse.json({
+        ok: true,
+        exam,
+        remaining: limitResult.remaining,
+        disclaimer:
+          "Questions are AI-generated educational material. Verify important answers independently.",
+      })
+    }
 
     if (practiceRequest) {
       const generatedJson = parseGeneratedJson(answer)

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit } from "lucide-react"
+import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -50,6 +50,12 @@ const features = [
     title: "Practice Generator",
     description: "Generate original chemistry practice questions with answer reveal, explanations, and validation guardrails.",
     href: "/practice-generator",
+  },
+  {
+    icon: FileQuestion,
+    title: "Exam Generator",
+    description: "Generate full chemistry practice exams with hidden answers, explanations, and self-marked progress.",
+    href: "/exam-generator",
   },
   {
     icon: Waves,

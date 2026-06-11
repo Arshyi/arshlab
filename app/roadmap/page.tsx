@@ -17,6 +17,7 @@ const completed = [
   "Hybridization Builder Alpha",
   "AI Chemistry Assistant Alpha",
   "Practice Generator Plus",
+  "Exam Generator Alpha",
 ]
 
 const inDevelopment = [
@@ -161,7 +162,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v2.1.1 - Practice Generator Plus
+          ARSHLAB v2.2.0 - Exam Generator Alpha
         </motion.p>
       </div>
     </div>

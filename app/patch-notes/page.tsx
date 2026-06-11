@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "2.1.1",
+    version: "2.2.0",
     date: "Current",
+    status: "released",
+    title: "Exam Generator Alpha",
+    changes: [
+      "Added full AI-generated chemistry practice exams",
+      "Added curriculum, length, difficulty, and question-type controls",
+      "Added validated exam JSON generation",
+      "Added answer and explanation reveal controls for exam questions",
+      "Added copy entire exam and copy answer key actions",
+      "Integrated exam self-marking with practice progress",
+      "Added recovery exam generation from weak-topic detection",
+      "Preserved free-model-only AI guardrails",
+    ],
+  },
+  {
+    version: "2.1.1",
+    date: "Previous",
     status: "released",
     title: "Practice Generator Plus",
     changes: [
