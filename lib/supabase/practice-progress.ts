@@ -2,6 +2,7 @@
 
 import type { SupabaseClient, User } from "@supabase/supabase-js"
 import { createClient } from "./client"
+import { inferSubtopicForTopic } from "@/lib/learning/subtopic-registry"
 
 export interface PracticeProgressEntry {
   id: string
@@ -86,7 +87,7 @@ function mapProgressRow(row: PracticeProgressRow): PracticeProgressEntry {
     id: row.id,
     userId: row.user_id,
     topic: row.topic,
-    subtopic: row.subtopic ?? "General",
+    subtopic: inferSubtopicForTopic(row.topic, "", row.subtopic ?? undefined),
     difficulty: row.difficulty,
     questionType: row.question_type ?? "Practice",
     correct: row.correct,
@@ -99,7 +100,7 @@ function mapConceptRow(row: ConceptProgressRow): ConceptProgressEntry {
     id: row.id,
     userId: row.user_id,
     topic: row.topic,
-    subtopic: row.subtopic,
+    subtopic: inferSubtopicForTopic(row.topic, "", row.subtopic),
     attempted: row.attempted,
     correct: row.correct,
     mastery: row.mastery,
@@ -180,7 +181,7 @@ export async function addPracticeProgress(input: {
       error: auth.error,
     }
   }
-  const subtopic = cleanMetadata(input.subtopic, "General")
+  const subtopic = inferSubtopicForTopic(input.topic, "", cleanMetadata(input.subtopic, ""))
   const questionType = cleanMetadata(input.questionType, "Practice")
 
   const { data, error } = await auth.data.supabase

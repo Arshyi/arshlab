@@ -180,13 +180,28 @@ function getMostImprovedTopic(entries: PracticeProgressEntry[]): { topic: string
 }
 
 function conceptRowsToStats(rows: ConceptProgressEntry[]): LearningConceptStats[] {
-  return rows.map((row) => ({
+  const groups = new Map<string, { topic: string; subtopic: string; attempted: number; correct: number }>()
+
+  for (const row of rows) {
+    const key = `${row.topic}::${row.subtopic}`
+    const current = groups.get(key) ?? {
+      topic: row.topic,
+      subtopic: row.subtopic,
+      attempted: 0,
+      correct: 0,
+    }
+    current.attempted += row.attempted
+    current.correct += row.correct
+    groups.set(key, current)
+  }
+
+  return Array.from(groups.values()).map((row) => ({
     topic: row.topic,
     subtopic: row.subtopic,
     attempted: row.attempted,
     correct: row.correct,
     missed: row.attempted - row.correct,
-    mastery: row.mastery,
+    mastery: percentage(row.correct, row.attempted),
   }))
 }
 

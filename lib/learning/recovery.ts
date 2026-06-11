@@ -1,8 +1,11 @@
+import { inferSubtopicForTopic } from "./subtopic-registry"
+
 export const RECOVERY_TOPICS = [
   "Functional group identification",
   "Hybridization",
   "VSEPR geometry",
   "Periodic trends",
+  "Thermodynamics",
   "Electron configuration",
   "IR spectroscopy peak identification",
 ] as const
@@ -89,7 +92,7 @@ export function calculateConceptStats(entries: ProgressLikeEntry[]): LearningCon
   const groups = new Map<string, { topic: string; subtopic: string; attempted: number; correct: number }>()
 
   for (const entry of entries) {
-    const subtopic = entry.subtopic?.trim() || "General"
+    const subtopic = inferSubtopicForTopic(entry.topic, "", entry.subtopic)
     const key = `${entry.topic}::${subtopic}`
     const current = groups.get(key) ?? {
       topic: entry.topic,

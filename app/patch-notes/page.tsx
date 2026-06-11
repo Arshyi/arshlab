@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "2.5.0",
+    version: "2.5.1",
     date: "Current",
+    status: "released",
+    title: "Automatic Subtopic Classification",
+    changes: [
+      "Added a shared chemistry topic-to-subtopic registry",
+      "Added required AI question subtopic metadata for practice, study, recovery, and exam generation",
+      "Added server-side subtopic inference when generated output omits metadata",
+      "Replaced known-topic General fallbacks with meaningful chemistry concepts",
+      "Added Thermodynamics subtopics including Enthalpy, Entropy, Gibbs Free Energy, Hess Law, and Calorimetry",
+      "Improved Most Missed Concepts so concept mastery uses specific subtopics",
+      "Improved Recovery Mode targeting from weak subtopics instead of generic topic buckets",
+      "Preserved existing free-model-only AI guardrails",
+    ],
+  },
+  {
+    version: "2.5.0",
+    date: "Previous",
     status: "released",
     title: "Mistake Analytics & Mastery Tracking",
     changes: [

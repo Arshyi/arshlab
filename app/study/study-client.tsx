@@ -54,6 +54,7 @@ const topics = [
   "Hybridization",
   "VSEPR geometry",
   "Periodic trends",
+  "Thermodynamics",
   "Electron configuration",
   "IR spectroscopy peak identification",
 ]

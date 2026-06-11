@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { getSubtopicsForTopic, inferSubtopicForTopic } from "@/lib/learning/subtopic-registry"
 
 const UNAVAILABLE_MESSAGE = "AI Assistant temporarily unavailable"
 const MAX_PROMPT_LENGTH = 1600
@@ -13,6 +14,7 @@ const PRACTICE_TOPICS = [
   "Hybridization",
   "VSEPR geometry",
   "Periodic trends",
+  "Thermodynamics",
   "Electron configuration",
   "IR spectroscopy peak identification",
 ] as const
@@ -386,6 +388,8 @@ function topicGuidance(topic: string): string {
       return "Seed concepts: linear, trigonal planar, tetrahedral, trigonal pyramidal, bent, trigonal bipyramidal, octahedral, square planar."
     case "Periodic trends":
       return "Seed concepts: atomic radius, electronegativity, first ionization energy, electron affinity; compare across periods and groups."
+    case "Thermodynamics":
+      return "Seed concepts: enthalpy, entropy, Gibbs free energy, Hess Law, calorimetry, spontaneity, and heat transfer."
     case "Electron configuration":
       return "Seed concepts: noble gas shorthand, orbital filling, Aufbau/Hund/Pauli, and common exceptions such as Cr and Cu when appropriate."
     case "IR spectroscopy peak identification":
@@ -395,40 +399,8 @@ function topicGuidance(topic: string): string {
   }
 }
 
-function fallbackSubtopics(topic: string): string[] {
-  switch (topic) {
-    case "Functional group identification":
-      return ["Alcohol identification", "Carbonyl identification", "Carboxylic acid derivatives", "Amines and amides"]
-    case "Hybridization":
-      return ["sp hybridization", "sp2 hybridization", "sp3 hybridization", "Lone pairs and geometry"]
-    case "VSEPR geometry":
-      return ["Electron domains", "Molecular geometry", "Lone pair repulsion", "Bond angles"]
-    case "Periodic trends":
-      return ["Atomic Radius", "Effective Nuclear Charge", "Shielding", "Ionization Energy", "Electronegativity"]
-    case "Electron configuration":
-      return ["Aufbau Principle", "Hund's Rule", "Noble Gas Shorthand", "d-block Exceptions"]
-    case "IR spectroscopy peak identification":
-      return ["Carbonyl Identification", "O-H Broad Peak", "N-H Stretch", "Fingerprint Region"]
-    default:
-      return ["General"]
-  }
-}
-
-function inferSubtopic(topic: string, questionText = ""): string {
-  const text = questionText.toLowerCase().replace(/[^a-z0-9]/g, "")
-  const candidates = fallbackSubtopics(topic)
-  const match = candidates.find((candidate) =>
-    candidate
-      .toLowerCase()
-      .split(/\s+/)
-      .some((part) => part.length > 3 && text.includes(part.replace(/[^a-z0-9]/g, ""))),
-  )
-
-  if (match) return match
-  return candidates[0] ?? "General"
-}
-
 function buildPracticePrompt(request: PracticeRequest): string {
+  const subtopics = getSubtopicsForTopic(request.topic)
   return [
     `Generate exactly ${request.questionCount} original ${request.questionType} chemistry practice question${request.questionCount === 1 ? "" : "s"}.`,
     `Topic: ${request.topic}. Difficulty: ${request.difficulty}. Curriculum style: ${request.curriculumStyle}.`,
@@ -443,7 +415,7 @@ function buildPracticePrompt(request: PracticeRequest): string {
     "Multiple choice distractors should reflect realistic misconceptions.",
     "For short answer, make the correctAnswer an expected student answer and explain the marking logic in the explanation.",
     "For explanation prompts, make the correctAnswer a concise model explanation and include the most important key points in the explanation.",
-    `Choose a concise subtopic for every question. Suggested subtopics: ${fallbackSubtopics(request.topic).join(", ")}.`,
+    `Every question must include a meaningful subtopic. Allowed subtopics for this topic: ${subtopics.join(", ") || "a concise chemistry concept"}.`,
     "Return valid JSON only, with no markdown and no surrounding prose.",
     "Return this exact top-level shape:",
     '{"questions":[{"id":"q1","topic":"...","subtopic":"...","questionType":"...","difficulty":"...","curriculumStyle":"...","question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
@@ -580,7 +552,7 @@ function validatePracticeSet(data: unknown, request: PracticeRequest): PracticeS
     const misconceptionNote =
       stringField(questionRecord, "misconceptionNote") ||
       stringField(questionRecord, "misconceptionNotes")
-    const subtopic = stringField(questionRecord, "subtopic") || inferSubtopic(request.topic, questionText)
+    const subtopic = inferSubtopicForTopic(request.topic, questionText, stringField(questionRecord, "subtopic"))
 
     if (!questionText || !correctAnswer || !explanation) return null
 
@@ -644,7 +616,11 @@ function validateRecoverySet(data: unknown, request: RecoveryRequest): PracticeS
 
     const choices = normalizeChoices(questionRecord.choices)
     if (!choices || !answerMatchesChoices(correctAnswer, choices)) return null
-    const subtopic = stringField(questionRecord, "subtopic") || slot.weakness || inferSubtopic(slot.topic, questionText)
+    const subtopic = inferSubtopicForTopic(
+      slot.topic,
+      questionText,
+      stringField(questionRecord, "subtopic") || slot.weakness,
+    )
 
     const question: PracticeQuestion = {
       id: stringField(questionRecord, "id") || `recovery-q${index + 1}`,
@@ -725,7 +701,7 @@ function validateGeneratedExam(data: unknown, request: ExamRequest): GeneratedEx
     const correctAnswer = stringField(questionRecord, "correctAnswer") || stringField(questionRecord, "answer")
     const explanation = stringField(questionRecord, "explanation")
     const topic = stringField(questionRecord, "topic") || request.targetTopic || "General chemistry exam"
-    const subtopic = stringField(questionRecord, "subtopic") || inferSubtopic(topic, question)
+    const subtopic = inferSubtopicForTopic(topic, question, stringField(questionRecord, "subtopic"))
 
     if (!question || !correctAnswer || !explanation) return null
 
