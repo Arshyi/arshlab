@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Atom, BookOpen, Bot, Database, Search, GraduationCap, Orbit, Sparkles, FileQuestion } from "lucide-react"
+import { Atom, BookOpen, BookOpenCheck, Bot, Database, Search, GraduationCap, Orbit, Sparkles, FileQuestion } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -15,6 +15,7 @@ import { analytics } from "@/lib/chemistry/database/analytics/tracker"
 
 const LAB_LINKS = [
   { href: "/ai-assistant", label: "AI Chemistry Assistant" },
+  { href: "/study", label: "Study Mode" },
   { href: "/practice-generator", label: "Practice Generator" },
   { href: "/exam-generator", label: "Exam Generator" },
   { href: "/molecule-builder", label: "Molecule Builder" },
@@ -100,6 +101,29 @@ export default function ChemistryHubPage() {
             </Card>
           ))}
         </div>
+
+        <Card className="rounded-2xl mb-8 border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <BookOpenCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Study Mode</h2>
+                <p className="text-sm text-muted-foreground">
+                  Practice one question at a time with immediate feedback, streaks, XP, daily goals,
+                  achievements, and adaptive recovery sets.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/study"
+              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Start Study Mode
+            </Link>
+          </CardContent>
+        </Card>
 
         <Card className="rounded-2xl mb-8 border-primary/20 bg-primary/5">
           <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">

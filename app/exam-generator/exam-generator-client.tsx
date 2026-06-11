@@ -36,6 +36,7 @@ import {
   getPracticeProgress,
   type PracticeProgressEntry,
 } from "@/lib/supabase/practice-progress"
+import { applyProfileReward } from "@/lib/supabase/user-profile"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -172,6 +173,7 @@ export function ExamGeneratorClient() {
   const [revealedAnswers, setRevealedAnswers] = useState<Record<number, boolean>>({})
   const [revealedExplanations, setRevealedExplanations] = useState<Record<number, boolean>>({})
   const [marks, setMarks] = useState<Record<number, MarkStatus>>({})
+  const [examCompletionAwarded, setExamCompletionAwarded] = useState(false)
   const [progressMessage, setProgressMessage] = useState<string | null>(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [guestUsage, setGuestUsage] = useState<GuestUsage>({ date: todayKey(), count: 0 })
@@ -217,6 +219,33 @@ export function ExamGeneratorClient() {
     return { total, correct, missed, attempted, unmarked: Math.max(0, total - attempted), percentage }
   }, [exam, marks])
 
+  useEffect(() => {
+    if (
+      !isLoggedIn ||
+      !exam ||
+      examCompletionAwarded ||
+      score.total === 0 ||
+      score.attempted !== score.total
+    ) {
+      return
+    }
+
+    let cancelled = false
+    applyProfileReward({ xp: 25, completedExams: 1 }).then((result) => {
+      if (cancelled) return
+      setExamCompletionAwarded(true)
+      setProgressMessage(
+        result.ok
+          ? "Exam complete. +25 XP completion bonus awarded."
+          : `Exam complete. Completion XP was not saved: ${result.error}`,
+      )
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [exam, examCompletionAwarded, isLoggedIn, score.attempted, score.total])
+
   async function loadProgress() {
     const result = await getPracticeProgress(200)
     if (result.ok) setProgressEntries(result.data)
@@ -238,6 +267,7 @@ export function ExamGeneratorClient() {
     setRevealedAnswers({})
     setRevealedExplanations({})
     setMarks({})
+    setExamCompletionAwarded(false)
     setRecoveryTopic(targetTopic ?? null)
 
     try {
@@ -286,6 +316,8 @@ export function ExamGeneratorClient() {
   }
 
   async function markQuestion(question: ExamQuestion, status: MarkStatus) {
+    if (marks[question.questionNumber]) return
+
     setMarks((current) => ({ ...current, [question.questionNumber]: status }))
     setProgressMessage(null)
 
@@ -294,14 +326,24 @@ export function ExamGeneratorClient() {
       return
     }
 
+    const isCorrect = status === "correct"
     const result = await addPracticeProgress({
       topic: question.topic || recoveryTopic || "Exam Generator",
       difficulty,
-      correct: status === "correct",
+      correct: isCorrect,
     })
 
     if (result.ok) {
-      setProgressMessage("Progress saved.")
+      if (isCorrect) {
+        const rewardResult = await applyProfileReward({ xp: 10 })
+        setProgressMessage(
+          rewardResult.ok
+            ? "Progress saved. +10 XP awarded."
+            : `Progress saved. XP was not updated: ${rewardResult.error}`,
+        )
+      } else {
+        setProgressMessage("Progress saved.")
+      }
       void loadProgress()
     } else {
       setProgressMessage(`Progress was not saved: ${result.error}`)

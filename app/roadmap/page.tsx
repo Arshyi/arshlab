@@ -18,6 +18,7 @@ const completed = [
   "AI Chemistry Assistant Alpha",
   "Practice Generator Plus",
   "Exam Generator Alpha",
+  "Study Mode & Adaptive Learning",
 ]
 
 const inDevelopment = [
@@ -144,13 +145,13 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <Check className="h-4 w-4" />
                 </div>
-                Hybridization Builder Alpha
+                Study Mode & Adaptive Learning
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: build atoms and orbitals interactively, hybridize s/p orbitals, drag atoms
-                together, and visualize sigma/pi overlap.
+                Now available: guided study sessions, XP, daily goals, topic mastery,
+                achievements, and adaptive recovery recommendations.
               </p>
             </CardContent>
           </Card>
@@ -162,7 +163,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v2.2.0 - Exam Generator Alpha
+          ARSHLAB v2.3.0 - Study Mode & Adaptive Learning
         </motion.p>
       </div>
     </div>

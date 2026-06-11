@@ -18,8 +18,27 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "2.2.0",
+    version: "2.3.0",
     date: "Current",
+    status: "released",
+    title: "Study Mode & Adaptive Learning",
+    changes: [
+      "Added guided Study Mode at /study",
+      "Added one-question-at-a-time study sessions",
+      "Added immediate answer feedback",
+      "Added current streak, remaining questions, and session accuracy",
+      "Added XP and level tracking",
+      "Added daily goal preferences and progress bars",
+      "Added weighted topic mastery calculations",
+      "Added adaptive recovery recommendations for topics below 60% mastery",
+      "Added achievement badges",
+      "Expanded My Progress into Overview, Topics, Achievements, and Recent Activity",
+      "Connected Practice Generator and Exam Generator self-marking to XP rewards",
+    ],
+  },
+  {
+    version: "2.2.0",
+    date: "Previous",
     status: "released",
     title: "Exam Generator Alpha",
     changes: [

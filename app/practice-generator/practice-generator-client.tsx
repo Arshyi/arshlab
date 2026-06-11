@@ -33,6 +33,7 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { addPracticeProgress } from "@/lib/supabase/practice-progress"
+import { applyProfileReward } from "@/lib/supabase/user-profile"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -219,6 +220,7 @@ export function PracticeGeneratorClient() {
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({})
   const [revealedExplanations, setRevealedExplanations] = useState<Record<string, boolean>>({})
   const [marks, setMarks] = useState<Record<string, MarkStatus>>({})
+  const [sessionCompletionAwarded, setSessionCompletionAwarded] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [guestUsage, setGuestUsage] = useState<GuestUsage>({ date: todayKey(), count: 0 })
 
@@ -267,6 +269,33 @@ export function PracticeGeneratorClient() {
     [practiceSet],
   )
 
+  useEffect(() => {
+    if (
+      !isLoggedIn ||
+      !practiceSet ||
+      sessionCompletionAwarded ||
+      score.total === 0 ||
+      score.attempted !== score.total
+    ) {
+      return
+    }
+
+    let cancelled = false
+    applyProfileReward({ xp: 5, completedSessions: 1 }).then((result) => {
+      if (cancelled) return
+      setSessionCompletionAwarded(true)
+      setProgressMessage(
+        result.ok
+          ? "Practice set complete. +5 XP completion bonus awarded."
+          : `Practice set complete. Completion XP was not saved: ${result.error}`,
+      )
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isLoggedIn, practiceSet, score.attempted, score.total, sessionCompletionAwarded])
+
   async function generateQuestionSet() {
     if (loading) return
 
@@ -281,6 +310,7 @@ export function PracticeGeneratorClient() {
     setRevealedAnswers({})
     setRevealedExplanations({})
     setMarks({})
+    setSessionCompletionAwarded(false)
     setCopied(null)
     setProgressMessage(null)
 
@@ -339,6 +369,8 @@ export function PracticeGeneratorClient() {
 
   async function markQuestion(question: PracticeQuestion, status: MarkStatus) {
     const id = question.id
+    if (marks[id]) return
+
     setMarks((current) => ({ ...current, [id]: status }))
     setProgressMessage(null)
 
@@ -347,13 +379,29 @@ export function PracticeGeneratorClient() {
       return
     }
 
+    const isCorrect = status === "correct"
     const result = await addPracticeProgress({
       topic: question.topic,
       difficulty: question.difficulty,
-      correct: status === "correct",
+      correct: isCorrect,
     })
 
-    setProgressMessage(result.ok ? "Progress saved." : `Progress was not saved: ${result.error}`)
+    if (!result.ok) {
+      setProgressMessage(`Progress was not saved: ${result.error}`)
+      return
+    }
+
+    if (!isCorrect) {
+      setProgressMessage("Progress saved.")
+      return
+    }
+
+    const rewardResult = await applyProfileReward({ xp: 10 })
+    setProgressMessage(
+      rewardResult.ok
+        ? "Progress saved. +10 XP awarded."
+        : `Progress saved. XP was not updated: ${rewardResult.error}`,
+    )
   }
 
   return (
