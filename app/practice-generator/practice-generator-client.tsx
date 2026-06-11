@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/client"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
+import { addPracticeProgress } from "@/lib/supabase/practice-progress"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -65,7 +66,7 @@ const curriculumStyles = [
   "CHEM 121 / First Year Chemistry",
 ]
 
-const questionCounts = ["1", "3", "5"]
+const questionCounts = ["1", "5", "10", "20"]
 
 interface GuestUsage {
   date: string
@@ -83,7 +84,7 @@ interface PracticeQuestion {
   questionType: string
   difficulty: string
   curriculumStyle: string
-  prompt: string
+  question: string
   choices?: PracticeChoice[]
   correctAnswer: string
   explanation: string
@@ -134,7 +135,7 @@ function formatQuestion(question: PracticeQuestion, index: number): string {
   const choices = question.choices?.length
     ? `\n${question.choices.map((choice) => `${choice.label}. ${choice.text}`).join("\n")}`
     : ""
-  return `Question ${index + 1}: ${question.prompt}${choices}`
+  return `Question ${index + 1}: ${question.question}${choices}`
 }
 
 function formatSolution(question: PracticeQuestion, index: number): string {
@@ -190,13 +191,13 @@ function qualityWarnings(question: PracticeQuestion, index: number): string[] {
     warnings.push(`Question ${index + 1}: no misconception note was provided.`)
   }
 
-  const promptWords = wordCount(question.prompt)
+  const promptWords = wordCount(question.question)
   const genericPhrases = [
     "which of the following is correct",
     "explain this concept",
     "what is chemistry",
   ]
-  if (promptWords < 8 || genericPhrases.some((phrase) => normalizeText(question.prompt).includes(phrase))) {
+  if (promptWords < 8 || genericPhrases.some((phrase) => normalizeText(question.question).includes(phrase))) {
     warnings.push(`Question ${index + 1}: prompt may be too generic.`)
   }
 
@@ -212,6 +213,7 @@ export function PracticeGeneratorClient() {
   const [practiceSet, setPracticeSet] = useState<PracticeSet | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [progressMessage, setProgressMessage] = useState<string | null>(null)
   const [remaining, setRemaining] = useState<number | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({})
@@ -222,6 +224,12 @@ export function PracticeGeneratorClient() {
 
   useEffect(() => {
     setGuestUsage(readGuestUsage())
+
+    const params = new URLSearchParams(window.location.search)
+    const requestedTopic = params.get("topic")
+    if (requestedTopic && topics.includes(requestedTopic)) {
+      setTopic(requestedTopic)
+    }
 
     if (!isSupabaseConfigured()) return
     const supabase = createClient()
@@ -274,6 +282,7 @@ export function PracticeGeneratorClient() {
     setRevealedExplanations({})
     setMarks({})
     setCopied(null)
+    setProgressMessage(null)
 
     try {
       const response = await fetch("/api/ai", {
@@ -328,8 +337,23 @@ export function PracticeGeneratorClient() {
     setRevealedExplanations((current) => ({ ...current, [id]: !current[id] }))
   }
 
-  function markQuestion(id: string, status: MarkStatus) {
+  async function markQuestion(question: PracticeQuestion, status: MarkStatus) {
+    const id = question.id
     setMarks((current) => ({ ...current, [id]: status }))
+    setProgressMessage(null)
+
+    if (!isLoggedIn) {
+      setProgressMessage("Local score updated. Sign in to save practice progress permanently.")
+      return
+    }
+
+    const result = await addPracticeProgress({
+      topic: question.topic,
+      difficulty: question.difficulty,
+      correct: status === "correct",
+    })
+
+    setProgressMessage(result.ok ? "Progress saved." : `Progress was not saved: ${result.error}`)
   }
 
   return (
@@ -346,7 +370,7 @@ export function PracticeGeneratorClient() {
             </div>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Generate one, three, or five focused practice questions, reveal answers when ready, and self-mark the session.
+            Generate 1, 5, 10, or 20 focused practice questions, reveal answers when ready, and self-mark the session.
           </p>
         </motion.div>
 
@@ -413,6 +437,14 @@ export function PracticeGeneratorClient() {
 
             {practiceSet && (
               <>
+                {progressMessage && (
+                  <Alert className="rounded-2xl border-teal-500/30 bg-teal-500/10">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <AlertTitle>Progress</AlertTitle>
+                    <AlertDescription>{progressMessage}</AlertDescription>
+                  </Alert>
+                )}
+
                 <Card className="rounded-2xl border-primary/20 bg-primary/5">
                   <CardHeader>
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -475,7 +507,7 @@ export function PracticeGeneratorClient() {
                           copied={copied}
                           onToggleAnswer={() => toggleAnswer(question.id)}
                           onToggleExplanation={() => toggleExplanation(question.id)}
-                          onMark={(status) => markQuestion(question.id, status)}
+                          onMark={(status) => void markQuestion(question, status)}
                           onCopyQuestion={() => copyText(`question-${question.id}`, formatQuestion(question, index))}
                           onCopySolution={() => copyText(`solution-${question.id}`, formatSolution(question, index))}
                         />
@@ -517,7 +549,7 @@ export function PracticeGeneratorClient() {
                 <p>Uses the same server-side OpenRouter route as the AI Chemistry Assistant.</p>
                 <p>Only configured free models are allowed, and the page never sends a model ID.</p>
                 <p>One generated set counts as one AI request.</p>
-                <p>No generated questions, answers, or scores are saved in this alpha.</p>
+                <p>Signed-in self-marked progress is saved with Supabase RLS. Generated question text is not stored.</p>
                 <p>No official exam-board or copied past-paper material.</p>
               </CardContent>
             </Card>
@@ -600,7 +632,7 @@ function QuestionCard({
         )}
       </div>
 
-      <p className="break-words text-base leading-relaxed text-foreground">{question.prompt}</p>
+      <p className="break-words text-base leading-relaxed text-foreground">{question.question}</p>
 
       {question.choices?.length ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">

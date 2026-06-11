@@ -24,7 +24,7 @@ const sections = [
   },
   {
     title: "AI Assistant and Practice Generator Alpha",
-    body: "When the AI Assistant or Practice Generator is enabled, AI questions may be sent to the configured free AI provider through ARSHLAB's server route. AI conversations and generated practice questions are not saved in this alpha.",
+    body: "When the AI Assistant or Practice Generator is enabled, AI questions may be sent to the configured free AI provider through ARSHLAB's server route. AI conversations and generated practice questions are not saved in this alpha. Signed-in practice progress may save topic, difficulty, whether the user marked an answer correct, and timestamp.",
   },
   {
     title: "Personal Data",

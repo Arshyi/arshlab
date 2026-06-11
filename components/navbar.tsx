@@ -26,6 +26,7 @@ import {
   LogOut,
   Bot,
   Sparkles,
+  BarChart3,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -52,6 +53,7 @@ const primaryNavItems = [
 const chemistryToolItems = [
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
   { href: "/practice-generator", label: "Practice Generator", icon: Sparkles },
+  { href: "/progress", label: "My Progress", icon: BarChart3 },
   { href: "/bonding-explorer", label: "Bonding Explorer", icon: Waves },
   { href: "/hybridization-builder", label: "Hybridization Builder", icon: Orbit },
   { href: "/functional-groups", label: "Functional Groups", icon: Layers },
@@ -169,7 +171,7 @@ export function Navbar() {
             {userEmail ? (
               <AccountDropdown
                 email={userEmail}
-                active={isActivePath("/account") || isActivePath("/history")}
+                active={isActivePath("/account") || isActivePath("/history") || isActivePath("/progress")}
                 loggingOut={loggingOut}
                 onLogout={handleLogout}
               />
@@ -229,6 +231,13 @@ export function Navbar() {
                       icon={History}
                       label="History"
                       active={isActivePath("/history")}
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
+                    <MobileAccountLink
+                      href="/progress"
+                      icon={BarChart3}
+                      label="My Progress"
+                      active={isActivePath("/progress")}
                       onClick={() => setMobileMenuOpen(false)}
                     />
                     <button
@@ -365,6 +374,12 @@ function AccountDropdown({
           <Link href="/history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
             <span>History</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/progress" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span>My Progress</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem

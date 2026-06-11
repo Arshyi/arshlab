@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 const UNAVAILABLE_MESSAGE = "AI Assistant temporarily unavailable"
 const MAX_PROMPT_LENGTH = 1600
 const MAX_OUTPUT_TOKENS = 500
-const PRACTICE_MAX_OUTPUT_TOKENS = 1800
+const PRACTICE_MAX_OUTPUT_TOKENS = 5000
 const guestUsage = new Map<string, { date: string; count: number }>()
 
 const PRACTICE_TOPICS = [
@@ -36,7 +36,7 @@ const PRACTICE_CURRICULUM_STYLES = [
   "CHEM 121 / First Year Chemistry",
 ] as const
 
-const PRACTICE_QUESTION_COUNTS = [1, 3, 5] as const
+const PRACTICE_QUESTION_COUNTS = [1, 5, 10, 20] as const
 
 interface AiUsageRow {
   id: string
@@ -62,8 +62,8 @@ interface PracticeQuestion {
   questionType: string
   difficulty: string
   curriculumStyle: string
-  prompt: string
-  choices?: PracticeChoice[]
+  question: string
+  choices: PracticeChoice[]
   correctAnswer: string
   explanation: string
   misconceptionNote?: string
@@ -91,7 +91,7 @@ function isAllowedValue(value: unknown, allowed: readonly string[]): value is st
 }
 
 function isAllowedQuestionCount(value: unknown): value is number {
-  return typeof value === "number" && PRACTICE_QUESTION_COUNTS.includes(value as 1 | 3 | 5)
+  return typeof value === "number" && PRACTICE_QUESTION_COUNTS.includes(value as 1 | 5 | 10 | 20)
 }
 
 function unavailable(status = 503) {
@@ -210,13 +210,15 @@ function parsePracticeRequest(body: unknown): PracticeRequest | null {
   const curriculumStyle = record.curriculumStyle
   const numericQuestionCount =
     typeof record.questionCount === "string" ? Number(record.questionCount) : record.questionCount
-  const questionCount = isAllowedQuestionCount(numericQuestionCount) ? numericQuestionCount : 1
+  const questionCount =
+    typeof numericQuestionCount === "undefined" ? 1 : isAllowedQuestionCount(numericQuestionCount) ? numericQuestionCount : null
 
   if (
     !isAllowedValue(topic, PRACTICE_TOPICS) ||
     !isAllowedValue(questionType, PRACTICE_QUESTION_TYPES) ||
     !isAllowedValue(difficulty, PRACTICE_DIFFICULTIES) ||
-    !isAllowedValue(curriculumStyle, PRACTICE_CURRICULUM_STYLES)
+    !isAllowedValue(curriculumStyle, PRACTICE_CURRICULUM_STYLES) ||
+    questionCount === null
   ) {
     return null
   }
@@ -260,7 +262,7 @@ function buildPracticePrompt(request: PracticeRequest): string {
     "For explanation prompts, make the correctAnswer a concise model explanation and include the most important key points in the explanation.",
     "Return valid JSON only, with no markdown and no surrounding prose.",
     "Return this exact top-level shape:",
-    '{"questions":[{"id":"q1","topic":"...","questionType":"...","difficulty":"...","curriculumStyle":"...","prompt":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
+    '{"questions":[{"id":"q1","topic":"...","questionType":"...","difficulty":"...","curriculumStyle":"...","question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
     "For non-multiple-choice questions, use an empty choices array and put the expected answer in correctAnswer.",
   ].join("\n")
 }
@@ -326,7 +328,7 @@ function validatePracticeSet(data: unknown, request: PracticeRequest): PracticeS
   const questions = rawQuestions.map((item, index) => {
     if (!item || typeof item !== "object") return null
     const questionRecord = item as Record<string, unknown>
-    const prompt = stringField(questionRecord, "prompt") || stringField(questionRecord, "question")
+    const questionText = stringField(questionRecord, "question") || stringField(questionRecord, "prompt")
     const correctAnswer =
       stringField(questionRecord, "correctAnswer") ||
       stringField(questionRecord, "answer") ||
@@ -336,7 +338,7 @@ function validatePracticeSet(data: unknown, request: PracticeRequest): PracticeS
       stringField(questionRecord, "misconceptionNote") ||
       stringField(questionRecord, "misconceptionNotes")
 
-    if (!prompt || !correctAnswer || !explanation) return null
+    if (!questionText || !correctAnswer || !explanation) return null
 
     const question: PracticeQuestion = {
       id: stringField(questionRecord, "id") || `q${index + 1}`,
@@ -344,7 +346,8 @@ function validatePracticeSet(data: unknown, request: PracticeRequest): PracticeS
       questionType: request.questionType,
       difficulty: request.difficulty,
       curriculumStyle: request.curriculumStyle,
-      prompt,
+      question: questionText,
+      choices: [],
       correctAnswer,
       explanation,
     }
