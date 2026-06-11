@@ -40,6 +40,7 @@ import {
   updateDailyGoal,
   type UserProfile,
 } from "@/lib/supabase/user-profile"
+import { detectWeakTopics } from "@/lib/learning/recovery"
 
 interface TopicStats {
   topic: string
@@ -217,7 +218,7 @@ export function ProgressClient() {
   const missed = total - correct
   const overallAccuracy = percentage(correct, total)
   const topicStats = useMemo(() => getTopicStats(entries), [entries])
-  const weakTopics = topicStats.filter((stat) => stat.total >= 3 && stat.mastery < 60).slice(0, 3)
+  const recoveryTopics = useMemo(() => detectWeakTopics(entries).slice(0, 3), [entries])
   const recent = entries.slice(0, 16)
   const achievements = useMemo(() => getAchievements(entries, profile), [entries, profile])
   const unlockedAchievements = achievements.filter((achievement) => achievement.unlocked).length
@@ -282,22 +283,18 @@ export function ProgressClient() {
           </Alert>
         )}
 
-        {weakTopics.length > 0 && (
+        {recoveryTopics.length > 0 && (
           <Alert className="mb-6 rounded-2xl border-orange-500/30 bg-orange-500/10">
             <Target className="h-4 w-4" />
-            <AlertTitle>Recommended Practice</AlertTitle>
+            <AlertTitle>Recommended Recovery</AlertTitle>
             <AlertDescription className="space-y-3">
               <p>
-                You are struggling with: {weakTopics.map((topic) => topic.topic).join(", ")}.
+                Weak topics detected: {recoveryTopics.map((topic) => `${topic.topic} (${topic.accuracy}%)`).join(", ")}.
               </p>
               <div className="flex flex-wrap gap-2">
-                {weakTopics.map((topic) => (
-                  <Button key={topic.topic} asChild className="rounded-xl">
-                    <Link href={`/study?topic=${encodeURIComponent(topic.topic)}`}>
-                      Generate targeted recovery set
-                    </Link>
-                  </Button>
-                ))}
+                <Button asChild className="rounded-xl">
+                  <Link href="/recovery">Start Recovery</Link>
+                </Button>
               </div>
             </AlertDescription>
           </Alert>
@@ -429,28 +426,26 @@ export function ProgressClient() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {weakTopics.length > 0 ? (
-                    weakTopics.map((stat) => (
+                  {recoveryTopics.length > 0 ? (
+                    recoveryTopics.map((stat) => (
                       <div key={stat.topic} className="rounded-xl border border-border bg-secondary/20 p-4">
                         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                           <div>
                             <p className="font-medium">You seem to be struggling with {stat.topic}.</p>
                             <p className="text-sm text-muted-foreground">
-                              Mastery is {stat.mastery}% across recent weighted attempts.
+                              Accuracy is {stat.accuracy}% across {stat.attempted} attempts.
                             </p>
                           </div>
                           <Button asChild className="rounded-xl">
-                            <Link href={`/study?topic=${encodeURIComponent(stat.topic)}`}>
-                              Generate targeted recovery set
-                            </Link>
+                            <Link href="/recovery">Start Recovery</Link>
                           </Button>
                         </div>
-                        <Progress value={stat.mastery} />
+                        <Progress value={stat.accuracy} />
                       </div>
                     ))
                   ) : (
                     <p className="rounded-xl border border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
-                      No weak topics detected yet. ARSHLAB will recommend recovery practice when mastery drops below 60%.
+                      No weak topics detected yet. ARSHLAB will recommend Recovery Mode when a topic has at least five attempts and accuracy below 60%.
                     </p>
                   )}
                 </CardContent>

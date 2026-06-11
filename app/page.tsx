@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion } from "lucide-react"
+import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -56,6 +56,12 @@ const features = [
     title: "Study Mode",
     description: "Work through adaptive chemistry sessions one question at a time with streaks, XP, mastery, and feedback.",
     href: "/study",
+  },
+  {
+    icon: Target,
+    title: "Recovery Mode",
+    description: "Automatically generate targeted 10-question recovery sessions from weak topic detection.",
+    href: "/recovery",
   },
   {
     icon: FileQuestion,

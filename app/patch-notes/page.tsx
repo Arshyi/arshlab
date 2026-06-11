@@ -18,8 +18,26 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "2.3.0",
+    version: "2.4.0",
     date: "Current",
+    status: "released",
+    title: "Recovery Mode",
+    changes: [
+      "Added Recovery Mode at /recovery",
+      "Added weak topic detection from practice_progress records",
+      "Flagged weak topics with at least five attempts and below 60% accuracy",
+      "Added automatic 10-question recovery session generation",
+      "Added 70/20/10 recovery distribution for two weak topics",
+      "Added 90/10 recovery distribution for one weak topic",
+      "Added adaptive difficulty selection from mastery percentage",
+      "Added before/after/improvement recovery summaries",
+      "Added Recommended Recovery integration on My Progress",
+      "Preserved existing free-model-only AI guardrails",
+    ],
+  },
+  {
+    version: "2.3.0",
+    date: "Previous",
     status: "released",
     title: "Study Mode & Adaptive Learning",
     changes: [

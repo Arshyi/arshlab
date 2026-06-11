@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Atom, BookOpen, BookOpenCheck, Bot, Database, Search, GraduationCap, Orbit, Sparkles, FileQuestion } from "lucide-react"
+import { Atom, BookOpen, BookOpenCheck, Bot, Database, Search, GraduationCap, Orbit, Sparkles, FileQuestion, Target } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -16,6 +16,7 @@ import { analytics } from "@/lib/chemistry/database/analytics/tracker"
 const LAB_LINKS = [
   { href: "/ai-assistant", label: "AI Chemistry Assistant" },
   { href: "/study", label: "Study Mode" },
+  { href: "/recovery", label: "Recovery Mode" },
   { href: "/practice-generator", label: "Practice Generator" },
   { href: "/exam-generator", label: "Exam Generator" },
   { href: "/molecule-builder", label: "Molecule Builder" },
@@ -121,6 +122,28 @@ export default function ChemistryHubPage() {
               className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
             >
               Start Study Mode
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl mb-8 border-orange-500/20 bg-orange-500/5">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <Target className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Recovery Mode</h2>
+                <p className="text-sm text-muted-foreground">
+                  Detect weak topics from saved practice progress and generate adaptive 10-question recovery sessions.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/recovery"
+              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Start Recovery
             </Link>
           </CardContent>
         </Card>

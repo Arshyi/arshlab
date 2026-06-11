@@ -44,6 +44,7 @@ import {
   getUserProfile,
   type UserProfile,
 } from "@/lib/supabase/user-profile"
+import { detectWeakTopics } from "@/lib/learning/recovery"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -241,8 +242,7 @@ export function StudyClient() {
   const dailyGoal = profile?.dailyGoal ?? 10
   const dailyProgress = Math.min(100, Math.round((dailyAttempted / dailyGoal) * 100))
   const level = getLevelFromXp(profile?.xp ?? 0)
-  const topicMastery = useMemo(() => getTopicMastery(progressEntries), [progressEntries])
-  const weakTopics = topicMastery.filter((item) => item.attempted >= 3 && item.mastery < 60).slice(0, 3)
+  const weakTopics = useMemo(() => detectWeakTopics(progressEntries).slice(0, 3), [progressEntries])
 
   async function refreshLearningData() {
     const [profileResult, progressResult] = await Promise.all([
@@ -683,15 +683,10 @@ export function StudyClient() {
                     <div key={item.topic} className="rounded-xl border border-border bg-card p-3">
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <span className="text-sm font-medium">{item.topic}</span>
-                        <Badge variant="secondary">{item.mastery}%</Badge>
+                        <Badge variant="secondary">{item.accuracy}%</Badge>
                       </div>
-                      <Button
-                        onClick={() => void generateSession(item.topic)}
-                        disabled={loading || (!isLoggedIn && guestRemaining <= 0)}
-                        variant="outline"
-                        className="w-full rounded-xl"
-                      >
-                        Generate Targeted Recovery Set
+                      <Button asChild variant="outline" className="w-full rounded-xl">
+                        <Link href="/recovery">Start Recovery</Link>
                       </Button>
                     </div>
                   ))}

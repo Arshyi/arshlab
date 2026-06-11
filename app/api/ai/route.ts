@@ -38,6 +38,7 @@ const PRACTICE_CURRICULUM_STYLES = [
 ] as const
 
 const PRACTICE_QUESTION_COUNTS = [1, 5, 10, 20] as const
+const RECOVERY_QUESTION_COUNT = 10
 
 const EXAM_CURRICULA = [
   "CHEM 121",
@@ -88,6 +89,16 @@ interface PracticeQuestion {
 
 interface PracticeSet {
   questions: PracticeQuestion[]
+}
+
+interface RecoveryPlanItem {
+  topic: string
+  count: number
+  difficulty: string
+}
+
+interface RecoveryRequest {
+  plan: RecoveryPlanItem[]
 }
 
 type ExamQuestionType = "multiple_choice" | "short_answer"
@@ -248,6 +259,17 @@ function buildPracticeSystemPrompt(): string {
   ].join(" ")
 }
 
+function buildRecoverySystemPrompt(): string {
+  return [
+    "You are ARSHLAB's free chemistry recovery practice generator alpha.",
+    "Generate only original educational chemistry recovery questions.",
+    "Do not copy or imitate known copyrighted exam questions.",
+    "Do not claim questions are official exam-board, university, or past-paper material.",
+    "Respect the requested topic distribution exactly.",
+    "Return only valid JSON with no markdown.",
+  ].join(" ")
+}
+
 function buildExamSystemPrompt(): string {
   return [
     "You are ARSHLAB's free chemistry exam generator alpha.",
@@ -310,6 +332,40 @@ function parseExamRequest(body: unknown): ExamRequest | null {
   }
 }
 
+function parseRecoveryRequest(body: unknown): RecoveryRequest | null {
+  const record = body as Record<string, unknown>
+  const rawPlan = Array.isArray(record.plan) ? record.plan : null
+  if (!rawPlan || rawPlan.length < 2 || rawPlan.length > 3) return null
+
+  const plan = rawPlan.map((item) => {
+    if (!item || typeof item !== "object") return null
+    const itemRecord = item as Record<string, unknown>
+    const topic = itemRecord.topic
+    const difficulty = itemRecord.difficulty
+    const count = typeof itemRecord.count === "string" ? Number(itemRecord.count) : itemRecord.count
+
+    if (
+      !isAllowedValue(topic, PRACTICE_TOPICS) ||
+      !isAllowedValue(difficulty, PRACTICE_DIFFICULTIES) ||
+      !Number.isInteger(count) ||
+      typeof count !== "number" ||
+      count < 1 ||
+      count > RECOVERY_QUESTION_COUNT
+    ) {
+      return null
+    }
+
+    return { topic, difficulty, count }
+  })
+
+  if (plan.some((item) => item === null)) return null
+  const normalizedPlan = plan as RecoveryPlanItem[]
+  const total = normalizedPlan.reduce((sum, item) => sum + item.count, 0)
+  if (total !== RECOVERY_QUESTION_COUNT) return null
+
+  return { plan: normalizedPlan }
+}
+
 function topicGuidance(topic: string): string {
   switch (topic) {
     case "Functional group identification":
@@ -348,6 +404,29 @@ function buildPracticePrompt(request: PracticeRequest): string {
     "Return this exact top-level shape:",
     '{"questions":[{"id":"q1","topic":"...","questionType":"...","difficulty":"...","curriculumStyle":"...","question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
     "For non-multiple-choice questions, use an empty choices array and put the expected answer in correctAnswer.",
+  ].join("\n")
+}
+
+function buildRecoveryPrompt(request: RecoveryRequest): string {
+  const distribution = request.plan
+    .map((item) => `${item.count} question${item.count === 1 ? "" : "s"} on ${item.topic} at ${item.difficulty} difficulty`)
+    .join("; ")
+
+  return [
+    `Generate exactly ${RECOVERY_QUESTION_COUNT} original multiple choice chemistry recovery questions.`,
+    `Distribution: ${distribution}.`,
+    "This is an adaptive recovery session based on a student's weak topics.",
+    "Use the requested topic distribution exactly.",
+    "Return questions in the same order as the distribution: all weakest-topic questions first, then second-weakest if present, then review.",
+    "For each question, set topic to the matching requested topic and difficulty to the matching requested difficulty.",
+    "Create exactly four choices labeled A, B, C, D with exactly one answer correct.",
+    "Distractors should target realistic misconceptions for the requested topic and difficulty.",
+    "Keep wording original, concise, and educational.",
+    "Do not copy official exam-board, university, or past-paper questions.",
+    "Do not mention being based on past papers.",
+    "Return valid JSON only, with no markdown and no surrounding prose.",
+    "Return this exact top-level shape:",
+    '{"questions":[{"id":"q1","topic":"...","questionType":"Multiple choice","difficulty":"...","curriculumStyle":"Recovery Mode","question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
   ].join("\n")
 }
 
@@ -480,6 +559,55 @@ function validatePracticeSet(data: unknown, request: PracticeRequest): PracticeS
   return { questions: questions as PracticeQuestion[] }
 }
 
+function validateRecoverySet(data: unknown, request: RecoveryRequest): PracticeSet | null {
+  if (!data || typeof data !== "object") return null
+  const record = data as Record<string, unknown>
+  const rawQuestions = Array.isArray(record.questions) ? record.questions : Array.isArray(data) ? data : null
+  if (!rawQuestions || rawQuestions.length !== RECOVERY_QUESTION_COUNT) return null
+
+  const slots = request.plan.flatMap((item) =>
+    Array.from({ length: item.count }, () => ({ topic: item.topic, difficulty: item.difficulty })),
+  )
+
+  const questions = rawQuestions.map((item, index) => {
+    if (!item || typeof item !== "object") return null
+    const questionRecord = item as Record<string, unknown>
+    const questionText = stringField(questionRecord, "question") || stringField(questionRecord, "prompt")
+    const correctAnswer =
+      stringField(questionRecord, "correctAnswer") ||
+      stringField(questionRecord, "answer") ||
+      stringField(questionRecord, "correctChoice")
+    const explanation = stringField(questionRecord, "explanation")
+    const misconceptionNote =
+      stringField(questionRecord, "misconceptionNote") ||
+      stringField(questionRecord, "misconceptionNotes")
+    const slot = slots[index]
+
+    if (!slot || !questionText || !correctAnswer || !explanation) return null
+
+    const choices = normalizeChoices(questionRecord.choices)
+    if (!choices || !answerMatchesChoices(correctAnswer, choices)) return null
+
+    const question: PracticeQuestion = {
+      id: stringField(questionRecord, "id") || `recovery-q${index + 1}`,
+      topic: slot.topic,
+      questionType: "Multiple choice",
+      difficulty: slot.difficulty,
+      curriculumStyle: "Recovery Mode",
+      question: questionText,
+      choices,
+      correctAnswer,
+      explanation,
+    }
+
+    if (misconceptionNote) question.misconceptionNote = misconceptionNote
+    return question
+  })
+
+  if (questions.some((question) => question === null)) return null
+  return { questions: questions as PracticeQuestion[] }
+}
+
 function normalizeExamChoices(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null
   const choices = value.map((choice) => {
@@ -590,20 +718,26 @@ export async function POST(request: NextRequest) {
   const task = typeof (body as { task?: unknown }).task === "string"
     ? (body as { task: string }).task
     : "assistant"
-  if (!["assistant", "practice-generator", "exam-generator"].includes(task)) {
+  if (!["assistant", "practice-generator", "exam-generator", "recovery-generator"].includes(task)) {
     return NextResponse.json({ ok: false, message: "Invalid AI task." }, { status: 400 })
   }
 
   const practiceRequest = task === "practice-generator" ? parsePracticeRequest(body) : null
   const examRequest = task === "exam-generator" ? parseExamRequest(body) : null
+  const recoveryRequest = task === "recovery-generator" ? parseRecoveryRequest(body) : null
   if (task === "practice-generator" && !practiceRequest) {
     return NextResponse.json({ ok: false, message: "Invalid practice generator request." }, { status: 400 })
   }
   if (task === "exam-generator" && !examRequest) {
     return NextResponse.json({ ok: false, message: "Invalid exam generator request." }, { status: 400 })
   }
+  if (task === "recovery-generator" && !recoveryRequest) {
+    return NextResponse.json({ ok: false, message: "Invalid recovery generator request." }, { status: 400 })
+  }
 
-  const prompt = examRequest
+  const prompt = recoveryRequest
+    ? buildRecoveryPrompt(recoveryRequest)
+    : examRequest
     ? buildExamPrompt(examRequest)
     : practiceRequest
       ? buildPracticePrompt(practiceRequest)
@@ -615,7 +749,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: "Enter a chemistry question first." }, { status: 400 })
   }
 
-  if (!practiceRequest && !examRequest && prompt.length > MAX_PROMPT_LENGTH) {
+  if (!practiceRequest && !examRequest && !recoveryRequest && prompt.length > MAX_PROMPT_LENGTH) {
     return NextResponse.json(
       { ok: false, message: `Prompt is too long. Keep it under ${MAX_PROMPT_LENGTH} characters.` },
       { status: 400 },
@@ -653,7 +787,9 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: "system",
-            content: examRequest
+            content: recoveryRequest
+              ? buildRecoverySystemPrompt()
+              : examRequest
               ? buildExamSystemPrompt()
               : practiceRequest
                 ? buildPracticeSystemPrompt()
@@ -663,7 +799,7 @@ export async function POST(request: NextRequest) {
         ],
         max_tokens: examRequest
           ? EXAM_MAX_OUTPUT_TOKENS
-          : practiceRequest
+          : practiceRequest || recoveryRequest
             ? PRACTICE_MAX_OUTPUT_TOKENS
             : MAX_OUTPUT_TOKENS,
         temperature: 0.4,
@@ -707,6 +843,30 @@ export async function POST(request: NextRequest) {
         remaining: limitResult.remaining,
         disclaimer:
           "Questions are AI-generated educational material. Verify important answers independently.",
+      })
+    }
+
+    if (recoveryRequest) {
+      const generatedJson = parseGeneratedJson(answer)
+      const practiceSet = validateRecoverySet(generatedJson, recoveryRequest)
+
+      if (!practiceSet) {
+        return NextResponse.json(
+          {
+            ok: false,
+            validationFailed: true,
+            message: "Generated recovery session did not pass validation. Try again.",
+          },
+          { status: 422 },
+        )
+      }
+
+      return NextResponse.json({
+        ok: true,
+        practiceSet,
+        remaining: limitResult.remaining,
+        disclaimer:
+          "Generated recovery questions are original educational materials and may contain mistakes. Verify important answers independently.",
       })
     }
 

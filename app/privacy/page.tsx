@@ -23,8 +23,8 @@ const sections = [
     body: "Users can export currently visible history from the History page as JSON or CSV for their own educational records.",
   },
   {
-    title: "AI Assistant, Practice Generator, Exam Generator, and Study Mode Alpha",
-    body: "When the AI Assistant, Practice Generator, Exam Generator, or Study Mode is enabled, AI questions may be sent to the configured free AI provider through ARSHLAB's server route. AI conversations, generated practice questions, generated study sessions, and generated exams are not saved in this alpha. Signed-in practice progress may save topic, difficulty, whether the user marked an answer correct, and timestamp.",
+    title: "AI Assistant, Practice Generator, Exam Generator, Study Mode, and Recovery Mode Alpha",
+    body: "When the AI Assistant, Practice Generator, Exam Generator, Study Mode, or Recovery Mode is enabled, AI questions may be sent to the configured free AI provider through ARSHLAB's server route. AI conversations, generated practice questions, generated study sessions, generated recovery sessions, and generated exams are not saved in this alpha. Signed-in practice progress may save topic, difficulty, whether the user marked an answer correct, and timestamp.",
   },
   {
     title: "Study Progress Data",
