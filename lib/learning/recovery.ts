@@ -12,6 +12,7 @@ export type PracticeDifficulty = "Introductory" | "Intermediate" | "Advanced"
 
 export interface ProgressLikeEntry {
   topic: string
+  subtopic?: string
   correct: boolean
 }
 
@@ -23,21 +24,33 @@ export interface LearningTopicStats {
   accuracy: number
 }
 
+export interface LearningConceptStats {
+  topic: string
+  subtopic: string
+  attempted: number
+  correct: number
+  missed: number
+  mastery: number
+}
+
 export interface RecoveryPlanItem {
   topic: string
   count: number
   difficulty: PracticeDifficulty
   mastery: number
   role: "weakest" | "second-weakest" | "review"
+  weaknesses: string[]
 }
 
 export interface RecoverySessionResult {
   topic: string
+  subtopic?: string
   correct: boolean
 }
 
 export interface RecoveryOutcome {
   topic: string
+  subtopic?: string
   before: number
   after: number
   improvement: number
@@ -72,6 +85,43 @@ export function detectWeakTopics(entries: ProgressLikeEntry[]): LearningTopicSta
   return calculateTopicStats(entries).filter((topic) => topic.attempted >= 5 && topic.accuracy < 60)
 }
 
+export function calculateConceptStats(entries: ProgressLikeEntry[]): LearningConceptStats[] {
+  const groups = new Map<string, { topic: string; subtopic: string; attempted: number; correct: number }>()
+
+  for (const entry of entries) {
+    const subtopic = entry.subtopic?.trim() || "General"
+    const key = `${entry.topic}::${subtopic}`
+    const current = groups.get(key) ?? {
+      topic: entry.topic,
+      subtopic,
+      attempted: 0,
+      correct: 0,
+    }
+    current.attempted += 1
+    if (entry.correct) current.correct += 1
+    groups.set(key, current)
+  }
+
+  return Array.from(groups.values())
+    .map((stats) => ({
+      ...stats,
+      missed: stats.attempted - stats.correct,
+      mastery: stats.attempted ? Math.round((stats.correct / stats.attempted) * 100) : 0,
+    }))
+    .sort((a, b) => a.mastery - b.mastery || b.attempted - a.attempted || a.subtopic.localeCompare(b.subtopic))
+}
+
+export function detectWeakConcepts(entries: ProgressLikeEntry[]): LearningConceptStats[] {
+  return calculateConceptStats(entries).filter((concept) => concept.attempted >= 5 && concept.mastery < 60)
+}
+
+export function getMasteryBand(mastery: number): "Weak" | "Developing" | "Strong" | "Mastered" {
+  if (mastery < 40) return "Weak"
+  if (mastery < 70) return "Developing"
+  if (mastery < 90) return "Strong"
+  return "Mastered"
+}
+
 export function getAdaptiveDifficulty(mastery: number): PracticeDifficulty {
   if (mastery < 40) return "Introductory"
   if (mastery < 80) return "Intermediate"
@@ -93,9 +143,19 @@ function getReviewTopic(weakTopics: LearningTopicStats[], allStats: LearningTopi
   }
 }
 
+function getWeaknessesForTopic(topic: string, weakConcepts: LearningConceptStats[]): string[] {
+  const weaknesses = weakConcepts
+    .filter((concept) => concept.topic === topic)
+    .sort((a, b) => a.mastery - b.mastery || b.attempted - a.attempted)
+    .map((concept) => concept.subtopic)
+
+  return weaknesses.length > 0 ? weaknesses.slice(0, 4) : [topic]
+}
+
 export function buildRecoveryPlan(
   weakTopics: LearningTopicStats[],
   allStats: LearningTopicStats[],
+  weakConcepts: LearningConceptStats[] = [],
 ): RecoveryPlanItem[] {
   const [weakest, secondWeakest] = weakTopics
   if (!weakest) return []
@@ -110,6 +170,7 @@ export function buildRecoveryPlan(
         difficulty: getAdaptiveDifficulty(weakest.accuracy),
         mastery: weakest.accuracy,
         role: "weakest",
+        weaknesses: getWeaknessesForTopic(weakest.topic, weakConcepts),
       },
       {
         topic: review.topic,
@@ -117,6 +178,7 @@ export function buildRecoveryPlan(
         difficulty: getAdaptiveDifficulty(review.accuracy),
         mastery: review.accuracy,
         role: "review",
+        weaknesses: getWeaknessesForTopic(review.topic, weakConcepts),
       },
     ]
   }
@@ -128,6 +190,7 @@ export function buildRecoveryPlan(
       difficulty: getAdaptiveDifficulty(weakest.accuracy),
       mastery: weakest.accuracy,
       role: "weakest",
+      weaknesses: getWeaknessesForTopic(weakest.topic, weakConcepts),
     },
     {
       topic: secondWeakest.topic,
@@ -135,6 +198,7 @@ export function buildRecoveryPlan(
       difficulty: getAdaptiveDifficulty(secondWeakest.accuracy),
       mastery: secondWeakest.accuracy,
       role: "second-weakest",
+      weaknesses: getWeaknessesForTopic(secondWeakest.topic, weakConcepts),
     },
     {
       topic: review.topic,
@@ -142,6 +206,7 @@ export function buildRecoveryPlan(
       difficulty: getAdaptiveDifficulty(review.accuracy),
       mastery: review.accuracy,
       role: "review",
+      weaknesses: getWeaknessesForTopic(review.topic, weakConcepts),
     },
   ]
 }
@@ -170,6 +235,36 @@ export function calculateRecoveryOutcomes(
       before: before.accuracy,
       after,
       improvement: after - before.accuracy,
+    }
+  })
+}
+
+export function calculateConceptRecoveryOutcomes(
+  baseline: LearningConceptStats[],
+  sessionResults: RecoverySessionResult[],
+  focusSubtopics: string[],
+): RecoveryOutcome[] {
+  return focusSubtopics.map((subtopic) => {
+    const before = baseline.find((stat) => stat.subtopic === subtopic) ?? {
+      topic: "Recovery",
+      subtopic,
+      attempted: 0,
+      correct: 0,
+      missed: 0,
+      mastery: 0,
+    }
+    const sessionForConcept = sessionResults.filter((result) => result.subtopic === subtopic)
+    const sessionCorrect = sessionForConcept.filter((result) => result.correct).length
+    const attempted = before.attempted + sessionForConcept.length
+    const correct = before.correct + sessionCorrect
+    const after = attempted ? Math.round((correct / attempted) * 100) : before.mastery
+
+    return {
+      topic: before.topic,
+      subtopic,
+      before: before.mastery,
+      after,
+      improvement: after - before.mastery,
     }
   })
 }

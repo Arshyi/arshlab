@@ -74,6 +74,7 @@ interface PracticeChoice {
 interface StudyQuestion {
   id: string
   topic: string
+  subtopic: string
   questionType: string
   difficulty: string
   curriculumStyle: string
@@ -329,7 +330,9 @@ export function StudyClient() {
 
     const progressResult = await addPracticeProgress({
       topic: currentQuestion.topic,
+      subtopic: currentQuestion.subtopic,
       difficulty: currentQuestion.difficulty,
+      questionType: "Study Mode",
       correct,
     })
 
@@ -404,7 +407,7 @@ export function StudyClient() {
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
             Choose a topic and difficulty, then work through one question at a time while ARSHLAB tracks streaks,
-            accuracy, XP, daily goals, and topic mastery.
+            accuracy, XP, daily goals, and topic/concept mastery.
           </p>
         </motion.div>
 
@@ -496,6 +499,7 @@ export function StudyClient() {
                       </CardTitle>
                       <div className="flex flex-wrap gap-2">
                         <Badge>{currentQuestion.topic}</Badge>
+                        <Badge variant="outline">{currentQuestion.subtopic}</Badge>
                         <Badge variant="secondary">{currentQuestion.difficulty}</Badge>
                       </div>
                     </div>
@@ -644,7 +648,7 @@ export function StudyClient() {
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Sign in to save XP, levels, topic mastery, and achievements.
+                    Sign in to save XP, levels, topic/concept mastery, and achievements.
                   </p>
                 )}
               </CardContent>

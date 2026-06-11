@@ -135,7 +135,7 @@ export default function ChemistryHubPage() {
               <div>
                 <h2 className="font-semibold">Recovery Mode</h2>
                 <p className="text-sm text-muted-foreground">
-                  Detect weak topics from saved practice progress and generate adaptive 10-question recovery sessions.
+                  Detect weak topics and concepts from saved practice progress and generate adaptive 10-question recovery sessions.
                 </p>
               </div>
             </div>

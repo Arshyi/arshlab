@@ -60,7 +60,7 @@ const features = [
   {
     icon: Target,
     title: "Recovery Mode",
-    description: "Automatically generate targeted 10-question recovery sessions from weak topic detection.",
+    description: "Automatically generate targeted 10-question recovery sessions from weak topic and concept detection.",
     href: "/recovery",
   },
   {

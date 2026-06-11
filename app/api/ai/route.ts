@@ -77,6 +77,7 @@ interface PracticeChoice {
 interface PracticeQuestion {
   id: string
   topic: string
+  subtopic: string
   questionType: string
   difficulty: string
   curriculumStyle: string
@@ -95,6 +96,7 @@ interface RecoveryPlanItem {
   topic: string
   count: number
   difficulty: string
+  weaknesses?: string[]
 }
 
 interface RecoveryRequest {
@@ -115,6 +117,7 @@ interface ExamQuestion {
   questionNumber: number
   type: ExamQuestionType
   topic: string
+  subtopic: string
   question: string
   choices: string[]
   correctAnswer: string
@@ -265,7 +268,7 @@ function buildRecoverySystemPrompt(): string {
     "Generate only original educational chemistry recovery questions.",
     "Do not copy or imitate known copyrighted exam questions.",
     "Do not claim questions are official exam-board, university, or past-paper material.",
-    "Respect the requested topic distribution exactly.",
+    "Respect the requested topic and weak-concept distribution exactly.",
     "Return only valid JSON with no markdown.",
   ].join(" ")
 }
@@ -343,6 +346,13 @@ function parseRecoveryRequest(body: unknown): RecoveryRequest | null {
     const topic = itemRecord.topic
     const difficulty = itemRecord.difficulty
     const count = typeof itemRecord.count === "string" ? Number(itemRecord.count) : itemRecord.count
+    const weaknesses = Array.isArray(itemRecord.weaknesses)
+      ? itemRecord.weaknesses
+          .filter((value): value is string => typeof value === "string")
+          .map((value) => value.trim())
+          .filter(Boolean)
+          .slice(0, 6)
+      : []
 
     if (
       !isAllowedValue(topic, PRACTICE_TOPICS) ||
@@ -355,7 +365,7 @@ function parseRecoveryRequest(body: unknown): RecoveryRequest | null {
       return null
     }
 
-    return { topic, difficulty, count }
+    return { topic, difficulty, count, weaknesses }
   })
 
   if (plan.some((item) => item === null)) return null
@@ -385,6 +395,39 @@ function topicGuidance(topic: string): string {
   }
 }
 
+function fallbackSubtopics(topic: string): string[] {
+  switch (topic) {
+    case "Functional group identification":
+      return ["Alcohol identification", "Carbonyl identification", "Carboxylic acid derivatives", "Amines and amides"]
+    case "Hybridization":
+      return ["sp hybridization", "sp2 hybridization", "sp3 hybridization", "Lone pairs and geometry"]
+    case "VSEPR geometry":
+      return ["Electron domains", "Molecular geometry", "Lone pair repulsion", "Bond angles"]
+    case "Periodic trends":
+      return ["Atomic Radius", "Effective Nuclear Charge", "Shielding", "Ionization Energy", "Electronegativity"]
+    case "Electron configuration":
+      return ["Aufbau Principle", "Hund's Rule", "Noble Gas Shorthand", "d-block Exceptions"]
+    case "IR spectroscopy peak identification":
+      return ["Carbonyl Identification", "O-H Broad Peak", "N-H Stretch", "Fingerprint Region"]
+    default:
+      return ["General"]
+  }
+}
+
+function inferSubtopic(topic: string, questionText = ""): string {
+  const text = questionText.toLowerCase().replace(/[^a-z0-9]/g, "")
+  const candidates = fallbackSubtopics(topic)
+  const match = candidates.find((candidate) =>
+    candidate
+      .toLowerCase()
+      .split(/\s+/)
+      .some((part) => part.length > 3 && text.includes(part.replace(/[^a-z0-9]/g, ""))),
+  )
+
+  if (match) return match
+  return candidates[0] ?? "General"
+}
+
 function buildPracticePrompt(request: PracticeRequest): string {
   return [
     `Generate exactly ${request.questionCount} original ${request.questionType} chemistry practice question${request.questionCount === 1 ? "" : "s"}.`,
@@ -400,25 +443,33 @@ function buildPracticePrompt(request: PracticeRequest): string {
     "Multiple choice distractors should reflect realistic misconceptions.",
     "For short answer, make the correctAnswer an expected student answer and explain the marking logic in the explanation.",
     "For explanation prompts, make the correctAnswer a concise model explanation and include the most important key points in the explanation.",
+    `Choose a concise subtopic for every question. Suggested subtopics: ${fallbackSubtopics(request.topic).join(", ")}.`,
     "Return valid JSON only, with no markdown and no surrounding prose.",
     "Return this exact top-level shape:",
-    '{"questions":[{"id":"q1","topic":"...","questionType":"...","difficulty":"...","curriculumStyle":"...","question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
+    '{"questions":[{"id":"q1","topic":"...","subtopic":"...","questionType":"...","difficulty":"...","curriculumStyle":"...","question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
     "For non-multiple-choice questions, use an empty choices array and put the expected answer in correctAnswer.",
   ].join("\n")
 }
 
 function buildRecoveryPrompt(request: RecoveryRequest): string {
   const distribution = request.plan
-    .map((item) => `${item.count} question${item.count === 1 ? "" : "s"} on ${item.topic} at ${item.difficulty} difficulty`)
+    .map((item) => {
+      const weaknessText = item.weaknesses?.length
+        ? ` focusing on: ${item.weaknesses.join(", ")}`
+        : ""
+      return `${item.count} question${item.count === 1 ? "" : "s"} on ${item.topic}${weaknessText} at ${item.difficulty} difficulty`
+    })
     .join("; ")
 
   return [
     `Generate exactly ${RECOVERY_QUESTION_COUNT} original multiple choice chemistry recovery questions.`,
     `Distribution: ${distribution}.`,
-    "This is an adaptive recovery session based on a student's weak topics.",
+    "This is an adaptive recovery session based on a student's weak concepts.",
     "Use the requested topic distribution exactly.",
+    "When weaknesses are provided, target those subtopics before broader review.",
+    "Do not repeat identical questions or the same concept wording.",
     "Return questions in the same order as the distribution: all weakest-topic questions first, then second-weakest if present, then review.",
-    "For each question, set topic to the matching requested topic and difficulty to the matching requested difficulty.",
+    "For each question, set topic to the matching requested topic, subtopic to the matching weak concept when possible, and difficulty to the matching requested difficulty.",
     "Create exactly four choices labeled A, B, C, D with exactly one answer correct.",
     "Distractors should target realistic misconceptions for the requested topic and difficulty.",
     "Keep wording original, concise, and educational.",
@@ -426,7 +477,7 @@ function buildRecoveryPrompt(request: RecoveryRequest): string {
     "Do not mention being based on past papers.",
     "Return valid JSON only, with no markdown and no surrounding prose.",
     "Return this exact top-level shape:",
-    '{"questions":[{"id":"q1","topic":"...","questionType":"Multiple choice","difficulty":"...","curriculumStyle":"Recovery Mode","question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
+    '{"questions":[{"id":"q1","topic":"...","subtopic":"...","questionType":"Multiple choice","difficulty":"...","curriculumStyle":"Recovery Mode","question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
   ].join("\n")
 }
 
@@ -451,11 +502,11 @@ function buildExamPrompt(request: ExamRequest): string {
     "Do not mention past papers, official exams, or copied source material.",
     "For multiple_choice questions, choices must be exactly four strings and correctAnswer must be A, B, C, D, or the exact correct choice text.",
     "For short_answer questions, choices must be an empty array and correctAnswer must contain the expected answer.",
-    "Every question must include questionNumber, type, question, choices, correctAnswer, explanation.",
-    "You may include a concise topic field for progress tracking.",
+    "Every question must include questionNumber, type, topic, subtopic, question, choices, correctAnswer, explanation.",
+    "Use concise topic and subtopic fields for progress tracking.",
     "Keep explanations concise enough that the whole exam fits in JSON.",
     "Return valid JSON only in this exact shape:",
-    '{"title":"Practice Midterm","questions":[{"questionNumber":1,"type":"multiple_choice","topic":"Stoichiometry","question":"...","choices":["A. ...","B. ...","C. ...","D. ..."],"correctAnswer":"A","explanation":"..."}]}',
+    '{"title":"Practice Midterm","questions":[{"questionNumber":1,"type":"multiple_choice","topic":"Stoichiometry","subtopic":"Limiting reagent","question":"...","choices":["A. ...","B. ...","C. ...","D. ..."],"correctAnswer":"A","explanation":"..."}]}',
   ].join("\n")
 }
 
@@ -529,12 +580,14 @@ function validatePracticeSet(data: unknown, request: PracticeRequest): PracticeS
     const misconceptionNote =
       stringField(questionRecord, "misconceptionNote") ||
       stringField(questionRecord, "misconceptionNotes")
+    const subtopic = stringField(questionRecord, "subtopic") || inferSubtopic(request.topic, questionText)
 
     if (!questionText || !correctAnswer || !explanation) return null
 
     const question: PracticeQuestion = {
       id: stringField(questionRecord, "id") || `q${index + 1}`,
       topic: request.topic,
+      subtopic,
       questionType: request.questionType,
       difficulty: request.difficulty,
       curriculumStyle: request.curriculumStyle,
@@ -566,7 +619,11 @@ function validateRecoverySet(data: unknown, request: RecoveryRequest): PracticeS
   if (!rawQuestions || rawQuestions.length !== RECOVERY_QUESTION_COUNT) return null
 
   const slots = request.plan.flatMap((item) =>
-    Array.from({ length: item.count }, () => ({ topic: item.topic, difficulty: item.difficulty })),
+    Array.from({ length: item.count }, (_unused, index) => ({
+      topic: item.topic,
+      difficulty: item.difficulty,
+      weakness: item.weaknesses?.[index % Math.max(1, item.weaknesses.length)],
+    })),
   )
 
   const questions = rawQuestions.map((item, index) => {
@@ -587,10 +644,12 @@ function validateRecoverySet(data: unknown, request: RecoveryRequest): PracticeS
 
     const choices = normalizeChoices(questionRecord.choices)
     if (!choices || !answerMatchesChoices(correctAnswer, choices)) return null
+    const subtopic = stringField(questionRecord, "subtopic") || slot.weakness || inferSubtopic(slot.topic, questionText)
 
     const question: PracticeQuestion = {
       id: stringField(questionRecord, "id") || `recovery-q${index + 1}`,
       topic: slot.topic,
+      subtopic,
       questionType: "Multiple choice",
       difficulty: slot.difficulty,
       curriculumStyle: "Recovery Mode",
@@ -666,6 +725,7 @@ function validateGeneratedExam(data: unknown, request: ExamRequest): GeneratedEx
     const correctAnswer = stringField(questionRecord, "correctAnswer") || stringField(questionRecord, "answer")
     const explanation = stringField(questionRecord, "explanation")
     const topic = stringField(questionRecord, "topic") || request.targetTopic || "General chemistry exam"
+    const subtopic = stringField(questionRecord, "subtopic") || inferSubtopic(topic, question)
 
     if (!question || !correctAnswer || !explanation) return null
 
@@ -678,6 +738,7 @@ function validateGeneratedExam(data: unknown, request: ExamRequest): GeneratedEx
       questionNumber: index + 1,
       type,
       topic,
+      subtopic,
       question,
       choices: type === "multiple_choice" ? choices ?? [] : [],
       correctAnswer,

@@ -31,7 +31,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import {
+  getConceptProgress,
   getPracticeProgress,
+  type ConceptProgressEntry,
   type PracticeProgressEntry,
 } from "@/lib/supabase/practice-progress"
 import {
@@ -40,7 +42,12 @@ import {
   updateDailyGoal,
   type UserProfile,
 } from "@/lib/supabase/user-profile"
-import { detectWeakTopics } from "@/lib/learning/recovery"
+import {
+  calculateConceptStats,
+  detectWeakTopics,
+  getMasteryBand,
+  type LearningConceptStats,
+} from "@/lib/learning/recovery"
 
 interface TopicStats {
   topic: string
@@ -130,10 +137,71 @@ function getTopicStats(entries: PracticeProgressEntry[]): TopicStats[] {
     .sort((a, b) => a.mastery - b.mastery || b.total - a.total || a.topic.localeCompare(b.topic))
 }
 
-function getAchievements(entries: PracticeProgressEntry[], profile: UserProfile | null): Achievement[] {
+function getLongestCorrectStreak(entries: PracticeProgressEntry[]): number {
+  const chronological = [...entries].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+  )
+  let current = 0
+  let longest = 0
+
+  for (const entry of chronological) {
+    current = entry.correct ? current + 1 : 0
+    longest = Math.max(longest, current)
+  }
+
+  return longest
+}
+
+function getMostImprovedTopic(entries: PracticeProgressEntry[]): { topic: string; improvement: number } | null {
+  const topics = new Map<string, PracticeProgressEntry[]>()
+  for (const entry of entries) {
+    const topicEntries = topics.get(entry.topic) ?? []
+    topicEntries.push(entry)
+    topics.set(entry.topic, topicEntries)
+  }
+
+  const improvements = Array.from(topics.entries())
+    .map(([topic, topicEntries]) => {
+      const chronological = [...topicEntries].sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+      )
+      const windowSize = Math.min(10, Math.floor(chronological.length / 2))
+      if (windowSize < 2) return null
+      const previous = chronological.slice(-windowSize * 2, -windowSize)
+      const recent = chronological.slice(-windowSize)
+      const previousAccuracy = percentage(previous.filter((entry) => entry.correct).length, previous.length)
+      const recentAccuracy = percentage(recent.filter((entry) => entry.correct).length, recent.length)
+      return { topic, improvement: recentAccuracy - previousAccuracy }
+    })
+    .filter((item): item is { topic: string; improvement: number } => Boolean(item))
+    .sort((a, b) => b.improvement - a.improvement)
+
+  return improvements[0] ?? null
+}
+
+function conceptRowsToStats(rows: ConceptProgressEntry[]): LearningConceptStats[] {
+  return rows.map((row) => ({
+    topic: row.topic,
+    subtopic: row.subtopic,
+    attempted: row.attempted,
+    correct: row.correct,
+    missed: row.attempted - row.correct,
+    mastery: row.mastery,
+  }))
+}
+
+function getAchievements(
+  entries: PracticeProgressEntry[],
+  profile: UserProfile | null,
+  topicStats: TopicStats[],
+): Achievement[] {
   const total = entries.length
   const correct = entries.filter((entry) => entry.correct).length
   const completedExams = profile?.completedExams ?? 0
+  const xp = profile?.xp ?? 0
+  const firstRecovery = entries.some((entry) => entry.questionType === "Recovery Mode")
+  const masteredTopic = topicStats.some((stat) => stat.total >= 5 && stat.mastery >= 90)
+  const longestStreak = getLongestCorrectStreak(entries)
 
   return [
     {
@@ -165,17 +233,46 @@ function getAchievements(entries: PracticeProgressEntry[], profile: UserProfile 
       icon: Medal,
     },
     {
+      label: "First Recovery Session",
+      description: "Record progress from Recovery Mode.",
+      unlocked: firstRecovery,
+      progress: firstRecovery ? 100 : 0,
+      icon: Flame,
+    },
+    {
+      label: "Mastered Topic",
+      description: "Reach 90% mastery on a topic with at least five attempts.",
+      unlocked: masteredTopic,
+      progress: masteredTopic ? 100 : Math.min(100, Math.max(0, ...topicStats.map((stat) => stat.mastery))),
+      icon: Medal,
+    },
+    {
+      label: "10 Correct In A Row",
+      description: "Build a streak of ten correct tracked answers.",
+      unlocked: longestStreak >= 10,
+      progress: Math.min(100, Math.round((longestStreak / 10) * 100)),
+      icon: CheckCircle2,
+    },
+    {
       label: "100 Questions Attempted",
       description: "Reach one hundred tracked attempts.",
       unlocked: total >= 100,
       progress: Math.min(100, Math.round((total / 100) * 100)),
       icon: Target,
     },
+    {
+      label: "500 XP Earned",
+      description: "Earn five hundred XP from saved learning actions.",
+      unlocked: xp >= 500,
+      progress: Math.min(100, Math.round((xp / 500) * 100)),
+      icon: Zap,
+    },
   ]
 }
 
 export function ProgressClient() {
   const [entries, setEntries] = useState<PracticeProgressEntry[]>([])
+  const [conceptEntries, setConceptEntries] = useState<ConceptProgressEntry[]>([])
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -187,9 +284,10 @@ export function ProgressClient() {
     setError(null)
     setMessage(null)
 
-    const [progressResult, profileResult] = await Promise.all([
+    const [progressResult, profileResult, conceptResult] = await Promise.all([
       getPracticeProgress(500),
       getUserProfile(),
+      getConceptProgress(500),
     ])
 
     if (!progressResult.ok) {
@@ -197,6 +295,12 @@ export function ProgressClient() {
       setError(progressResult.error)
     } else {
       setEntries(progressResult.data)
+    }
+
+    if (conceptResult.ok) {
+      setConceptEntries(conceptResult.data)
+    } else {
+      setConceptEntries([])
     }
 
     if (profileResult.ok) {
@@ -218,15 +322,35 @@ export function ProgressClient() {
   const missed = total - correct
   const overallAccuracy = percentage(correct, total)
   const topicStats = useMemo(() => getTopicStats(entries), [entries])
+  const conceptStats = useMemo(
+    () => (conceptEntries.length > 0 ? conceptRowsToStats(conceptEntries) : calculateConceptStats(entries)),
+    [conceptEntries, entries],
+  )
+  const mostMissedConcepts = useMemo(
+    () =>
+      [...conceptStats]
+        .filter((concept) => concept.attempted > 0)
+        .sort((a, b) => a.mastery - b.mastery || b.attempted - a.attempted)
+        .slice(0, 8),
+    [conceptStats],
+  )
+  const recoveryConcepts = useMemo(
+    () => mostMissedConcepts.filter((concept) => concept.attempted >= 5 && concept.mastery < 60).slice(0, 3),
+    [mostMissedConcepts],
+  )
   const recoveryTopics = useMemo(() => detectWeakTopics(entries).slice(0, 3), [entries])
   const recent = entries.slice(0, 16)
-  const achievements = useMemo(() => getAchievements(entries, profile), [entries, profile])
+  const achievements = useMemo(() => getAchievements(entries, profile, topicStats), [entries, profile, topicStats])
   const unlockedAchievements = achievements.filter((achievement) => achievement.unlocked).length
   const dailyGoal = profile?.dailyGoal ?? 10
   const dailyAttempted = useMemo(() => getDailyAttempted(entries), [entries])
   const dailyProgress = Math.min(100, Math.round((dailyAttempted / dailyGoal) * 100))
   const xp = profile?.xp ?? 0
   const level = getLevelFromXp(xp)
+  const weakestTopic = topicStats[0] ?? null
+  const strongestTopic = [...topicStats].sort((a, b) => b.mastery - a.mastery || b.total - a.total)[0] ?? null
+  const mostAttemptedTopic = [...topicStats].sort((a, b) => b.total - a.total || b.mastery - a.mastery)[0] ?? null
+  const mostImprovedTopic = useMemo(() => getMostImprovedTopic(entries), [entries])
 
   async function handleDailyGoalChange(value: string) {
     const goal = Number(value)
@@ -255,7 +379,7 @@ export function ProgressClient() {
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">My Progress</h1>
-              <p className="text-muted-foreground">Study dashboard, topic mastery, XP, and achievements</p>
+              <p className="text-muted-foreground">Study dashboard, topic mastery, concept analytics, XP, and achievements</p>
             </div>
           </div>
         </motion.div>
@@ -283,13 +407,17 @@ export function ProgressClient() {
           </Alert>
         )}
 
-        {recoveryTopics.length > 0 && (
+        {(recoveryConcepts.length > 0 || recoveryTopics.length > 0) && (
           <Alert className="mb-6 rounded-2xl border-orange-500/30 bg-orange-500/10">
             <Target className="h-4 w-4" />
             <AlertTitle>Recommended Recovery</AlertTitle>
             <AlertDescription className="space-y-3">
               <p>
-                Weak topics detected: {recoveryTopics.map((topic) => `${topic.topic} (${topic.accuracy}%)`).join(", ")}.
+                Weak areas detected:{" "}
+                {(recoveryConcepts.length > 0
+                  ? recoveryConcepts.map((concept) => `${concept.subtopic} (${concept.mastery}%)`)
+                  : recoveryTopics.map((topic) => `${topic.topic} (${topic.accuracy}%)`)
+                ).join(", ")}.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button asChild className="rounded-xl">
@@ -307,6 +435,35 @@ export function ProgressClient() {
           <StatCard icon={Trophy} label="Accuracy" value={loading ? "..." : `${overallAccuracy}%`} />
           <StatCard icon={Medal} label="Achievements" value={loading ? "..." : `${unlockedAchievements}/${achievements.length}`} />
         </div>
+
+        {!loading && total > 0 && (
+          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <InsightCard
+              label="Weakest Topic"
+              value={weakestTopic ? weakestTopic.topic : "Not enough data"}
+              detail={weakestTopic ? `${weakestTopic.mastery}% mastery` : "Self-mark more questions"}
+            />
+            <InsightCard
+              label="Strongest Topic"
+              value={strongestTopic ? strongestTopic.topic : "Not enough data"}
+              detail={strongestTopic ? `${strongestTopic.mastery}% mastery` : "Self-mark more questions"}
+            />
+            <InsightCard
+              label="Most Improved Topic"
+              value={mostImprovedTopic ? mostImprovedTopic.topic : "Not enough data"}
+              detail={
+                mostImprovedTopic
+                  ? `${mostImprovedTopic.improvement >= 0 ? "+" : ""}${mostImprovedTopic.improvement}% recent gain`
+                  : "Needs more attempts"
+              }
+            />
+            <InsightCard
+              label="Most Attempted Topic"
+              value={mostAttemptedTopic ? mostAttemptedTopic.topic : "Not enough data"}
+              detail={mostAttemptedTopic ? `${mostAttemptedTopic.total} attempts` : "Self-mark more questions"}
+            />
+          </div>
+        )}
 
         <div className="mb-6 flex flex-wrap gap-2">
           <Button variant="outline" className="rounded-xl" onClick={() => void loadProgress()} disabled={loading}>
@@ -421,31 +578,71 @@ export function ProgressClient() {
               <Card className="rounded-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
+                    <XCircle className="h-5 w-5" />
+                    Most Missed Concepts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {mostMissedConcepts.length > 0 ? (
+                    mostMissedConcepts.map((concept) => (
+                      <div key={`${concept.topic}-${concept.subtopic}`} className="rounded-xl border border-border bg-card p-4">
+                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <p className="font-medium text-foreground">{concept.subtopic}</p>
+                            <p className="text-xs text-muted-foreground">{concept.topic}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant={concept.mastery < 40 ? "destructive" : concept.mastery < 70 ? "secondary" : "default"}>
+                              {getMasteryBand(concept.mastery)}
+                            </Badge>
+                            <Badge variant="outline">{concept.correct}/{concept.attempted} correct</Badge>
+                            <Badge variant="outline">{concept.mastery}% mastery</Badge>
+                          </div>
+                        </div>
+                        <Progress value={concept.mastery} />
+                      </div>
+                    ))
+                  ) : (
+                    <p className="rounded-xl border border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
+                      Concept analytics will appear after you self-mark practice questions with subtopic metadata.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
                     <Target className="h-5 w-5" />
                     Adaptive Recommendations
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {recoveryTopics.length > 0 ? (
-                    recoveryTopics.map((stat) => (
-                      <div key={stat.topic} className="rounded-xl border border-border bg-secondary/20 p-4">
+                  {recoveryConcepts.length > 0 || recoveryTopics.length > 0 ? (
+                    (recoveryConcepts.length > 0 ? recoveryConcepts : recoveryTopics).map((stat) => (
+                      <div
+                        key={"subtopic" in stat ? `${stat.topic}-${stat.subtopic}` : stat.topic}
+                        className="rounded-xl border border-border bg-secondary/20 p-4"
+                      >
                         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                           <div>
-                            <p className="font-medium">You seem to be struggling with {stat.topic}.</p>
+                            <p className="font-medium">
+                              You seem to be struggling with {"subtopic" in stat ? stat.subtopic : stat.topic}.
+                            </p>
                             <p className="text-sm text-muted-foreground">
-                              Accuracy is {stat.accuracy}% across {stat.attempted} attempts.
+                              Accuracy is {"subtopic" in stat ? stat.mastery : stat.accuracy}% across {stat.attempted} attempts.
                             </p>
                           </div>
                           <Button asChild className="rounded-xl">
                             <Link href="/recovery">Start Recovery</Link>
                           </Button>
                         </div>
-                        <Progress value={stat.accuracy} />
+                        <Progress value={"subtopic" in stat ? stat.mastery : stat.accuracy} />
                       </div>
                     ))
                   ) : (
                     <p className="rounded-xl border border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
-                      No weak topics detected yet. ARSHLAB will recommend Recovery Mode when a topic has at least five attempts and accuracy below 60%.
+                      No weak areas detected yet. ARSHLAB will recommend Recovery Mode when a topic or concept has at least five attempts and accuracy below 60%.
                     </p>
                   )}
                 </CardContent>
@@ -471,9 +668,10 @@ export function ProgressClient() {
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <Badge variant={stat.mastery >= 70 ? "default" : stat.mastery < 60 ? "destructive" : "secondary"}>
-                            {stat.mastery}% mastery
+                          <Badge variant={stat.mastery < 40 ? "destructive" : stat.mastery < 70 ? "secondary" : "default"}>
+                            {getMasteryBand(stat.mastery)}
                           </Badge>
+                          <Badge variant="outline">{stat.mastery}% mastery</Badge>
                           <Badge variant="outline">{stat.accuracy}% overall</Badge>
                         </div>
                       </div>
@@ -534,7 +732,9 @@ export function ProgressClient() {
                         </span>
                       </div>
                       <p className="text-sm font-medium text-foreground">{entry.topic}</p>
-                      <p className="text-xs text-muted-foreground">{entry.difficulty}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.subtopic} - {entry.difficulty} - {entry.questionType}
+                      </p>
                     </div>
                   ))}
                 </CardContent>
@@ -566,6 +766,18 @@ function StatCard({
           <p className="text-2xl font-bold text-foreground">{value}</p>
           <p className="text-sm text-muted-foreground">{label}</p>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function InsightCard({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <Card className="rounded-2xl">
+      <CardContent className="p-5">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="mt-2 break-words text-lg font-semibold text-foreground">{value}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
       </CardContent>
     </Card>
   )

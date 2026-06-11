@@ -82,6 +82,7 @@ interface PracticeChoice {
 interface PracticeQuestion {
   id: string
   topic: string
+  subtopic: string
   questionType: string
   difficulty: string
   curriculumStyle: string
@@ -382,7 +383,9 @@ export function PracticeGeneratorClient() {
     const isCorrect = status === "correct"
     const result = await addPracticeProgress({
       topic: question.topic,
+      subtopic: question.subtopic,
       difficulty: question.difficulty,
+      questionType: question.questionType,
       correct: isCorrect,
     })
 
@@ -672,6 +675,7 @@ function QuestionCard({
         <div className="flex flex-wrap items-center gap-2">
           <Badge>Question {index + 1}</Badge>
           <Badge variant="secondary">{question.topic}</Badge>
+          <Badge variant="outline">{question.subtopic}</Badge>
         </div>
         {mark && (
           <Badge variant={mark === "correct" ? "default" : "destructive"}>

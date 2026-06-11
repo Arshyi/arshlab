@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "2.4.0",
+    version: "2.5.0",
     date: "Current",
+    status: "released",
+    title: "Mistake Analytics & Mastery Tracking",
+    changes: [
+      "Extended practice progress with subtopic and question-type metadata",
+      "Added concept_progress analytics storage with Supabase RLS",
+      "Added Most Missed Concepts analytics on My Progress",
+      "Added topic mastery bands: Weak, Developing, Strong, and Mastered",
+      "Added weakest, strongest, most improved, and most attempted topic dashboard cards",
+      "Upgraded Recovery Mode to target weak concepts instead of only broad topics",
+      "Passed weak-area data into recovery prompts while preserving free-model-only guardrails",
+      "Added achievements for First Recovery Session, Mastered Topic, 10 Correct In A Row, 100 Questions Attempted, and 500 XP Earned",
+    ],
+  },
+  {
+    version: "2.4.0",
+    date: "Previous",
     status: "released",
     title: "Recovery Mode",
     changes: [

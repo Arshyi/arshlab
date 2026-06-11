@@ -31,9 +31,13 @@ import {
 import { applyProfileReward } from "@/lib/supabase/user-profile"
 import {
   buildRecoveryPlan,
+  calculateConceptRecoveryOutcomes,
+  calculateConceptStats,
   calculateRecoveryOutcomes,
   calculateTopicStats,
+  detectWeakConcepts,
   detectWeakTopics,
+  type LearningConceptStats,
   type LearningTopicStats,
   type RecoveryOutcome,
   type RecoveryPlanItem,
@@ -47,6 +51,7 @@ interface PracticeChoice {
 interface RecoveryQuestion {
   id: string
   topic: string
+  subtopic: string
   questionType: string
   difficulty: string
   curriculumStyle: string
@@ -97,6 +102,7 @@ export function RecoveryClient() {
   const [recoverySet, setRecoverySet] = useState<RecoverySet | null>(null)
   const [plan, setPlan] = useState<RecoveryPlanItem[]>([])
   const [baselineStats, setBaselineStats] = useState<LearningTopicStats[]>([])
+  const [baselineConceptStats, setBaselineConceptStats] = useState<LearningConceptStats[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedChoice, setSelectedChoice] = useState<PracticeChoice | null>(null)
   const [answers, setAnswers] = useState<Record<string, AnswerRecord>>({})
@@ -157,7 +163,30 @@ export function RecoveryClient() {
   }, [loadProgress])
 
   const allStats = useMemo(() => calculateTopicStats(entries), [entries])
+  const conceptStats = useMemo(() => calculateConceptStats(entries), [entries])
   const weakTopics = useMemo(() => detectWeakTopics(entries), [entries])
+  const weakConcepts = useMemo(() => detectWeakConcepts(entries), [entries])
+  const weakAreaTopics = useMemo(() => {
+    if (weakTopics.length > 0) return weakTopics
+
+    const groups = new Map<string, { attempted: number; correct: number }>()
+    for (const concept of weakConcepts) {
+      const current = groups.get(concept.topic) ?? { attempted: 0, correct: 0 }
+      current.attempted += concept.attempted
+      current.correct += concept.correct
+      groups.set(concept.topic, current)
+    }
+
+    return Array.from(groups.entries())
+      .map(([topic, stats]) => ({
+        topic,
+        attempted: stats.attempted,
+        correct: stats.correct,
+        missed: stats.attempted - stats.correct,
+        accuracy: stats.attempted ? Math.round((stats.correct / stats.attempted) * 100) : 0,
+      }))
+      .sort((a, b) => a.accuracy - b.accuracy || b.attempted - a.attempted)
+  }, [weakConcepts, weakTopics])
   const currentQuestion = recoverySet?.questions[currentIndex] ?? null
   const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined
   const totalQuestions = recoverySet?.questions.length ?? 0
@@ -170,25 +199,33 @@ export function RecoveryClient() {
     () => plan.filter((item) => item.role !== "review").map((item) => item.topic),
     [plan],
   )
+  const focusSubtopics = useMemo(
+    () => Array.from(new Set(plan.filter((item) => item.role !== "review").flatMap((item) => item.weaknesses))),
+    [plan],
+  )
   const outcomes: RecoveryOutcome[] = useMemo(() => {
     if (!recoverySet || !sessionComplete) return []
     const sessionResults = recoverySet.questions
       .map((question) => {
         const answer = answers[question.id]
         if (!answer) return null
-        return { topic: question.topic, correct: answer.correct }
+        return { topic: question.topic, subtopic: question.subtopic, correct: answer.correct }
       })
-      .filter((result): result is { topic: string; correct: boolean } => Boolean(result))
+      .filter((result): result is { topic: string; subtopic: string; correct: boolean } => Boolean(result))
+
+    if (focusSubtopics.length > 0) {
+      return calculateConceptRecoveryOutcomes(baselineConceptStats, sessionResults, focusSubtopics)
+    }
 
     return calculateRecoveryOutcomes(baselineStats, sessionResults, focusTopics)
-  }, [answers, baselineStats, focusTopics, recoverySet, sessionComplete])
+  }, [answers, baselineConceptStats, baselineStats, focusSubtopics, focusTopics, recoverySet, sessionComplete])
 
   async function generateRecoverySession() {
-    if (generating || weakTopics.length === 0) return
+    if (generating || weakAreaTopics.length === 0) return
 
-    const nextPlan = buildRecoveryPlan(weakTopics, allStats)
+    const nextPlan = buildRecoveryPlan(weakAreaTopics, allStats, weakConcepts)
     if (nextPlan.length === 0) {
-      setError("No weak topics are ready for Recovery Mode yet.")
+      setError("No weak topics or concepts are ready for Recovery Mode yet.")
       return
     }
 
@@ -198,6 +235,7 @@ export function RecoveryClient() {
     setRecoverySet(null)
     setPlan(nextPlan)
     setBaselineStats(allStats)
+    setBaselineConceptStats(conceptStats)
     setCurrentIndex(0)
     setSelectedChoice(null)
     setAnswers({})
@@ -215,6 +253,7 @@ export function RecoveryClient() {
             topic: item.topic,
             count: item.count,
             difficulty: item.difficulty,
+            weaknesses: item.weaknesses,
           })),
         }),
       })
@@ -247,7 +286,9 @@ export function RecoveryClient() {
 
     const progressResult = await addPracticeProgress({
       topic: currentQuestion.topic,
+      subtopic: currentQuestion.subtopic,
       difficulty: currentQuestion.difficulty,
+      questionType: "Recovery Mode",
       correct,
     })
 
@@ -297,6 +338,7 @@ export function RecoveryClient() {
     setRecoverySet(null)
     setPlan([])
     setBaselineStats([])
+    setBaselineConceptStats([])
     setCurrentIndex(0)
     setSelectedChoice(null)
     setAnswers({})
@@ -317,12 +359,12 @@ export function RecoveryClient() {
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Recovery Mode</h1>
-              <p className="text-muted-foreground">Targeted study sessions generated from your weak topics</p>
+              <p className="text-muted-foreground">Targeted study sessions generated from weak concepts</p>
             </div>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB scans saved practice progress, finds topics with at least five attempts and under 60%
-            accuracy, then builds a 10-question recovery set with adaptive difficulty.
+            ARSHLAB scans saved practice progress, finds topics and concepts with at least five attempts and under
+            60% accuracy, then builds a 10-question recovery set with adaptive difficulty.
           </p>
         </motion.div>
 
@@ -350,7 +392,7 @@ export function RecoveryClient() {
                   <Target className="mx-auto mb-4 h-10 w-10 text-muted-foreground/50" />
                   <p className="font-medium text-foreground">Sign in to use Recovery Mode.</p>
                   <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-                    Recovery Mode needs your saved practice_progress rows to detect weak topics.
+                    Recovery Mode needs your saved practice_progress rows to detect weak topics and concepts.
                   </p>
                   <Button asChild className="mt-5 rounded-xl">
                     <Link href="/account">Sign in / Account</Link>
@@ -363,7 +405,7 @@ export function RecoveryClient() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Target className="h-5 w-5" />
-                      Weak Topics
+                      Weak Concepts
                     </CardTitle>
                     {remaining !== null && <Badge variant="secondary">{remaining} account AI requests left</Badge>}
                   </div>
@@ -371,11 +413,11 @@ export function RecoveryClient() {
                 <CardContent className="space-y-4">
                   {loadingData ? (
                     <p className="py-8 text-center text-sm text-muted-foreground">Loading practice progress...</p>
-                  ) : weakTopics.length === 0 ? (
+                  ) : weakAreaTopics.length === 0 ? (
                     <div className="rounded-xl border border-border bg-secondary/20 p-5">
-                      <p className="font-medium">No weak topics detected yet.</p>
+                      <p className="font-medium">No weak topics or concepts detected yet.</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Recovery Mode starts when a topic has at least five attempts and accuracy below 60%.
+                        Recovery Mode starts when a topic or concept has at least five attempts and accuracy below 60%.
                       </p>
                       <Button asChild className="mt-4 rounded-xl">
                         <Link href="/study">Build more study data</Link>
@@ -384,7 +426,7 @@ export function RecoveryClient() {
                   ) : (
                     <>
                       <div className="grid gap-3 md:grid-cols-2">
-                        {weakTopics.map((topic) => (
+                        {weakAreaTopics.map((topic) => (
                           <div key={topic.topic} className="rounded-xl border border-border bg-card p-4">
                             <div className="mb-2 flex items-center justify-between gap-2">
                               <p className="font-medium">{topic.topic}</p>
@@ -394,6 +436,16 @@ export function RecoveryClient() {
                             <p className="mt-2 text-xs text-muted-foreground">
                               {topic.correct} correct, {topic.missed} missed, {topic.attempted} attempted
                             </p>
+                            <div className="mt-3 flex flex-wrap gap-1">
+                              {weakConcepts
+                                .filter((concept) => concept.topic === topic.topic)
+                                .slice(0, 3)
+                                .map((concept) => (
+                                  <Badge key={`${topic.topic}-${concept.subtopic}`} variant="outline">
+                                    {concept.subtopic} {concept.mastery}%
+                                  </Badge>
+                                ))}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -424,6 +476,13 @@ export function RecoveryClient() {
                     <div key={`${item.role}-${item.topic}`} className="rounded-xl border border-border bg-card p-4">
                       <Badge variant={item.role === "review" ? "secondary" : "default"}>{roleLabel(item.role)}</Badge>
                       <p className="mt-3 font-medium">{item.topic}</p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {item.weaknesses.map((weakness) => (
+                          <Badge key={weakness} variant="outline">
+                            {weakness}
+                          </Badge>
+                        ))}
+                      </div>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {item.count} question{item.count === 1 ? "" : "s"} • {item.difficulty}
                       </p>
@@ -452,6 +511,7 @@ export function RecoveryClient() {
                       </CardTitle>
                       <div className="flex flex-wrap gap-2">
                         <Badge>{currentQuestion.topic}</Badge>
+                        <Badge variant="outline">{currentQuestion.subtopic}</Badge>
                         <Badge variant="secondary">{currentQuestion.difficulty}</Badge>
                       </div>
                     </div>
@@ -563,8 +623,9 @@ export function RecoveryClient() {
 
                   <div className="grid gap-3 md:grid-cols-2">
                     {outcomes.map((outcome) => (
-                      <div key={outcome.topic} className="rounded-xl border border-border bg-card p-4">
-                        <p className="font-medium">{outcome.topic}</p>
+                      <div key={`${outcome.topic}-${outcome.subtopic ?? "topic"}`} className="rounded-xl border border-border bg-card p-4">
+                        <p className="font-medium">{outcome.subtopic ?? outcome.topic}</p>
+                        {outcome.subtopic && <p className="text-xs text-muted-foreground">{outcome.topic}</p>}
                         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                           <ScoreTile label="Before" value={`${outcome.before}%`} />
                           <ScoreTile label="After" value={`${outcome.after}%`} />
@@ -603,9 +664,9 @@ export function RecoveryClient() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>Weak topics require at least five attempts and less than 60% accuracy.</p>
-                <p>Two weak topics: 70% weakest, 20% second weakest, 10% random review.</p>
-                <p>One weak topic: 90% weak topic and 10% random review.</p>
+                <p>Weak topics and concepts require at least five attempts and less than 60% accuracy.</p>
+                <p>Two weak areas: 70% weakest, 20% second weakest, 10% random review.</p>
+                <p>One weak area: 90% weak area and 10% random review.</p>
                 <p>Difficulty is selected from mastery: 0-40% introductory, 40-80% intermediate, 80%+ advanced.</p>
               </CardContent>
             </Card>

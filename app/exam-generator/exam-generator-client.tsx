@@ -62,6 +62,7 @@ interface ExamQuestion {
   questionNumber: number
   type: "multiple_choice" | "short_answer"
   topic: string
+  subtopic: string
   question: string
   choices: string[]
   correctAnswer: string
@@ -329,7 +330,9 @@ export function ExamGeneratorClient() {
     const isCorrect = status === "correct"
     const result = await addPracticeProgress({
       topic: question.topic || recoveryTopic || "Exam Generator",
+      subtopic: question.subtopic,
       difficulty,
+      questionType: question.type === "multiple_choice" ? "Multiple choice exam" : "Short answer exam",
       correct: isCorrect,
     })
 
@@ -598,6 +601,7 @@ function ExamQuestionCard({
           <Badge>Question {question.questionNumber}</Badge>
           <Badge variant="secondary">{question.type === "multiple_choice" ? "Multiple choice" : "Short answer"}</Badge>
           <Badge variant="outline">{question.topic}</Badge>
+          <Badge variant="outline">{question.subtopic}</Badge>
         </div>
         {mark && (
           <Badge variant={mark === "correct" ? "default" : "destructive"}>
