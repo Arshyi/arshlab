@@ -132,6 +132,7 @@ export async function POST(request: NextRequest) {
   }
 
   const model = process.env.ARSHLAB_AI_MODEL ?? "openrouter/free"
+  const siteUrl = process.env.ARSHLAB_SITE_URL ?? "https://arshlab.vercel.app"
   if (!isAllowedFreeModel(model)) {
     return NextResponse.json(
       { ok: false, message: "Configured AI model is not allowed for ARSHLAB free alpha." },
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://arshlab.com",
+        "HTTP-Referer": siteUrl,
         "X-Title": "ARSHLAB",
       },
       body: JSON.stringify({
