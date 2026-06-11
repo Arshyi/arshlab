@@ -25,6 +25,7 @@ import {
   Waves,
   LogOut,
   Bot,
+  Sparkles,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -50,6 +51,7 @@ const primaryNavItems = [
 
 const chemistryToolItems = [
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
+  { href: "/practice-generator", label: "Practice Generator", icon: Sparkles },
   { href: "/bonding-explorer", label: "Bonding Explorer", icon: Waves },
   { href: "/hybridization-builder", label: "Hybridization Builder", icon: Orbit },
   { href: "/functional-groups", label: "Functional Groups", icon: Layers },

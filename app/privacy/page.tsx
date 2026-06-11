@@ -23,8 +23,8 @@ const sections = [
     body: "Users can export currently visible history from the History page as JSON or CSV for their own educational records.",
   },
   {
-    title: "AI Assistant Alpha",
-    body: "When the AI Assistant is enabled, AI questions may be sent to the configured free AI provider through ARSHLAB's server route. AI conversations are not saved in this alpha.",
+    title: "AI Assistant and Practice Generator Alpha",
+    body: "When the AI Assistant or Practice Generator is enabled, AI questions may be sent to the configured free AI provider through ARSHLAB's server route. AI conversations and generated practice questions are not saved in this alpha.",
   },
   {
     title: "Personal Data",

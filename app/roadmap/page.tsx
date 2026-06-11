@@ -15,6 +15,8 @@ const completed = [
   "Chemistry Database",
   "Chemistry Hub",
   "Hybridization Builder Alpha",
+  "AI Chemistry Assistant Alpha",
+  "Practice Generator Alpha",
 ]
 
 const inDevelopment = [
@@ -28,7 +30,7 @@ const planned = [
   "Search History",
   "Saved Compounds",
   "Saved Reactions",
-  "AI Question Generation",
+  "Saved Generated Practice Sets",
   "Mobile Application",
   "Community Features",
 ]
@@ -159,7 +161,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v2.0.0 - Free AI Chemistry Assistant Alpha
+          ARSHLAB v2.1.0 - Practice Generator Alpha
         </motion.p>
       </div>
     </div>

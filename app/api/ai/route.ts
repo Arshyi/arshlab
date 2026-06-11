@@ -4,11 +4,68 @@ import { createClient } from "@/lib/supabase/server"
 const UNAVAILABLE_MESSAGE = "AI Assistant temporarily unavailable"
 const MAX_PROMPT_LENGTH = 1600
 const MAX_OUTPUT_TOKENS = 500
+const PRACTICE_MAX_OUTPUT_TOKENS = 800
 const guestUsage = new Map<string, { date: string; count: number }>()
+
+const PRACTICE_TOPICS = [
+  "Functional group identification",
+  "Hybridization",
+  "VSEPR geometry",
+  "Periodic trends",
+  "Electron configuration",
+  "IR spectroscopy peak identification",
+] as const
+
+const PRACTICE_QUESTION_TYPES = [
+  "Multiple choice",
+  "Short answer",
+  "Explanation prompt",
+] as const
+
+const PRACTICE_DIFFICULTIES = [
+  "Introductory",
+  "Intermediate",
+  "Advanced",
+] as const
+
+const PRACTICE_CURRICULUM_STYLES = [
+  "High School",
+  "IB Chemistry",
+  "AP Chemistry",
+  "A-Level Chemistry",
+  "CHEM 121 / First Year Chemistry",
+] as const
 
 interface AiUsageRow {
   id: string
   request_count: number
+}
+
+interface PracticeRequest {
+  topic: string
+  questionType: string
+  difficulty: string
+  curriculumStyle: string
+}
+
+interface PracticeChoice {
+  label: string
+  text: string
+}
+
+interface PracticeResult {
+  topic: string
+  questionType: string
+  difficulty: string
+  curriculumStyle: string
+  question: string
+  choices?: PracticeChoice[]
+  correctChoice?: string
+  answer: string
+  explanation: string
+  misconceptionNotes?: string
+  markingGuidance?: string
+  keyPoints?: string[]
 }
 
 function todayKey(): string {
@@ -22,6 +79,10 @@ function getNumberEnv(name: string, fallback: number): number {
 
 function isAllowedFreeModel(model: string): boolean {
   return model === "openrouter/free" || model.endsWith(":free")
+}
+
+function isAllowedValue(value: unknown, allowed: readonly string[]): value is string {
+  return typeof value === "string" && allowed.includes(value)
 }
 
 function unavailable(status = 503) {
@@ -121,6 +182,124 @@ function buildSystemPrompt(): string {
   ].join(" ")
 }
 
+function buildPracticeSystemPrompt(): string {
+  return [
+    "You are ARSHLAB's free chemistry practice generator alpha.",
+    "Generate only original educational chemistry practice questions.",
+    "Do not copy or imitate known copyrighted exam questions.",
+    "Do not claim the question is official exam-board, university, or past-paper material.",
+    "Keep chemistry accurate, concise, and student-friendly.",
+    "Return only valid JSON with no markdown.",
+  ].join(" ")
+}
+
+function parsePracticeRequest(body: unknown): PracticeRequest | null {
+  const record = body as Record<string, unknown>
+  const topic = record.topic
+  const questionType = record.questionType
+  const difficulty = record.difficulty
+  const curriculumStyle = record.curriculumStyle
+
+  if (
+    !isAllowedValue(topic, PRACTICE_TOPICS) ||
+    !isAllowedValue(questionType, PRACTICE_QUESTION_TYPES) ||
+    !isAllowedValue(difficulty, PRACTICE_DIFFICULTIES) ||
+    !isAllowedValue(curriculumStyle, PRACTICE_CURRICULUM_STYLES)
+  ) {
+    return null
+  }
+
+  return { topic, questionType, difficulty, curriculumStyle }
+}
+
+function buildPracticePrompt(request: PracticeRequest): string {
+  return [
+    `Generate one original ${request.questionType} chemistry practice question.`,
+    `Topic: ${request.topic}. Difficulty: ${request.difficulty}. Curriculum style: ${request.curriculumStyle}.`,
+    "Do not mention official past papers, do not copy known exam material, and do not imply endorsement by any exam board.",
+    "For multiple choice, create exactly four choices labeled A, B, C, D with exactly one correct choice and realistic misconception distractors.",
+    "For short answer, include expected answer, marking guidance, and explanation.",
+    "For explanation prompts, include a model explanation and key points a student should mention.",
+    "Return only JSON in this exact shape:",
+    '{"question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctChoice":"A","answer":"...","explanation":"...","misconceptionNotes":"...","markingGuidance":"...","keyPoints":["..."]}',
+    "For non-multiple-choice questions, use an empty choices array and null correctChoice.",
+  ].join("\n")
+}
+
+function stringField(record: Record<string, unknown>, key: string): string {
+  const value = record[key]
+  return typeof value === "string" ? value.trim() : ""
+}
+
+function parseGeneratedJson(text: string): unknown | null {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i)
+  const candidate = fenced?.[1] ?? text
+  const start = candidate.indexOf("{")
+  const end = candidate.lastIndexOf("}")
+  if (start === -1 || end <= start) return null
+
+  try {
+    return JSON.parse(candidate.slice(start, end + 1))
+  } catch {
+    return null
+  }
+}
+
+function normalizeChoices(value: unknown): PracticeChoice[] | null {
+  if (!Array.isArray(value) || value.length !== 4) return null
+  const expectedLabels = ["A", "B", "C", "D"]
+  const choices = value.map((item, index) => {
+    if (!item || typeof item !== "object") return null
+    const record = item as Record<string, unknown>
+    const label = stringField(record, "label").toUpperCase()
+    const text = stringField(record, "text")
+    if (label !== expectedLabels[index] || !text) return null
+    return { label, text }
+  })
+
+  if (choices.some((choice) => choice === null)) return null
+  return choices as PracticeChoice[]
+}
+
+function validatePracticeResult(data: unknown, request: PracticeRequest): PracticeResult | null {
+  if (!data || typeof data !== "object") return null
+  const record = data as Record<string, unknown>
+  const question = stringField(record, "question")
+  const answer = stringField(record, "answer")
+  const explanation = stringField(record, "explanation")
+  const misconceptionNotes = stringField(record, "misconceptionNotes")
+  const markingGuidance = stringField(record, "markingGuidance")
+  const keyPoints = Array.isArray(record.keyPoints)
+    ? record.keyPoints.filter((point): point is string => typeof point === "string" && point.trim().length > 0).map((point) => point.trim())
+    : []
+
+  if (!question || !answer || !explanation) return null
+
+  const result: PracticeResult = {
+    ...request,
+    question,
+    answer,
+    explanation,
+  }
+
+  if (misconceptionNotes) result.misconceptionNotes = misconceptionNotes
+  if (markingGuidance) result.markingGuidance = markingGuidance
+  if (keyPoints.length) result.keyPoints = keyPoints
+
+  if (request.questionType === "Multiple choice") {
+    const choices = normalizeChoices(record.choices)
+    const correctChoice = stringField(record, "correctChoice").toUpperCase()
+    if (!choices || !["A", "B", "C", "D"].includes(correctChoice)) return null
+    result.choices = choices
+    result.correctChoice = correctChoice
+  }
+
+  if (request.questionType === "Short answer" && !markingGuidance) return null
+  if (request.questionType === "Explanation prompt" && keyPoints.length === 0) return null
+
+  return result
+}
+
 export async function POST(request: NextRequest) {
   if (process.env.ARSHLAB_AI_ENABLED !== "true") {
     return unavailable()
@@ -147,15 +326,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: "Invalid request body." }, { status: 400 })
   }
 
-  const prompt = typeof (body as { prompt?: unknown }).prompt === "string"
-    ? (body as { prompt: string }).prompt.trim()
-    : ""
+  const task = typeof (body as { task?: unknown }).task === "string"
+    ? (body as { task: string }).task
+    : "assistant"
+  const practiceRequest = task === "practice-generator" ? parsePracticeRequest(body) : null
+  if (task === "practice-generator" && !practiceRequest) {
+    return NextResponse.json({ ok: false, message: "Invalid practice generator request." }, { status: 400 })
+  }
+
+  const prompt = practiceRequest
+    ? buildPracticePrompt(practiceRequest)
+    : typeof (body as { prompt?: unknown }).prompt === "string"
+      ? (body as { prompt: string }).prompt.trim()
+      : ""
 
   if (!prompt) {
     return NextResponse.json({ ok: false, message: "Enter a chemistry question first." }, { status: 400 })
   }
 
-  if (prompt.length > MAX_PROMPT_LENGTH) {
+  if (!practiceRequest && prompt.length > MAX_PROMPT_LENGTH) {
     return NextResponse.json(
       { ok: false, message: `Prompt is too long. Keep it under ${MAX_PROMPT_LENGTH} characters.` },
       { status: 400 },
@@ -191,10 +380,10 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: buildSystemPrompt() },
+          { role: "system", content: practiceRequest ? buildPracticeSystemPrompt() : buildSystemPrompt() },
           { role: "user", content: prompt },
         ],
-        max_tokens: MAX_OUTPUT_TOKENS,
+        max_tokens: practiceRequest ? PRACTICE_MAX_OUTPUT_TOKENS : MAX_OUTPUT_TOKENS,
         temperature: 0.4,
       }),
     })
@@ -214,6 +403,30 @@ export async function POST(request: NextRequest) {
         : ""
 
     if (!answer) return unavailable()
+
+    if (practiceRequest) {
+      const generatedJson = parseGeneratedJson(answer)
+      const practice = validatePracticeResult(generatedJson, practiceRequest)
+
+      if (!practice) {
+        return NextResponse.json(
+          {
+            ok: false,
+            validationFailed: true,
+            message: "Generated practice question did not pass validation. Try again.",
+          },
+          { status: 422 },
+        )
+      }
+
+      return NextResponse.json({
+        ok: true,
+        practice,
+        remaining: limitResult.remaining,
+        disclaimer:
+          "Generated practice questions are original educational materials and may contain mistakes. Verify important answers independently.",
+      })
+    }
 
     return NextResponse.json({
       ok: true,

@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "2.0.0",
+    version: "2.1.0",
     date: "Current",
+    status: "released",
+    title: "Practice Generator Alpha",
+    changes: [
+      "Added AI-assisted practice question generator",
+      "Added multiple choice question generation",
+      "Added short answer question generation",
+      "Added explanation prompts",
+      "Added support for functional groups, hybridization, VSEPR, periodic trends, electron configuration, and IR spectroscopy",
+      "Added answer/explanation reveal controls",
+      "Added validation and educational disclaimers",
+    ],
+  },
+  {
+    version: "2.0.0",
+    date: "Previous",
     status: "released",
     title: "Free AI Chemistry Assistant Alpha",
     changes: [

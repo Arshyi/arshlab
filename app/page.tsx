@@ -46,6 +46,12 @@ const features = [
     description: "Search elements, animate orbital filling, and study Aufbau, Hund, Pauli, and d-block exceptions.",
   },
   {
+    icon: Sparkles,
+    title: "Practice Generator",
+    description: "Generate original chemistry practice questions with answer reveal, explanations, and validation guardrails.",
+    href: "/practice-generator",
+  },
+  {
     icon: Waves,
     title: "Bonding Explorer",
     description: "Move atoms together, inspect sigma and pi overlap, and connect bond length to potential energy.",
