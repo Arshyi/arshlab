@@ -46,13 +46,18 @@ const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
 
 const topics = [
-  "Functional group identification",
+  "Functional Group Identification",
   "Hybridization",
-  "VSEPR geometry",
-  "Periodic trends",
+  "VSEPR Geometry",
+  "Periodic Trends",
   "Thermodynamics",
-  "Electron configuration",
-  "IR spectroscopy peak identification",
+  "Electron Configuration",
+  "IR Spectroscopy",
+  "Kinetics",
+  "Equilibrium",
+  "Acids and Bases",
+  "Bonding",
+  "Stoichiometry",
 ]
 
 const questionTypes = [

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target } from "lucide-react"
+import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -56,6 +56,12 @@ const features = [
     title: "Study Mode",
     description: "Work through adaptive chemistry sessions with streaks, XP, mastery, feedback, and PDF exports.",
     href: "/study",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Diagnostic Assessment",
+    description: "Take a placement-style chemistry checkup, then get targeted study order, reports, and recovery actions.",
+    href: "/diagnostic",
   },
   {
     icon: Target,

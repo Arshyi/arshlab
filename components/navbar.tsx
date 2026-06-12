@@ -29,6 +29,7 @@ import {
   BarChart3,
   FileQuestion,
   BookOpenCheck,
+  ClipboardCheck,
   Target,
 } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -55,6 +56,7 @@ const primaryNavItems = [
 
 const chemistryToolItems = [
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
+  { href: "/diagnostic", label: "Diagnostic", icon: ClipboardCheck },
   { href: "/study", label: "Study Mode", icon: BookOpenCheck },
   { href: "/recovery", label: "Recovery Mode", icon: Target },
   { href: "/practice-generator", label: "Practice Generator", icon: Sparkles },

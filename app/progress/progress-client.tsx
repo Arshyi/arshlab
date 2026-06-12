@@ -7,6 +7,7 @@ import {
   AlertCircle,
   BarChart3,
   CheckCircle2,
+  ClipboardCheck,
   ClipboardList,
   Flame,
   Medal,
@@ -213,10 +214,17 @@ function getAchievements(
   const total = entries.length
   const correct = entries.filter((entry) => entry.correct).length
   const completedExams = profile?.completedExams ?? 0
+  const completedDiagnostics = profile?.completedDiagnostics ?? 0
   const xp = profile?.xp ?? 0
   const firstRecovery = entries.some((entry) => entry.questionType === "Recovery Mode")
   const masteredTopic = topicStats.some((stat) => stat.total >= 5 && stat.mastery >= 90)
   const longestStreak = getLongestCorrectStreak(entries)
+  const bestDiagnosticAccuracy = profile?.bestDiagnosticAccuracy ?? 0
+  const previousDiagnosticAccuracy = profile?.previousDiagnosticAccuracy
+  const lastDiagnosticAccuracy = profile?.lastDiagnosticAccuracy ?? 0
+  const diagnosticImproved =
+    typeof previousDiagnosticAccuracy === "number" &&
+    lastDiagnosticAccuracy > previousDiagnosticAccuracy
 
   return [
     {
@@ -281,6 +289,48 @@ function getAchievements(
       unlocked: xp >= 500,
       progress: Math.min(100, Math.round((xp / 500) * 100)),
       icon: Zap,
+    },
+    {
+      label: "First Diagnostic",
+      description: "Start placement tracking with one diagnostic.",
+      unlocked: completedDiagnostics >= 1,
+      progress: Math.min(100, completedDiagnostics * 100),
+      icon: ClipboardCheck,
+    },
+    {
+      label: "Diagnostic Complete",
+      description: "Complete a full diagnostic assessment.",
+      unlocked: completedDiagnostics >= 1,
+      progress: Math.min(100, completedDiagnostics * 100),
+      icon: Trophy,
+    },
+    {
+      label: "70% Diagnostic",
+      description: "Reach at least 70% on a diagnostic.",
+      unlocked: bestDiagnosticAccuracy >= 70,
+      progress: Math.min(100, Math.round((bestDiagnosticAccuracy / 70) * 100)),
+      icon: Medal,
+    },
+    {
+      label: "90% Diagnostic",
+      description: "Reach advanced diagnostic placement.",
+      unlocked: bestDiagnosticAccuracy >= 90,
+      progress: Math.min(100, Math.round((bestDiagnosticAccuracy / 90) * 100)),
+      icon: Medal,
+    },
+    {
+      label: "Diagnostic Improvement",
+      description: "Improve your latest diagnostic score.",
+      unlocked: diagnosticImproved,
+      progress: diagnosticImproved ? 100 : 0,
+      icon: BarChart3,
+    },
+    {
+      label: "Placement Ready",
+      description: "Complete a diagnostic and review your progress dashboard.",
+      unlocked: completedDiagnostics >= 1,
+      progress: Math.min(100, completedDiagnostics * 100),
+      icon: Target,
     },
   ]
 }
@@ -366,6 +416,15 @@ export function ProgressClient() {
   const strongestTopic = [...topicStats].sort((a, b) => b.mastery - a.mastery || b.total - a.total)[0] ?? null
   const mostAttemptedTopic = [...topicStats].sort((a, b) => b.total - a.total || b.mastery - a.mastery)[0] ?? null
   const mostImprovedTopic = useMemo(() => getMostImprovedTopic(entries), [entries])
+  const previousDiagnosticAccuracy = profile?.previousDiagnosticAccuracy
+  const diagnosticImprovement =
+    typeof previousDiagnosticAccuracy === "number"
+      ? (profile?.lastDiagnosticAccuracy ?? 0) - previousDiagnosticAccuracy
+      : null
+  const diagnosticScore = profile?.completedDiagnostics
+    ? `${profile.lastDiagnosticAccuracy}%`
+    : "No diagnostic"
+  const lastDiagnosticDate = profile?.lastDiagnosticAt ? friendlyTime(profile.lastDiagnosticAt) : "Not taken"
 
   async function handleDailyGoalChange(value: string) {
     const goal = Number(value)
@@ -451,6 +510,35 @@ export function ProgressClient() {
           <StatCard icon={Medal} label="Achievements" value={loading ? "..." : `${unlockedAchievements}/${achievements.length}`} />
         </div>
 
+        {!loading && (
+          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <InsightCard
+              label="Diagnostic Score"
+              value={diagnosticScore}
+              detail={profile?.completedDiagnostics ? `${profile.completedDiagnostics} completed` : "Take the diagnostic to set a baseline"}
+            />
+            <InsightCard
+              label="Last Diagnostic Date"
+              value={lastDiagnosticDate}
+              detail={profile?.lastDiagnosticAt ?? "No saved diagnostic yet"}
+            />
+            <InsightCard
+              label="Best Diagnostic Accuracy"
+              value={profile?.completedDiagnostics ? `${profile.bestDiagnosticAccuracy}%` : "No diagnostic"}
+              detail="Best saved placement score"
+            />
+            <InsightCard
+              label="Diagnostic Improvement"
+              value={
+                diagnosticImprovement === null
+                  ? "After 2 diagnostics"
+                  : `${diagnosticImprovement >= 0 ? "+" : ""}${diagnosticImprovement}%`
+              }
+              detail="Latest score compared with previous"
+            />
+          </div>
+        )}
+
         {!loading && total > 0 && (
           <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <InsightCard
@@ -488,6 +576,9 @@ export function ProgressClient() {
           <Button asChild className="rounded-xl">
             <Link href="/study">Start Study Mode</Link>
           </Button>
+          <Button asChild variant="outline" className="rounded-xl">
+            <Link href="/diagnostic">Take Diagnostic</Link>
+          </Button>
           <Button asChild variant="secondary" className="rounded-xl">
             <Link href="/exam-generator">Open Exam Generator</Link>
           </Button>
@@ -511,6 +602,9 @@ export function ProgressClient() {
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 <Button asChild className="rounded-xl">
                   <Link href="/study">Start Study Mode</Link>
+                </Button>
+                <Button asChild variant="outline" className="rounded-xl">
+                  <Link href="/diagnostic">Take Diagnostic</Link>
                 </Button>
                 <Button asChild variant="outline" className="rounded-xl">
                   <Link href="/practice-generator">Open Practice Generator</Link>

@@ -9,6 +9,11 @@ export interface UserProfile {
   dailyGoal: 5 | 10 | 20
   completedSessions: number
   completedExams: number
+  completedDiagnostics: number
+  lastDiagnosticAt: string | null
+  lastDiagnosticAccuracy: number
+  previousDiagnosticAccuracy: number | null
+  bestDiagnosticAccuracy: number
   createdAt: string
   updatedAt: string
 }
@@ -19,6 +24,11 @@ interface UserProfileRow {
   daily_goal: number
   completed_sessions: number
   completed_exams: number
+  completed_diagnostics: number | null
+  last_diagnostic_at: string | null
+  last_diagnostic_accuracy: number | null
+  previous_diagnostic_accuracy: number | null
+  best_diagnostic_accuracy: number | null
   created_at: string
   updated_at: string
 }
@@ -68,6 +78,11 @@ function mapProfileRow(row: UserProfileRow): UserProfile {
     dailyGoal: normalizeDailyGoal(row.daily_goal),
     completedSessions: row.completed_sessions,
     completedExams: row.completed_exams,
+    completedDiagnostics: row.completed_diagnostics ?? 0,
+    lastDiagnosticAt: row.last_diagnostic_at ?? null,
+    lastDiagnosticAccuracy: row.last_diagnostic_accuracy ?? 0,
+    previousDiagnosticAccuracy: row.previous_diagnostic_accuracy ?? null,
+    bestDiagnosticAccuracy: row.best_diagnostic_accuracy ?? 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -168,6 +183,9 @@ export async function applyProfileReward(input: {
   xp?: number
   completedSessions?: number
   completedExams?: number
+  completedDiagnostics?: number
+  diagnosticAccuracy?: number
+  diagnosticCompletedAt?: string
 }): Promise<ProfileResult<UserProfile>> {
   const result = await ensureUserProfile()
   if (!result.ok) {
@@ -179,12 +197,28 @@ export async function applyProfileReward(input: {
   }
 
   const profile = result.data.profile
+  const completedDiagnostics = input.completedDiagnostics ?? 0
+  const diagnosticAccuracy =
+    typeof input.diagnosticAccuracy === "number"
+      ? Math.max(0, Math.min(100, Math.round(input.diagnosticAccuracy)))
+      : null
   const { data, error } = await result.data.supabase
     .from("user_profiles")
     .update({
       xp: Math.max(0, profile.xp + (input.xp ?? 0)),
       completed_sessions: profile.completedSessions + (input.completedSessions ?? 0),
       completed_exams: profile.completedExams + (input.completedExams ?? 0),
+      completed_diagnostics: profile.completedDiagnostics + completedDiagnostics,
+      last_diagnostic_at: completedDiagnostics > 0
+        ? input.diagnosticCompletedAt ?? new Date().toISOString()
+        : profile.lastDiagnosticAt,
+      previous_diagnostic_accuracy: diagnosticAccuracy !== null
+        ? profile.lastDiagnosticAccuracy
+        : profile.previousDiagnosticAccuracy,
+      last_diagnostic_accuracy: diagnosticAccuracy ?? profile.lastDiagnosticAccuracy,
+      best_diagnostic_accuracy: diagnosticAccuracy !== null
+        ? Math.max(profile.bestDiagnosticAccuracy, diagnosticAccuracy)
+        : profile.bestDiagnosticAccuracy,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", result.data.user.id)

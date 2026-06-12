@@ -49,6 +49,38 @@ export const TOPIC_SUBTOPIC_REGISTRY = {
     "Noble Gas Shorthand",
     "d-block Exceptions",
   ],
+  Kinetics: [
+    "Rate Laws",
+    "Activation Energy",
+    "Reaction Mechanisms",
+    "Collision Theory",
+  ],
+  Equilibrium: [
+    "Equilibrium Constant",
+    "Le Chatelier Principle",
+    "ICE Tables",
+    "Reaction Quotient",
+  ],
+  "Acids and Bases": [
+    "pH",
+    "pKa",
+    "Strong and Weak Acids",
+    "Buffers",
+    "Titrations",
+  ],
+  Bonding: [
+    "Ionic Bonding",
+    "Covalent Bonding",
+    "Polarity",
+    "Lewis Structures",
+    "Sigma and Pi Bonds",
+  ],
+  Stoichiometry: [
+    "Mole Calculations",
+    "Limiting Reagent",
+    "Percent Yield",
+    "Empirical Formula",
+  ],
 } as const
 
 export type LearningTopic = keyof typeof TOPIC_SUBTOPIC_REGISTRY
@@ -67,6 +99,14 @@ const TOPIC_ALIASES: Record<string, LearningTopic> = {
   "vsepr": "VSEPR Geometry",
   "electron configuration": "Electron Configuration",
   "electron configurations": "Electron Configuration",
+  "kinetics": "Kinetics",
+  "equilibrium": "Equilibrium",
+  "acids and bases": "Acids and Bases",
+  "acid base": "Acids and Bases",
+  "acid base chemistry": "Acids and Bases",
+  "bonding": "Bonding",
+  "chemical bonding": "Bonding",
+  "stoichiometry": "Stoichiometry",
 }
 
 const SUBTOPIC_KEYWORDS: Record<string, string[]> = {
@@ -106,6 +146,28 @@ const SUBTOPIC_KEYWORDS: Record<string, string[]> = {
   "Hund's Rule": ["hund", "unpaired", "parallel spins"],
   "Noble Gas Shorthand": ["noble gas", "shorthand", "[ar]", "[ne]", "[kr]"],
   "d-block Exceptions": ["chromium", "copper", "cr", "cu", "exception", "half-filled", "filled d"],
+  "Rate Laws": ["rate law", "rate laws", "order of reaction", "rate constant"],
+  "Activation Energy": ["activation energy", "arrhenius", "energy barrier"],
+  "Reaction Mechanisms": ["mechanism", "elementary step", "rate determining", "intermediate"],
+  "Collision Theory": ["collision", "orientation", "frequency factor"],
+  "Equilibrium Constant": ["equilibrium constant", "k eq", "keq", "kc", "kp"],
+  "Le Chatelier Principle": ["le chatelier", "shift left", "shift right", "stress"],
+  "ICE Tables": ["ice table", "initial change equilibrium"],
+  "Reaction Quotient": ["reaction quotient", "q value", "compare q", "q vs k"],
+  pH: ["ph", "hydronium", "hydrogen ion", "h+"],
+  pKa: ["pka", "acid strength", "conjugate base"],
+  "Strong and Weak Acids": ["strong acid", "weak acid", "strong base", "weak base", "dissociation"],
+  Buffers: ["buffer", "henderson", "resists ph"],
+  Titrations: ["titration", "equivalence point", "endpoint", "neutralization"],
+  "Ionic Bonding": ["ionic", "lattice", "cation", "anion"],
+  "Covalent Bonding": ["covalent", "shared electrons", "single bond", "double bond", "triple bond"],
+  Polarity: ["polar", "dipole", "electronegativity difference"],
+  "Lewis Structures": ["lewis", "formal charge", "resonance", "octet"],
+  "Sigma and Pi Bonds": ["sigma", "pi bond", "overlap", "single bond", "double bond"],
+  "Mole Calculations": ["mole", "molar mass", "avogadro", "particles"],
+  "Limiting Reagent": ["limiting reagent", "limiting reactant", "excess reactant"],
+  "Percent Yield": ["percent yield", "actual yield", "theoretical yield"],
+  "Empirical Formula": ["empirical formula", "molecular formula", "percent composition"],
 }
 
 function normalize(value: string): string {

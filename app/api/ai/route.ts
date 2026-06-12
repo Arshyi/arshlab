@@ -1,22 +1,38 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getSubtopicsForTopic, inferSubtopicForTopic } from "@/lib/learning/subtopic-registry"
+import {
+  DIAGNOSTIC_COUNTS,
+  DIAGNOSTIC_CURRICULA,
+  DIAGNOSTIC_TOPICS,
+} from "@/lib/learning/diagnostic"
 
 const UNAVAILABLE_MESSAGE = "AI Assistant temporarily unavailable"
 const MAX_PROMPT_LENGTH = 1600
 const MAX_OUTPUT_TOKENS = 500
 const PRACTICE_MAX_OUTPUT_TOKENS = 5000
 const EXAM_MAX_OUTPUT_TOKENS = 9000
+const DIAGNOSTIC_MAX_OUTPUT_TOKENS = 12000
 const guestUsage = new Map<string, { date: string; count: number }>()
 
 const PRACTICE_TOPICS = [
   "Functional group identification",
+  "Functional Group Identification",
   "Hybridization",
   "VSEPR geometry",
+  "VSEPR Geometry",
   "Periodic trends",
+  "Periodic Trends",
   "Thermodynamics",
   "Electron configuration",
+  "Electron Configuration",
   "IR spectroscopy peak identification",
+  "IR Spectroscopy",
+  "Kinetics",
+  "Equilibrium",
+  "Acids and Bases",
+  "Bonding",
+  "Stoichiometry",
 ] as const
 
 const PRACTICE_QUESTION_TYPES = [
@@ -131,6 +147,30 @@ interface GeneratedExam {
   questions: ExamQuestion[]
 }
 
+interface DiagnosticRequest {
+  questionCount: number
+  curriculum: string
+}
+
+interface DiagnosticQuestion {
+  id: string
+  questionNumber: number
+  topic: string
+  subtopic: string
+  difficulty: string
+  questionType: "Multiple Choice"
+  question: string
+  choices: string[]
+  correctAnswer: string
+  explanation: string
+}
+
+interface GeneratedDiagnostic {
+  title: string
+  curriculum: string
+  questions: DiagnosticQuestion[]
+}
+
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10)
 }
@@ -154,6 +194,10 @@ function isAllowedQuestionCount(value: unknown): value is number {
 
 function isAllowedExamLength(value: unknown): value is number {
   return typeof value === "number" && EXAM_LENGTHS.includes(value as 10 | 20 | 30 | 50)
+}
+
+function isAllowedDiagnosticCount(value: unknown): value is number {
+  return typeof value === "number" && DIAGNOSTIC_COUNTS.includes(value as 20 | 40 | 60)
 }
 
 function unavailable(status = 503) {
@@ -286,6 +330,17 @@ function buildExamSystemPrompt(): string {
   ].join(" ")
 }
 
+function buildDiagnosticSystemPrompt(): string {
+  return [
+    "You are ARSHLAB's free chemistry diagnostic assessment generator alpha.",
+    "Generate original diagnostic chemistry assessment questions only.",
+    "Do not copy or imitate official exam-board, university, or past-paper questions.",
+    "Do not claim the diagnostic is affiliated with or endorsed by any institution.",
+    "Use clear wording suitable for placement and study planning.",
+    "Return only valid JSON with no markdown.",
+  ].join(" ")
+}
+
 function parsePracticeRequest(body: unknown): PracticeRequest | null {
   const record = body as Record<string, unknown>
   const topic = record.topic
@@ -337,6 +392,25 @@ function parseExamRequest(body: unknown): ExamRequest | null {
   }
 }
 
+function parseDiagnosticRequest(body: unknown): DiagnosticRequest | null {
+  const record = body as Record<string, unknown>
+  const curriculum = record.curriculum
+  const numericQuestionCount =
+    typeof record.questionCount === "string" ? Number(record.questionCount) : record.questionCount
+
+  if (
+    !isAllowedValue(curriculum, DIAGNOSTIC_CURRICULA) ||
+    !isAllowedDiagnosticCount(numericQuestionCount)
+  ) {
+    return null
+  }
+
+  return {
+    curriculum,
+    questionCount: numericQuestionCount,
+  }
+}
+
 function parseRecoveryRequest(body: unknown): RecoveryRequest | null {
   const record = body as Record<string, unknown>
   const rawPlan = Array.isArray(record.plan) ? record.plan : null
@@ -381,22 +455,44 @@ function parseRecoveryRequest(body: unknown): RecoveryRequest | null {
 function topicGuidance(topic: string): string {
   switch (topic) {
     case "Functional group identification":
+    case "Functional Group Identification":
       return "Seed concepts: alcohols, amines, aldehydes, ketones, carboxylic acids, esters, amides, haloalkanes, and alkenes."
     case "Hybridization":
       return "Seed concepts: sp, sp2, sp3, sp3d, sp3d2; examples CO2, BF3, CH4, NH3, H2O, PCl5, SF6, XeF4."
     case "VSEPR geometry":
+    case "VSEPR Geometry":
       return "Seed concepts: linear, trigonal planar, tetrahedral, trigonal pyramidal, bent, trigonal bipyramidal, octahedral, square planar."
     case "Periodic trends":
+    case "Periodic Trends":
       return "Seed concepts: atomic radius, electronegativity, first ionization energy, electron affinity; compare across periods and groups."
     case "Thermodynamics":
       return "Seed concepts: enthalpy, entropy, Gibbs free energy, Hess Law, calorimetry, spontaneity, and heat transfer."
     case "Electron configuration":
+    case "Electron Configuration":
       return "Seed concepts: noble gas shorthand, orbital filling, Aufbau/Hund/Pauli, and common exceptions such as Cr and Cu when appropriate."
     case "IR spectroscopy peak identification":
+    case "IR Spectroscopy":
       return "Seed concepts: broad O-H around 3200-3600 cm^-1, C=O around 1650-1750 cm^-1, N-H around 3300 cm^-1, C-H regions, and fingerprint region concept."
+    case "Kinetics":
+      return "Seed concepts: rate laws, reaction order, activation energy, mechanisms, and collision theory."
+    case "Equilibrium":
+      return "Seed concepts: equilibrium constants, reaction quotient, Le Chatelier's principle, and ICE-table reasoning."
+    case "Acids and Bases":
+      return "Seed concepts: pH, pKa, strong and weak acids/bases, buffers, titrations, and conjugate pairs."
+    case "Bonding":
+      return "Seed concepts: ionic bonding, covalent bonding, polarity, Lewis structures, sigma bonds, and pi bonds."
+    case "Stoichiometry":
+      return "Seed concepts: mole calculations, limiting reagents, percent yield, empirical formulas, and balanced equations."
     default:
       return "Use accurate chemistry examples suitable for the selected curriculum style."
   }
+}
+
+function diagnosticTopicGuidance(): string {
+  return DIAGNOSTIC_TOPICS.map((topic) => {
+    const subtopics = getSubtopicsForTopic(topic)
+    return `${topic}: ${subtopics.join(", ") || "core chemistry concepts"}`
+  }).join("\n")
 }
 
 function buildPracticePrompt(request: PracticeRequest): string {
@@ -479,6 +575,26 @@ function buildExamPrompt(request: ExamRequest): string {
     "Keep explanations concise enough that the whole exam fits in JSON.",
     "Return valid JSON only in this exact shape:",
     '{"title":"Practice Midterm","questions":[{"questionNumber":1,"type":"multiple_choice","topic":"Stoichiometry","subtopic":"Limiting reagent","question":"...","choices":["A. ...","B. ...","C. ...","D. ..."],"correctAnswer":"A","explanation":"..."}]}',
+  ].join("\n")
+}
+
+function buildDiagnosticPrompt(request: DiagnosticRequest): string {
+  return [
+    `Generate exactly ${request.questionCount} original multiple choice chemistry diagnostic questions.`,
+    `Curriculum: ${request.curriculum}. Difficulty mode: Automatic. Question type: Mixed diagnostic multiple choice.`,
+    "A single generated diagnostic counts as one AI request, so make this complete in one response.",
+    "Sample across these topics and subtopics. Do not ignore any major area when the question count allows broad coverage:",
+    diagnosticTopicGuidance(),
+    "Use a mix of Introductory, Intermediate, and Advanced difficulties.",
+    "Every question must include id, questionNumber, topic, subtopic, difficulty, questionType, question, choices, correctAnswer, and explanation.",
+    "Every questionType must be exactly Multiple Choice.",
+    "Each choices array must contain exactly four strings labeled A, B, C, D or easily normalizable to A-D.",
+    "correctAnswer must be A, B, C, D, or the exact correct choice text.",
+    "Explanations should be concise and useful for placement feedback.",
+    "Questions are AI-generated educational material, not official exam-board or university material.",
+    "Do not mention past papers, official exams, or copied source material.",
+    "Return valid JSON only in this exact shape:",
+    '{"title":"ARSHLAB Diagnostic Assessment","curriculum":"...","questions":[{"id":"q1","questionNumber":1,"topic":"Periodic Trends","subtopic":"Ionization Energy","difficulty":"Introductory","questionType":"Multiple Choice","question":"...","choices":["A. ...","B. ...","C. ...","D. ..."],"correctAnswer":"B","explanation":"..."}]}',
   ].join("\n")
 }
 
@@ -726,6 +842,66 @@ function validateGeneratedExam(data: unknown, request: ExamRequest): GeneratedEx
   return { title, questions: questions as ExamQuestion[] }
 }
 
+function normalizeDiagnosticDifficulty(value: string): string | null {
+  return PRACTICE_DIFFICULTIES.find(
+    (difficulty) => difficulty.toLowerCase() === value.trim().toLowerCase(),
+  ) ?? null
+}
+
+function normalizeDiagnosticQuestionType(value: string): "Multiple Choice" | null {
+  const normalized = value.trim().toLowerCase().replace(/[_-]+/g, " ")
+  return normalized === "multiple choice" ? "Multiple Choice" : null
+}
+
+function validateGeneratedDiagnostic(data: unknown, request: DiagnosticRequest): GeneratedDiagnostic | null {
+  if (!data || typeof data !== "object") return null
+  const record = data as Record<string, unknown>
+  const title = stringField(record, "title")
+  const curriculum = stringField(record, "curriculum") || request.curriculum
+  const rawQuestions = Array.isArray(record.questions) ? record.questions : null
+
+  if (!title || !rawQuestions || rawQuestions.length !== request.questionCount) return null
+
+  const questions = rawQuestions.map((item, index) => {
+    if (!item || typeof item !== "object") return null
+    const questionRecord = item as Record<string, unknown>
+    const topic = stringField(questionRecord, "topic")
+    const subtopicRaw = stringField(questionRecord, "subtopic")
+    const difficulty = normalizeDiagnosticDifficulty(stringField(questionRecord, "difficulty"))
+    const questionType = normalizeDiagnosticQuestionType(stringField(questionRecord, "questionType"))
+    const question = stringField(questionRecord, "question") || stringField(questionRecord, "prompt")
+    const correctAnswer = stringField(questionRecord, "correctAnswer") || stringField(questionRecord, "answer")
+    const explanation = stringField(questionRecord, "explanation")
+
+    if (!topic || !subtopicRaw || !difficulty || !questionType || !question || !correctAnswer || !explanation) {
+      return null
+    }
+
+    const choices = normalizeExamChoices(questionRecord.choices)
+    if (!choices || choices.length !== 4 || !examAnswerMatchesChoices(correctAnswer, choices)) return null
+
+    return {
+      id: stringField(questionRecord, "id") || `q${index + 1}`,
+      questionNumber: index + 1,
+      topic,
+      subtopic: inferSubtopicForTopic(topic, question, subtopicRaw),
+      difficulty,
+      questionType,
+      question,
+      choices,
+      correctAnswer,
+      explanation,
+    }
+  })
+
+  if (questions.some((question) => question === null)) return null
+  return {
+    title,
+    curriculum,
+    questions: questions as DiagnosticQuestion[],
+  }
+}
+
 export async function POST(request: NextRequest) {
   if (process.env.ARSHLAB_AI_ENABLED !== "true") {
     return unavailable()
@@ -755,13 +931,14 @@ export async function POST(request: NextRequest) {
   const task = typeof (body as { task?: unknown }).task === "string"
     ? (body as { task: string }).task
     : "assistant"
-  if (!["assistant", "practice-generator", "exam-generator", "recovery-generator"].includes(task)) {
+  if (!["assistant", "practice-generator", "exam-generator", "recovery-generator", "diagnostic-generator"].includes(task)) {
     return NextResponse.json({ ok: false, message: "Invalid AI task." }, { status: 400 })
   }
 
   const practiceRequest = task === "practice-generator" ? parsePracticeRequest(body) : null
   const examRequest = task === "exam-generator" ? parseExamRequest(body) : null
   const recoveryRequest = task === "recovery-generator" ? parseRecoveryRequest(body) : null
+  const diagnosticRequest = task === "diagnostic-generator" ? parseDiagnosticRequest(body) : null
   if (task === "practice-generator" && !practiceRequest) {
     return NextResponse.json({ ok: false, message: "Invalid practice generator request." }, { status: 400 })
   }
@@ -771,22 +948,27 @@ export async function POST(request: NextRequest) {
   if (task === "recovery-generator" && !recoveryRequest) {
     return NextResponse.json({ ok: false, message: "Invalid recovery generator request." }, { status: 400 })
   }
+  if (task === "diagnostic-generator" && !diagnosticRequest) {
+    return NextResponse.json({ ok: false, message: "Invalid diagnostic generator request." }, { status: 400 })
+  }
 
   const prompt = recoveryRequest
     ? buildRecoveryPrompt(recoveryRequest)
     : examRequest
     ? buildExamPrompt(examRequest)
-    : practiceRequest
-      ? buildPracticePrompt(practiceRequest)
-      : typeof (body as { prompt?: unknown }).prompt === "string"
-        ? (body as { prompt: string }).prompt.trim()
-        : ""
+    : diagnosticRequest
+      ? buildDiagnosticPrompt(diagnosticRequest)
+      : practiceRequest
+        ? buildPracticePrompt(practiceRequest)
+        : typeof (body as { prompt?: unknown }).prompt === "string"
+          ? (body as { prompt: string }).prompt.trim()
+          : ""
 
   if (!prompt) {
     return NextResponse.json({ ok: false, message: "Enter a chemistry question first." }, { status: 400 })
   }
 
-  if (!practiceRequest && !examRequest && !recoveryRequest && prompt.length > MAX_PROMPT_LENGTH) {
+  if (!practiceRequest && !examRequest && !recoveryRequest && !diagnosticRequest && prompt.length > MAX_PROMPT_LENGTH) {
     return NextResponse.json(
       { ok: false, message: `Prompt is too long. Keep it under ${MAX_PROMPT_LENGTH} characters.` },
       { status: 400 },
@@ -828,17 +1010,21 @@ export async function POST(request: NextRequest) {
               ? buildRecoverySystemPrompt()
               : examRequest
               ? buildExamSystemPrompt()
-              : practiceRequest
-                ? buildPracticeSystemPrompt()
-                : buildSystemPrompt(),
+              : diagnosticRequest
+                ? buildDiagnosticSystemPrompt()
+                : practiceRequest
+                  ? buildPracticeSystemPrompt()
+                  : buildSystemPrompt(),
           },
           { role: "user", content: prompt },
         ],
-        max_tokens: examRequest
-          ? EXAM_MAX_OUTPUT_TOKENS
-          : practiceRequest || recoveryRequest
-            ? PRACTICE_MAX_OUTPUT_TOKENS
-            : MAX_OUTPUT_TOKENS,
+        max_tokens: diagnosticRequest
+          ? DIAGNOSTIC_MAX_OUTPUT_TOKENS
+          : examRequest
+            ? EXAM_MAX_OUTPUT_TOKENS
+            : practiceRequest || recoveryRequest
+              ? PRACTICE_MAX_OUTPUT_TOKENS
+              : MAX_OUTPUT_TOKENS,
         temperature: 0.4,
       }),
     })
@@ -880,6 +1066,30 @@ export async function POST(request: NextRequest) {
         remaining: limitResult.remaining,
         disclaimer:
           "Questions are AI-generated educational material. Verify important answers independently.",
+      })
+    }
+
+    if (diagnosticRequest) {
+      const generatedJson = parseGeneratedJson(answer)
+      const diagnostic = validateGeneratedDiagnostic(generatedJson, diagnosticRequest)
+
+      if (!diagnostic) {
+        return NextResponse.json(
+          {
+            ok: false,
+            validationFailed: true,
+            message: "Generated diagnostic did not pass validation. Try again.",
+          },
+          { status: 422 },
+        )
+      }
+
+      return NextResponse.json({
+        ok: true,
+        diagnostic,
+        remaining: limitResult.remaining,
+        disclaimer:
+          "Diagnostic questions are AI-generated educational material. Verify important answers independently.",
       })
     }
 

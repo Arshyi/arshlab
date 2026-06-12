@@ -2,12 +2,22 @@ import { inferSubtopicForTopic } from "./subtopic-registry"
 
 export const RECOVERY_TOPICS = [
   "Functional group identification",
+  "Functional Group Identification",
   "Hybridization",
   "VSEPR geometry",
+  "VSEPR Geometry",
   "Periodic trends",
+  "Periodic Trends",
   "Thermodynamics",
   "Electron configuration",
+  "Electron Configuration",
   "IR spectroscopy peak identification",
+  "IR Spectroscopy",
+  "Kinetics",
+  "Equilibrium",
+  "Acids and Bases",
+  "Bonding",
+  "Stoichiometry",
 ] as const
 
 export type RecoveryTopic = (typeof RECOVERY_TOPICS)[number]

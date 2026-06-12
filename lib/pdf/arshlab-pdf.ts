@@ -29,6 +29,24 @@ export interface RecoverySummaryRow {
   endingMastery: string | number
 }
 
+export interface DiagnosticReportStatRow {
+  name: string
+  attempted: number
+  correct: number
+  accuracy: number
+  band: string
+}
+
+interface DiagnosticReportPdfOptions {
+  filename: string
+  metadata: PdfMetadataRow[]
+  summary: PdfMetadataRow[]
+  topicStats: DiagnosticReportStatRow[]
+  subtopicStats: DiagnosticReportStatRow[]
+  recommendedStudyOrder: string[]
+  recommendedActions: string[]
+}
+
 interface QuestionPdfOptions {
   filename: string
   title: string
@@ -135,6 +153,14 @@ function addRecoverySummary(doc: jsPDF, rows: RecoverySummaryRow[] | undefined, 
   return lastAutoTableY(doc, startY) + 10
 }
 
+function addSectionTitle(doc: jsPDF, title: string, startY: number): number {
+  const y = ensureSpace(doc, startY, 12)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(12)
+  doc.text(title, margin, y)
+  return y + 6
+}
+
 function ensureSpace(doc: jsPDF, y: number, needed = 14): number {
   if (y + needed <= pageHeight - margin) return y
   doc.addPage()
@@ -235,6 +261,94 @@ export function downloadAnswerKeyPdf(options: AnswerKeyPdfOptions) {
     y = addWrappedText(doc, `Explanation: ${question.explanation ?? "Unavailable"}`, margin, y + 1, contentWidth, 4.8)
     y += 6
   }
+
+  addFooters(doc)
+  doc.save(options.filename)
+}
+
+export function downloadDiagnosticReportPdf(options: DiagnosticReportPdfOptions) {
+  const doc = new jsPDF({ unit: "mm", format: "a4" })
+  let y = addHeader(doc, "ARSHLAB Diagnostic Report", "Placement Summary")
+  y = addMetadata(doc, options.metadata, y)
+
+  y = addSectionTitle(doc, "Overall Summary", y)
+  y = addMetadata(doc, options.summary, y)
+
+  if (options.topicStats.length > 0) {
+    y = addSectionTitle(doc, "Topic Accuracy", y)
+    autoTable(doc, {
+      startY: y,
+      head: [["Topic", "Correct", "Attempted", "Accuracy", "Band"]],
+      body: options.topicStats.map((row) => [
+        row.name,
+        String(row.correct),
+        String(row.attempted),
+        `${row.accuracy}%`,
+        row.band,
+      ]),
+      theme: "grid",
+      styles: {
+        font: "helvetica",
+        fontSize: 9,
+        cellPadding: 2,
+        textColor: [0, 0, 0],
+        lineColor: [0, 0, 0],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [245, 245, 245],
+        textColor: [0, 0, 0],
+        fontStyle: "bold",
+      },
+      margin: { left: margin, right: margin },
+    })
+    y = lastAutoTableY(doc, y) + 10
+  }
+
+  if (options.subtopicStats.length > 0) {
+    y = addSectionTitle(doc, "Subtopic Accuracy", y)
+    autoTable(doc, {
+      startY: y,
+      head: [["Subtopic", "Correct", "Attempted", "Accuracy", "Band"]],
+      body: options.subtopicStats.map((row) => [
+        row.name,
+        String(row.correct),
+        String(row.attempted),
+        `${row.accuracy}%`,
+        row.band,
+      ]),
+      theme: "grid",
+      styles: {
+        font: "helvetica",
+        fontSize: 9,
+        cellPadding: 2,
+        textColor: [0, 0, 0],
+        lineColor: [0, 0, 0],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [245, 245, 245],
+        textColor: [0, 0, 0],
+        fontStyle: "bold",
+      },
+      margin: { left: margin, right: margin },
+    })
+    y = lastAutoTableY(doc, y) + 10
+  }
+
+  y = addSectionTitle(doc, "Recommended Study Order", y)
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(10)
+  const orderText = options.recommendedStudyOrder.length
+    ? options.recommendedStudyOrder.map((item, index) => `${index + 1}. ${item}`).join("\n")
+    : "No weak topics were detected. Continue with mixed review and advanced study."
+  y = addWrappedText(doc, orderText, margin, y, contentWidth, 5)
+
+  y = addSectionTitle(doc, "Recommended Actions", y + 4)
+  const actionText = options.recommendedActions.length
+    ? options.recommendedActions.map((item, index) => `${index + 1}. ${item}`).join("\n")
+    : "Review your progress dashboard and continue practice."
+  addWrappedText(doc, actionText, margin, y, contentWidth, 5)
 
   addFooters(doc)
   doc.save(options.filename)

@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "2.6.0",
+    version: "2.7.0",
     date: "Current",
+    status: "released",
+    title: "Diagnostic Assessment & Placement Engine",
+    changes: [
+      "Added Diagnostic Assessment route at /diagnostic",
+      "Added AI-generated mixed chemistry diagnostics with 20, 40, or 60 questions",
+      "Added server-side diagnostic JSON validation with exact question counts, topic metadata, and four-choice answer checks",
+      "Added one-question-at-a-time diagnostic flow with immediate feedback and explanations",
+      "Added topic and subtopic accuracy summaries with placement bands",
+      "Added recommended study order and links to Recovery Mode, Study Mode, Practice Generator, Exam Generator, and Progress",
+      "Added diagnostic PDF, answer key PDF, and diagnostic report PDF exports",
+      "Added diagnostic profile fields, progress integration, XP rewards, and diagnostic achievements",
+      "Preserved free-model-only AI guardrails with no client-side model selection or paid fallback",
+    ],
+  },
+  {
+    version: "2.6.0",
+    date: "Previous",
     status: "released",
     title: "PDF Export System",
     changes: [

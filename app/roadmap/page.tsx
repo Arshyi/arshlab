@@ -23,6 +23,7 @@ const completed = [
   "Mistake Analytics & Mastery Tracking",
   "Automatic Subtopic Classification",
   "PDF Export System",
+  "Diagnostic Assessment & Placement Engine",
 ]
 
 const inDevelopment = [
@@ -149,13 +150,13 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <Check className="h-4 w-4" />
                 </div>
-                PDF Export System
+                Diagnostic Assessment & Placement Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: printable PDFs for practice sets, exams, study sessions, recovery sessions,
-                and answer keys.
+                Now available: placement-style diagnostic sessions with topic/subtopic scoring,
+                recommended study order, diagnostic achievements, and printable reports.
               </p>
             </CardContent>
           </Card>
@@ -167,7 +168,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v2.6.0 - PDF Export System
+          ARSHLAB v2.7.0 - Diagnostic Assessment & Placement Engine
         </motion.p>
       </div>
     </div>

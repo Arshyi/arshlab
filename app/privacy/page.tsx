@@ -23,12 +23,12 @@ const sections = [
     body: "Users can export currently visible history from the History page as JSON or CSV for their own educational records.",
   },
   {
-    title: "AI Assistant, Practice Generator, Exam Generator, Study Mode, and Recovery Mode Alpha",
-    body: "When the AI Assistant, Practice Generator, Exam Generator, Study Mode, or Recovery Mode is enabled, AI questions may be sent to the configured free AI provider through ARSHLAB's server route. AI conversations, generated practice questions, generated study sessions, generated recovery sessions, and generated exams are not saved in this alpha. Signed-in practice progress may save topic, subtopic, difficulty, question type, whether the user marked an answer correct, and timestamp.",
+    title: "AI Assistant, Practice Generator, Exam Generator, Study Mode, Recovery Mode, and Diagnostic Alpha",
+    body: "When the AI Assistant, Practice Generator, Exam Generator, Study Mode, Recovery Mode, or Diagnostic Assessment is enabled, AI questions may be sent to the configured free AI provider through ARSHLAB's server route. AI conversations, generated practice questions, generated study sessions, generated recovery sessions, generated diagnostics, and generated exams are not saved in this alpha. Signed-in practice progress may save topic, subtopic, difficulty, question type, whether the user marked an answer correct, and timestamp.",
   },
   {
     title: "Study Progress Data",
-    body: "Signed-in users may save XP, daily goal preference, completed study sessions, completed exams, achievement progress, topic mastery, concept mastery, and mistake analytics derived from practice_progress rows. ARSHLAB uses this data to show adaptive recommendations, recovery sessions, and progress dashboards.",
+    body: "Signed-in users may save XP, daily goal preference, completed study sessions, completed exams, completed diagnostics, last and best diagnostic accuracy, achievement progress, topic mastery, concept mastery, and mistake analytics derived from practice_progress rows. ARSHLAB uses this data to show adaptive recommendations, recovery sessions, placement summaries, and progress dashboards.",
   },
   {
     title: "Personal Data",
