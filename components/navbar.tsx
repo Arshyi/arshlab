@@ -56,6 +56,7 @@ const primaryNavItems = [
 
 const chemistryToolItems = [
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
+  { href: "/curriculum", label: "Curriculum Engine", icon: GraduationCap },
   { href: "/diagnostic", label: "Diagnostic", icon: ClipboardCheck },
   { href: "/study", label: "Study Mode", icon: BookOpenCheck },
   { href: "/recovery", label: "Recovery Mode", icon: Target },

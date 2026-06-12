@@ -6,6 +6,7 @@ import {
   DIAGNOSTIC_CURRICULA,
   DIAGNOSTIC_TOPICS,
 } from "@/lib/learning/diagnostic"
+import { findUnit, getCurriculum, isCurriculumId } from "@/lib/curriculum/curriculum-registry"
 
 const UNAVAILABLE_MESSAGE = "AI Assistant temporarily unavailable"
 const MAX_PROMPT_LENGTH = 1600
@@ -60,6 +61,7 @@ const RECOVERY_QUESTION_COUNT = 10
 
 const EXAM_CURRICULA = [
   "CHEM 121",
+  "CHEM 121 Style",
   "IB Chemistry Style",
   "AP Chemistry Style",
   "A-Level Chemistry Style",
@@ -85,6 +87,9 @@ interface PracticeRequest {
   difficulty: string
   curriculumStyle: string
   questionCount: number
+  curriculumId?: string
+  curriculumUnit?: string
+  targetSubtopic?: string
 }
 
 interface PracticeChoice {
@@ -115,6 +120,7 @@ interface RecoveryPlanItem {
   count: number
   difficulty: string
   weaknesses?: string[]
+  unit?: string
 }
 
 interface RecoveryRequest {
@@ -129,6 +135,9 @@ interface ExamRequest {
   difficulty: string
   questionType: string
   targetTopic?: string
+  curriculumId?: string
+  curriculumUnit?: string
+  targetSubtopic?: string
 }
 
 interface ExamQuestion {
@@ -150,6 +159,9 @@ interface GeneratedExam {
 interface DiagnosticRequest {
   questionCount: number
   curriculum: string
+  diagnosticType: "General diagnostic" | "Curriculum diagnostic"
+  curriculumId?: string
+  curriculumUnit?: string
 }
 
 interface DiagnosticQuestion {
@@ -198,6 +210,56 @@ function isAllowedExamLength(value: unknown): value is number {
 
 function isAllowedDiagnosticCount(value: unknown): value is number {
   return typeof value === "number" && DIAGNOSTIC_COUNTS.includes(value as 20 | 40 | 60)
+}
+
+function cleanOptionalString(record: Record<string, unknown>, key: string, maxLength = 120): string {
+  const value = record[key]
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : ""
+}
+
+function parseCurriculumContext(record: Record<string, unknown>): {
+  curriculumId?: string
+  curriculumUnit?: string
+} {
+  const curriculumId = cleanOptionalString(record, "curriculumId")
+  if (!curriculumId || !isCurriculumId(curriculumId)) return {}
+
+  const curriculum = getCurriculum(curriculumId)
+  const unitId = cleanOptionalString(record, "curriculumUnit")
+  const unit = findUnit(curriculum, unitId)
+
+  return {
+    curriculumId,
+    ...(unit ? { curriculumUnit: unit.id } : {}),
+  }
+}
+
+function buildCurriculumContextText(input: {
+  curriculumId?: string
+  curriculumUnit?: string
+  topic?: string
+  subtopic?: string
+}): string {
+  if (!input.curriculumId) return ""
+
+  const curriculum = getCurriculum(input.curriculumId)
+  const unit = findUnit(curriculum, input.curriculumUnit)
+  const parts = [
+    `Selected curriculum: ${curriculum.name}.`,
+    curriculum.questionStyleNotes,
+    curriculum.disclaimer,
+  ]
+
+  if (unit) {
+    parts.push(`Curriculum unit constraint: ${unit.title}.`)
+    parts.push(`Unit topics: ${unit.topics.join(", ")}.`)
+    parts.push(`Unit subtopics: ${unit.subtopics.join(", ")}.`)
+  }
+
+  if (input.topic) parts.push(`Target topic: ${input.topic}.`)
+  if (input.subtopic) parts.push(`Target subtopic: ${input.subtopic}.`)
+  parts.push("Avoid unsupported topics for the selected curriculum and unit.")
+  return parts.join("\n")
 }
 
 function unavailable(status = 503) {
@@ -351,6 +413,8 @@ function parsePracticeRequest(body: unknown): PracticeRequest | null {
     typeof record.questionCount === "string" ? Number(record.questionCount) : record.questionCount
   const questionCount =
     typeof numericQuestionCount === "undefined" ? 1 : isAllowedQuestionCount(numericQuestionCount) ? numericQuestionCount : null
+  const curriculumContext = parseCurriculumContext(record)
+  const targetSubtopic = cleanOptionalString(record, "targetSubtopic")
 
   if (
     !isAllowedValue(topic, PRACTICE_TOPICS) ||
@@ -362,7 +426,15 @@ function parsePracticeRequest(body: unknown): PracticeRequest | null {
     return null
   }
 
-  return { topic, questionType, difficulty, curriculumStyle, questionCount }
+  return {
+    topic,
+    questionType,
+    difficulty,
+    curriculumStyle,
+    questionCount,
+    ...curriculumContext,
+    ...(targetSubtopic ? { targetSubtopic } : {}),
+  }
 }
 
 function parseExamRequest(body: unknown): ExamRequest | null {
@@ -373,6 +445,8 @@ function parseExamRequest(body: unknown): ExamRequest | null {
   const numericExamLength =
     typeof record.examLength === "string" ? Number(record.examLength) : record.examLength
   const targetTopic = typeof record.targetTopic === "string" ? record.targetTopic.trim() : ""
+  const curriculumContext = parseCurriculumContext(record)
+  const targetSubtopic = cleanOptionalString(record, "targetSubtopic")
 
   if (
     !isAllowedValue(curriculum, EXAM_CURRICULA) ||
@@ -389,14 +463,19 @@ function parseExamRequest(body: unknown): ExamRequest | null {
     difficulty,
     questionType,
     ...(targetTopic ? { targetTopic } : {}),
+    ...curriculumContext,
+    ...(targetSubtopic ? { targetSubtopic } : {}),
   }
 }
 
 function parseDiagnosticRequest(body: unknown): DiagnosticRequest | null {
   const record = body as Record<string, unknown>
   const curriculum = record.curriculum
+  const diagnosticType =
+    record.diagnosticType === "Curriculum diagnostic" ? "Curriculum diagnostic" : "General diagnostic"
   const numericQuestionCount =
     typeof record.questionCount === "string" ? Number(record.questionCount) : record.questionCount
+  const curriculumContext = parseCurriculumContext(record)
 
   if (
     !isAllowedValue(curriculum, DIAGNOSTIC_CURRICULA) ||
@@ -408,6 +487,8 @@ function parseDiagnosticRequest(body: unknown): DiagnosticRequest | null {
   return {
     curriculum,
     questionCount: numericQuestionCount,
+    diagnosticType,
+    ...curriculumContext,
   }
 }
 
@@ -429,6 +510,7 @@ function parseRecoveryRequest(body: unknown): RecoveryRequest | null {
           .filter(Boolean)
           .slice(0, 6)
       : []
+    const unit = cleanOptionalString(itemRecord, "unit")
 
     if (
       !isAllowedValue(topic, PRACTICE_TOPICS) ||
@@ -441,7 +523,7 @@ function parseRecoveryRequest(body: unknown): RecoveryRequest | null {
       return null
     }
 
-    return { topic, difficulty, count, weaknesses }
+    return { topic, difficulty, count, weaknesses, ...(unit ? { unit } : {}) }
   })
 
   if (plan.some((item) => item === null)) return null
@@ -497,9 +579,16 @@ function diagnosticTopicGuidance(): string {
 
 function buildPracticePrompt(request: PracticeRequest): string {
   const subtopics = getSubtopicsForTopic(request.topic)
+  const curriculumContext = buildCurriculumContextText({
+    curriculumId: request.curriculumId,
+    curriculumUnit: request.curriculumUnit,
+    topic: request.topic,
+    subtopic: request.targetSubtopic,
+  })
   return [
     `Generate exactly ${request.questionCount} original ${request.questionType} chemistry practice question${request.questionCount === 1 ? "" : "s"}.`,
     `Topic: ${request.topic}. Difficulty: ${request.difficulty}. Curriculum style: ${request.curriculumStyle}.`,
+    curriculumContext,
     topicGuidance(request.topic),
     "Produce original questions only.",
     "Do not copy official exam-board, university, or past-paper questions.",
@@ -511,7 +600,7 @@ function buildPracticePrompt(request: PracticeRequest): string {
     "Multiple choice distractors should reflect realistic misconceptions.",
     "For short answer, make the correctAnswer an expected student answer and explain the marking logic in the explanation.",
     "For explanation prompts, make the correctAnswer a concise model explanation and include the most important key points in the explanation.",
-    `Every question must include a meaningful subtopic. Allowed subtopics for this topic: ${subtopics.join(", ") || "a concise chemistry concept"}.`,
+    `Every question must include a meaningful subtopic. Allowed subtopics for this topic: ${request.targetSubtopic || subtopics.join(", ") || "a concise chemistry concept"}.`,
     "Return valid JSON only, with no markdown and no surrounding prose.",
     "Return this exact top-level shape:",
     '{"questions":[{"id":"q1","topic":"...","subtopic":"...","questionType":"...","difficulty":"...","curriculumStyle":"...","question":"...","choices":[{"label":"A","text":"..."},{"label":"B","text":"..."},{"label":"C","text":"..."},{"label":"D","text":"..."}],"correctAnswer":"A","explanation":"...","misconceptionNote":"..."}]}',
@@ -525,7 +614,8 @@ function buildRecoveryPrompt(request: RecoveryRequest): string {
       const weaknessText = item.weaknesses?.length
         ? ` focusing on: ${item.weaknesses.join(", ")}`
         : ""
-      return `${item.count} question${item.count === 1 ? "" : "s"} on ${item.topic}${weaknessText} at ${item.difficulty} difficulty`
+      const unitText = item.unit ? ` in curriculum unit ${item.unit}` : ""
+      return `${item.count} question${item.count === 1 ? "" : "s"} on ${item.topic}${unitText}${weaknessText} at ${item.difficulty} difficulty`
     })
     .join("; ")
 
@@ -560,10 +650,17 @@ function buildExamPrompt(request: ExamRequest): string {
   const targetRule = request.targetTopic
     ? `This is a recovery exam focused on this topic: ${request.targetTopic}. Keep every question connected to that topic.`
     : "Cover a balanced spread of core chemistry topics suitable for the selected curriculum."
+  const curriculumContext = buildCurriculumContextText({
+    curriculumId: request.curriculumId,
+    curriculumUnit: request.curriculumUnit,
+    topic: request.targetTopic,
+    subtopic: request.targetSubtopic,
+  })
 
   return [
     `Generate exactly ${request.examLength} original chemistry practice exam questions.`,
     `Curriculum: ${request.curriculum}. Difficulty: ${request.difficulty}. Question type mode: ${request.questionType}.`,
+    curriculumContext,
     targetRule,
     typeRule,
     "Questions are AI-generated educational material, not official exam-board or university material.",
@@ -579,9 +676,20 @@ function buildExamPrompt(request: ExamRequest): string {
 }
 
 function buildDiagnosticPrompt(request: DiagnosticRequest): string {
+  const curriculumContext = buildCurriculumContextText({
+    curriculumId: request.curriculumId,
+    curriculumUnit: request.curriculumUnit,
+  })
+  const diagnosticRule =
+    request.diagnosticType === "Curriculum diagnostic"
+      ? "This is a curriculum diagnostic. Sample across the selected curriculum units and report topic/subtopic metadata that supports unit-level feedback."
+      : "This is a general diagnostic. Sample broadly across chemistry topics."
+
   return [
     `Generate exactly ${request.questionCount} original multiple choice chemistry diagnostic questions.`,
-    `Curriculum: ${request.curriculum}. Difficulty mode: Automatic. Question type: Mixed diagnostic multiple choice.`,
+    `Curriculum: ${request.curriculum}. Diagnostic type: ${request.diagnosticType}. Difficulty mode: Automatic. Question type: Mixed diagnostic multiple choice.`,
+    curriculumContext,
+    diagnosticRule,
     "A single generated diagnostic counts as one AI request, so make this complete in one response.",
     "Sample across these topics and subtopics. Do not ignore any major area when the question count allows broad coverage:",
     diagnosticTopicGuidance(),

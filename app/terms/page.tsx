@@ -12,7 +12,7 @@ const sections = [
   },
   {
     title: "Not Official Material",
-    body: "ARSHLAB is not official exam-board or university material. Practice papers and videos are independently created unless otherwise stated.",
+    body: "ARSHLAB is not official exam-board or university material. Practice papers and videos are independently created unless otherwise stated. Curriculum labels describe study style and topic alignment only; they are not official syllabus coverage, official placement, or official exam prediction.",
   },
   {
     title: "Acceptable Use",

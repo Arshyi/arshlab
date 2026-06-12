@@ -2,6 +2,11 @@
 
 import type { SupabaseClient, User } from "@supabase/supabase-js"
 import { createClient } from "./client"
+import {
+  DEFAULT_CURRICULUM_ID,
+  isCurriculumId,
+  type CurriculumId,
+} from "@/lib/curriculum/curriculum-registry"
 
 export interface UserProfile {
   userId: string
@@ -14,6 +19,9 @@ export interface UserProfile {
   lastDiagnosticAccuracy: number
   previousDiagnosticAccuracy: number | null
   bestDiagnosticAccuracy: number
+  selectedCurriculum: CurriculumId
+  curriculumStartedAt: string | null
+  curriculumUpdatedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -29,6 +37,9 @@ interface UserProfileRow {
   last_diagnostic_accuracy: number | null
   previous_diagnostic_accuracy: number | null
   best_diagnostic_accuracy: number | null
+  selected_curriculum: string | null
+  curriculum_started_at: string | null
+  curriculum_updated_at: string | null
   created_at: string
   updated_at: string
 }
@@ -71,6 +82,10 @@ function normalizeDailyGoal(value: number): 5 | 10 | 20 {
   return value === 5 || value === 20 ? value : 10
 }
 
+function normalizeCurriculum(value: string | null | undefined): CurriculumId {
+  return value && isCurriculumId(value) ? value : DEFAULT_CURRICULUM_ID
+}
+
 function mapProfileRow(row: UserProfileRow): UserProfile {
   return {
     userId: row.user_id,
@@ -83,6 +98,9 @@ function mapProfileRow(row: UserProfileRow): UserProfile {
     lastDiagnosticAccuracy: row.last_diagnostic_accuracy ?? 0,
     previousDiagnosticAccuracy: row.previous_diagnostic_accuracy ?? null,
     bestDiagnosticAccuracy: row.best_diagnostic_accuracy ?? 0,
+    selectedCurriculum: normalizeCurriculum(row.selected_curriculum),
+    curriculumStartedAt: row.curriculum_started_at ?? null,
+    curriculumUpdatedAt: row.curriculum_updated_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -173,6 +191,40 @@ export async function updateDailyGoal(goal: 5 | 10 | 20): Promise<ProfileResult<
       ok: false,
       reason: "supabase-error",
       error: error?.message ?? "Could not update daily goal.",
+    }
+  }
+
+  return { ok: true, data: mapProfileRow(data) }
+}
+
+export async function updateSelectedCurriculum(curriculumId: CurriculumId): Promise<ProfileResult<UserProfile>> {
+  const result = await ensureUserProfile()
+  if (!result.ok) {
+    return {
+      ok: false,
+      reason: result.reason,
+      error: result.error,
+    }
+  }
+
+  const now = new Date().toISOString()
+  const { data, error } = await result.data.supabase
+    .from("user_profiles")
+    .update({
+      selected_curriculum: curriculumId,
+      curriculum_started_at: result.data.profile.curriculumStartedAt ?? now,
+      curriculum_updated_at: now,
+      updated_at: now,
+    })
+    .eq("user_id", result.data.user.id)
+    .select("*")
+    .single<UserProfileRow>()
+
+  if (error || !data) {
+    return {
+      ok: false,
+      reason: "supabase-error",
+      error: error?.message ?? "Could not update selected curriculum.",
     }
   }
 

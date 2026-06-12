@@ -35,7 +35,14 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { addPracticeProgress } from "@/lib/supabase/practice-progress"
-import { applyProfileReward } from "@/lib/supabase/user-profile"
+import { applyProfileReward, getUserProfile } from "@/lib/supabase/user-profile"
+import {
+  calculateCurriculumProgress,
+  DEFAULT_CURRICULUM_ID,
+  getCurriculum,
+  listCurricula,
+  type CurriculumId,
+} from "@/lib/curriculum/curriculum-registry"
 import {
   calculateDiagnosticStats,
   DIAGNOSTIC_COUNTS,
@@ -56,6 +63,7 @@ import {
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
+const curricula = listCurricula()
 
 interface GuestUsage {
   date: string
@@ -162,6 +170,9 @@ function statValue(stats: DiagnosticStat[], strongest = false): DiagnosticStat |
 export function DiagnosticClient() {
   const [questionCount, setQuestionCount] = useState("20")
   const [curriculum, setCurriculum] = useState<(typeof DIAGNOSTIC_CURRICULA)[number]>("General First-Year Chemistry")
+  const [curriculumId, setCurriculumId] = useState<CurriculumId>(DEFAULT_CURRICULUM_ID)
+  const [curriculumUnit, setCurriculumUnit] = useState("all")
+  const [diagnosticType, setDiagnosticType] = useState<"General diagnostic" | "Curriculum diagnostic">("General diagnostic")
   const [diagnostic, setDiagnostic] = useState<GeneratedDiagnostic | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null)
@@ -179,17 +190,44 @@ export function DiagnosticClient() {
   useEffect(() => {
     setGuestUsage(readGuestUsage())
 
+    const params = new URLSearchParams(window.location.search)
+    const requestedUnit = params.get("unit")
+    if (requestedUnit) {
+      setCurriculumUnit(requestedUnit)
+      setDiagnosticType("Curriculum diagnostic")
+    }
+
     if (!isSupabaseConfigured()) return
     const supabase = createClient()
 
     supabase.auth.getUser().then(({ data }) => {
-      setIsLoggedIn(Boolean(data.user))
+      const signedIn = Boolean(data.user)
+      setIsLoggedIn(signedIn)
+      if (signedIn) {
+        getUserProfile().then((result) => {
+          if (result.ok) {
+            const selected = getCurriculum(result.data.selectedCurriculum)
+            setCurriculumId(selected.id)
+            setCurriculum(selected.name as (typeof DIAGNOSTIC_CURRICULA)[number])
+          }
+        })
+      }
     })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(Boolean(session?.user))
+      const signedIn = Boolean(session?.user)
+      setIsLoggedIn(signedIn)
+      if (signedIn) {
+        getUserProfile().then((result) => {
+          if (result.ok) {
+            const selected = getCurriculum(result.data.selectedCurriculum)
+            setCurriculumId(selected.id)
+            setCurriculum(selected.name as (typeof DIAGNOSTIC_CURRICULA)[number])
+          }
+        })
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -199,6 +237,7 @@ export function DiagnosticClient() {
     () => Math.max(0, GUEST_LIMIT - guestUsage.count),
     [guestUsage.count],
   )
+  const selectedCurriculum = useMemo(() => getCurriculum(curriculumId), [curriculumId])
   const currentQuestion = diagnostic?.questions[currentIndex] ?? null
   const currentChecked = currentQuestion ? checkedAnswers[currentQuestion.id] : undefined
   const currentMark = currentQuestion ? marks[currentQuestion.id] : undefined
@@ -231,6 +270,19 @@ export function DiagnosticClient() {
   const topicStats = useMemo(() => calculateDiagnosticStats(attempts, "topic"), [attempts])
   const subtopicStats = useMemo(() => calculateDiagnosticStats(attempts, "subtopic"), [attempts])
   const recommendedStudyOrder = useMemo(() => getRecommendedStudyOrder(topicStats), [topicStats])
+  const curriculumDiagnosticSummary = useMemo(
+    () =>
+      calculateCurriculumProgress(
+        attempts.map((attempt) => ({
+          topic: attempt.topic,
+          subtopic: attempt.subtopic,
+          correct: attempt.correct,
+          questionType: "Diagnostic",
+        })),
+        curriculumId,
+      ),
+    [attempts, curriculumId],
+  )
   const weakestTopic = statValue(topicStats)
   const strongestTopic = statValue(topicStats, true)
   const weakestSubtopic = statValue(subtopicStats)
@@ -263,6 +315,9 @@ export function DiagnosticClient() {
           task: "diagnostic-generator",
           questionCount: Number(questionCount),
           curriculum,
+          diagnosticType,
+          curriculumId,
+          curriculumUnit: curriculumUnit === "all" ? undefined : curriculumUnit,
         }),
       })
       const data = await response.json()
@@ -386,6 +441,8 @@ export function DiagnosticClient() {
       subtitle: "Diagnostic Assessment",
       metadata: [
         { label: "Curriculum", value: diagnostic.curriculum },
+        { label: "Diagnostic Type", value: diagnosticType },
+        { label: "Curriculum Unit", value: curriculumUnit === "all" ? "All units" : selectedCurriculum.units.find((unit) => unit.id === curriculumUnit)?.title ?? curriculumUnit },
         { label: "Difficulty", value: "Automatic" },
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: diagnostic.questions.length },
@@ -401,6 +458,7 @@ export function DiagnosticClient() {
       title: "Diagnostic Answer Key",
       metadata: [
         { label: "Curriculum", value: diagnostic.curriculum },
+        { label: "Diagnostic Type", value: diagnosticType },
         { label: "Difficulty", value: "Automatic" },
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: diagnostic.questions.length },
@@ -415,6 +473,8 @@ export function DiagnosticClient() {
       filename: "arshlab-diagnostic-report.pdf",
       metadata: [
         { label: "Curriculum", value: diagnostic.curriculum },
+        { label: "Diagnostic Type", value: diagnosticType },
+        { label: "Curriculum Coverage", value: `${curriculumDiagnosticSummary.diagnosticCoverage}%` },
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: diagnostic.questions.length },
       ],
@@ -471,6 +531,34 @@ export function DiagnosticClient() {
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="grid gap-4 md:grid-cols-2">
+                  <Picker
+                    label="Diagnostic Type"
+                    value={diagnosticType}
+                    options={["General diagnostic", "Curriculum diagnostic"]}
+                    onChange={(value) => setDiagnosticType(value as "General diagnostic" | "Curriculum diagnostic")}
+                  />
+                  <Picker
+                    label="Learning Path"
+                    value={curriculumId}
+                    options={curricula.map((item) => item.id)}
+                    optionLabels={Object.fromEntries(curricula.map((item) => [item.id, item.name]))}
+                    onChange={(value) => {
+                      const next = value as CurriculumId
+                      const selected = getCurriculum(next)
+                      setCurriculumId(next)
+                      setCurriculum(selected.name as (typeof DIAGNOSTIC_CURRICULA)[number])
+                    }}
+                  />
+                  <Picker
+                    label="Curriculum Unit"
+                    value={curriculumUnit}
+                    options={["all", ...selectedCurriculum.units.map((unit) => unit.id)]}
+                    optionLabels={{
+                      all: "All curriculum units",
+                      ...Object.fromEntries(selectedCurriculum.units.map((unit) => [unit.id, unit.title])),
+                    }}
+                    onChange={setCurriculumUnit}
+                  />
                   <Picker
                     label="Question Count"
                     value={questionCount}
@@ -702,6 +790,35 @@ export function DiagnosticClient() {
                     <InsightCard label="Weakest Subtopic" stat={weakestSubtopic} />
                   </div>
 
+                  {diagnosticType === "Curriculum diagnostic" && (
+                    <Card className="rounded-2xl">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          <GraduationCap className="h-5 w-5" />
+                          Curriculum Coverage
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          <ScoreTile label="Coverage" value={`${curriculumDiagnosticSummary.diagnosticCoverage}%`} />
+                          <ScoreTile label="Weakest Unit" value={curriculumDiagnosticSummary.weakestUnit?.unit.title ?? "Not enough data"} />
+                          <ScoreTile label="Next Unit" value={curriculumDiagnosticSummary.recommendedNextUnit?.unit.title ?? "Not enough data"} />
+                        </div>
+                        <div className="grid gap-2 md:grid-cols-2">
+                          {curriculumDiagnosticSummary.units.map((unit) => (
+                            <div key={unit.unit.id} className="rounded-xl border border-border bg-card p-3">
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <span className="text-sm font-medium">{unit.unit.title}</span>
+                                <Badge variant="outline">{unit.mastery}%</Badge>
+                              </div>
+                              <Progress value={unit.mastery} />
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   <Card className="rounded-2xl">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-lg">
@@ -864,12 +981,14 @@ function Picker({
   label,
   value,
   options,
+  optionLabels,
   onChange,
   suffix,
 }: {
   label: string
   value: string
   options: string[]
+  optionLabels?: Record<string, string>
   onChange: (value: string) => void
   suffix?: string
 }) {
@@ -883,7 +1002,7 @@ function Picker({
         <SelectContent>
           {options.map((option) => (
             <SelectItem key={option} value={option}>
-              {suffix ? `${option} ${suffix}` : option}
+              {suffix ? `${optionLabels?.[option] ?? option} ${suffix}` : optionLabels?.[option] ?? option}
             </SelectItem>
           ))}
         </SelectContent>

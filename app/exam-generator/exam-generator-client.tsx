@@ -37,7 +37,15 @@ import {
   getPracticeProgress,
   type PracticeProgressEntry,
 } from "@/lib/supabase/practice-progress"
-import { applyProfileReward } from "@/lib/supabase/user-profile"
+import { applyProfileReward, getUserProfile } from "@/lib/supabase/user-profile"
+import {
+  DEFAULT_CURRICULUM_ID,
+  getCurriculum,
+  getSubtopicsForCurriculumTopic,
+  getTopicsForUnit,
+  listCurricula,
+  type CurriculumId,
+} from "@/lib/curriculum/curriculum-registry"
 import {
   downloadAnswerKeyPdf,
   downloadQuestionPdf,
@@ -50,6 +58,7 @@ const GUEST_LIMIT = 3
 
 const curricula = [
   "CHEM 121",
+  "CHEM 121 Style",
   "IB Chemistry Style",
   "AP Chemistry Style",
   "A-Level Chemistry Style",
@@ -59,6 +68,7 @@ const curricula = [
 const examLengths = ["10", "20", "30", "50"]
 const difficulties = ["Introductory", "Intermediate", "Advanced"]
 const questionTypes = ["Multiple Choice Only", "Mixed Exam", "Short Answer Only"]
+const curriculumOptions = listCurricula()
 
 interface GuestUsage {
   date: string
@@ -181,6 +191,10 @@ function getWeakTopic(entries: PracticeProgressEntry[]): string | null {
 
 export function ExamGeneratorClient() {
   const [curriculum, setCurriculum] = useState(curricula[0])
+  const [curriculumId, setCurriculumId] = useState<CurriculumId>(DEFAULT_CURRICULUM_ID)
+  const [curriculumUnit, setCurriculumUnit] = useState("all")
+  const [examTopic, setExamTopic] = useState("all")
+  const [targetSubtopic, setTargetSubtopic] = useState("all")
   const [examLength, setExamLength] = useState("10")
   const [difficulty, setDifficulty] = useState(difficulties[1])
   const [questionType, setQuestionType] = useState(questionTypes[1])
@@ -202,13 +216,29 @@ export function ExamGeneratorClient() {
   useEffect(() => {
     setGuestUsage(readGuestUsage())
 
+    const params = new URLSearchParams(window.location.search)
+    const requestedUnit = params.get("unit")
+    if (requestedUnit) setCurriculumUnit(requestedUnit)
+    const requestedTopic = params.get("topic")
+    if (requestedTopic) setExamTopic(requestedTopic)
+    const requestedSubtopic = params.get("subtopic")
+    if (requestedSubtopic) setTargetSubtopic(requestedSubtopic)
+
     if (!isSupabaseConfigured()) return
     const supabase = createClient()
 
     supabase.auth.getUser().then(({ data }) => {
       const signedIn = Boolean(data.user)
       setIsLoggedIn(signedIn)
-      if (signedIn) void loadProgress()
+      if (signedIn) {
+        void loadProgress()
+        getUserProfile().then((result) => {
+          if (result.ok) {
+            setCurriculumId(result.data.selectedCurriculum)
+            setCurriculum(getCurriculum(result.data.selectedCurriculum).name)
+          }
+        })
+      }
     })
 
     const {
@@ -216,7 +246,15 @@ export function ExamGeneratorClient() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const signedIn = Boolean(session?.user)
       setIsLoggedIn(signedIn)
-      if (signedIn) void loadProgress()
+      if (signedIn) {
+        void loadProgress()
+        getUserProfile().then((result) => {
+          if (result.ok) {
+            setCurriculumId(result.data.selectedCurriculum)
+            setCurriculum(getCurriculum(result.data.selectedCurriculum).name)
+          }
+        })
+      }
       else setProgressEntries([])
     })
 
@@ -229,6 +267,15 @@ export function ExamGeneratorClient() {
   )
 
   const weakTopic = useMemo(() => getWeakTopic(progressEntries), [progressEntries])
+  const selectedCurriculum = useMemo(() => getCurriculum(curriculumId), [curriculumId])
+  const topicOptions = useMemo(
+    () => getTopicsForUnit(selectedCurriculum, curriculumUnit),
+    [selectedCurriculum, curriculumUnit],
+  )
+  const subtopicOptions = useMemo(
+    () => getSubtopicsForCurriculumTopic(selectedCurriculum, examTopic, curriculumUnit),
+    [curriculumUnit, examTopic, selectedCurriculum],
+  )
 
   const score = useMemo(() => {
     const total = exam?.questions.length ?? 0
@@ -238,6 +285,18 @@ export function ExamGeneratorClient() {
     const percentage = attempted ? Math.round((correct / attempted) * 100) : 0
     return { total, correct, missed, attempted, unmarked: Math.max(0, total - attempted), percentage }
   }, [exam, marks])
+
+  useEffect(() => {
+    if (examTopic !== "all" && topicOptions.length > 0 && !topicOptions.includes(examTopic)) {
+      setExamTopic("all")
+    }
+  }, [examTopic, topicOptions])
+
+  useEffect(() => {
+    if (targetSubtopic !== "all" && !subtopicOptions.includes(targetSubtopic)) {
+      setTargetSubtopic("all")
+    }
+  }, [subtopicOptions, targetSubtopic])
 
   useEffect(() => {
     if (
@@ -300,7 +359,10 @@ export function ExamGeneratorClient() {
           examLength: targetTopic ? 10 : Number(examLength),
           difficulty,
           questionType: targetTopic ? "Mixed Exam" : questionType,
-          targetTopic,
+          targetTopic: targetTopic ?? (examTopic === "all" ? undefined : examTopic),
+          curriculumId,
+          curriculumUnit: curriculumUnit === "all" ? undefined : curriculumUnit,
+          targetSubtopic: targetSubtopic === "all" ? undefined : targetSubtopic,
         }),
       })
       const data = await response.json()
@@ -343,6 +405,9 @@ export function ExamGeneratorClient() {
       subtitle: "Generated Practice Exam",
       metadata: [
         { label: "Curriculum", value: curriculum },
+        { label: "Curriculum Unit", value: curriculumUnit === "all" ? "Recommended / All" : selectedCurriculum.units.find((unit) => unit.id === curriculumUnit)?.title ?? curriculumUnit },
+        { label: "Topic", value: recoveryTopic ?? (examTopic === "all" ? "Balanced curriculum spread" : examTopic) },
+        { label: "Subtopic", value: targetSubtopic === "all" ? "Any supported subtopic" : targetSubtopic },
         { label: "Difficulty", value: difficulty },
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: exam.questions.length },
@@ -359,6 +424,7 @@ export function ExamGeneratorClient() {
       title: "Practice Exam Answer Key",
       metadata: [
         { label: "Curriculum", value: curriculum },
+        { label: "Curriculum Unit", value: curriculumUnit === "all" ? "Recommended / All" : selectedCurriculum.units.find((unit) => unit.id === curriculumUnit)?.title ?? curriculumUnit },
         { label: "Difficulty", value: difficulty },
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: exam.questions.length },
@@ -451,6 +517,41 @@ export function ExamGeneratorClient() {
               <CardContent className="space-y-5">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Picker label="Curriculum" value={curriculum} options={curricula} onChange={setCurriculum} />
+                  <Picker
+                    label="Learning Path"
+                    value={curriculumId}
+                    options={curriculumOptions.map((item) => item.id)}
+                    optionLabels={Object.fromEntries(curriculumOptions.map((item) => [item.id, item.name]))}
+                    onChange={(value) => {
+                      const next = value as CurriculumId
+                      setCurriculumId(next)
+                      setCurriculum(getCurriculum(next).name)
+                    }}
+                  />
+                  <Picker
+                    label="Curriculum Unit"
+                    value={curriculumUnit}
+                    options={["all", ...selectedCurriculum.units.map((unit) => unit.id)]}
+                    optionLabels={{
+                      all: "Recommended / All Units",
+                      ...Object.fromEntries(selectedCurriculum.units.map((unit) => [unit.id, unit.title])),
+                    }}
+                    onChange={setCurriculumUnit}
+                  />
+                  <Picker
+                    label="Topic"
+                    value={examTopic}
+                    options={["all", ...topicOptions]}
+                    optionLabels={{ all: "Balanced curriculum spread" }}
+                    onChange={setExamTopic}
+                  />
+                  <Picker
+                    label="Subtopic"
+                    value={targetSubtopic}
+                    options={["all", ...subtopicOptions]}
+                    optionLabels={{ all: "Any supported subtopic" }}
+                    onChange={setTargetSubtopic}
+                  />
                   <Picker label="Exam Length" value={examLength} options={examLengths} onChange={setExamLength} suffix="Questions" />
                   <Picker label="Difficulty" value={difficulty} options={difficulties} onChange={setDifficulty} />
                   <Picker label="Question Types" value={questionType} options={questionTypes} onChange={setQuestionType} />
@@ -808,12 +909,14 @@ function Picker({
   label,
   value,
   options,
+  optionLabels,
   onChange,
   suffix,
 }: {
   label: string
   value: string
   options: string[]
+  optionLabels?: Record<string, string>
   onChange: (value: string) => void
   suffix?: string
 }) {
@@ -827,7 +930,7 @@ function Picker({
         <SelectContent>
           {options.map((option) => (
             <SelectItem key={option} value={option}>
-              {suffix ? `${option} ${suffix}` : option}
+              {suffix ? `${optionLabels?.[option] ?? option} ${suffix}` : optionLabels?.[option] ?? option}
             </SelectItem>
           ))}
         </SelectContent>

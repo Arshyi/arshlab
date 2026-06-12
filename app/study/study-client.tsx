@@ -47,6 +47,14 @@ import {
 } from "@/lib/supabase/user-profile"
 import { detectWeakTopics } from "@/lib/learning/recovery"
 import {
+  DEFAULT_CURRICULUM_ID,
+  getCurriculum,
+  getSubtopicsForCurriculumTopic,
+  getTopicsForUnit,
+  listCurricula,
+  type CurriculumId,
+} from "@/lib/curriculum/curriculum-registry"
+import {
   downloadAnswerKeyPdf,
   downloadQuestionPdf,
   generatedDateLabel,
@@ -73,6 +81,7 @@ const topics = [
 
 const difficulties = ["Introductory", "Intermediate", "Advanced"]
 const questionCounts = ["1", "5", "10", "20"]
+const curricula = listCurricula()
 
 interface GuestUsage {
   date: string
@@ -200,6 +209,9 @@ function getTopicMastery(entries: PracticeProgressEntry[]): TopicMastery[] {
 
 export function StudyClient() {
   const [topic, setTopic] = useState(topics[0])
+  const [curriculumId, setCurriculumId] = useState<CurriculumId>(DEFAULT_CURRICULUM_ID)
+  const [curriculumUnit, setCurriculumUnit] = useState("all")
+  const [targetSubtopic, setTargetSubtopic] = useState("all")
   const [difficulty, setDifficulty] = useState(difficulties[0])
   const [questionCount, setQuestionCount] = useState("5")
   const [studySet, setStudySet] = useState<StudySet | null>(null)
@@ -226,6 +238,10 @@ export function StudyClient() {
     if (requestedTopic && topics.includes(requestedTopic)) {
       setTopic(requestedTopic)
     }
+    const requestedUnit = params.get("unit")
+    if (requestedUnit) setCurriculumUnit(requestedUnit)
+    const requestedSubtopic = params.get("subtopic")
+    if (requestedSubtopic) setTargetSubtopic(requestedSubtopic)
 
     if (!isSupabaseConfigured()) return
     const supabase = createClient()
@@ -269,6 +285,27 @@ export function StudyClient() {
   const dailyProgress = Math.min(100, Math.round((dailyAttempted / dailyGoal) * 100))
   const level = getLevelFromXp(profile?.xp ?? 0)
   const weakTopics = useMemo(() => detectWeakTopics(progressEntries).slice(0, 3), [progressEntries])
+  const curriculum = useMemo(() => getCurriculum(curriculumId), [curriculumId])
+  const topicOptions = useMemo(
+    () => getTopicsForUnit(curriculum, curriculumUnit),
+    [curriculum, curriculumUnit],
+  )
+  const subtopicOptions = useMemo(
+    () => getSubtopicsForCurriculumTopic(curriculum, topic, curriculumUnit),
+    [curriculum, curriculumUnit, topic],
+  )
+
+  useEffect(() => {
+    if (topicOptions.length > 0 && !topicOptions.includes(topic)) {
+      setTopic(topicOptions[0])
+    }
+  }, [topic, topicOptions])
+
+  useEffect(() => {
+    if (targetSubtopic !== "all" && !subtopicOptions.includes(targetSubtopic)) {
+      setTargetSubtopic("all")
+    }
+  }, [subtopicOptions, targetSubtopic])
 
   async function refreshLearningData() {
     const [profileResult, progressResult] = await Promise.all([
@@ -277,6 +314,7 @@ export function StudyClient() {
     ])
 
     if (profileResult.ok) setProfile(profileResult.data)
+    if (profileResult.ok) setCurriculumId(profileResult.data.selectedCurriculum)
     if (progressResult.ok) setProgressEntries(progressResult.data)
   }
 
@@ -313,6 +351,9 @@ export function StudyClient() {
           difficulty,
           curriculumStyle: "High School",
           questionCount: Number(questionCount),
+          curriculumId,
+          curriculumUnit: curriculumUnit === "all" ? undefined : curriculumUnit,
+          targetSubtopic: targetSubtopic === "all" ? undefined : targetSubtopic,
         }),
       })
       const data = await response.json()
@@ -425,6 +466,9 @@ export function StudyClient() {
       subtitle: "Study Session",
       metadata: [
         { label: "Topic", value: topic },
+        { label: "Curriculum", value: curriculum.name },
+        { label: "Unit", value: curriculumUnit === "all" ? "Recommended / All" : curriculum.units.find((unit) => unit.id === curriculumUnit)?.title ?? curriculumUnit },
+        { label: "Subtopic", value: targetSubtopic === "all" ? "Any supported subtopic" : targetSubtopic },
         { label: "Difficulty", value: difficulty },
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: studySet.questions.length },
@@ -441,6 +485,7 @@ export function StudyClient() {
       title: "Study Session Answer Key",
       metadata: [
         { label: "Topic", value: topic },
+        { label: "Curriculum", value: curriculum.name },
         { label: "Difficulty", value: difficulty },
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: studySet.questions.length },
@@ -488,7 +533,31 @@ export function StudyClient() {
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Picker label="Topic" value={topic} options={topics} onChange={setTopic} />
+                  <Picker
+                    label="Curriculum"
+                    value={curriculumId}
+                    options={curricula.map((item) => item.id)}
+                    optionLabels={Object.fromEntries(curricula.map((item) => [item.id, item.name]))}
+                    onChange={(value) => setCurriculumId(value as CurriculumId)}
+                  />
+                  <Picker
+                    label="Curriculum Unit"
+                    value={curriculumUnit}
+                    options={["all", ...curriculum.units.map((unit) => unit.id)]}
+                    optionLabels={{
+                      all: "Recommended / All Units",
+                      ...Object.fromEntries(curriculum.units.map((unit) => [unit.id, unit.title])),
+                    }}
+                    onChange={setCurriculumUnit}
+                  />
+                  <Picker label="Topic" value={topic} options={topicOptions.length ? topicOptions : topics} onChange={setTopic} />
+                  <Picker
+                    label="Subtopic"
+                    value={targetSubtopic}
+                    options={["all", ...subtopicOptions]}
+                    optionLabels={{ all: "Any supported subtopic" }}
+                    onChange={setTargetSubtopic}
+                  />
                   <Picker label="Difficulty" value={difficulty} options={difficulties} onChange={setDifficulty} />
                   <Picker
                     label="Number of Questions"
@@ -798,12 +867,14 @@ function Picker({
   label,
   value,
   options,
+  optionLabels,
   onChange,
   suffix,
 }: {
   label: string
   value: string
   options: string[]
+  optionLabels?: Record<string, string>
   onChange: (value: string) => void
   suffix?: string
 }) {
@@ -817,7 +888,7 @@ function Picker({
         <SelectContent>
           {options.map((option) => (
             <SelectItem key={option} value={option}>
-              {suffix ? `${option} ${suffix}` : option}
+              {suffix ? `${optionLabels?.[option] ?? option} ${suffix}` : optionLabels?.[option] ?? option}
             </SelectItem>
           ))}
         </SelectContent>

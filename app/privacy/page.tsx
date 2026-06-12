@@ -28,7 +28,11 @@ const sections = [
   },
   {
     title: "Study Progress Data",
-    body: "Signed-in users may save XP, daily goal preference, completed study sessions, completed exams, completed diagnostics, last and best diagnostic accuracy, achievement progress, topic mastery, concept mastery, and mistake analytics derived from practice_progress rows. ARSHLAB uses this data to show adaptive recommendations, recovery sessions, placement summaries, and progress dashboards.",
+    body: "Signed-in users may save XP, daily goal preference, selected curriculum, completed study sessions, completed exams, completed diagnostics, last and best diagnostic accuracy, achievement progress, topic mastery, concept mastery, curriculum unit progress, and mistake analytics derived from practice_progress rows. ARSHLAB uses this data to show adaptive recommendations, recovery sessions, placement summaries, curriculum dashboards, and progress dashboards.",
+  },
+  {
+    title: "Curriculum Labels",
+    body: "Curriculum labels describe study style and topic alignment. ARSHLAB does not claim official syllabus coverage, official placement, official exam prediction, or endorsement by any examination board or institution.",
   },
   {
     title: "Personal Data",

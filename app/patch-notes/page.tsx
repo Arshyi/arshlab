@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "2.7.0",
+    version: "3.0.0",
     date: "Current",
+    status: "released",
+    title: "Curriculum Engine",
+    changes: [
+      "Added shared curriculum registry for General First-Year Chemistry, CHEM 121 Style, IB Chemistry Style, AP Chemistry Style, and A-Level Chemistry Style",
+      "Added selected learning path fields to user profiles",
+      "Added Curriculum Engine dashboard at /curriculum",
+      "Added unit-by-unit mastery, weakest/strongest unit, recommended next unit, and diagnostic coverage summaries",
+      "Added curriculum selection and curriculum achievements to My Progress",
+      "Added curriculum, unit, topic, and subtopic constraints to Practice Generator, Study Mode, Exam Generator, Diagnostic Assessment, and Recovery Mode",
+      "Added curriculum diagnostic mode and unit-level diagnostic coverage summaries",
+      "Added legal copy clarifying curriculum labels are study-style alignment, not official syllabus coverage",
+      "Preserved OpenRouter free-model-only guardrails with no client-side model selection or paid fallback",
+    ],
+  },
+  {
+    version: "2.7.0",
+    date: "Previous",
     status: "released",
     title: "Diagnostic Assessment & Placement Engine",
     changes: [

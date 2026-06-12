@@ -34,7 +34,15 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { addPracticeProgress } from "@/lib/supabase/practice-progress"
-import { applyProfileReward } from "@/lib/supabase/user-profile"
+import { applyProfileReward, getUserProfile } from "@/lib/supabase/user-profile"
+import {
+  DEFAULT_CURRICULUM_ID,
+  getCurriculum,
+  getSubtopicsForCurriculumTopic,
+  getTopicsForUnit,
+  listCurricula,
+  type CurriculumId,
+} from "@/lib/curriculum/curriculum-registry"
 import {
   downloadAnswerKeyPdf,
   downloadQuestionPdf,
@@ -81,6 +89,7 @@ const curriculumStyles = [
 ]
 
 const questionCounts = ["1", "5", "10", "20"]
+const curricula = listCurricula()
 
 interface GuestUsage {
   date: string
@@ -233,6 +242,9 @@ function qualityWarnings(question: PracticeQuestion, index: number): string[] {
 
 export function PracticeGeneratorClient() {
   const [topic, setTopic] = useState(topics[0])
+  const [curriculumId, setCurriculumId] = useState<CurriculumId>(DEFAULT_CURRICULUM_ID)
+  const [curriculumUnit, setCurriculumUnit] = useState("all")
+  const [targetSubtopic, setTargetSubtopic] = useState("all")
   const [questionType, setQuestionType] = useState(questionTypes[0])
   const [difficulty, setDifficulty] = useState(difficulties[0])
   const [curriculumStyle, setCurriculumStyle] = useState(curriculumStyles[0])
@@ -258,18 +270,34 @@ export function PracticeGeneratorClient() {
     if (requestedTopic && topics.includes(requestedTopic)) {
       setTopic(requestedTopic)
     }
+    const requestedUnit = params.get("unit")
+    if (requestedUnit) setCurriculumUnit(requestedUnit)
+    const requestedSubtopic = params.get("subtopic")
+    if (requestedSubtopic) setTargetSubtopic(requestedSubtopic)
 
     if (!isSupabaseConfigured()) return
     const supabase = createClient()
 
     supabase.auth.getUser().then(({ data }) => {
-      setIsLoggedIn(Boolean(data.user))
+      const signedIn = Boolean(data.user)
+      setIsLoggedIn(signedIn)
+      if (signedIn) {
+        getUserProfile().then((result) => {
+          if (result.ok) setCurriculumId(result.data.selectedCurriculum)
+        })
+      }
     })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(Boolean(session?.user))
+      const signedIn = Boolean(session?.user)
+      setIsLoggedIn(signedIn)
+      if (signedIn) {
+        getUserProfile().then((result) => {
+          if (result.ok) setCurriculumId(result.data.selectedCurriculum)
+        })
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -278,6 +306,15 @@ export function PracticeGeneratorClient() {
   const guestRemaining = useMemo(
     () => Math.max(0, GUEST_LIMIT - guestUsage.count),
     [guestUsage.count],
+  )
+  const curriculum = useMemo(() => getCurriculum(curriculumId), [curriculumId])
+  const topicOptions = useMemo(
+    () => getTopicsForUnit(curriculum, curriculumUnit),
+    [curriculum, curriculumUnit],
+  )
+  const subtopicOptions = useMemo(
+    () => getSubtopicsForCurriculumTopic(curriculum, topic, curriculumUnit),
+    [curriculum, curriculumUnit, topic],
   )
 
   const score = useMemo(() => {
@@ -294,6 +331,18 @@ export function PracticeGeneratorClient() {
     () => practiceSet?.questions.flatMap((question, index) => qualityWarnings(question, index)) ?? [],
     [practiceSet],
   )
+
+  useEffect(() => {
+    if (topicOptions.length > 0 && !topicOptions.includes(topic)) {
+      setTopic(topicOptions[0])
+    }
+  }, [topic, topicOptions])
+
+  useEffect(() => {
+    if (targetSubtopic !== "all" && !subtopicOptions.includes(targetSubtopic)) {
+      setTargetSubtopic("all")
+    }
+  }, [subtopicOptions, targetSubtopic])
 
   useEffect(() => {
     if (
@@ -351,6 +400,9 @@ export function PracticeGeneratorClient() {
           difficulty,
           curriculumStyle,
           questionCount: Number(questionCount),
+          curriculumId,
+          curriculumUnit: curriculumUnit === "all" ? undefined : curriculumUnit,
+          targetSubtopic: targetSubtopic === "all" ? undefined : targetSubtopic,
         }),
       })
       const data = await response.json()
@@ -393,6 +445,9 @@ export function PracticeGeneratorClient() {
       subtitle: "Generated Practice Set",
       metadata: [
         { label: "Topic", value: topic },
+        { label: "Curriculum", value: curriculum.name },
+        { label: "Unit", value: curriculumUnit === "all" ? "Recommended / All" : curriculum.units.find((unit) => unit.id === curriculumUnit)?.title ?? curriculumUnit },
+        { label: "Subtopic", value: targetSubtopic === "all" ? "Any supported subtopic" : targetSubtopic },
         { label: "Question Type", value: questionType },
         { label: "Difficulty", value: difficulty },
         { label: "Curriculum", value: curriculumStyle },
@@ -410,6 +465,7 @@ export function PracticeGeneratorClient() {
       title: "Practice Set Answer Key",
       metadata: [
         { label: "Topic", value: topic },
+        { label: "Curriculum", value: curriculum.name },
         { label: "Difficulty", value: difficulty },
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: practiceSet.questions.length },
@@ -503,7 +559,31 @@ export function PracticeGeneratorClient() {
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Picker label="Topic" value={topic} options={topics} onChange={setTopic} />
+                  <Picker
+                    label="Curriculum"
+                    value={curriculumId}
+                    options={curricula.map((item) => item.id)}
+                    optionLabels={Object.fromEntries(curricula.map((item) => [item.id, item.name]))}
+                    onChange={(value) => setCurriculumId(value as CurriculumId)}
+                  />
+                  <Picker
+                    label="Curriculum Unit"
+                    value={curriculumUnit}
+                    options={["all", ...curriculum.units.map((unit) => unit.id)]}
+                    optionLabels={{
+                      all: "Recommended / All Units",
+                      ...Object.fromEntries(curriculum.units.map((unit) => [unit.id, unit.title])),
+                    }}
+                    onChange={setCurriculumUnit}
+                  />
+                  <Picker label="Topic" value={topic} options={topicOptions.length ? topicOptions : topics} onChange={setTopic} />
+                  <Picker
+                    label="Subtopic"
+                    value={targetSubtopic}
+                    options={["all", ...subtopicOptions]}
+                    optionLabels={{ all: "Any supported subtopic" }}
+                    onChange={setTargetSubtopic}
+                  />
                   <Picker label="Question Type" value={questionType} options={questionTypes} onChange={setQuestionType} />
                   <Picker label="Difficulty" value={difficulty} options={difficulties} onChange={setDifficulty} />
                   <Picker
@@ -666,6 +746,7 @@ export function PracticeGeneratorClient() {
                 <p>Uses the same server-side OpenRouter route as the AI Chemistry Assistant.</p>
                 <p>Only configured free models are allowed, and the page never sends a model ID.</p>
                 <p>One generated set counts as one AI request.</p>
+                <p>Curriculum unit and subtopic selectors constrain the prompt but never select the AI model.</p>
                 <p>Signed-in self-marked progress is saved with Supabase RLS. Generated question text is not stored.</p>
                 <p>No official exam-board or copied past-paper material.</p>
               </CardContent>
@@ -849,11 +930,13 @@ function Picker({
   label,
   value,
   options,
+  optionLabels,
   onChange,
 }: {
   label: string
   value: string
   options: string[]
+  optionLabels?: Record<string, string>
   onChange: (value: string) => void
 }) {
   return (
@@ -866,7 +949,7 @@ function Picker({
         <SelectContent>
           {options.map((option) => (
             <SelectItem key={option} value={option}>
-              {option}
+              {optionLabels?.[option] ?? option}
             </SelectItem>
           ))}
         </SelectContent>

@@ -10,6 +10,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   Flame,
+  GraduationCap,
   Medal,
   RefreshCw,
   Target,
@@ -41,8 +42,15 @@ import {
   getLevelFromXp,
   getUserProfile,
   updateDailyGoal,
+  updateSelectedCurriculum,
   type UserProfile,
 } from "@/lib/supabase/user-profile"
+import {
+  calculateCurriculumProgress,
+  listCurricula,
+  type CurriculumId,
+  type CurriculumProgressSummary,
+} from "@/lib/curriculum/curriculum-registry"
 import {
   calculateConceptStats,
   detectWeakTopics,
@@ -210,6 +218,7 @@ function getAchievements(
   entries: PracticeProgressEntry[],
   profile: UserProfile | null,
   topicStats: TopicStats[],
+  curriculumSummary: CurriculumProgressSummary,
 ): Achievement[] {
   const total = entries.length
   const correct = entries.filter((entry) => entry.correct).length
@@ -225,6 +234,9 @@ function getAchievements(
   const diagnosticImproved =
     typeof previousDiagnosticAccuracy === "number" &&
     lastDiagnosticAccuracy > previousDiagnosticAccuracy
+  const firstCurriculumSelected = Boolean(profile?.curriculumStartedAt || profile?.selectedCurriculum)
+  const unitsMastered = curriculumSummary.unitsMastered
+  const curriculumProgress = curriculumSummary.overallProgress
 
   return [
     {
@@ -332,6 +344,48 @@ function getAchievements(
       progress: Math.min(100, completedDiagnostics * 100),
       icon: Target,
     },
+    {
+      label: "First Curriculum Selected",
+      description: "Choose a learning path for curriculum-aware study.",
+      unlocked: firstCurriculumSelected,
+      progress: firstCurriculumSelected ? 100 : 0,
+      icon: GraduationCap,
+    },
+    {
+      label: "First Unit Mastered",
+      description: "Master one curriculum unit.",
+      unlocked: unitsMastered >= 1,
+      progress: Math.min(100, unitsMastered * 100),
+      icon: Medal,
+    },
+    {
+      label: "25% Curriculum Complete",
+      description: "Reach 25% overall curriculum mastery.",
+      unlocked: curriculumProgress >= 25,
+      progress: Math.min(100, Math.round((curriculumProgress / 25) * 100)),
+      icon: BarChart3,
+    },
+    {
+      label: "50% Curriculum Complete",
+      description: "Reach 50% overall curriculum mastery.",
+      unlocked: curriculumProgress >= 50,
+      progress: Math.min(100, Math.round((curriculumProgress / 50) * 100)),
+      icon: BarChart3,
+    },
+    {
+      label: "75% Curriculum Complete",
+      description: "Reach 75% overall curriculum mastery.",
+      unlocked: curriculumProgress >= 75,
+      progress: Math.min(100, Math.round((curriculumProgress / 75) * 100)),
+      icon: Trophy,
+    },
+    {
+      label: "Curriculum Mastery",
+      description: "Reach 90% overall curriculum mastery.",
+      unlocked: curriculumProgress >= 90,
+      progress: Math.min(100, Math.round((curriculumProgress / 90) * 100)),
+      icon: Trophy,
+    },
   ]
 }
 
@@ -343,6 +397,7 @@ export function ProgressClient() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [updatingGoal, setUpdatingGoal] = useState(false)
+  const [updatingCurriculum, setUpdatingCurriculum] = useState(false)
 
   const loadProgress = useCallback(async () => {
     setLoading(true)
@@ -405,7 +460,15 @@ export function ProgressClient() {
   )
   const recoveryTopics = useMemo(() => detectWeakTopics(entries).slice(0, 3), [entries])
   const recent = entries.slice(0, 16)
-  const achievements = useMemo(() => getAchievements(entries, profile, topicStats), [entries, profile, topicStats])
+  const curriculumSummary = useMemo(
+    () => calculateCurriculumProgress(entries, profile?.selectedCurriculum),
+    [entries, profile?.selectedCurriculum],
+  )
+  const curricula = useMemo(() => listCurricula(), [])
+  const achievements = useMemo(
+    () => getAchievements(entries, profile, topicStats, curriculumSummary),
+    [curriculumSummary, entries, profile, topicStats],
+  )
   const unlockedAchievements = achievements.filter((achievement) => achievement.unlocked).length
   const dailyGoal = profile?.dailyGoal ?? 10
   const dailyAttempted = useMemo(() => getDailyAttempted(entries), [entries])
@@ -440,6 +503,20 @@ export function ProgressClient() {
       setMessage("Daily goal updated.")
     } else {
       setMessage(`Daily goal was not updated: ${result.error}`)
+    }
+  }
+
+  async function handleCurriculumChange(value: string) {
+    setUpdatingCurriculum(true)
+    setMessage(null)
+    const result = await updateSelectedCurriculum(value as CurriculumId)
+    setUpdatingCurriculum(false)
+
+    if (result.ok) {
+      setProfile(result.data)
+      setMessage("Learning path updated. Existing progress was preserved.")
+    } else {
+      setMessage(`Learning path was not updated: ${result.error}`)
     }
   }
 
@@ -573,6 +650,9 @@ export function ProgressClient() {
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             Refresh Progress
           </Button>
+          <Button asChild variant="outline" className="rounded-xl">
+            <Link href="/curriculum">Curriculum Dashboard</Link>
+          </Button>
           <Button asChild className="rounded-xl">
             <Link href="/study">Start Study Mode</Link>
           </Button>
@@ -614,8 +694,9 @@ export function ProgressClient() {
           </Card>
         ) : (
           <Tabs defaultValue="overview" className="space-y-5">
-            <TabsList className="grid h-auto w-full grid-cols-2 rounded-xl sm:grid-cols-4">
+            <TabsList className="grid h-auto w-full grid-cols-2 rounded-xl sm:grid-cols-5">
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
               <TabsTrigger value="topics">Topics</TabsTrigger>
               <TabsTrigger value="achievements">Achievements</TabsTrigger>
               <TabsTrigger value="recent">Recent Activity</TabsTrigger>
@@ -683,6 +764,48 @@ export function ProgressClient() {
                   </CardContent>
                 </Card>
               </div>
+
+              <Card className="rounded-2xl border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <GraduationCap className="h-5 w-5" />
+                    Current Learning Path
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 lg:grid-cols-[1fr_280px]">
+                  <div>
+                    <h3 className="text-xl font-semibold">{curriculumSummary.curriculum.name}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{curriculumSummary.curriculum.description}</p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                      <MiniStat label="Progress" value={`${curriculumSummary.overallProgress}%`} />
+                      <MiniStat label="Units Mastered" value={`${curriculumSummary.unitsMastered}/${curriculumSummary.units.length}`} />
+                      <MiniStat label="Needs Work" value={curriculumSummary.unitsNeedingWork} />
+                      <MiniStat label="Diagnostic Coverage" value={`${curriculumSummary.diagnosticCoverage}%`} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Select
+                      value={curriculumSummary.curriculum.id}
+                      onValueChange={(value) => void handleCurriculumChange(value)}
+                      disabled={updatingCurriculum || !profile}
+                    >
+                      <SelectTrigger className="h-11 rounded-xl">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {curricula.map((curriculum) => (
+                          <SelectItem key={curriculum.id} value={curriculum.id}>
+                            {curriculum.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button asChild variant="outline" className="w-full rounded-xl">
+                      <Link href="/curriculum">Open Curriculum Dashboard</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
               <Card className="rounded-2xl">
                 <CardHeader>
@@ -754,6 +877,55 @@ export function ProgressClient() {
                       No weak areas detected yet. ARSHLAB will recommend Recovery Mode when a topic or concept has at least five attempts and accuracy below 60%.
                     </p>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="curriculum">
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <GraduationCap className="h-5 w-5" />
+                    Curriculum Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <InsightCard
+                      label="Weakest Unit"
+                      value={curriculumSummary.weakestUnit?.unit.title ?? "Not enough data"}
+                      detail={curriculumSummary.weakestUnit ? `${curriculumSummary.weakestUnit.mastery}% mastery` : "Take a diagnostic or study session"}
+                    />
+                    <InsightCard
+                      label="Strongest Unit"
+                      value={curriculumSummary.strongestUnit?.unit.title ?? "Not enough data"}
+                      detail={curriculumSummary.strongestUnit ? `${curriculumSummary.strongestUnit.mastery}% mastery` : "Take a diagnostic or study session"}
+                    />
+                    <InsightCard
+                      label="Next Recommended Unit"
+                      value={curriculumSummary.recommendedNextUnit?.unit.title ?? "Not enough data"}
+                      detail={curriculumSummary.recommendedNextUnit ? curriculumSummary.recommendedNextUnit.status : "Choose a learning path"}
+                    />
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {curriculumSummary.units.map((unit) => (
+                      <div key={unit.unit.id} className="rounded-xl border border-border bg-card p-4">
+                        <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <p className="font-medium text-foreground">{unit.unit.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {unit.correct} correct, {unit.missed} missed, {unit.attempted} attempted
+                            </p>
+                          </div>
+                          <Badge variant={unit.status === "Needs Intervention" ? "destructive" : unit.status === "Not Started" ? "outline" : unit.status === "Mastered" || unit.status === "Strong" ? "default" : "secondary"}>
+                            {unit.status}
+                          </Badge>
+                        </div>
+                        <Progress value={unit.mastery} />
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

@@ -29,7 +29,13 @@ import {
   getPracticeProgress,
   type PracticeProgressEntry,
 } from "@/lib/supabase/practice-progress"
-import { applyProfileReward } from "@/lib/supabase/user-profile"
+import { applyProfileReward, getUserProfile } from "@/lib/supabase/user-profile"
+import {
+  DEFAULT_CURRICULUM_ID,
+  getCurriculum,
+  getUnitForTopic,
+  type CurriculumId,
+} from "@/lib/curriculum/curriculum-registry"
 import {
   buildRecoveryPlan,
   calculateConceptRecoveryOutcomes,
@@ -117,6 +123,7 @@ function roleLabel(role: RecoveryPlanItem["role"]): string {
 
 export function RecoveryClient() {
   const [entries, setEntries] = useState<PracticeProgressEntry[]>([])
+  const [curriculumId, setCurriculumId] = useState<CurriculumId>(DEFAULT_CURRICULUM_ID)
   const [loadingData, setLoadingData] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [recoverySet, setRecoverySet] = useState<RecoverySet | null>(null)
@@ -158,6 +165,8 @@ export function RecoveryClient() {
     }
 
     const result = await getPracticeProgress(800)
+    const profileResult = await getUserProfile()
+    if (profileResult.ok) setCurriculumId(profileResult.data.selectedCurriculum)
     if (result.ok) {
       setEntries(result.data)
     } else {
@@ -183,6 +192,7 @@ export function RecoveryClient() {
   }, [loadProgress])
 
   const allStats = useMemo(() => calculateTopicStats(entries), [entries])
+  const selectedCurriculum = useMemo(() => getCurriculum(curriculumId), [curriculumId])
   const conceptStats = useMemo(() => calculateConceptStats(entries), [entries])
   const weakTopics = useMemo(() => detectWeakTopics(entries), [entries])
   const weakConcepts = useMemo(() => detectWeakConcepts(entries), [entries])
@@ -274,6 +284,7 @@ export function RecoveryClient() {
             count: item.count,
             difficulty: item.difficulty,
             weaknesses: item.weaknesses,
+            unit: getUnitForTopic(selectedCurriculum, item.topic, item.weaknesses[0])?.title,
           })),
         }),
       })
@@ -478,6 +489,13 @@ export function RecoveryClient() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="rounded-xl border border-border bg-secondary/20 p-4">
+                    <p className="font-medium">Recommended Recovery for {selectedCurriculum.name}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Prioritizes weak required topics, prerequisite-style foundations, high-frequency chemistry skills,
+                      and recently missed concepts from your saved progress.
+                    </p>
+                  </div>
                   {loadingData ? (
                     <p className="py-8 text-center text-sm text-muted-foreground">Loading practice progress...</p>
                   ) : weakAreaTopics.length === 0 ? (
@@ -543,6 +561,9 @@ export function RecoveryClient() {
                     <div key={`${item.role}-${item.topic}`} className="rounded-xl border border-border bg-card p-4">
                       <Badge variant={item.role === "review" ? "secondary" : "default"}>{roleLabel(item.role)}</Badge>
                       <p className="mt-3 font-medium">{item.topic}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Unit: {getUnitForTopic(selectedCurriculum, item.topic, item.weaknesses[0])?.title ?? "Mixed curriculum review"}
+                      </p>
                       <div className="mt-2 flex flex-wrap gap-1">
                         {item.weaknesses.map((weakness) => (
                           <Badge key={weakness} variant="outline">
