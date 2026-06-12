@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "2.5.1",
+  "version": "2.6.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -51,6 +51,8 @@
     "embla-carousel-react": "8.6.0",
     "framer-motion": "^12.40.0",
     "input-otp": "1.4.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.564.0",
     "next": "16.2.6",
     "next-themes": "^0.4.6",

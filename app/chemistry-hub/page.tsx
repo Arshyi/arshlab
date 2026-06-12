@@ -113,7 +113,7 @@ export default function ChemistryHubPage() {
                 <h2 className="font-semibold">Study Mode</h2>
                 <p className="text-sm text-muted-foreground">
                   Practice one question at a time with immediate feedback, streaks, XP, daily goals,
-                  achievements, and adaptive recovery sets.
+                  achievements, adaptive recovery sets, and printable PDF exports.
                 </p>
               </div>
             </div>
@@ -135,7 +135,7 @@ export default function ChemistryHubPage() {
               <div>
                 <h2 className="font-semibold">Recovery Mode</h2>
                 <p className="text-sm text-muted-foreground">
-                  Detect weak topics and concepts from saved practice progress and generate adaptive 10-question recovery sessions.
+                  Detect weak topics and concepts, generate adaptive recovery sessions, and export printable PDFs with mastery summaries.
                 </p>
               </div>
             </div>
@@ -225,7 +225,7 @@ export default function ChemistryHubPage() {
               <div>
                 <h2 className="font-semibold">Practice Generator</h2>
                 <p className="text-sm text-muted-foreground">
-                  Generate original chemistry practice questions with answers, explanations, and validation guardrails.
+                  Generate original chemistry practice questions with answers, explanations, validation guardrails, and PDF export.
                 </p>
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function ChemistryHubPage() {
                 <h2 className="font-semibold">Exam Generator</h2>
                 <p className="text-sm text-muted-foreground">
                   Generate full chemistry practice exams with answer reveal controls, explanations,
-                  and self-marked progress.
+                  self-marked progress, and printable exam PDFs.
                 </p>
               </div>
             </div>

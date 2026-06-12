@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "2.5.1",
+    version: "2.6.0",
     date: "Current",
+    status: "released",
+    title: "PDF Export System",
+    changes: [
+      "Added client-side PDF export support with jsPDF and jsPDF AutoTable",
+      "Added Download PDF and Download Answer Key PDF actions to Practice Generator",
+      "Added printable exam PDFs and separate answer key PDFs to Exam Generator",
+      "Added Study Mode PDF exports with questions, answers, and explanations",
+      "Added Recovery Mode PDFs with weak concepts, starting mastery, ending mastery, and solutions",
+      "Added clean black-and-white printable formatting with page breaks, page numbers, and ARSHLAB footers",
+      "Kept PDF generation entirely client-side with no server storage or database changes",
+    ],
+  },
+  {
+    version: "2.5.1",
+    date: "Previous",
     status: "released",
     title: "Automatic Subtopic Classification",
     changes: [

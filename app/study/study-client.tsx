@@ -8,6 +8,7 @@ import {
   ArrowRight,
   BookOpenCheck,
   CheckCircle2,
+  Download,
   Flame,
   GraduationCap,
   Loader2,
@@ -45,6 +46,12 @@ import {
   type UserProfile,
 } from "@/lib/supabase/user-profile"
 import { detectWeakTopics } from "@/lib/learning/recovery"
+import {
+  downloadAnswerKeyPdf,
+  downloadQuestionPdf,
+  generatedDateLabel,
+  type PdfQuestion,
+} from "@/lib/pdf/arshlab-pdf"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -134,6 +141,18 @@ function answerMatchesChoice(question: StudyQuestion, choice: PracticeChoice): b
   const label = normalizeText(choice.label)
   const text = normalizeText(choice.text)
   return answer === label || answer === text || answer === `${label}. ${text}`
+}
+
+function toStudyPdfQuestions(set: StudySet): PdfQuestion[] {
+  return set.questions.map((question, index) => ({
+    questionNumber: index + 1,
+    question: question.question,
+    choices: question.choices,
+    correctAnswer: question.correctAnswer,
+    explanation: question.explanation,
+    topic: question.topic,
+    subtopic: question.subtopic,
+  }))
 }
 
 function getDailyAttempted(entries: PracticeProgressEntry[]): number {
@@ -393,6 +412,38 @@ export function StudyClient() {
     setMessage(null)
   }
 
+  function downloadStudySessionPdf() {
+    if (!studySet) return
+    downloadQuestionPdf({
+      filename: "arshlab-study-session.pdf",
+      title: "ARSHLAB",
+      subtitle: "Study Session",
+      metadata: [
+        { label: "Topic", value: topic },
+        { label: "Difficulty", value: difficulty },
+        { label: "Date Generated", value: generatedDateLabel() },
+        { label: "Number of Questions", value: studySet.questions.length },
+      ],
+      questions: toStudyPdfQuestions(studySet),
+      includeSolutions: true,
+    })
+  }
+
+  function downloadStudyAnswerKeyPdf() {
+    if (!studySet) return
+    downloadAnswerKeyPdf({
+      filename: "arshlab-study-answer-key.pdf",
+      title: "Study Session Answer Key",
+      metadata: [
+        { label: "Topic", value: topic },
+        { label: "Difficulty", value: difficulty },
+        { label: "Date Generated", value: generatedDateLabel() },
+        { label: "Number of Questions", value: studySet.questions.length },
+      ],
+      questions: toStudyPdfQuestions(studySet),
+    })
+  }
+
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -507,6 +558,17 @@ export function StudyClient() {
                     <Progress value={sessionProgress} className="mt-2" />
                   </CardHeader>
                   <CardContent className="space-y-5">
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" className="rounded-xl" onClick={downloadStudySessionPdf}>
+                        <Download className="h-4 w-4" />
+                        Download PDF
+                      </Button>
+                      <Button variant="outline" className="rounded-xl" onClick={downloadStudyAnswerKeyPdf}>
+                        <Download className="h-4 w-4" />
+                        Download Answer Key PDF
+                      </Button>
+                    </div>
+
                     <Alert className="rounded-2xl border-amber-500/30 bg-amber-500/10">
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>AI-generated practice may contain mistakes.</AlertTitle>
@@ -614,6 +676,14 @@ export function StudyClient() {
                   <div className="flex flex-wrap gap-2">
                     <Button onClick={() => void generateSession()} className="rounded-xl">
                       Start Another Session
+                    </Button>
+                    <Button variant="outline" className="rounded-xl" onClick={downloadStudySessionPdf}>
+                      <Download className="h-4 w-4" />
+                      Download PDF
+                    </Button>
+                    <Button variant="outline" className="rounded-xl" onClick={downloadStudyAnswerKeyPdf}>
+                      <Download className="h-4 w-4" />
+                      Download Answer Key PDF
                     </Button>
                     <Button asChild variant="outline" className="rounded-xl">
                       <Link href="/progress">View Progress</Link>

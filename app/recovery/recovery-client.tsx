@@ -7,6 +7,7 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
+  Download,
   Flame,
   Loader2,
   RotateCcw,
@@ -42,6 +43,13 @@ import {
   type RecoveryOutcome,
   type RecoveryPlanItem,
 } from "@/lib/learning/recovery"
+import {
+  downloadAnswerKeyPdf,
+  downloadQuestionPdf,
+  generatedDateLabel,
+  type PdfQuestion,
+  type RecoverySummaryRow,
+} from "@/lib/pdf/arshlab-pdf"
 
 interface PracticeChoice {
   label: string
@@ -80,6 +88,18 @@ function answerMatchesChoice(question: RecoveryQuestion, choice: PracticeChoice)
   const label = normalizeText(choice.label)
   const text = normalizeText(choice.text)
   return answer === label || answer === text || answer === `${label}. ${text}`
+}
+
+function toRecoveryPdfQuestions(set: RecoverySet): PdfQuestion[] {
+  return set.questions.map((question, index) => ({
+    questionNumber: index + 1,
+    question: question.question,
+    choices: question.choices,
+    correctAnswer: question.correctAnswer,
+    explanation: question.explanation,
+    topic: question.topic,
+    subtopic: question.subtopic,
+  }))
 }
 
 function roleLabel(role: RecoveryPlanItem["role"]): string {
@@ -347,6 +367,53 @@ export function RecoveryClient() {
     setCompletionAwarded(false)
     setError(null)
     setMessage(null)
+  }
+
+  function recoverySummaryRows(): RecoverySummaryRow[] {
+    const outcomeBySubtopic = new Map(outcomes.map((outcome) => [outcome.subtopic ?? outcome.topic, outcome]))
+    return plan
+      .filter((item) => item.role !== "review")
+      .flatMap((item) =>
+        item.weaknesses.map((weakness) => {
+          const outcome = outcomeBySubtopic.get(weakness)
+          return {
+            concept: weakness,
+            startingMastery: outcome ? `${outcome.before}%` : `${item.mastery}%`,
+            endingMastery: outcome ? `${outcome.after}%` : "Complete session to calculate",
+          }
+        }),
+      )
+  }
+
+  function downloadRecoverySessionPdf() {
+    if (!recoverySet) return
+    downloadQuestionPdf({
+      filename: "arshlab-recovery-session.pdf",
+      title: "ARSHLAB",
+      subtitle: "Recovery Session",
+      metadata: [
+        { label: "Date Generated", value: generatedDateLabel() },
+        { label: "Number of Questions", value: recoverySet.questions.length },
+        { label: "Session Accuracy", value: `${accuracy}%` },
+      ],
+      recoverySummary: recoverySummaryRows(),
+      questions: toRecoveryPdfQuestions(recoverySet),
+      includeSolutions: true,
+    })
+  }
+
+  function downloadRecoveryAnswerKeyPdf() {
+    if (!recoverySet) return
+    downloadAnswerKeyPdf({
+      filename: "arshlab-recovery-answer-key.pdf",
+      title: "Recovery Session Answer Key",
+      metadata: [
+        { label: "Date Generated", value: generatedDateLabel() },
+        { label: "Number of Questions", value: recoverySet.questions.length },
+        { label: "Session Accuracy", value: `${accuracy}%` },
+      ],
+      questions: toRecoveryPdfQuestions(recoverySet),
+    })
   }
 
   return (
@@ -641,6 +708,14 @@ export function RecoveryClient() {
                   <div className="flex flex-wrap gap-2">
                     <Button onClick={() => void generateRecoverySession()} className="rounded-xl">
                       Generate Another Recovery Session
+                    </Button>
+                    <Button variant="outline" className="rounded-xl" onClick={downloadRecoverySessionPdf}>
+                      <Download className="h-4 w-4" />
+                      Download PDF
+                    </Button>
+                    <Button variant="outline" className="rounded-xl" onClick={downloadRecoveryAnswerKeyPdf}>
+                      <Download className="h-4 w-4" />
+                      Download Answer Key PDF
                     </Button>
                     <Button variant="outline" className="rounded-xl" onClick={resetSession}>
                       <RotateCcw className="h-4 w-4" />

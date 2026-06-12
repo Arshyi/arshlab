@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Copy,
+  Download,
   Eye,
   EyeOff,
   FlaskConical,
@@ -34,6 +35,12 @@ import { createClient } from "@/lib/supabase/client"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { addPracticeProgress } from "@/lib/supabase/practice-progress"
 import { applyProfileReward } from "@/lib/supabase/user-profile"
+import {
+  downloadAnswerKeyPdf,
+  downloadQuestionPdf,
+  generatedDateLabel,
+  type PdfQuestion,
+} from "@/lib/pdf/arshlab-pdf"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -170,6 +177,18 @@ function formatAnswerKey(set: PracticeSet): string {
 
 function formatEntireSet(set: PracticeSet): string {
   return set.questions.map((question, index) => formatSolution(question, index)).join("\n\n---\n\n")
+}
+
+function toPracticePdfQuestions(set: PracticeSet): PdfQuestion[] {
+  return set.questions.map((question, index) => ({
+    questionNumber: index + 1,
+    question: question.question,
+    choices: question.choices ?? [],
+    correctAnswer: question.correctAnswer,
+    explanation: question.explanation,
+    topic: question.topic,
+    subtopic: question.subtopic,
+  }))
 }
 
 function wordCount(value: string): number {
@@ -361,6 +380,39 @@ export function PracticeGeneratorClient() {
     }
   }
 
+  function downloadPracticeSetPdf() {
+    if (!practiceSet) return
+    downloadQuestionPdf({
+      filename: "arshlab-practice-set.pdf",
+      title: "ARSHLAB",
+      subtitle: "Generated Practice Set",
+      metadata: [
+        { label: "Topic", value: topic },
+        { label: "Question Type", value: questionType },
+        { label: "Difficulty", value: difficulty },
+        { label: "Curriculum", value: curriculumStyle },
+        { label: "Date Generated", value: generatedDateLabel() },
+        { label: "Number of Questions", value: practiceSet.questions.length },
+      ],
+      questions: toPracticePdfQuestions(practiceSet),
+    })
+  }
+
+  function downloadPracticeAnswerKeyPdf() {
+    if (!practiceSet) return
+    downloadAnswerKeyPdf({
+      filename: "arshlab-practice-answer-key.pdf",
+      title: "Practice Set Answer Key",
+      metadata: [
+        { label: "Topic", value: topic },
+        { label: "Difficulty", value: difficulty },
+        { label: "Date Generated", value: generatedDateLabel() },
+        { label: "Number of Questions", value: practiceSet.questions.length },
+      ],
+      questions: toPracticePdfQuestions(practiceSet),
+    })
+  }
+
   function toggleAnswer(id: string) {
     setRevealedAnswers((current) => ({ ...current, [id]: !current[id] }))
   }
@@ -544,6 +596,14 @@ export function PracticeGeneratorClient() {
                       <Button variant="secondary" className="rounded-xl" onClick={() => copyText("answer-key", formatAnswerKey(practiceSet))}>
                         <Copy className="h-4 w-4" />
                         {copied === "answer-key" ? "Copied" : "Copy Answer Key"}
+                      </Button>
+                      <Button variant="outline" className="rounded-xl" onClick={downloadPracticeSetPdf}>
+                        <Download className="h-4 w-4" />
+                        Download PDF
+                      </Button>
+                      <Button variant="outline" className="rounded-xl" onClick={downloadPracticeAnswerKeyPdf}>
+                        <Download className="h-4 w-4" />
+                        Download Answer Key PDF
                       </Button>
                     </div>
 

@@ -48,25 +48,25 @@ const features = [
   {
     icon: Sparkles,
     title: "Practice Generator",
-    description: "Generate original chemistry practice questions with answer reveal, explanations, and validation guardrails.",
+    description: "Generate original chemistry practice questions with answer reveal, explanations, and printable PDFs.",
     href: "/practice-generator",
   },
   {
     icon: BookOpenCheck,
     title: "Study Mode",
-    description: "Work through adaptive chemistry sessions one question at a time with streaks, XP, mastery, and feedback.",
+    description: "Work through adaptive chemistry sessions with streaks, XP, mastery, feedback, and PDF exports.",
     href: "/study",
   },
   {
     icon: Target,
     title: "Recovery Mode",
-    description: "Automatically generate targeted 10-question recovery sessions from weak topic and concept detection.",
+    description: "Generate targeted recovery sessions from weak concepts, then export printable PDFs with mastery summaries.",
     href: "/recovery",
   },
   {
     icon: FileQuestion,
     title: "Exam Generator",
-    description: "Generate full chemistry practice exams with hidden answers, explanations, and self-marked progress.",
+    description: "Generate full chemistry practice exams, answer keys, and clean printable PDF handouts.",
     href: "/exam-generator",
   },
   {

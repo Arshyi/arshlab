@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Copy,
+  Download,
   Eye,
   EyeOff,
   FileQuestion,
@@ -37,6 +38,12 @@ import {
   type PracticeProgressEntry,
 } from "@/lib/supabase/practice-progress"
 import { applyProfileReward } from "@/lib/supabase/user-profile"
+import {
+  downloadAnswerKeyPdf,
+  downloadQuestionPdf,
+  generatedDateLabel,
+  type PdfQuestion,
+} from "@/lib/pdf/arshlab-pdf"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -135,6 +142,18 @@ function formatAnswerKey(exam: GeneratedExam): string {
   return exam.questions
     .map((question) => `Question ${question.questionNumber}: ${question.correctAnswer}\nExplanation: ${question.explanation}`)
     .join("\n\n")
+}
+
+function toExamPdfQuestions(exam: GeneratedExam): PdfQuestion[] {
+  return exam.questions.map((question) => ({
+    questionNumber: question.questionNumber,
+    question: question.question,
+    choices: question.choices,
+    correctAnswer: question.correctAnswer,
+    explanation: question.explanation,
+    topic: question.topic,
+    subtopic: question.subtopic,
+  }))
 }
 
 function getWeakTopic(entries: PracticeProgressEntry[]): string | null {
@@ -316,6 +335,38 @@ export function ExamGeneratorClient() {
     }
   }
 
+  function downloadExamPdf() {
+    if (!exam) return
+    downloadQuestionPdf({
+      filename: "arshlab-practice-exam.pdf",
+      title: "ARSHLAB",
+      subtitle: "Generated Practice Exam",
+      metadata: [
+        { label: "Curriculum", value: curriculum },
+        { label: "Difficulty", value: difficulty },
+        { label: "Date Generated", value: generatedDateLabel() },
+        { label: "Number of Questions", value: exam.questions.length },
+        { label: "Question Format", value: recoveryTopic ? "Recovery Exam" : questionType },
+      ],
+      questions: toExamPdfQuestions(exam),
+    })
+  }
+
+  function downloadExamAnswerKeyPdf() {
+    if (!exam) return
+    downloadAnswerKeyPdf({
+      filename: "arshlab-exam-answer-key.pdf",
+      title: "Practice Exam Answer Key",
+      metadata: [
+        { label: "Curriculum", value: curriculum },
+        { label: "Difficulty", value: difficulty },
+        { label: "Date Generated", value: generatedDateLabel() },
+        { label: "Number of Questions", value: exam.questions.length },
+      ],
+      questions: toExamPdfQuestions(exam),
+    })
+  }
+
   async function markQuestion(question: ExamQuestion, status: MarkStatus) {
     if (marks[question.questionNumber]) return
 
@@ -464,6 +515,8 @@ export function ExamGeneratorClient() {
                       copied={copied}
                       onCopyEntire={() => copyText("entire-exam-top", formatEntireExam(exam))}
                       onCopyKey={() => copyText("answer-key-top", formatAnswerKey(exam))}
+                      onDownloadPdf={downloadExamPdf}
+                      onDownloadKeyPdf={downloadExamAnswerKeyPdf}
                       top
                     />
 
@@ -490,6 +543,8 @@ export function ExamGeneratorClient() {
                       copied={copied}
                       onCopyEntire={() => copyText("entire-exam-bottom", formatEntireExam(exam))}
                       onCopyKey={() => copyText("answer-key-bottom", formatAnswerKey(exam))}
+                      onDownloadPdf={downloadExamPdf}
+                      onDownloadKeyPdf={downloadExamAnswerKeyPdf}
                     />
                   </CardContent>
                 </Card>
@@ -692,12 +747,16 @@ function ExamCopyActions({
   copied,
   onCopyEntire,
   onCopyKey,
+  onDownloadPdf,
+  onDownloadKeyPdf,
   top = false,
 }: {
   exam: GeneratedExam
   copied: string | null
   onCopyEntire: () => void
   onCopyKey: () => void
+  onDownloadPdf: () => void
+  onDownloadKeyPdf: () => void
   top?: boolean
 }) {
   return (
@@ -709,6 +768,14 @@ function ExamCopyActions({
       <Button variant="secondary" className="rounded-xl" onClick={onCopyKey}>
         <Copy className="h-4 w-4" />
         {copied?.startsWith("answer-key") ? "Copied" : "Copy Answer Key"}
+      </Button>
+      <Button variant="outline" className="rounded-xl" onClick={onDownloadPdf}>
+        <Download className="h-4 w-4" />
+        Download PDF
+      </Button>
+      <Button variant="outline" className="rounded-xl" onClick={onDownloadKeyPdf}>
+        <Download className="h-4 w-4" />
+        Download Answer Key PDF
       </Button>
       <span className="sr-only">{exam.title}</span>
     </div>
