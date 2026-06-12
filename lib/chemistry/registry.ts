@@ -11,7 +11,7 @@ import type {
   ReactionTemplate,
 } from "./types"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.1.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.2.0"
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,

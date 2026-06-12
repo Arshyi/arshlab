@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.1.0",
+    version: "3.2.0",
     date: "Current",
+    status: "released",
+    title: "Database Generated Questions",
+    changes: [
+      "Added deterministic question engine modules with reusable templates, validators, typed questions, and generator facade",
+      "Added database-generated multiple choice questions for functional groups, formulas, molar mass, ion charges, reaction types, compound classification, and periodic trends",
+      "Added plausible distractor generation from chemistry database similarity",
+      "Added /question-engine with template coverage, database metrics, supported topics, and sample questions",
+      "Added Practice Generator source modes: Database Only, AI Only, and Hybrid",
+      "Added Database Generated and AI Generated source badges",
+      "Added source-level progress analytics for database questions and AI questions",
+      "Preserved existing AI generation, OpenRouter free-model-only guardrails, and no paid fallback policy",
+    ],
+  },
+  {
+    version: "3.1.0",
+    date: "Previous",
     status: "released",
     title: "Chemistry Knowledge Core",
     changes: [

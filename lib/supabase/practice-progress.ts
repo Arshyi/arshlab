@@ -11,6 +11,7 @@ export interface PracticeProgressEntry {
   subtopic: string
   difficulty: string
   questionType: string
+  source: "ai" | "database"
   correct: boolean
   timestamp: string
 }
@@ -22,6 +23,7 @@ interface PracticeProgressRow {
   subtopic: string | null
   difficulty: string
   question_type: string | null
+  question_source: string | null
   correct: boolean
   timestamp: string
 }
@@ -90,6 +92,7 @@ function mapProgressRow(row: PracticeProgressRow): PracticeProgressEntry {
     subtopic: inferSubtopicForTopic(row.topic, "", row.subtopic ?? undefined),
     difficulty: row.difficulty,
     questionType: row.question_type ?? "Practice",
+    source: row.question_source === "database" ? "database" : "ai",
     correct: row.correct,
     timestamp: row.timestamp,
   }
@@ -171,6 +174,7 @@ export async function addPracticeProgress(input: {
   subtopic?: string
   difficulty: string
   questionType?: string
+  source?: "ai" | "database"
   correct: boolean
 }): Promise<ProgressResult<PracticeProgressEntry>> {
   const auth = await getAuthenticatedClient()
@@ -192,6 +196,7 @@ export async function addPracticeProgress(input: {
       subtopic,
       difficulty: input.difficulty,
       question_type: questionType,
+      question_source: input.source === "database" ? "database" : "ai",
       correct: input.correct,
     })
     .select("*")

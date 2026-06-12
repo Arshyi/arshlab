@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Atom, BookOpen, BookOpenCheck, Bot, Database, Search, GraduationCap, Orbit, Sparkles, FileQuestion, Target, ClipboardCheck } from "lucide-react"
+import { Atom, BookOpen, BookOpenCheck, Bot, Database, Search, GraduationCap, Orbit, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -16,6 +16,7 @@ import { analytics } from "@/lib/chemistry/database/analytics/tracker"
 const LAB_LINKS = [
   { href: "/ai-assistant", label: "AI Chemistry Assistant" },
   { href: "/chemistry-database", label: "Chemistry Database" },
+  { href: "/question-engine", label: "Question Engine" },
   { href: "/curriculum", label: "Curriculum Engine" },
   { href: "/diagnostic", label: "Diagnostic Assessment" },
   { href: "/study", label: "Study Mode" },
@@ -148,6 +149,29 @@ export default function ChemistryHubPage() {
               className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
             >
               Open Database
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl mb-8 border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <ListChecks className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Question Engine</h2>
+                <p className="text-sm text-muted-foreground">
+                  Generate local database-backed chemistry questions with deterministic templates,
+                  source badges, and zero AI token usage.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/question-engine"
+              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Open Engine
             </Link>
           </CardContent>
         </Card>

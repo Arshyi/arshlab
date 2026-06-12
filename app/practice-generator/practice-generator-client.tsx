@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Copy,
+  Database,
   Download,
   Eye,
   EyeOff,
@@ -49,6 +50,8 @@ import {
   generatedDateLabel,
   type PdfQuestion,
 } from "@/lib/pdf/arshlab-pdf"
+import { generateDatabaseQuestions } from "@/lib/question-engine/generator"
+import type { QuestionSource } from "@/lib/question-engine/types"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -89,7 +92,10 @@ const curriculumStyles = [
 ]
 
 const questionCounts = ["1", "5", "10", "20"]
+const questionSources = ["Hybrid", "Database Only", "AI Only"] as const
 const curricula = listCurricula()
+
+type QuestionSourceMode = (typeof questionSources)[number]
 
 interface GuestUsage {
   date: string
@@ -113,6 +119,12 @@ interface PracticeQuestion {
   correctAnswer: string
   explanation: string
   misconceptionNote?: string
+  source?: QuestionSource
+  sourceEntry?: {
+    kind: string
+    id: string
+    name: string
+  }
 }
 
 interface PracticeSet {
@@ -249,6 +261,7 @@ export function PracticeGeneratorClient() {
   const [difficulty, setDifficulty] = useState(difficulties[0])
   const [curriculumStyle, setCurriculumStyle] = useState(curriculumStyles[0])
   const [questionCount, setQuestionCount] = useState("1")
+  const [questionSource, setQuestionSource] = useState<QuestionSourceMode>("Hybrid")
   const [practiceSet, setPracticeSet] = useState<PracticeSet | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -332,6 +345,8 @@ export function PracticeGeneratorClient() {
     [practiceSet],
   )
 
+  const needsAi = questionSource !== "Database Only" && !(questionSource === "Hybrid" && Number(questionCount) === 1)
+
   useEffect(() => {
     if (topicOptions.length > 0 && !topicOptions.includes(topic)) {
       setTopic(topicOptions[0])
@@ -374,7 +389,7 @@ export function PracticeGeneratorClient() {
   async function generateQuestionSet() {
     if (loading) return
 
-    if (!isLoggedIn && guestRemaining <= 0) {
+    if (needsAi && !isLoggedIn && guestRemaining <= 0) {
       setError("Daily guest AI assistant limit reached. Sign in for a higher limit.")
       return
     }
@@ -390,32 +405,71 @@ export function PracticeGeneratorClient() {
     setProgressMessage(null)
 
     try {
-      const response = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          task: "practice-generator",
-          topic,
-          questionType,
-          difficulty,
-          curriculumStyle,
-          questionCount: Number(questionCount),
-          curriculumId,
-          curriculumUnit: curriculumUnit === "all" ? undefined : curriculumUnit,
-          targetSubtopic: targetSubtopic === "all" ? undefined : targetSubtopic,
-        }),
-      })
-      const data = await response.json()
+      const totalCount = Number(questionCount)
+      const databaseCount =
+        questionSource === "Database Only" ? totalCount : questionSource === "Hybrid" ? Math.ceil(totalCount / 2) : 0
+      const aiCount =
+        questionSource === "AI Only" ? totalCount : questionSource === "Hybrid" ? Math.floor(totalCount / 2) : 0
 
-      if (!response.ok || !data.ok || !data.practiceSet) {
-        setError(data.message || "AI Assistant temporarily unavailable")
-        return
+      const databaseQuestions =
+        databaseCount > 0
+          ? generateDatabaseQuestions({
+              topic,
+              difficulty,
+              count: databaseCount,
+              curriculum: curriculumId,
+              unit: curriculumUnit === "all" ? undefined : curriculumUnit,
+              questionType,
+              targetSubtopic: targetSubtopic === "all" ? undefined : targetSubtopic,
+            })
+          : []
+
+      let aiQuestions: PracticeQuestion[] = []
+      if (aiCount > 0) {
+        const response = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            task: "practice-generator",
+            topic,
+            questionType,
+            difficulty,
+            curriculumStyle,
+            questionCount: aiCount,
+            curriculumId,
+            curriculumUnit: curriculumUnit === "all" ? undefined : curriculumUnit,
+            targetSubtopic: targetSubtopic === "all" ? undefined : targetSubtopic,
+          }),
+        })
+        const data = await response.json()
+
+        if (!response.ok || !data.ok || !data.practiceSet) {
+          if (questionSource === "Hybrid" && databaseQuestions.length > 0) {
+            setPracticeSet({ questions: databaseQuestions })
+            setError(data.message || "AI Assistant temporarily unavailable. Database questions were generated instead.")
+            return
+          }
+          setError(data.message || "AI Assistant temporarily unavailable")
+          return
+        }
+
+        aiQuestions = data.practiceSet.questions.map((question: PracticeQuestion) => ({
+          ...question,
+          source: "ai",
+        }))
+        setRemaining(typeof data.remaining === "number" ? data.remaining : null)
       }
 
-      setPracticeSet(data.practiceSet)
-      setRemaining(typeof data.remaining === "number" ? data.remaining : null)
+      const mergedQuestions =
+        questionSource === "Hybrid"
+          ? Array.from({ length: totalCount }, (_unused, index) =>
+              index % 2 === 0 ? databaseQuestions.shift() : aiQuestions.shift(),
+            ).filter((question): question is PracticeQuestion => Boolean(question))
+          : [...databaseQuestions, ...aiQuestions]
 
-      if (!isLoggedIn) {
+      setPracticeSet({ questions: mergedQuestions })
+
+      if (needsAi && !isLoggedIn) {
         const nextUsage = { date: todayKey(), count: guestUsage.count + 1 }
         setGuestUsage(nextUsage)
         writeGuestUsage(nextUsage)
@@ -500,6 +554,7 @@ export function PracticeGeneratorClient() {
       subtopic: question.subtopic,
       difficulty: question.difficulty,
       questionType: question.questionType,
+      source: question.source ?? "ai",
       correct: isCorrect,
     })
 
@@ -531,7 +586,7 @@ export function PracticeGeneratorClient() {
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Practice Generator</h1>
-              <p className="text-muted-foreground">Original AI-assisted chemistry study sessions with free-model guardrails</p>
+              <p className="text-muted-foreground">Original chemistry study sessions from database templates, AI, or hybrid mode</p>
             </div>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
@@ -550,10 +605,14 @@ export function PracticeGeneratorClient() {
                   </CardTitle>
                   <Badge variant="secondary">
                     {isLoggedIn
-                      ? remaining === null
+                      ? !needsAi
+                        ? "Database mode: no AI usage"
+                        : remaining === null
                         ? "Signed in"
                         : `${remaining} account AI requests left`
-                      : `${guestRemaining} guest AI requests left today`}
+                      : needsAi
+                        ? `${guestRemaining} guest AI requests left today`
+                        : "Database mode: no AI usage"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -598,18 +657,30 @@ export function PracticeGeneratorClient() {
                     options={questionCounts}
                     onChange={setQuestionCount}
                   />
+                  <Picker
+                    label="Question Source"
+                    value={questionSource}
+                    options={[...questionSources]}
+                    onChange={(value) => setQuestionSource(value as QuestionSourceMode)}
+                  />
                 </div>
 
                 <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-muted-foreground">
-                    One generated set counts as one AI request, even when it contains multiple questions.
+                    Database mode uses no AI requests. Hybrid alternates database and AI questions when AI is available.
                   </p>
                   <Button
                     onClick={generateQuestionSet}
-                    disabled={loading || (!isLoggedIn && guestRemaining <= 0)}
+                    disabled={loading || (needsAi && !isLoggedIn && guestRemaining <= 0)}
                     className="h-11 rounded-xl"
                   >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : questionSource === "Database Only" ? (
+                      <Database className="h-4 w-4" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
                     {loading ? "Generating..." : "Generate Set"}
                   </Button>
                 </div>
@@ -642,17 +713,20 @@ export function PracticeGeneratorClient() {
                         Study Session
                       </CardTitle>
                       <div className="flex flex-wrap gap-2">
-                        <Badge>{questionType}</Badge>
-                        <Badge variant="secondary">{difficulty}</Badge>
-                        <Badge variant="outline">{curriculumStyle}</Badge>
-                      </div>
+                      <Badge>{questionType}</Badge>
+                      <Badge variant="secondary">{difficulty}</Badge>
+                      <Badge variant="outline">{curriculumStyle}</Badge>
+                      <Badge variant="outline">{questionSource}</Badge>
+                    </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <Alert className="rounded-2xl border-amber-500/30 bg-amber-500/10">
                       <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>AI-generated practice may contain mistakes.</AlertTitle>
-                      <AlertDescription>Verify answers independently before relying on them.</AlertDescription>
+                      <AlertTitle>Generated practice may contain mistakes.</AlertTitle>
+                      <AlertDescription>
+                        Database questions are deterministic; AI questions may vary. Verify important answers independently.
+                      </AlertDescription>
                     </Alert>
 
                     {warnings.length > 0 && (
@@ -744,8 +818,9 @@ export function PracticeGeneratorClient() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>Uses the same server-side OpenRouter route as the AI Chemistry Assistant.</p>
-                <p>Only configured free models are allowed, and the page never sends a model ID.</p>
-                <p>One generated set counts as one AI request.</p>
+                <p>Database Only mode uses local chemistry records and makes no API calls.</p>
+                <p>AI Only and Hybrid keep the same free-model guardrails, and the page never sends a model ID.</p>
+                <p>One AI or Hybrid generated set counts as one AI request.</p>
                 <p>Curriculum unit and subtopic selectors constrain the prompt but never select the AI model.</p>
                 <p>Signed-in self-marked progress is saved with Supabase RLS. Generated question text is not stored.</p>
                 <p>No official exam-board or copied past-paper material.</p>
@@ -823,6 +898,9 @@ function QuestionCard({
           <Badge>Question {index + 1}</Badge>
           <Badge variant="secondary">{question.topic}</Badge>
           <Badge variant="outline">{question.subtopic}</Badge>
+          <Badge variant={question.source === "database" ? "default" : "secondary"}>
+            {question.source === "database" ? "Database Generated" : "AI Generated"}
+          </Badge>
         </div>
         {mark && (
           <Badge variant={mark === "correct" ? "default" : "destructive"}>

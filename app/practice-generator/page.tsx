@@ -3,7 +3,7 @@ import { PracticeGeneratorClient } from "./practice-generator-client"
 
 export const metadata: Metadata = {
   title: "Practice Generator | ARSHLAB",
-  description: "Generate original chemistry practice question sets with free-model-only AI guardrails.",
+  description: "Generate original chemistry practice question sets with database, AI, or hybrid sources.",
 }
 
 export default function PracticeGeneratorPage() {

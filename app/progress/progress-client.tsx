@@ -9,10 +9,12 @@ import {
   CheckCircle2,
   ClipboardCheck,
   ClipboardList,
+  Database,
   Flame,
   GraduationCap,
   Medal,
   RefreshCw,
+  Sparkles,
   Target,
   Trophy,
   XCircle,
@@ -65,6 +67,12 @@ interface TopicStats {
   missed: number
   accuracy: number
   mastery: number
+}
+
+interface SourceStats {
+  attempted: number
+  correct: number
+  accuracy: number
 }
 
 interface Achievement {
@@ -186,6 +194,16 @@ function getMostImprovedTopic(entries: PracticeProgressEntry[]): { topic: string
     .sort((a, b) => b.improvement - a.improvement)
 
   return improvements[0] ?? null
+}
+
+function getSourceStats(entries: PracticeProgressEntry[], source: "ai" | "database"): SourceStats {
+  const sourceEntries = entries.filter((entry) => entry.source === source)
+  const correct = sourceEntries.filter((entry) => entry.correct).length
+  return {
+    attempted: sourceEntries.length,
+    correct,
+    accuracy: percentage(correct, sourceEntries.length),
+  }
 }
 
 function conceptRowsToStats(rows: ConceptProgressEntry[]): LearningConceptStats[] {
@@ -442,6 +460,8 @@ export function ProgressClient() {
   const missed = total - correct
   const overallAccuracy = percentage(correct, total)
   const topicStats = useMemo(() => getTopicStats(entries), [entries])
+  const databaseStats = useMemo(() => getSourceStats(entries, "database"), [entries])
+  const aiStats = useMemo(() => getSourceStats(entries, "ai"), [entries])
   const conceptStats = useMemo(
     () => (conceptEntries.length > 0 ? conceptRowsToStats(conceptEntries) : calculateConceptStats(entries)),
     [conceptEntries, entries],
@@ -619,6 +639,16 @@ export function ProgressClient() {
         {!loading && total > 0 && (
           <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <InsightCard
+              label="Database Questions"
+              value={`${databaseStats.attempted} attempted`}
+              detail={`${databaseStats.accuracy}% accuracy from local generated questions`}
+            />
+            <InsightCard
+              label="AI Questions"
+              value={`${aiStats.attempted} attempted`}
+              detail={`${aiStats.accuracy}% accuracy from AI-generated questions`}
+            />
+            <InsightCard
               label="Weakest Topic"
               value={weakestTopic ? weakestTopic.topic : "Not enough data"}
               detail={weakestTopic ? `${weakestTopic.mastery}% mastery` : "Self-mark more questions"}
@@ -658,6 +688,9 @@ export function ProgressClient() {
           </Button>
           <Button asChild variant="outline" className="rounded-xl">
             <Link href="/diagnostic">Take Diagnostic</Link>
+          </Button>
+          <Button asChild variant="outline" className="rounded-xl">
+            <Link href="/question-engine">Question Engine</Link>
           </Button>
           <Button asChild variant="secondary" className="rounded-xl">
             <Link href="/exam-generator">Open Exam Generator</Link>
@@ -1005,9 +1038,19 @@ export function ProgressClient() {
                   {recent.map((entry) => (
                     <div key={entry.id} className="rounded-xl border border-border bg-card p-3">
                       <div className="mb-1 flex items-center justify-between gap-2">
-                        <Badge variant={entry.correct ? "default" : "destructive"}>
-                          {entry.correct ? "Correct" : "Missed"}
-                        </Badge>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant={entry.correct ? "default" : "destructive"}>
+                            {entry.correct ? "Correct" : "Missed"}
+                          </Badge>
+                          <Badge variant={entry.source === "database" ? "default" : "secondary"}>
+                            {entry.source === "database" ? (
+                              <Database className="mr-1 h-3 w-3" />
+                            ) : (
+                              <Sparkles className="mr-1 h-3 w-3" />
+                            )}
+                            {entry.source === "database" ? "Database" : "AI"}
+                          </Badge>
+                        </div>
                         <span className="text-xs text-muted-foreground" title={entry.timestamp}>
                           {friendlyTime(entry.timestamp)}
                         </span>
