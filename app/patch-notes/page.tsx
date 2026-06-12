@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.0.0",
+    version: "3.1.0",
     date: "Current",
+    status: "released",
+    title: "Chemistry Knowledge Core",
+    changes: [
+      "Added root chemistry knowledge modules for compounds, ions, functional groups, reaction templates, typed records, and registry lookup",
+      "Added more than 100 compound records through the existing database projection plus v3.1 supplemental staples",
+      "Added 50+ common ions with formulas, charges, categories, and aliases",
+      "Added 11 functional group registry entries for future validation and generation workflows",
+      "Added starter reaction templates for acid-base, neutralization, combustion, addition, elimination, substitution, esterification, hydrolysis, redox, and precipitation",
+      "Added /chemistry-database for browsing and searching the local knowledge core",
+      "Added deterministic helper functions for compound lookup, ion lookup, functional group lookup, reaction lookup, and future AI prompt context",
+      "Preserved existing AI, curriculum, study, diagnostic, recovery, molecule, reaction, and spectroscopy behavior",
+    ],
+  },
+  {
+    version: "3.0.0",
+    date: "Previous",
     status: "released",
     title: "Curriculum Engine",
     changes: [

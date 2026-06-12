@@ -391,3 +391,83 @@ export function searchFunctionalGroups(query: string): FunctionalGroup[] {
       g.searchKeywords.some((k) => k.includes(q) || q.includes(k))
   )
 }
+
+export const KNOWLEDGE_FUNCTIONAL_GROUPS: import("./types").FunctionalGroup[] = [
+  {
+    id: "fg-alcohol",
+    name: "Alcohol",
+    identifier: "R-OH",
+    description: "Contains a hydroxyl group bonded to a saturated carbon; often hydrogen bonds strongly.",
+    examples: ["methanol", "ethanol", "propan-1-ol"],
+  },
+  {
+    id: "fg-aldehyde",
+    name: "Aldehyde",
+    identifier: "R-CHO",
+    description: "Contains a terminal carbonyl carbon bonded to hydrogen; oxidizes readily to carboxylic acids.",
+    examples: ["methanal", "ethanal", "benzaldehyde"],
+  },
+  {
+    id: "fg-ketone",
+    name: "Ketone",
+    identifier: "R-CO-R'",
+    description: "Contains an internal carbonyl group bonded to two carbon groups.",
+    examples: ["propanone", "butanone", "cyclohexanone"],
+  },
+  {
+    id: "fg-ester",
+    name: "Ester",
+    identifier: "R-COO-R'",
+    description: "Forms from carboxylic acids and alcohols; common in fruity-smelling compounds.",
+    examples: ["methyl ethanoate", "ethyl ethanoate", "aspirin"],
+  },
+  {
+    id: "fg-ether",
+    name: "Ether",
+    identifier: "R-O-R'",
+    description: "Contains an oxygen atom between two carbon groups; less hydrogen-bonding than alcohols.",
+    examples: ["dimethyl ether", "diethyl ether", "anisole"],
+  },
+  {
+    id: "fg-carboxylic-acid",
+    name: "Carboxylic Acid",
+    identifier: "R-COOH",
+    description: "Contains a carboxyl group; weak organic acids that form salts and esters.",
+    examples: ["methanoic acid", "ethanoic acid", "benzoic acid"],
+  },
+  {
+    id: "fg-amine",
+    name: "Amine",
+    identifier: "R-NH2 / R2NH / R3N",
+    description: "Nitrogen-containing bases related to ammonia.",
+    examples: ["methylamine", "ethylamine", "aniline"],
+  },
+  {
+    id: "fg-amide",
+    name: "Amide",
+    identifier: "R-CONH2",
+    description: "Contains a carbonyl attached to nitrogen; peptide bonds are amide linkages.",
+    examples: ["ethanamide", "urea", "acetamide"],
+  },
+  {
+    id: "fg-alkene",
+    name: "Alkene",
+    identifier: "C=C",
+    description: "Contains a carbon-carbon double bond; undergoes addition reactions.",
+    examples: ["ethene", "propene", "cyclohexene"],
+  },
+  {
+    id: "fg-alkyne",
+    name: "Alkyne",
+    identifier: "C≡C",
+    description: "Contains a carbon-carbon triple bond; linear around the triple bond.",
+    examples: ["ethyne", "propyne", "but-1-yne"],
+  },
+  {
+    id: "fg-haloalkane",
+    name: "Haloalkane",
+    identifier: "R-X",
+    description: "Contains a carbon-halogen bond; important for nucleophilic substitution and elimination.",
+    examples: ["chloromethane", "bromoethane", "1-chloropropane"],
+  },
+]

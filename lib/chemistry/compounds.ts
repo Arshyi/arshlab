@@ -6,6 +6,7 @@ import {
   matchesCondensedVariants,
   shouldShowAlternateOrientation,
 } from "./formula-normalize"
+import { ALL_COMPOUNDS as DATABASE_COMPOUNDS } from "./database/compounds"
 
 export interface LonePairInfo {
   atom: string
@@ -902,6 +903,257 @@ export function getSuggestions(query: string, limit: number = 6): Compound[] {
   
   return matches.slice(0, limit)
 }
+
+type KnowledgeCompound = import("./types").Compound
+type KnowledgeCompoundSeed = Omit<KnowledgeCompound, "molarMass"> & { molarMass?: number }
+
+const ATOMIC_MASSES: Record<string, number> = {
+  H: 1.008,
+  He: 4.003,
+  Li: 6.94,
+  Be: 9.012,
+  B: 10.81,
+  C: 12.011,
+  N: 14.007,
+  O: 15.999,
+  F: 18.998,
+  Ne: 20.18,
+  Na: 22.99,
+  Mg: 24.305,
+  Al: 26.982,
+  Si: 28.085,
+  P: 30.974,
+  S: 32.06,
+  Cl: 35.45,
+  Ar: 39.948,
+  K: 39.098,
+  Ca: 40.078,
+  Cr: 51.996,
+  Mn: 54.938,
+  Fe: 55.845,
+  Co: 58.933,
+  Ni: 58.693,
+  Cu: 63.546,
+  Zn: 65.38,
+  Br: 79.904,
+  Ag: 107.868,
+  I: 126.904,
+  Ba: 137.327,
+  Pb: 207.2,
+}
+
+function readFormulaNumber(formula: string, index: number): { value: number; nextIndex: number } {
+  let digits = ""
+  while (index < formula.length && /\d/.test(formula[index])) {
+    digits += formula[index]
+    index += 1
+  }
+  return { value: digits ? Number(digits) : 1, nextIndex: index }
+}
+
+function parseFormulaMass(formula: string, startIndex = 0): { mass: number; nextIndex: number } {
+  let mass = 0
+  let index = startIndex
+
+  while (index < formula.length) {
+    const char = formula[index]
+
+    if (char === "(") {
+      const parsedGroup = parseFormulaMass(formula, index + 1)
+      const multiplier = readFormulaNumber(formula, parsedGroup.nextIndex)
+      mass += parsedGroup.mass * multiplier.value
+      index = multiplier.nextIndex
+      continue
+    }
+
+    if (char === ")") {
+      return { mass, nextIndex: index + 1 }
+    }
+
+    if (/[A-Z]/.test(char)) {
+      let symbol = char
+      index += 1
+      if (index < formula.length && /[a-z]/.test(formula[index])) {
+        symbol += formula[index]
+        index += 1
+      }
+      const multiplier = readFormulaNumber(formula, index)
+      mass += (ATOMIC_MASSES[symbol] ?? 0) * multiplier.value
+      index = multiplier.nextIndex
+      continue
+    }
+
+    index += 1
+  }
+
+  return { mass, nextIndex: index }
+}
+
+function calculateMolarMass(formula: string): number {
+  const cleaned = formula
+    .replace(/[·.].*$/g, "")
+    .replace(/\[[^\]]+\]/g, "")
+    .replace(/[^A-Za-z0-9()]/g, "")
+  const mass = parseFormulaMass(cleaned).mass
+  return Number((mass || 0).toFixed(3))
+}
+
+function splitFunctionalGroups(functionalGroup: string): string[] {
+  if (!functionalGroup || functionalGroup.toLowerCase() === "none") return []
+  return functionalGroup
+    .split(/\s*(?:\/|\+|,|and)\s*/i)
+    .map((group) => group.trim())
+    .filter(Boolean)
+}
+
+function makeKnowledgeCompound(seed: KnowledgeCompoundSeed): KnowledgeCompound {
+  return {
+    ...seed,
+    molarMass: Number((seed.molarMass ?? calculateMolarMass(seed.formula)).toFixed(3)),
+  }
+}
+
+function toKnowledgeCompound(record: (typeof DATABASE_COMPOUNDS)[number]): KnowledgeCompound {
+  return makeKnowledgeCompound({
+    id: record.id,
+    name: record.name,
+    formula: record.formula ?? record.condensed,
+    category: record.family,
+    functionalGroups: splitFunctionalGroups(record.functionalGroup),
+    aliases: record.aliases,
+    description: record.explanation,
+  })
+}
+
+const SUPPLEMENTAL_KNOWLEDGE_COMPOUNDS: KnowledgeCompound[] = [
+  makeKnowledgeCompound({
+    id: "compound-fructose",
+    name: "fructose",
+    formula: "C6H12O6",
+    category: "Carbohydrate",
+    functionalGroups: ["alcohol", "ketone", "hemiacetal"],
+    aliases: ["fruit sugar", "levulose"],
+    description: "Six-carbon ketohexose commonly discussed alongside glucose.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-sucrose",
+    name: "sucrose",
+    formula: "C12H22O11",
+    category: "Carbohydrate",
+    functionalGroups: ["alcohol", "glycosidic"],
+    aliases: ["table sugar"],
+    description: "Disaccharide made from glucose and fructose units.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-aspirin",
+    name: "aspirin",
+    formula: "C9H8O4",
+    category: "Aromatic carboxylic acid derivative",
+    functionalGroups: ["carboxylic acid", "ester", "aromatic ring"],
+    aliases: ["acetylsalicylic acid"],
+    description: "Aromatic ester and carboxylic acid used as a medicine; useful for functional group practice.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-hydrogen-peroxide",
+    name: "hydrogen peroxide",
+    formula: "H2O2",
+    category: "Inorganic peroxide",
+    functionalGroups: ["peroxide"],
+    aliases: ["peroxide"],
+    description: "Simple peroxide and oxidizing agent.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-toluene",
+    name: "toluene",
+    formula: "C7H8",
+    category: "Aromatic hydrocarbon",
+    functionalGroups: ["aromatic ring"],
+    aliases: ["methylbenzene"],
+    description: "Methyl-substituted benzene ring.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-ethyl-ethanoate",
+    name: "ethyl ethanoate",
+    formula: "C4H8O2",
+    category: "Ester",
+    functionalGroups: ["ester"],
+    aliases: ["ethyl acetate"],
+    description: "Common fruity-smelling ester used for esterification examples.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-methanal",
+    name: "methanal",
+    formula: "CH2O",
+    category: "Aldehyde",
+    functionalGroups: ["aldehyde"],
+    aliases: ["formaldehyde"],
+    description: "Simplest aldehyde.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-ethanal",
+    name: "ethanal",
+    formula: "C2H4O",
+    category: "Aldehyde",
+    functionalGroups: ["aldehyde"],
+    aliases: ["acetaldehyde"],
+    description: "Two-carbon aldehyde formed by controlled oxidation of ethanol.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-diethyl-ether",
+    name: "diethyl ether",
+    formula: "C4H10O",
+    category: "Ether",
+    functionalGroups: ["ether"],
+    aliases: ["ethoxyethane"],
+    description: "Simple ether used to contrast alcohol and ether functional groups.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-sodium-chloride",
+    name: "sodium chloride",
+    formula: "NaCl",
+    category: "Ionic compound",
+    functionalGroups: [],
+    aliases: ["table salt", "NaCl"],
+    description: "Common ionic compound formed from sodium and chloride ions.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-calcium-carbonate",
+    name: "calcium carbonate",
+    formula: "CaCO3",
+    category: "Ionic compound",
+    functionalGroups: ["carbonate"],
+    aliases: ["limestone", "chalk"],
+    description: "Common carbonate used in acid-carbonate reaction examples.",
+  }),
+  makeKnowledgeCompound({
+    id: "compound-sodium-hydroxide",
+    name: "sodium hydroxide",
+    formula: "NaOH",
+    category: "Base",
+    functionalGroups: ["hydroxide"],
+    aliases: ["NaOH", "caustic soda"],
+    description: "Strong base used in neutralization examples.",
+  }),
+]
+
+function dedupeKnowledgeCompounds(compounds: KnowledgeCompound[]): KnowledgeCompound[] {
+  const byKey = new Map<string, KnowledgeCompound>()
+  for (const compound of compounds) {
+    const key = `${compound.name.toLowerCase()}|${compound.formula.toLowerCase()}`
+    if (!byKey.has(compound.id) && !byKey.has(key)) {
+      byKey.set(compound.id, compound)
+      byKey.set(key, compound)
+    }
+  }
+  return Array.from(new Set(byKey.values()))
+}
+
+export const KNOWLEDGE_COMPOUNDS: KnowledgeCompound[] = dedupeKnowledgeCompounds([
+  ...DATABASE_COMPOUNDS.map(toKnowledgeCompound),
+  ...SUPPLEMENTAL_KNOWLEDGE_COMPOUNDS,
+])
+
+export const CHEMISTRY_COMPOUNDS = KNOWLEDGE_COMPOUNDS
 
 // Master database exports (v1.0 infrastructure)
 export { ALL_COMPOUNDS, getCompoundById, getCompoundsByFamily } from "./database/compounds"

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, GraduationCap } from "lucide-react"
+import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, GraduationCap, Database } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -62,6 +62,12 @@ const features = [
     title: "Curriculum Engine",
     description: "Choose IB, AP, A-Level, CHEM 121, or first-year chemistry paths and track unit mastery.",
     href: "/curriculum",
+  },
+  {
+    icon: Database,
+    title: "Chemistry Database",
+    description: "Browse ARSHLAB's local chemistry knowledge core for compounds, ions, functional groups, and reaction templates.",
+    href: "/chemistry-database",
   },
   {
     icon: ClipboardCheck,

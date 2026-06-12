@@ -31,6 +31,7 @@ import {
   BookOpenCheck,
   ClipboardCheck,
   Target,
+  Database,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -56,6 +57,7 @@ const primaryNavItems = [
 
 const chemistryToolItems = [
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
+  { href: "/chemistry-database", label: "Chemistry Database", icon: Database },
   { href: "/curriculum", label: "Curriculum Engine", icon: GraduationCap },
   { href: "/diagnostic", label: "Diagnostic", icon: ClipboardCheck },
   { href: "/study", label: "Study Mode", icon: BookOpenCheck },
