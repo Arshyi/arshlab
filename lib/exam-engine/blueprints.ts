@@ -28,6 +28,7 @@ export const EXAM_BLUEPRINTS: ExamBlueprint[] = [
       section("kinetics", "Kinetics", "Kinetics", 2, "kinetics"),
       section("equilibrium", "Equilibrium", "Equilibrium", 2, "equilibrium"),
       section("acids-bases", "Acids/Bases", "Acids and Bases", 2, "acids-bases"),
+      section("spectroscopy", "Spectroscopy", "Spectroscopy", 1, "organic-chemistry", "IR Spectroscopy"),
     ],
   },
   {
@@ -42,6 +43,7 @@ export const EXAM_BLUEPRINTS: ExamBlueprint[] = [
       section("thermodynamics", "Thermodynamics", "Thermodynamics", 6, "energetics"),
       section("periodic-trends", "Periodic Trends", "Periodic Trends", 6, "periodicity"),
       section("bonding", "Bonding", "Hybridization", 6, "bonding"),
+      section("spectroscopy", "Spectroscopy", "Spectroscopy", 2, "measurement-data", "IR Spectroscopy"),
     ],
   },
   {
@@ -61,6 +63,7 @@ export const EXAM_BLUEPRINTS: ExamBlueprint[] = [
       section("equilibrium", "Equilibrium", "Equilibrium", 3, "equilibrium"),
       section("acids-bases", "Acids/Bases", "Acids and Bases", 2, "acids-bases"),
       section("organic", "Organic Chemistry", "Functional Group Identification", 2, "organic"),
+      section("spectroscopy", "Spectroscopy", "Spectroscopy", 2, "organic", "IR Spectroscopy"),
     ],
   },
   {
@@ -78,6 +81,7 @@ export const EXAM_BLUEPRINTS: ExamBlueprint[] = [
       section("periodicity", "Periodic Trends", "Periodic Trends", 3, "periodicity"),
       section("bonding", "Bonding", "Hybridization", 3, "bonding"),
       section("stoichiometry", "Stoichiometry", "Stoichiometry", 2, "stoichiometry"),
+      section("spectroscopy", "Spectroscopy", "Spectroscopy", 1, "measurement-data", "IR Spectroscopy"),
     ],
   },
   {
@@ -95,6 +99,7 @@ export const EXAM_BLUEPRINTS: ExamBlueprint[] = [
       section("organic", "Organic Chemistry", "Functional Group Identification", 4, "organic"),
       section("equilibrium", "Equilibria", "Equilibrium", 3, "equilibrium"),
       section("acids-bases", "Acids/Bases", "Acids and Bases", 2, "acids-bases"),
+      section("spectroscopy", "Spectroscopy", "Spectroscopy", 2, "organic", "IR Spectroscopy"),
     ],
   },
 ]

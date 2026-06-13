@@ -24,6 +24,7 @@ const PRACTICE_TOPICS = [
   "VSEPR Geometry",
   "Periodic trends",
   "Periodic Trends",
+  "Spectroscopy",
   "Thermodynamics",
   "Electron configuration",
   "Electron Configuration",

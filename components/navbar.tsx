@@ -71,6 +71,7 @@ const chemistryToolItems = [
   { href: "/bonding-explorer", label: "Bonding Explorer", icon: Waves },
   { href: "/hybridization-builder", label: "Hybridization Builder", icon: Orbit },
   { href: "/functional-groups", label: "Functional Groups", icon: Layers },
+  { href: "/spectroscopy", label: "Spectroscopy Reference", icon: Waves },
   { href: "/spectroscopy-lab", label: "Spectroscopy Lab", icon: Radio },
   { href: "/orbital-viewer", label: "Orbital Viewer", icon: Orbit },
   { href: "/periodic-trends-quiz", label: "Trend Quiz", icon: GraduationCap },

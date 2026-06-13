@@ -219,6 +219,21 @@ function getExamSourceStats(
   }
 }
 
+function isSpectroscopyEntry(entry: PracticeProgressEntry): boolean {
+  const value = `${entry.topic} ${entry.subtopic}`.toLowerCase()
+  return value.includes("spectroscopy") || value.includes("carbonyl") || value.includes("stretch") || value.includes("aromatic peak")
+}
+
+function getSpectroscopyStats(entries: PracticeProgressEntry[]): SourceStats {
+  const spectroscopyEntries = entries.filter(isSpectroscopyEntry)
+  const correct = spectroscopyEntries.filter((entry) => entry.correct).length
+  return {
+    attempted: spectroscopyEntries.length,
+    correct,
+    accuracy: percentage(correct, spectroscopyEntries.length),
+  }
+}
+
 function conceptRowsToStats(rows: ConceptProgressEntry[]): LearningConceptStats[] {
   const groups = new Map<string, { topic: string; subtopic: string; attempted: number; correct: number }>()
 
@@ -479,6 +494,7 @@ export function ProgressClient() {
   const aiExamStats = useMemo(() => getExamSourceStats(entries, "ai"), [entries])
   const hybridExamStats = useMemo(() => getExamSourceStats(entries, "hybrid"), [entries])
   const adaptiveExamStats = useMemo(() => getExamSourceStats(entries, "adaptive"), [entries])
+  const spectroscopyStats = useMemo(() => getSpectroscopyStats(entries), [entries])
   const conceptStats = useMemo(
     () => (conceptEntries.length > 0 ? conceptRowsToStats(conceptEntries) : calculateConceptStats(entries)),
     [conceptEntries, entries],
@@ -495,6 +511,19 @@ export function ProgressClient() {
     () => mostMissedConcepts.filter((concept) => concept.attempted >= 5 && concept.mastery < 60).slice(0, 3),
     [mostMissedConcepts],
   )
+  const spectroscopyConcepts = useMemo(
+    () =>
+      conceptStats
+        .filter((concept) => {
+          const value = `${concept.topic} ${concept.subtopic}`.toLowerCase()
+          return value.includes("spectroscopy") || value.includes("carbonyl") || value.includes("stretch") || value.includes("aromatic peak")
+        })
+        .sort((a, b) => a.mastery - b.mastery || b.attempted - a.attempted),
+    [conceptStats],
+  )
+  const weakestSpectroscopyConcept = spectroscopyConcepts[0] ?? null
+  const strongestSpectroscopyConcept =
+    [...spectroscopyConcepts].sort((a, b) => b.mastery - a.mastery || b.attempted - a.attempted)[0] ?? null
   const recoveryTopics = useMemo(() => detectWeakTopics(entries).slice(0, 3), [entries])
   const recent = entries.slice(0, 16)
   const curriculumSummary = useMemo(
@@ -684,6 +713,21 @@ export function ProgressClient() {
               label="Adaptive Exam Score"
               value={`${adaptiveExamStats.attempted} marked`}
               detail={`${adaptiveExamStats.accuracy}% accuracy from adaptive exams`}
+            />
+            <InsightCard
+              label="Spectroscopy Attempts"
+              value={`${spectroscopyStats.attempted} attempted`}
+              detail={`${spectroscopyStats.accuracy}% accuracy across IR and spectroscopy practice`}
+            />
+            <InsightCard
+              label="Weakest Spectroscopy Concept"
+              value={weakestSpectroscopyConcept ? weakestSpectroscopyConcept.subtopic : "Not enough data"}
+              detail={weakestSpectroscopyConcept ? `${weakestSpectroscopyConcept.mastery}% mastery` : "Try spectroscopy questions"}
+            />
+            <InsightCard
+              label="Strongest Spectroscopy Concept"
+              value={strongestSpectroscopyConcept ? strongestSpectroscopyConcept.subtopic : "Not enough data"}
+              detail={strongestSpectroscopyConcept ? `${strongestSpectroscopyConcept.mastery}% mastery` : "Try spectroscopy questions"}
             />
             <InsightCard
               label="Weakest Topic"

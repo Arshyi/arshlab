@@ -56,6 +56,7 @@ import {
   type PdfQuestion,
   type RecoverySummaryRow,
 } from "@/lib/pdf/arshlab-pdf"
+import { generateDatabaseQuestions } from "@/lib/question-engine/generator"
 
 interface PracticeChoice {
   label: string
@@ -87,6 +88,40 @@ interface AnswerRecord {
 
 function normalizeText(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, " ")
+}
+
+function isSpectroscopyRecoveryPlan(plan: RecoveryPlanItem[]): boolean {
+  return plan.some((item) =>
+    [item.topic, ...item.weaknesses].some((value) => {
+      const normalized = normalizeText(value)
+      return normalized.includes("spectroscopy") || normalized.includes("carbonyl") || normalized.includes("stretch")
+    }),
+  )
+}
+
+function generateDatabaseRecoverySet(plan: RecoveryPlanItem[]): RecoverySet {
+  const questions = plan.flatMap((item) =>
+    generateDatabaseQuestions({
+      topic: item.topic === "IR Spectroscopy" ? "Spectroscopy" : item.topic,
+      targetSubtopic: item.weaknesses[0] ?? "IR Spectroscopy",
+      difficulty: item.difficulty,
+      count: item.count,
+      curriculum: "general-first-year",
+    }).map((question) => ({
+      id: question.id,
+      topic: question.topic,
+      subtopic: question.subtopic,
+      questionType: question.questionType,
+      difficulty: question.difficulty,
+      curriculumStyle: question.curriculumStyle,
+      question: question.question,
+      choices: question.choices,
+      correctAnswer: question.correctAnswer,
+      explanation: question.explanation,
+      misconceptionNote: question.misconceptionNote,
+    })),
+  )
+  return { questions: questions.slice(0, 10) }
 }
 
 function answerMatchesChoice(question: RecoveryQuestion, choice: PracticeChoice): boolean {
@@ -274,6 +309,12 @@ export function RecoveryClient() {
     setCompletionAwarded(false)
 
     try {
+      if (isSpectroscopyRecoveryPlan(nextPlan)) {
+        setRecoverySet(generateDatabaseRecoverySet(nextPlan))
+        setRemaining(null)
+        return
+      }
+
       const response = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

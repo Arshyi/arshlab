@@ -117,6 +117,12 @@ const features = [
   },
   {
     icon: Radio,
+    title: "Spectroscopy Reference",
+    description: "Study deterministic IR peak ranges for functional groups and practice offline spectroscopy questions.",
+    href: "/spectroscopy",
+  },
+  {
+    icon: Radio,
     title: "Spectroscopy Lab",
     description: "Educational IR, mass spectrometry, and proton NMR data for common molecules.",
   },

@@ -5,10 +5,12 @@ import {
   KNOWLEDGE_COMPOUNDS,
   KNOWLEDGE_FUNCTIONAL_GROUPS,
   REACTION_TEMPLATES_KNOWLEDGE,
+  SPECTROSCOPY_RECORDS,
 } from "@/lib/chemistry/registry"
 import type { Compound, FunctionalGroup, Ion, ReactionTemplate } from "@/lib/chemistry/types"
 import type { ElementRecord } from "@/lib/chemistry/database/types"
 import type { Question, QuestionChoice, QuestionTemplate, QuestionTemplateContext } from "./types"
+import { SPECTROSCOPY_QUESTION_TEMPLATES } from "./spectroscopy-templates"
 
 const choiceLabels = ["A", "B", "C", "D"]
 
@@ -377,7 +379,7 @@ export const DATABASE_QUESTION_TEMPLATES: QuestionTemplate[] = [
     id: "functional-group-compound",
     name: "Functional Group Compound",
     description: "Ask which compound contains a named functional group.",
-    supportedTopics: ["Functional Group Identification", "IR Spectroscopy"],
+    supportedTopics: ["Functional Group Identification", "IR Spectroscopy", "Spectroscopy"],
     supportedSubtopics: ["Alcohols", "Aldehydes", "Ketones", "Carboxylic Acids", "Esters", "Amides", "Amines", "Haloalkanes"],
     estimatedCombinations: KNOWLEDGE_FUNCTIONAL_GROUPS.length * 12,
     build: buildFunctionalGroupQuestion,
@@ -386,7 +388,7 @@ export const DATABASE_QUESTION_TEMPLATES: QuestionTemplate[] = [
     id: "compound-formula",
     name: "Compound Formula",
     description: "Ask for the molecular formula of a known compound.",
-    supportedTopics: ["Stoichiometry", "Functional Group Identification", "IR Spectroscopy"],
+    supportedTopics: ["Stoichiometry", "Functional Group Identification", "IR Spectroscopy", "Spectroscopy"],
     estimatedCombinations: KNOWLEDGE_COMPOUNDS.length,
     build: buildCompoundFormulaQuestion,
   },
@@ -420,7 +422,7 @@ export const DATABASE_QUESTION_TEMPLATES: QuestionTemplate[] = [
     id: "compound-classification",
     name: "Compound Classification",
     description: "Ask which compound belongs to a functional class.",
-    supportedTopics: ["Functional Group Identification", "IR Spectroscopy"],
+    supportedTopics: ["Functional Group Identification", "IR Spectroscopy", "Spectroscopy"],
     supportedSubtopics: ["Alcohols", "Ketones", "Carboxylic Acids", "Esters", "Amines", "Aldehydes", "Haloalkanes"],
     estimatedCombinations: classificationGroups.length * 12,
     build: buildCompoundClassificationQuestion,
@@ -434,10 +436,11 @@ export const DATABASE_QUESTION_TEMPLATES: QuestionTemplate[] = [
     estimatedCombinations: ALL_ELEMENTS.length * 4,
     build: buildPeriodicTrendQuestion,
   },
+  ...SPECTROSCOPY_QUESTION_TEMPLATES,
 ]
 
 export function getQuestionEngineTemplateCoverage(): number {
-  const requestedTemplateFamilies = 7
+  const requestedTemplateFamilies = 12
   return Math.round((DATABASE_QUESTION_TEMPLATES.length / requestedTemplateFamilies) * 100)
 }
 
@@ -447,5 +450,7 @@ export function getQuestionEngineDatabaseCounts() {
     ions: CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions,
     functionalGroups: CHEMISTRY_KNOWLEDGE_CORE_META.counts.functionalGroups,
     reactions: CHEMISTRY_KNOWLEDGE_CORE_META.counts.reactionTemplates,
+    spectroscopy: SPECTROSCOPY_RECORDS.length,
+    irPeaks: CHEMISTRY_KNOWLEDGE_CORE_META.counts.irPeaks,
   }
 }

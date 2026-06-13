@@ -60,6 +60,7 @@ import {
   generatedDateLabel,
   type PdfQuestion,
 } from "@/lib/pdf/arshlab-pdf"
+import { generateDatabaseQuestions } from "@/lib/question-engine/generator"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -69,6 +70,7 @@ const topics = [
   "Hybridization",
   "VSEPR Geometry",
   "Periodic Trends",
+  "Spectroscopy",
   "Thermodynamics",
   "Electron Configuration",
   "IR Spectroscopy",
@@ -109,6 +111,11 @@ interface StudyQuestion {
 
 interface StudySet {
   questions: StudyQuestion[]
+}
+
+function isSpectroscopyTopic(value: string): boolean {
+  const normalized = value.toLowerCase()
+  return normalized.includes("spectroscopy") || normalized.includes("ir")
 }
 
 interface AnswerRecord {
@@ -321,12 +328,14 @@ export function StudyClient() {
   async function generateSession(targetTopic?: string) {
     if (loading) return
 
-    if (!isLoggedIn && guestRemaining <= 0) {
+    const nextTopic = targetTopic ?? topic
+    const useDatabaseSpectroscopy = isSpectroscopyTopic(nextTopic)
+
+    if (!isLoggedIn && !useDatabaseSpectroscopy && guestRemaining <= 0) {
       setError("Daily guest AI assistant limit reached. Sign in for a higher limit.")
       return
     }
 
-    const nextTopic = targetTopic ?? topic
     if (targetTopic) setTopic(targetTopic)
 
     setLoading(true)
@@ -341,6 +350,34 @@ export function StudyClient() {
     setCurrentStreak(0)
 
     try {
+      if (useDatabaseSpectroscopy) {
+        const questions = generateDatabaseQuestions({
+          topic: "Spectroscopy",
+          targetSubtopic: targetSubtopic === "all" ? "IR Spectroscopy" : targetSubtopic,
+          difficulty,
+          count: Number(questionCount),
+          curriculum: curriculumId,
+          unit: curriculumUnit === "all" ? undefined : curriculumUnit,
+        })
+        setStudySet({
+          questions: questions.map((question) => ({
+            id: question.id,
+            topic: question.topic,
+            subtopic: question.subtopic,
+            questionType: question.questionType,
+            difficulty: question.difficulty,
+            curriculumStyle: question.curriculumStyle,
+            question: question.question,
+            choices: question.choices,
+            correctAnswer: question.correctAnswer,
+            explanation: question.explanation,
+            misconceptionNote: question.misconceptionNote,
+          })),
+        })
+        setRemaining(null)
+        return
+      }
+
       const response = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

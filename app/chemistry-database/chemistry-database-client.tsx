@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, Beaker, Database, FlaskConical, Search, Sigma } from "lucide-react"
+import { ArrowRight, Atom, Beaker, Database, FlaskConical, Search, Sigma, Waves } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,11 +13,13 @@ import {
   KNOWLEDGE_COMPOUNDS,
   KNOWLEDGE_FUNCTIONAL_GROUPS,
   REACTION_TEMPLATES_KNOWLEDGE,
+  SPECTROSCOPY_RECORDS,
   getCompoundByFormula,
   getCompoundByName,
   searchChemistry,
 } from "@/lib/chemistry/registry"
 import type { ChemistryRecordKind, ChemistrySearchResult, Compound } from "@/lib/chemistry/types"
+import type { SpectroscopyRecord } from "@/lib/chemistry/spectroscopy-types"
 import { cn } from "@/lib/utils"
 
 type Section = ChemistryRecordKind
@@ -27,12 +29,17 @@ const sections: Array<{ id: Section; label: string; icon: React.ElementType }> =
   { id: "ion", label: "Ions", icon: Atom },
   { id: "functional-group", label: "Functional Groups", icon: Sigma },
   { id: "reaction-template", label: "Reaction Templates", icon: FlaskConical },
+  { id: "spectroscopy", label: "Spectroscopy", icon: Waves },
 ]
 
-const quickSearches = ["ethanol", "C2H5OH", "alcohol", "NO3-", "esterification"]
+const quickSearches = ["ethanol", "C2H5OH", "alcohol", "NO3-", "esterification", "carbonyl", "2250"]
 
 function asCompound(record: ChemistrySearchResult["record"]): Compound | null {
   return "molarMass" in record ? record : null
+}
+
+function asSpectroscopy(record: ChemistrySearchResult["record"]): SpectroscopyRecord | null {
+  return "irPeaks" in record && "peakRange" in record ? record : null
 }
 
 function compoundLabel(compound: Compound): string {
@@ -75,12 +82,22 @@ export function ChemistryDatabaseClient() {
     return searchResults.filter((result) => result.kind === "reaction-template").map((result) => result.record)
   }, [query, searchResults])
 
+  const spectroscopyResults = useMemo(() => {
+    if (!query.trim()) return SPECTROSCOPY_RECORDS
+    return searchResults
+      .filter((result) => result.kind === "spectroscopy")
+      .map((result) => asSpectroscopy(result.record))
+      .filter((record): record is SpectroscopyRecord => Boolean(record))
+  }, [query, searchResults])
+
   function runQuickSearch(value: string) {
     setQuery(value)
     const match = getCompoundByName(value) ?? getCompoundByFormula(value)
     if (match) {
       setSelectedCompoundId(match.id)
       setActiveSection("compound")
+    } else if (searchChemistry(value, { kinds: ["spectroscopy"], limit: 1 }).length > 0) {
+      setActiveSection("spectroscopy")
     }
   }
 
@@ -102,7 +119,7 @@ export function ChemistryDatabaseClient() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">Chemistry Database</h1>
                 <p className="max-w-3xl text-muted-foreground">
-                  Browse ARSHLAB&apos;s local knowledge core for compounds, ions, functional groups, and reaction templates.
+                  Browse ARSHLAB&apos;s local knowledge core for compounds, ions, functional groups, reaction templates, and spectroscopy.
                 </p>
               </div>
             </div>
@@ -111,11 +128,12 @@ export function ChemistryDatabaseClient() {
             </Badge>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <StatCard label="Compounds" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.compounds} />
             <StatCard label="Ions" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions} />
             <StatCard label="Functional Groups" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.functionalGroups} />
             <StatCard label="Reaction Templates" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.reactionTemplates} />
+            <StatCard label="Spectroscopy Records" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.spectroscopyRecords} />
           </div>
         </motion.div>
 
@@ -256,6 +274,47 @@ export function ChemistryDatabaseClient() {
                         {record.examples?.[0] && (
                           <p className="mt-2 text-xs text-muted-foreground">Example: {record.examples[0]}</p>
                         )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeSection === "spectroscopy" && (
+                  <div className="grid gap-3">
+                    {spectroscopyResults.map((record) => (
+                      <div key={record.id} className="rounded-xl border border-border bg-secondary/20 px-4 py-3">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="font-medium">{record.name}</p>
+                          <Badge variant="outline" className="w-fit">
+                            {record.peakRange}
+                          </Badge>
+                        </div>
+                        <p className="mt-2 text-sm text-muted-foreground">{record.notes}</p>
+                        <div className="mt-3 overflow-x-auto rounded-xl border border-border bg-background/70">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-secondary/50 text-muted-foreground">
+                              <tr>
+                                <th className="px-3 py-2">Range</th>
+                                <th className="px-3 py-2">Shape</th>
+                                <th className="px-3 py-2">Strength</th>
+                                <th className="px-3 py-2">Assignment</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {record.irPeaks.map((peak) => (
+                                <tr key={peak.id} className="border-t border-border">
+                                  <td className="px-3 py-2 font-mono">{peak.range}</td>
+                                  <td className="px-3 py-2">{peak.shape}</td>
+                                  <td className="px-3 py-2">{peak.strength}</td>
+                                  <td className="px-3 py-2">{peak.assignment}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Examples: {record.exampleCompounds.join(", ")}
+                        </p>
                       </div>
                     ))}
                   </div>

@@ -75,6 +75,18 @@ function unitLink(unit: CurriculumUnitProgress | null, target: "study" | "practi
   return `/study?${params.toString()}`
 }
 
+function getSpectroscopyAccuracy(entries: PracticeProgressEntry[]): { attempted: number; accuracy: number } {
+  const spectroscopyEntries = entries.filter((entry) => {
+    const value = `${entry.topic} ${entry.subtopic}`.toLowerCase()
+    return value.includes("spectroscopy") || value.includes("carbonyl") || value.includes("stretch") || value.includes("aromatic peak")
+  })
+  const correct = spectroscopyEntries.filter((entry) => entry.correct).length
+  return {
+    attempted: spectroscopyEntries.length,
+    accuracy: spectroscopyEntries.length ? Math.round((correct / spectroscopyEntries.length) * 100) : 0,
+  }
+}
+
 export function CurriculumClient() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [entries, setEntries] = useState<PracticeProgressEntry[]>([])
@@ -115,6 +127,7 @@ export function CurriculumClient() {
     [entries, profile?.selectedCurriculum],
   )
   const level = getLevelFromXp(profile?.xp ?? 0)
+  const spectroscopyAccuracy = useMemo(() => getSpectroscopyAccuracy(entries), [entries])
 
   async function handleCurriculumChange(value: string) {
     setUpdating(true)
@@ -209,11 +222,12 @@ export function CurriculumClient() {
           </CardContent>
         </Card>
 
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
           <StatCard icon={BarChart3} label="Progress" value={loading ? "..." : `${summary.overallProgress}%`} />
           <StatCard icon={ClipboardCheck} label="Diagnostic Coverage" value={loading ? "..." : `${summary.diagnosticCoverage}%`} />
           <StatCard icon={Trophy} label="Units Mastered" value={loading ? "..." : `${summary.unitsMastered}/${summary.units.length}`} />
           <StatCard icon={Target} label="Needs Work" value={loading ? "..." : summary.unitsNeedingWork} />
+          <StatCard icon={BookOpenCheck} label="Spectroscopy" value={loading ? "..." : `${spectroscopyAccuracy.accuracy}%`} />
           <StatCard icon={Zap} label="Level / XP" value={loading ? "..." : `${level} / ${profile?.xp ?? 0}`} />
         </div>
 

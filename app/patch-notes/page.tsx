@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.3.0",
+    version: "3.4.0",
     date: "Current",
+    status: "released",
+    title: "Spectroscopy Knowledge Core",
+    changes: [
+      "Added root spectroscopy types and functional-group IR reference records for alcohols, aldehydes, ketones, carboxylic acids, esters, amines, amides, alkenes, alkynes, arenes, and nitriles",
+      "Added deterministic spectroscopy question templates for IR peak recognition, functional group identification, peak assignment, compound elimination, and spectral matching",
+      "Added /spectroscopy with searchable IR reference tables and quick-study functional group cards",
+      "Added Spectroscopy to Chemistry Database search, tabs, and knowledge-core counts",
+      "Added Spectroscopy topic support to Practice Generator, Study Mode, Recovery Mode, Exam Generator, diagnostics, and curriculum mappings",
+      "Added spectroscopy-specific progress analytics for attempts, accuracy, weakest concept, and strongest concept",
+      "Preserved existing AI functionality while enabling database-generated spectroscopy questions entirely offline from OpenRouter",
+    ],
+  },
+  {
+    version: "3.3.0",
+    date: "Previous",
     status: "released",
     title: "Deterministic Exam Engine",
     changes: [

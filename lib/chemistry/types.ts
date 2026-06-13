@@ -1,3 +1,5 @@
+import type { SpectroscopyRecord } from "./spectroscopy-types"
+
 export interface Compound {
   id: string
   name: string
@@ -36,7 +38,7 @@ export interface ReactionTemplate {
   examples?: string[]
 }
 
-export type ChemistryRecordKind = "compound" | "ion" | "functional-group" | "reaction-template"
+export type ChemistryRecordKind = "compound" | "ion" | "functional-group" | "reaction-template" | "spectroscopy"
 
 export interface ChemistrySearchResult {
   kind: ChemistryRecordKind
@@ -44,5 +46,5 @@ export interface ChemistrySearchResult {
   name: string
   matchField: string
   description: string
-  record: Compound | Ion | FunctionalGroup | ReactionTemplate
+  record: Compound | Ion | FunctionalGroup | ReactionTemplate | SpectroscopyRecord
 }

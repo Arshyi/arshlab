@@ -3,6 +3,7 @@ export const DIAGNOSTIC_TOPICS = [
   "Hybridization",
   "VSEPR Geometry",
   "Periodic Trends",
+  "Spectroscopy",
   "Electron Configuration",
   "IR Spectroscopy",
   "Thermodynamics",

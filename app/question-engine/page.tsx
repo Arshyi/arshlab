@@ -15,7 +15,8 @@ export default function QuestionEnginePage() {
   const stats = getQuestionEngineStats()
   const start = performance.now()
   const sampleQuestions = generateDatabaseQuestions({
-    topic: "Functional Group Identification",
+    topic: "Spectroscopy",
+    targetSubtopic: "IR Spectroscopy",
     difficulty: "Introductory",
     count: 4,
     curriculum: "general-first-year",
@@ -40,15 +41,17 @@ export default function QuestionEnginePage() {
             </div>
           </div>
           <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-            ARSHLAB v3.2.0
+            ARSHLAB v3.4.0
           </Badge>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
           <MetricCard label="Compounds" value={stats.databaseCounts.compounds} />
           <MetricCard label="Ions" value={stats.databaseCounts.ions} />
           <MetricCard label="Functional Groups" value={stats.databaseCounts.functionalGroups} />
           <MetricCard label="Reactions" value={stats.databaseCounts.reactions} />
+          <MetricCard label="Spectroscopy" value={stats.databaseCounts.spectroscopy} />
+          <MetricCard label="IR Peaks" value={stats.databaseCounts.irPeaks} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
