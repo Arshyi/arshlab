@@ -37,6 +37,10 @@ const HEATMAP_HUES: Record<TrendMode, number> = {
   electronAffinity: 145,
 }
 
+const TABLE_GRID_STYLE = {
+  gridTemplateColumns: "repeat(18, minmax(3rem, 3.5rem))",
+} as const
+
 interface PeriodicTableGridProps {
   focusSymbol?: string | null
   heatmapMode?: TrendMode | null
@@ -165,10 +169,10 @@ export function PeriodicTableGrid({
     <div className="space-y-6">
       <div className="overflow-x-auto pb-2">
         <div
-          className="grid min-w-[720px] gap-1"
+          className="grid w-max gap-1"
           style={{
-            gridTemplateColumns: "repeat(18, minmax(2.5rem, 1fr))",
-            gridTemplateRows: "repeat(9, minmax(2.5rem, 1fr))",
+            ...TABLE_GRID_STYLE,
+            gridTemplateRows: "repeat(7, minmax(3rem, 3.5rem))",
           }}
         >
           {mainElements.map((el) => {
@@ -180,12 +184,28 @@ export function PeriodicTableGrid({
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Lanthanides</p>
-        <div className="flex gap-1 overflow-x-auto pb-1">{lanthanides.map((el) => renderCell(el, 1, 1))}</div>
-      </div>
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Actinides</p>
-        <div className="flex gap-1 overflow-x-auto pb-1">{actinides.map((el) => renderCell(el, 1, 1))}</div>
+        <div className="overflow-x-auto pb-1">
+          <div className="grid w-max gap-1" style={TABLE_GRID_STYLE}>
+            <div
+              className="flex h-12 items-center rounded-lg border border-dashed border-border/70 bg-secondary/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:h-14"
+              style={{ gridColumn: "1 / span 2" }}
+            >
+              Lanthanides
+            </div>
+            {lanthanides.map((el, index) => renderCell(el, 1, index + 3))}
+          </div>
+        </div>
+        <div className="overflow-x-auto pb-1">
+          <div className="grid w-max gap-1" style={TABLE_GRID_STYLE}>
+            <div
+              className="flex h-12 items-center rounded-lg border border-dashed border-border/70 bg-secondary/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:h-14"
+              style={{ gridColumn: "1 / span 2" }}
+            >
+              Actinides
+            </div>
+            {actinides.map((el, index) => renderCell(el, 1, index + 3))}
+          </div>
+        </div>
       </div>
 
       <AnimatePresence>
