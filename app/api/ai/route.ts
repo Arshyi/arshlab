@@ -68,7 +68,7 @@ const EXAM_CURRICULA = [
   "General First-Year Chemistry",
 ] as const
 
-const EXAM_LENGTHS = [10, 20, 30, 50] as const
+const EXAM_LENGTHS = [3, 6, 9, 10, 15, 20, 30, 50] as const
 
 const EXAM_QUESTION_TYPES = [
   "Multiple Choice Only",

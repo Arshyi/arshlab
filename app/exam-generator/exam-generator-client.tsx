@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { motion } from "framer-motion"
 import {
   AlertCircle,
   BookOpenCheck,
   CheckCircle2,
-  ClipboardList,
   Copy,
+  Database,
   Download,
   Eye,
   EyeOff,
@@ -52,6 +53,15 @@ import {
   generatedDateLabel,
   type PdfQuestion,
 } from "@/lib/pdf/arshlab-pdf"
+import {
+  buildGeneratedExamFromQuestions,
+  generateAdaptiveDatabaseExam,
+  generateDatabaseExam,
+  getHybridSplit,
+  mergeExamQuestions,
+  type ExamEngineQuestion,
+  type GeneratedEngineExam,
+} from "@/lib/exam-engine/generator"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -68,30 +78,20 @@ const curricula = [
 const examLengths = ["10", "20", "30", "50"]
 const difficulties = ["Introductory", "Intermediate", "Advanced"]
 const questionTypes = ["Multiple Choice Only", "Mixed Exam", "Short Answer Only"]
+const examSources = ["Hybrid", "Database Only", "AI Only"] as const
+const examModes = ["Blueprint Exam", "Adaptive Exam"] as const
 const curriculumOptions = listCurricula()
+
+type ExamQuestion = ExamEngineQuestion
+type GeneratedExam = GeneratedEngineExam
+type ExamSourceSelection = (typeof examSources)[number]
+type ExamModeSelection = (typeof examModes)[number]
+type MarkStatus = "correct" | "missed"
 
 interface GuestUsage {
   date: string
   count: number
 }
-
-interface ExamQuestion {
-  questionNumber: number
-  type: "multiple_choice" | "short_answer"
-  topic: string
-  subtopic: string
-  question: string
-  choices: string[]
-  correctAnswer: string
-  explanation: string
-}
-
-interface GeneratedExam {
-  title: string
-  questions: ExamQuestion[]
-}
-
-type MarkStatus = "correct" | "missed"
 
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10)
@@ -166,6 +166,51 @@ function toExamPdfQuestions(exam: GeneratedExam): PdfQuestion[] {
   }))
 }
 
+function getExamSourceMode(selection: ExamSourceSelection): "database" | "ai" | "hybrid" {
+  if (selection === "Database Only") return "database"
+  if (selection === "AI Only") return "ai"
+  return "hybrid"
+}
+
+function needsAiForExam(selection: ExamSourceSelection): boolean {
+  return selection === "AI Only" || selection === "Hybrid"
+}
+
+function toAiExamQuestion(question: Partial<ExamQuestion>, index: number): ExamQuestion {
+  const rawChoices = Array.isArray(question.choices) ? question.choices : []
+  return {
+    questionNumber: index + 1,
+    type: question.type === "short_answer" ? "short_answer" : "multiple_choice",
+    topic: question.topic || "Exam Generator",
+    subtopic: question.subtopic || "Mixed Review",
+    question: question.question || "Question unavailable.",
+    choices: rawChoices.map((choice, choiceIndex) => normalizeChoice(String(choice), choiceIndex)),
+    correctAnswer: question.correctAnswer || "Answer unavailable.",
+    explanation: question.explanation || "Explanation unavailable.",
+    source: "ai",
+    curriculumUnit: question.curriculumUnit,
+    blueprintSection: question.blueprintSection || question.topic || "AI Generated",
+  }
+}
+
+function convertAiExam(
+  aiExam: { title?: string; questions?: Partial<ExamQuestion>[] },
+  source: "ai" | "hybrid",
+  databaseQuestions: ExamQuestion[] = [],
+): GeneratedExam {
+  const aiQuestions = (aiExam.questions ?? []).map(toAiExamQuestion)
+  const questions =
+    source === "hybrid"
+      ? mergeExamQuestions(databaseQuestions, aiQuestions)
+      : aiQuestions.map((question, index) => ({ ...question, questionNumber: index + 1 }))
+
+  return buildGeneratedExamFromQuestions({
+    title: aiExam.title || (source === "hybrid" ? "Hybrid Practice Exam" : "AI Practice Exam"),
+    source,
+    questions,
+  })
+}
+
 function getWeakTopic(entries: PracticeProgressEntry[]): string | null {
   const recent = entries.slice(0, 20)
   const stats = new Map<string, { total: number; correct: number }>()
@@ -198,6 +243,8 @@ export function ExamGeneratorClient() {
   const [examLength, setExamLength] = useState("10")
   const [difficulty, setDifficulty] = useState(difficulties[1])
   const [questionType, setQuestionType] = useState(questionTypes[1])
+  const [examSource, setExamSource] = useState<ExamSourceSelection>("Hybrid")
+  const [examMode, setExamMode] = useState<ExamModeSelection>("Blueprint Exam")
   const [exam, setExam] = useState<GeneratedExam | null>(null)
   const [recoveryTopic, setRecoveryTopic] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -223,6 +270,11 @@ export function ExamGeneratorClient() {
     if (requestedTopic) setExamTopic(requestedTopic)
     const requestedSubtopic = params.get("subtopic")
     if (requestedSubtopic) setTargetSubtopic(requestedSubtopic)
+    const requestedSource = params.get("source")
+    if (requestedSource === "database") setExamSource("Database Only")
+    if (requestedSource === "ai") setExamSource("AI Only")
+    if (requestedSource === "hybrid") setExamSource("Hybrid")
+    if (params.get("mode") === "adaptive") setExamMode("Adaptive Exam")
 
     if (!isSupabaseConfigured()) return
     const supabase = createClient()
@@ -254,8 +306,9 @@ export function ExamGeneratorClient() {
             setCurriculum(getCurriculum(result.data.selectedCurriculum).name)
           }
         })
+      } else {
+        setProgressEntries([])
       }
-      else setProgressEntries([])
     })
 
     return () => subscription.unsubscribe()
@@ -265,7 +318,7 @@ export function ExamGeneratorClient() {
     () => Math.max(0, GUEST_LIMIT - guestUsage.count),
     [guestUsage.count],
   )
-
+  const examNeedsAi = needsAiForExam(examSource)
   const weakTopic = useMemo(() => getWeakTopic(progressEntries), [progressEntries])
   const selectedCurriculum = useMemo(() => getCurriculum(curriculumId), [curriculumId])
   const topicOptions = useMemo(
@@ -333,7 +386,12 @@ export function ExamGeneratorClient() {
   async function generateExam(targetTopic?: string) {
     if (loading) return
 
-    if (!isLoggedIn && guestRemaining <= 0) {
+    const totalCount = targetTopic ? 10 : Number(examLength)
+    const sourceMode = getExamSourceMode(examSource)
+    const adaptive = examMode === "Adaptive Exam" || Boolean(targetTopic)
+    const aiRequired = sourceMode === "ai" || sourceMode === "hybrid"
+
+    if (!isLoggedIn && aiRequired && guestRemaining <= 0) {
       setError("Daily guest AI assistant limit reached. Sign in for a higher limit.")
       return
     }
@@ -350,38 +408,89 @@ export function ExamGeneratorClient() {
     setRecoveryTopic(targetTopic ?? null)
 
     try {
-      const response = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          task: "exam-generator",
-          curriculum,
-          examLength: targetTopic ? 10 : Number(examLength),
-          difficulty,
-          questionType: targetTopic ? "Mixed Exam" : questionType,
-          targetTopic: targetTopic ?? (examTopic === "all" ? undefined : examTopic),
-          curriculumId,
-          curriculumUnit: curriculumUnit === "all" ? undefined : curriculumUnit,
-          targetSubtopic: targetSubtopic === "all" ? undefined : targetSubtopic,
-        }),
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.ok || !data.exam) {
-        setError(data.message || "AI Assistant temporarily unavailable")
-        return
+      const engineInput = {
+        curriculum,
+        curriculumId,
+        unit: curriculumUnit === "all" ? undefined : curriculumUnit,
+        topic: targetTopic ?? (examTopic === "all" ? undefined : examTopic),
+        subtopic: targetSubtopic === "all" ? undefined : targetSubtopic,
+        difficulty,
+        count: totalCount,
+        questionType: targetTopic ? "Mixed Exam" : questionType,
       }
 
-      setExam(data.exam)
-      setRemaining(typeof data.remaining === "number" ? data.remaining : null)
+      const requestAiExam = async (count: number, aiTargetTopic?: string) => {
+        const response = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            task: "exam-generator",
+            curriculum,
+            examLength: count,
+            difficulty,
+            questionType: targetTopic ? "Mixed Exam" : questionType,
+            targetTopic:
+              aiTargetTopic ??
+              targetTopic ??
+              (adaptive ? weakTopic ?? undefined : examTopic === "all" ? undefined : examTopic),
+            curriculumId,
+            curriculumUnit: curriculumUnit === "all" ? undefined : curriculumUnit,
+            targetSubtopic: targetSubtopic === "all" ? undefined : targetSubtopic,
+          }),
+        })
+        const data = await response.json()
 
-      if (!isLoggedIn) {
+        if (!response.ok || !data.ok || !data.exam) {
+          throw new Error(data.message || "AI Assistant temporarily unavailable")
+        }
+
+        setRemaining(typeof data.remaining === "number" ? data.remaining : null)
+        return data.exam as { title?: string; questions?: Partial<ExamQuestion>[] }
+      }
+
+      let nextExam: GeneratedExam
+
+      if (sourceMode === "database") {
+        nextExam = adaptive
+          ? generateAdaptiveDatabaseExam(engineInput, progressEntries)
+          : generateDatabaseExam(engineInput)
+      } else if (sourceMode === "hybrid") {
+        const split = getHybridSplit(totalCount)
+        const databaseInput = { ...engineInput, count: split.databaseCount }
+        const databaseExam = adaptive
+          ? generateAdaptiveDatabaseExam(databaseInput, progressEntries)
+          : generateDatabaseExam(databaseInput)
+        const aiExam = await requestAiExam(split.aiCount)
+        const hybridExam = convertAiExam(aiExam, "hybrid", databaseExam.questions)
+        nextExam = {
+          ...hybridExam,
+          title: targetTopic
+            ? `Hybrid Recovery Exam: ${targetTopic}`
+            : adaptive
+              ? `Adaptive Hybrid Practice Exam: ${curriculum}`
+              : `Hybrid Practice Exam: ${curriculum}`,
+        }
+      } else {
+        const aiExam = await requestAiExam(totalCount)
+        nextExam = {
+          ...convertAiExam(aiExam, "ai"),
+          title: targetTopic
+            ? `AI Recovery Exam: ${targetTopic}`
+            : adaptive
+              ? `Adaptive AI Practice Exam: ${curriculum}`
+              : aiExam.title || `AI Practice Exam: ${curriculum}`,
+        }
+      }
+
+      setExam(nextExam)
+
+      if (!isLoggedIn && aiRequired) {
         const nextUsage = { date: todayKey(), count: guestUsage.count + 1 }
         setGuestUsage(nextUsage)
         writeGuestUsage(nextUsage)
       }
-    } catch {
-      setError("AI Assistant temporarily unavailable")
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "AI Assistant temporarily unavailable")
     } finally {
       setLoading(false)
     }
@@ -412,6 +521,12 @@ export function ExamGeneratorClient() {
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: exam.questions.length },
         { label: "Question Format", value: recoveryTopic ? "Recovery Exam" : questionType },
+        { label: "Exam Source", value: exam.source },
+        { label: "Coverage Summary", value: exam.coverageSummary || "Mixed review" },
+        { label: "Curriculum Units Tested", value: exam.curriculumUnitsTested.join(", ") || "Mixed review" },
+        { label: "Question Breakdown", value: exam.questionBreakdown.map((item) => `${item.label}: ${item.count}`).join(", ") || "Mixed" },
+        { label: "Database / AI", value: `${exam.metrics.databasePercent}% database, ${exam.metrics.aiPercent}% AI` },
+        { label: "Estimated Time", value: `${exam.metrics.estimatedMinutes} minutes` },
       ],
       questions: toExamPdfQuestions(exam),
     })
@@ -428,6 +543,9 @@ export function ExamGeneratorClient() {
         { label: "Difficulty", value: difficulty },
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: exam.questions.length },
+        { label: "Exam Source", value: exam.source },
+        { label: "Coverage Summary", value: exam.coverageSummary || "Mixed review" },
+        { label: "Question Breakdown", value: exam.questionBreakdown.map((item) => `${item.label}: ${item.count}`).join(", ") || "Mixed" },
       ],
       questions: toExamPdfQuestions(exam),
     })
@@ -450,6 +568,8 @@ export function ExamGeneratorClient() {
       subtopic: question.subtopic,
       difficulty,
       questionType: question.type === "multiple_choice" ? "Multiple choice exam" : "Short answer exam",
+      source: question.source,
+      examSource: exam?.source,
       correct: isCorrect,
     })
 
@@ -488,7 +608,7 @@ export function ExamGeneratorClient() {
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Exam Generator</h1>
-              <p className="text-muted-foreground">Complete AI-generated chemistry practice exams with free-model guardrails</p>
+              <p className="text-muted-foreground">Complete chemistry practice exams from the Question Engine, AI, or both</p>
             </div>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
@@ -506,11 +626,13 @@ export function ExamGeneratorClient() {
                     Exam Settings
                   </CardTitle>
                   <Badge variant="secondary">
-                    {isLoggedIn
-                      ? remaining === null
-                        ? "Signed in"
-                        : `${remaining} account AI requests left`
-                      : `${guestRemaining} guest AI requests left today`}
+                    {!examNeedsAi
+                      ? "No AI request needed"
+                      : isLoggedIn
+                        ? remaining === null
+                          ? "Signed in"
+                          : `${remaining} account AI requests left`
+                        : `${guestRemaining} guest AI requests left today`}
                   </Badge>
                 </div>
               </CardHeader>
@@ -555,15 +677,24 @@ export function ExamGeneratorClient() {
                   <Picker label="Exam Length" value={examLength} options={examLengths} onChange={setExamLength} suffix="Questions" />
                   <Picker label="Difficulty" value={difficulty} options={difficulties} onChange={setDifficulty} />
                   <Picker label="Question Types" value={questionType} options={questionTypes} onChange={setQuestionType} />
+                  <Picker label="Exam Source" value={examSource} options={[...examSources]} onChange={(value) => setExamSource(value as ExamSourceSelection)} />
+                  <Picker label="Exam Mode" value={examMode} options={[...examModes]} onChange={(value) => setExamMode(value as ExamModeSelection)} />
+                </div>
+
+                <div className="grid gap-3 rounded-2xl border border-border bg-secondary/20 p-4 text-sm text-muted-foreground md:grid-cols-4">
+                  <SourceMetric label="Database %" value={examSource === "AI Only" ? "0%" : examSource === "Database Only" ? "100%" : "70%"} />
+                  <SourceMetric label="AI %" value={examSource === "AI Only" ? "100%" : examSource === "Database Only" ? "0%" : "30%"} />
+                  <SourceMetric label="Estimated Time" value={`${Math.round(Number(examLength) * 1.5)} min`} />
+                  <SourceMetric label="Mode" value={examMode === "Adaptive Exam" ? "Personalized" : "Blueprint"} />
                 </div>
 
                 <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-muted-foreground">
-                    One generated exam counts as one AI request. No exam text is stored by ARSHLAB.
+                    Database exams use local chemistry records and do not consume AI requests. AI-containing exams still use the free-model-only server route.
                   </p>
                   <Button
                     onClick={() => void generateExam()}
-                    disabled={loading || (!isLoggedIn && guestRemaining <= 0)}
+                    disabled={loading || (examNeedsAi && !isLoggedIn && guestRemaining <= 0)}
                     className="h-11 rounded-xl"
                   >
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileQuestion className="h-4 w-4" />}
@@ -606,11 +737,15 @@ export function ExamGeneratorClient() {
                       <div className="flex flex-wrap gap-2">
                         <Badge>{exam.questions.length} questions</Badge>
                         <Badge variant="secondary">{difficulty}</Badge>
+                        <Badge variant={exam.source === "database" || exam.source === "adaptive" ? "default" : "outline"}>
+                          {exam.source}
+                        </Badge>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <ExamDisclaimer />
+                    <ExamMetricsPanel exam={exam} />
                     <ExamCopyActions
                       exam={exam}
                       copied={copied}
@@ -684,7 +819,7 @@ export function ExamGeneratorClient() {
                   <p>Your recent accuracy is below 60% for {weakTopic}.</p>
                   <Button
                     onClick={() => void generateExam(weakTopic)}
-                    disabled={loading || (!isLoggedIn && guestRemaining <= 0)}
+                    disabled={loading || (examNeedsAi && !isLoggedIn && guestRemaining <= 0)}
                     className="w-full rounded-xl"
                   >
                     Generate Recovery Exam
@@ -696,12 +831,28 @@ export function ExamGeneratorClient() {
             <Card className="rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
+                  <Database className="h-5 w-5" />
+                  Deterministic Engine
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <p>Database Only exams are generated locally from the Chemistry Knowledge Core and Question Engine.</p>
+                <p>Hybrid exams use about 70% database questions and 30% AI questions.</p>
+                <Button asChild variant="outline" className="w-full rounded-xl">
+                  <Link href="/exam-engine">View Exam Engine</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <ShieldCheck className="h-5 w-5" />
                   Safety Rules
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>All AI calls go through the server-side OpenRouter route.</p>
+                <p>AI calls go through the server-side OpenRouter route only when AI mode is selected.</p>
                 <p>Only configured free models are allowed, and the page never sends a model ID.</p>
                 <p>No paid fallback, file uploads, image generation, or chat history.</p>
                 <p>Existing daily usage limits stay unchanged.</p>
@@ -710,9 +861,7 @@ export function ExamGeneratorClient() {
 
             <Card className="rounded-2xl border-dashed">
               <CardContent className="space-y-3 p-5 text-sm text-muted-foreground">
-                <p>
-                  Questions are AI-generated educational material.
-                </p>
+                <p>Questions are generated educational material.</p>
                 <p>
                   Not affiliated with or endorsed by the International Baccalaureate, College Board, UBC,
                   or any examination board.
@@ -756,6 +905,9 @@ function ExamQuestionCard({
         <div className="flex flex-wrap items-center gap-2">
           <Badge>Question {question.questionNumber}</Badge>
           <Badge variant="secondary">{question.type === "multiple_choice" ? "Multiple choice" : "Short answer"}</Badge>
+          <Badge variant={question.source === "database" ? "default" : "outline"}>
+            {question.source === "database" ? "Database Generated" : "AI Generated"}
+          </Badge>
           <Badge variant="outline">{question.topic}</Badge>
           <Badge variant="outline">{question.subtopic}</Badge>
         </div>
@@ -843,6 +995,30 @@ function ExamQuestionCard({
   )
 }
 
+function ExamMetricsPanel({ exam }: { exam: GeneratedExam }) {
+  return (
+    <div className="grid gap-3 rounded-2xl border border-border bg-background/70 p-4 sm:grid-cols-2 lg:grid-cols-4">
+      <SourceMetric label="Questions generated" value={exam.metrics.questionsGenerated} />
+      <SourceMetric label="Database / AI" value={`${exam.metrics.databasePercent}% / ${exam.metrics.aiPercent}%`} />
+      <SourceMetric label="Coverage" value={`${exam.metrics.coveragePercent}%`} />
+      <SourceMetric label="Estimated time" value={`${exam.metrics.estimatedMinutes} min`} />
+      <div className="sm:col-span-2 lg:col-span-4">
+        <p className="text-xs font-medium uppercase text-muted-foreground">Question breakdown</p>
+        <p className="mt-1 text-sm text-muted-foreground">{exam.coverageSummary || "Mixed review"}</p>
+      </div>
+    </div>
+  )
+}
+
+function SourceMetric({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-foreground">{value}</p>
+    </div>
+  )
+}
+
 function ExamCopyActions({
   exam,
   copied,
@@ -887,10 +1063,10 @@ function ExamDisclaimer() {
   return (
     <Alert className="rounded-2xl border-amber-500/30 bg-amber-500/10">
       <AlertCircle className="h-4 w-4" />
-      <AlertTitle>AI-generated educational material</AlertTitle>
+      <AlertTitle>Generated educational material</AlertTitle>
       <AlertDescription>
-        Questions are AI-generated educational material. Not affiliated with or endorsed by the International
-        Baccalaureate, College Board, UBC, or any examination board. Verify important answers independently.
+        Questions may be database-generated, AI-generated, or hybrid. ARSHLAB is not affiliated with or endorsed by
+        the International Baccalaureate, College Board, UBC, or any examination board. Verify important answers independently.
       </AlertDescription>
     </Alert>
   )

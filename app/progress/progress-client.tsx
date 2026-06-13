@@ -206,6 +206,19 @@ function getSourceStats(entries: PracticeProgressEntry[], source: "ai" | "databa
   }
 }
 
+function getExamSourceStats(
+  entries: PracticeProgressEntry[],
+  source: "ai" | "database" | "hybrid" | "adaptive",
+): SourceStats {
+  const sourceEntries = entries.filter((entry) => entry.examSource === source)
+  const correct = sourceEntries.filter((entry) => entry.correct).length
+  return {
+    attempted: sourceEntries.length,
+    correct,
+    accuracy: percentage(correct, sourceEntries.length),
+  }
+}
+
 function conceptRowsToStats(rows: ConceptProgressEntry[]): LearningConceptStats[] {
   const groups = new Map<string, { topic: string; subtopic: string; attempted: number; correct: number }>()
 
@@ -462,6 +475,10 @@ export function ProgressClient() {
   const topicStats = useMemo(() => getTopicStats(entries), [entries])
   const databaseStats = useMemo(() => getSourceStats(entries, "database"), [entries])
   const aiStats = useMemo(() => getSourceStats(entries, "ai"), [entries])
+  const databaseExamStats = useMemo(() => getExamSourceStats(entries, "database"), [entries])
+  const aiExamStats = useMemo(() => getExamSourceStats(entries, "ai"), [entries])
+  const hybridExamStats = useMemo(() => getExamSourceStats(entries, "hybrid"), [entries])
+  const adaptiveExamStats = useMemo(() => getExamSourceStats(entries, "adaptive"), [entries])
   const conceptStats = useMemo(
     () => (conceptEntries.length > 0 ? conceptRowsToStats(conceptEntries) : calculateConceptStats(entries)),
     [conceptEntries, entries],
@@ -647,6 +664,26 @@ export function ProgressClient() {
               label="AI Questions"
               value={`${aiStats.attempted} attempted`}
               detail={`${aiStats.accuracy}% accuracy from AI-generated questions`}
+            />
+            <InsightCard
+              label="Database Exam Score"
+              value={`${databaseExamStats.attempted} marked`}
+              detail={`${databaseExamStats.accuracy}% accuracy from database exams`}
+            />
+            <InsightCard
+              label="AI Exam Score"
+              value={`${aiExamStats.attempted} marked`}
+              detail={`${aiExamStats.accuracy}% accuracy from AI exams`}
+            />
+            <InsightCard
+              label="Hybrid Exam Score"
+              value={`${hybridExamStats.attempted} marked`}
+              detail={`${hybridExamStats.accuracy}% accuracy from hybrid exams`}
+            />
+            <InsightCard
+              label="Adaptive Exam Score"
+              value={`${adaptiveExamStats.attempted} marked`}
+              detail={`${adaptiveExamStats.accuracy}% accuracy from adaptive exams`}
             />
             <InsightCard
               label="Weakest Topic"

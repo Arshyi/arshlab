@@ -12,6 +12,7 @@ export interface PracticeProgressEntry {
   difficulty: string
   questionType: string
   source: "ai" | "database"
+  examSource?: "ai" | "database" | "hybrid" | "adaptive"
   correct: boolean
   timestamp: string
 }
@@ -24,6 +25,7 @@ interface PracticeProgressRow {
   difficulty: string
   question_type: string | null
   question_source: string | null
+  exam_source: string | null
   correct: boolean
   timestamp: string
 }
@@ -85,6 +87,14 @@ async function getAuthenticatedClient(): Promise<
 }
 
 function mapProgressRow(row: PracticeProgressRow): PracticeProgressEntry {
+  const examSource =
+    row.exam_source === "database" ||
+    row.exam_source === "hybrid" ||
+    row.exam_source === "adaptive" ||
+    row.exam_source === "ai"
+      ? row.exam_source
+      : undefined
+
   return {
     id: row.id,
     userId: row.user_id,
@@ -93,6 +103,7 @@ function mapProgressRow(row: PracticeProgressRow): PracticeProgressEntry {
     difficulty: row.difficulty,
     questionType: row.question_type ?? "Practice",
     source: row.question_source === "database" ? "database" : "ai",
+    examSource,
     correct: row.correct,
     timestamp: row.timestamp,
   }
@@ -175,6 +186,7 @@ export async function addPracticeProgress(input: {
   difficulty: string
   questionType?: string
   source?: "ai" | "database"
+  examSource?: "ai" | "database" | "hybrid" | "adaptive"
   correct: boolean
 }): Promise<ProgressResult<PracticeProgressEntry>> {
   const auth = await getAuthenticatedClient()
@@ -197,6 +209,7 @@ export async function addPracticeProgress(input: {
       difficulty: input.difficulty,
       question_type: questionType,
       question_source: input.source === "database" ? "database" : "ai",
+      exam_source: input.examSource,
       correct: input.correct,
     })
     .select("*")

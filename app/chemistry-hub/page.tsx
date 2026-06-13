@@ -17,6 +17,7 @@ const LAB_LINKS = [
   { href: "/ai-assistant", label: "AI Chemistry Assistant" },
   { href: "/chemistry-database", label: "Chemistry Database" },
   { href: "/question-engine", label: "Question Engine" },
+  { href: "/exam-engine", label: "Exam Engine" },
   { href: "/curriculum", label: "Curriculum Engine" },
   { href: "/diagnostic", label: "Diagnostic Assessment" },
   { href: "/study", label: "Study Mode" },
@@ -172,6 +173,29 @@ export default function ChemistryHubPage() {
               className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
             >
               Open Engine
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl mb-8 border-teal-500/20 bg-teal-500/5">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <FileQuestion className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Exam Engine</h2>
+                <p className="text-sm text-muted-foreground">
+                  Assemble deterministic chemistry exams from local blueprints and database-backed questions
+                  without API calls or token usage.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/exam-engine"
+              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Open Exam Engine
             </Link>
           </CardContent>
         </Card>

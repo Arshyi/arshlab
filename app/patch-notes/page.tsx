@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.2.0",
+    version: "3.3.0",
     date: "Current",
+    status: "released",
+    title: "Deterministic Exam Engine",
+    changes: [
+      "Added reusable exam-engine modules for blueprints, deterministic generation, scoring, metrics, and typed exam records",
+      "Added predefined exam blueprints for General First-Year Chemistry, CHEM 121, IB Chemistry, AP Chemistry, and A-Level Chemistry styles",
+      "Added Database Only, AI Only, and Hybrid source modes to Exam Generator",
+      "Added adaptive database exams that weight weak topics from existing progress data",
+      "Added exam metrics for database percentage, AI percentage, estimated completion time, coverage, and question breakdown",
+      "Added /exam-engine with blueprint coverage, supported curricula, performance targets, and deterministic exam statistics",
+      "Added exam-source analytics for database, AI, hybrid, and adaptive exam scores on My Progress",
+      "Updated exam PDF metadata with exam source, coverage summary, curriculum units tested, and question breakdown",
+      "Preserved existing AI exam generation, free-model-only guardrails, and no paid fallback policy",
+    ],
+  },
+  {
+    version: "3.2.0",
+    date: "Previous",
     status: "released",
     title: "Database Generated Questions",
     changes: [

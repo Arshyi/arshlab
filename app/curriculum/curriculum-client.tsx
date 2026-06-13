@@ -55,7 +55,7 @@ function statusVariant(status: string): "default" | "secondary" | "destructive" 
 function unitLink(unit: CurriculumUnitProgress | null, target: "study" | "practice" | "exam" | "diagnostic"): string {
   if (!unit) {
     if (target === "practice") return "/practice-generator"
-    if (target === "exam") return "/exam-generator"
+    if (target === "exam") return "/exam-generator?source=database&mode=adaptive"
     if (target === "diagnostic") return "/diagnostic"
     return "/study"
   }
@@ -66,7 +66,11 @@ function unitLink(unit: CurriculumUnitProgress | null, target: "study" | "practi
   if (topic) params.set("topic", topic)
   if (subtopic) params.set("subtopic", subtopic)
   if (target === "practice") return `/practice-generator?${params.toString()}`
-  if (target === "exam") return `/exam-generator?${params.toString()}`
+  if (target === "exam") {
+    params.set("source", "database")
+    params.set("mode", "adaptive")
+    return `/exam-generator?${params.toString()}`
+  }
   if (target === "diagnostic") return `/diagnostic?${params.toString()}`
   return `/study?${params.toString()}`
 }
@@ -230,7 +234,7 @@ export function CurriculumClient() {
             <Link href={unitLink(summary.recommendedNextUnit, "practice")}>Generate Practice Set</Link>
           </Button>
           <Button asChild variant="outline" className="rounded-xl">
-            <Link href={unitLink(summary.recommendedNextUnit, "exam")}>Generate Exam</Link>
+            <Link href={unitLink(summary.recommendedNextUnit, "exam")}>Generate Curriculum Exam</Link>
           </Button>
           <Button asChild variant="outline" className="rounded-xl">
             <Link href={unitLink(summary.recommendedNextUnit, "diagnostic")}>Curriculum Diagnostic</Link>

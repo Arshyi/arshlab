@@ -76,6 +76,12 @@ const features = [
     href: "/question-engine",
   },
   {
+    icon: FileQuestion,
+    title: "Exam Engine",
+    description: "Build deterministic chemistry exam blueprints from the local Question Engine without AI calls.",
+    href: "/exam-engine",
+  },
+  {
     icon: ClipboardCheck,
     title: "Diagnostic Assessment",
     description: "Take a placement-style chemistry checkup, then get targeted study order, reports, and recovery actions.",
