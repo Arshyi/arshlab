@@ -6,11 +6,14 @@ import {
   KNOWLEDGE_FUNCTIONAL_GROUPS,
   REACTION_TEMPLATES_KNOWLEDGE,
   SPECTROSCOPY_RECORDS,
+  REACTION_RECORDS,
 } from "@/lib/chemistry/registry"
 import type { Compound, FunctionalGroup, Ion, ReactionTemplate } from "@/lib/chemistry/types"
 import type { ElementRecord } from "@/lib/chemistry/database/types"
 import type { Question, QuestionChoice, QuestionTemplate, QuestionTemplateContext } from "./types"
 import { SPECTROSCOPY_QUESTION_TEMPLATES } from "./spectroscopy-templates"
+import { REACTION_QUESTION_TEMPLATES } from "./reaction-templates"
+import { BALANCING_EXERCISES } from "@/lib/reaction-engine/balancer"
 
 const choiceLabels = ["A", "B", "C", "D"]
 
@@ -436,11 +439,12 @@ export const DATABASE_QUESTION_TEMPLATES: QuestionTemplate[] = [
     estimatedCombinations: ALL_ELEMENTS.length * 4,
     build: buildPeriodicTrendQuestion,
   },
+  ...REACTION_QUESTION_TEMPLATES,
   ...SPECTROSCOPY_QUESTION_TEMPLATES,
 ]
 
 export function getQuestionEngineTemplateCoverage(): number {
-  const requestedTemplateFamilies = 12
+  const requestedTemplateFamilies = 21
   return Math.round((DATABASE_QUESTION_TEMPLATES.length / requestedTemplateFamilies) * 100)
 }
 
@@ -450,6 +454,8 @@ export function getQuestionEngineDatabaseCounts() {
     ions: CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions,
     functionalGroups: CHEMISTRY_KNOWLEDGE_CORE_META.counts.functionalGroups,
     reactions: CHEMISTRY_KNOWLEDGE_CORE_META.counts.reactionTemplates,
+    reactionRecords: REACTION_RECORDS.length,
+    balancingExercises: BALANCING_EXERCISES.length,
     spectroscopy: SPECTROSCOPY_RECORDS.length,
     irPeaks: CHEMISTRY_KNOWLEDGE_CORE_META.counts.irPeaks,
   }

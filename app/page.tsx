@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, GraduationCap, Database, ListChecks, Gauge, Route } from "lucide-react"
+import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, GraduationCap, Database, ListChecks, Gauge, Route } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -80,6 +80,12 @@ const features = [
     title: "Chemistry Database",
     description: "Browse ARSHLAB's local chemistry knowledge core for compounds, ions, functional groups, and reaction templates.",
     href: "/chemistry-database",
+  },
+  {
+    icon: ArrowRightLeft,
+    title: "Reaction Engine",
+    description: "Browse 100+ deterministic reaction records for prediction, classification, balancing, and mastery tracking.",
+    href: "/reaction-database",
   },
   {
     icon: ListChecks,

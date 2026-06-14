@@ -76,6 +76,7 @@ interface RecoveryQuestion {
   correctAnswer: string
   explanation: string
   misconceptionNote?: string
+  source?: "ai" | "database"
 }
 
 interface RecoverySet {
@@ -91,11 +92,20 @@ function normalizeText(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, " ")
 }
 
-function isSpectroscopyRecoveryPlan(plan: RecoveryPlanItem[]): boolean {
+function isDatabaseRecoveryPlan(plan: RecoveryPlanItem[]): boolean {
   return plan.some((item) =>
     [item.topic, ...item.weaknesses].some((value) => {
       const normalized = normalizeText(value)
-      return normalized.includes("spectroscopy") || normalized.includes("carbonyl") || normalized.includes("stretch")
+      return (
+        normalized.includes("spectroscopy") ||
+        normalized.includes("carbonyl") ||
+        normalized.includes("stretch") ||
+        normalized.includes("reaction") ||
+        normalized.includes("redox") ||
+        normalized.includes("precipitation") ||
+        normalized.includes("combustion") ||
+        normalized.includes("balancing")
+      )
     }),
   )
 }
@@ -104,7 +114,7 @@ function generateDatabaseRecoverySet(plan: RecoveryPlanItem[]): RecoverySet {
   const questions = plan.flatMap((item) =>
     generateDatabaseQuestions({
       topic: item.topic === "IR Spectroscopy" ? "Spectroscopy" : item.topic,
-      targetSubtopic: item.weaknesses[0] ?? "IR Spectroscopy",
+      targetSubtopic: item.weaknesses[0] ?? (item.topic === "IR Spectroscopy" ? "IR Spectroscopy" : undefined),
       difficulty: item.difficulty,
       count: item.count,
       curriculum: "general-first-year",
@@ -120,6 +130,7 @@ function generateDatabaseRecoverySet(plan: RecoveryPlanItem[]): RecoverySet {
       correctAnswer: question.correctAnswer,
       explanation: question.explanation,
       misconceptionNote: question.misconceptionNote,
+      source: question.source,
     })),
   )
   return { questions: questions.slice(0, 10) }
@@ -318,7 +329,7 @@ export function RecoveryClient() {
     setCompletionAwarded(false)
 
     try {
-      if (isSpectroscopyRecoveryPlan(nextPlan)) {
+      if (isDatabaseRecoveryPlan(nextPlan)) {
         setRecoverySet(generateDatabaseRecoverySet(nextPlan))
         setRemaining(null)
         return
@@ -370,6 +381,7 @@ export function RecoveryClient() {
       subtopic: currentQuestion.subtopic,
       difficulty: currentQuestion.difficulty,
       questionType: "Recovery Mode",
+      source: currentQuestion.source,
       correct,
     })
 

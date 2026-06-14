@@ -35,6 +35,7 @@ import {
   ListChecks,
   Gauge,
   Route,
+  ArrowRightLeft,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -61,6 +62,7 @@ const primaryNavItems = [
 const chemistryToolItems = [
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
   { href: "/chemistry-database", label: "Chemistry Database", icon: Database },
+  { href: "/reaction-database", label: "Reaction Database", icon: ArrowRightLeft },
   { href: "/question-engine", label: "Question Engine", icon: ListChecks },
   { href: "/exam-engine", label: "Exam Engine", icon: FileQuestion },
   { href: "/curriculum", label: "Curriculum Engine", icon: GraduationCap },

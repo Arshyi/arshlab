@@ -61,6 +61,8 @@ export interface QuestionEngineStats {
     ions: number
     functionalGroups: number
     reactions: number
+    reactionRecords: number
+    balancingExercises: number
     spectroscopy: number
     irPeaks: number
   }

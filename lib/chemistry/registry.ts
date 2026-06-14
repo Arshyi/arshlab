@@ -1,7 +1,7 @@
 import { KNOWLEDGE_COMPOUNDS } from "./compounds"
 import { KNOWLEDGE_FUNCTIONAL_GROUPS } from "./functional-groups"
 import { COMMON_IONS } from "./ions"
-import { REACTION_TEMPLATES_KNOWLEDGE } from "./reactions"
+import { REACTION_RECORDS, REACTION_TEMPLATES_KNOWLEDGE } from "./reactions"
 import { SPECTROSCOPY_RECORDS, countIRPeaks, getSpectroscopyRecord } from "./spectroscopy"
 import type {
   ChemistryRecordKind,
@@ -11,9 +11,10 @@ import type {
   Ion,
   ReactionTemplate,
 } from "./types"
+import type { ReactionRecord } from "./reaction-types"
 import type { SpectroscopyRecord } from "./spectroscopy-types"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.5.1"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.6.0"
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,
@@ -22,6 +23,7 @@ export const CHEMISTRY_KNOWLEDGE_CORE_META = {
     ions: COMMON_IONS.length,
     functionalGroups: KNOWLEDGE_FUNCTIONAL_GROUPS.length,
     reactionTemplates: REACTION_TEMPLATES_KNOWLEDGE.length,
+    reactionRecords: REACTION_RECORDS.length,
     spectroscopyRecords: SPECTROSCOPY_RECORDS.length,
     irPeaks: countIRPeaks(),
   },
@@ -80,6 +82,21 @@ function resultSearchValues(result: ChemistrySearchResult): string[] {
       ...record.irPeaks.flatMap((peak) => [peak.range, peak.shape, peak.strength, peak.assignment, peak.notes ?? ""]),
     ]
   }
+  if (result.kind === "reaction-record") {
+    const record = result.record as ReactionRecord
+    return [
+      record.name,
+      record.reactionType,
+      record.category,
+      record.difficulty,
+      record.balancedEquation,
+      record.unbalancedEquation,
+      record.explanation,
+      ...record.reactants,
+      ...record.products,
+      ...record.curriculum,
+    ]
+  }
   const template = result.record as ReactionTemplate
   return [
     template.type,
@@ -107,6 +124,10 @@ function primarySearchValues(result: ChemistrySearchResult): string[] {
   if (result.kind === "spectroscopy") {
     const record = result.record as SpectroscopyRecord
     return [record.name, record.functionalGroup, record.peakRange]
+  }
+  if (result.kind === "reaction-record") {
+    const record = result.record as ReactionRecord
+    return [record.name, record.balancedEquation, record.reactionType]
   }
   const template = result.record as ReactionTemplate
   return [template.type]
@@ -169,6 +190,17 @@ export function getReactionTemplate(query: string): ReactionTemplate | undefined
   const q = normalizeCompact(query)
   return REACTION_TEMPLATES_KNOWLEDGE.find(
     (template) => normalizeCompact(template.id) === q || normalizeCompact(template.type) === q,
+  )
+}
+
+export function getReactionRecord(query: string): ReactionRecord | undefined {
+  const q = normalizeCompact(query)
+  return REACTION_RECORDS.find(
+    (record) =>
+      normalizeCompact(record.id) === q ||
+      normalizeCompact(record.name) === q ||
+      normalizeCompact(record.balancedEquation) === q ||
+      normalizeCompact(record.unbalancedEquation) === q,
   )
 }
 
@@ -263,6 +295,33 @@ function reactionTemplateResult(template: ReactionTemplate, query: string): Chem
   }
 }
 
+function reactionRecordResult(record: ReactionRecord, query: string): ChemistrySearchResult | null {
+  const matchField = firstMatchingField(
+    [
+      ["name", record.name],
+      ["type", record.reactionType],
+      ["category", record.category],
+      ["reactant", record.reactants.join(" ")],
+      ["product", record.products.join(" ")],
+      ["balanced equation", record.balancedEquation],
+      ["unbalanced equation", record.unbalancedEquation],
+      ["difficulty", record.difficulty],
+      ["curriculum", record.curriculum.join(" ")],
+      ["explanation", record.explanation],
+    ],
+    query,
+  )
+  if (!matchField) return null
+  return {
+    kind: "reaction-record",
+    id: record.id,
+    name: record.name,
+    matchField,
+    description: `${record.category} | ${record.balancedEquation}`,
+    record,
+  }
+}
+
 function spectroscopyResult(record: SpectroscopyRecord, query: string): ChemistrySearchResult | null {
   const matchField = firstMatchingField(
     [
@@ -296,7 +355,9 @@ export function searchChemistry(
   const trimmed = query.trim()
   if (!trimmed) return []
 
-  const allowed = new Set(options.kinds ?? ["compound", "ion", "functional-group", "reaction-template", "spectroscopy"])
+  const allowed = new Set(
+    options.kinds ?? ["compound", "ion", "functional-group", "reaction-template", "reaction-record", "spectroscopy"],
+  )
   const results: ChemistrySearchResult[] = [
     ...(allowed.has("compound") ? KNOWLEDGE_COMPOUNDS.map((compound) => compoundResult(compound, trimmed)) : []),
     ...(allowed.has("ion") ? COMMON_IONS.map((ion) => ionResult(ion, trimmed)) : []),
@@ -306,6 +367,7 @@ export function searchChemistry(
     ...(allowed.has("reaction-template")
       ? REACTION_TEMPLATES_KNOWLEDGE.map((template) => reactionTemplateResult(template, trimmed))
       : []),
+    ...(allowed.has("reaction-record") ? REACTION_RECORDS.map((record) => reactionRecordResult(record, trimmed)) : []),
     ...(allowed.has("spectroscopy") ? SPECTROSCOPY_RECORDS.map((record) => spectroscopyResult(record, trimmed)) : []),
   ].filter((result): result is ChemistrySearchResult => Boolean(result))
 
@@ -335,6 +397,10 @@ export function getChemistryPromptContext(query: string, limit = 6): string {
         const record = result.record as SpectroscopyRecord
         return `Spectroscopy: ${record.name}. Key IR peak ${record.peakRange}, ${record.peakShape}, ${record.peakStrength}. ${record.notes}`
       }
+      if (result.kind === "reaction-record") {
+        const record = result.record as ReactionRecord
+        return `Reaction: ${record.name}. ${record.balancedEquation}. Type ${record.reactionType}; category ${record.category}. ${record.explanation}`
+      }
       const template = result.record as ReactionTemplate
       return `Reaction template: ${template.type}. ${template.generalForm}. ${template.description}`
     })
@@ -345,6 +411,7 @@ export {
   COMMON_IONS,
   KNOWLEDGE_COMPOUNDS,
   KNOWLEDGE_FUNCTIONAL_GROUPS,
+  REACTION_RECORDS,
   REACTION_TEMPLATES_KNOWLEDGE,
   SPECTROSCOPY_RECORDS,
 }

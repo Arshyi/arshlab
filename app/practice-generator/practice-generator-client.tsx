@@ -70,6 +70,14 @@ const topics = [
   "Acids and Bases",
   "Bonding",
   "Stoichiometry",
+  "Reaction Types",
+  "Reaction Prediction",
+  "Reaction Balancing",
+  "Reaction Classification",
+  "Redox",
+  "Precipitation",
+  "Combustion",
+  "Organic Reactions",
 ]
 
 const questionTypes = [
@@ -288,6 +296,10 @@ export function PracticeGeneratorClient() {
     if (requestedUnit) setCurriculumUnit(requestedUnit)
     const requestedSubtopic = params.get("subtopic")
     if (requestedSubtopic) setTargetSubtopic(requestedSubtopic)
+    const requestedSource = params.get("source")
+    if (requestedSource === "database") setQuestionSource("Database Only")
+    if (requestedSource === "ai") setQuestionSource("AI Only")
+    if (requestedSource === "hybrid") setQuestionSource("Hybrid")
 
     if (!isSupabaseConfigured()) return
     const supabase = createClient()

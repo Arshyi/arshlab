@@ -12,6 +12,7 @@ import {
   COMMON_IONS,
   KNOWLEDGE_COMPOUNDS,
   KNOWLEDGE_FUNCTIONAL_GROUPS,
+  REACTION_RECORDS,
   REACTION_TEMPLATES_KNOWLEDGE,
   SPECTROSCOPY_RECORDS,
   getCompoundByFormula,
@@ -19,6 +20,7 @@ import {
   searchChemistry,
 } from "@/lib/chemistry/registry"
 import type { ChemistryRecordKind, ChemistrySearchResult, Compound } from "@/lib/chemistry/types"
+import type { ReactionRecord } from "@/lib/chemistry/reaction-types"
 import type { SpectroscopyRecord } from "@/lib/chemistry/spectroscopy-types"
 import { cn } from "@/lib/utils"
 
@@ -28,6 +30,7 @@ const sections: Array<{ id: Section; label: string; icon: React.ElementType }> =
   { id: "compound", label: "Compounds", icon: Beaker },
   { id: "ion", label: "Ions", icon: Atom },
   { id: "functional-group", label: "Functional Groups", icon: Sigma },
+  { id: "reaction-record", label: "Reaction Records", icon: FlaskConical },
   { id: "reaction-template", label: "Reaction Templates", icon: FlaskConical },
   { id: "spectroscopy", label: "Spectroscopy", icon: Waves },
 ]
@@ -40,6 +43,10 @@ function asCompound(record: ChemistrySearchResult["record"]): Compound | null {
 
 function asSpectroscopy(record: ChemistrySearchResult["record"]): SpectroscopyRecord | null {
   return "irPeaks" in record && "peakRange" in record ? record : null
+}
+
+function asReactionRecord(record: ChemistrySearchResult["record"]): ReactionRecord | null {
+  return "balancedEquation" in record && "reactionType" in record ? record : null
 }
 
 function compoundLabel(compound: Compound): string {
@@ -80,6 +87,14 @@ export function ChemistryDatabaseClient() {
   const reactionResults = useMemo(() => {
     if (!query.trim()) return REACTION_TEMPLATES_KNOWLEDGE
     return searchResults.filter((result) => result.kind === "reaction-template").map((result) => result.record)
+  }, [query, searchResults])
+
+  const reactionRecordResults = useMemo(() => {
+    if (!query.trim()) return REACTION_RECORDS.slice(0, 80)
+    return searchResults
+      .filter((result) => result.kind === "reaction-record")
+      .map((result) => asReactionRecord(result.record))
+      .filter((record): record is ReactionRecord => Boolean(record))
   }, [query, searchResults])
 
   const spectroscopyResults = useMemo(() => {
@@ -128,13 +143,14 @@ export function ChemistryDatabaseClient() {
             </Badge>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <StatCard label="Compounds" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.compounds} />
-            <StatCard label="Ions" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions} />
-            <StatCard label="Functional Groups" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.functionalGroups} />
-            <StatCard label="Reaction Templates" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.reactionTemplates} />
-            <StatCard label="Spectroscopy Records" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.spectroscopyRecords} />
-          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <StatCard label="Compounds" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.compounds} />
+          <StatCard label="Ions" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions} />
+          <StatCard label="Functional Groups" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.functionalGroups} />
+          <StatCard label="Reaction Templates" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.reactionTemplates} />
+          <StatCard label="Reaction Records" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.reactionRecords} />
+          <StatCard label="Spectroscopy Records" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.spectroscopyRecords} />
+        </div>
         </motion.div>
 
         <Card className="rounded-2xl border-primary/20 bg-primary/5">
@@ -274,6 +290,24 @@ export function ChemistryDatabaseClient() {
                         {record.examples?.[0] && (
                           <p className="mt-2 text-xs text-muted-foreground">Example: {record.examples[0]}</p>
                         )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeSection === "reaction-record" && (
+                  <div className="grid gap-3">
+                    {reactionRecordResults.map((record) => (
+                      <div key={record.id} className="rounded-xl border border-border bg-secondary/20 px-4 py-3">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="font-medium">{record.name}</p>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary">{record.category}</Badge>
+                            <Badge variant="outline">{record.difficulty}</Badge>
+                          </div>
+                        </div>
+                        <p className="mt-2 font-mono text-xs sm:text-sm">{record.balancedEquation}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">{record.explanation}</p>
                       </div>
                     ))}
                   </div>

@@ -18,6 +18,14 @@ export const RECOVERY_TOPICS = [
   "Acids and Bases",
   "Bonding",
   "Stoichiometry",
+  "Reaction Types",
+  "Reaction Prediction",
+  "Reaction Balancing",
+  "Reaction Classification",
+  "Redox",
+  "Precipitation",
+  "Combustion",
+  "Organic Reactions",
 ] as const
 
 export type RecoveryTopic = (typeof RECOVERY_TOPICS)[number]

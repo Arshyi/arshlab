@@ -15,12 +15,12 @@ export default function QuestionEnginePage() {
   const stats = getQuestionEngineStats()
   const start = performance.now()
   const sampleQuestions = generateDatabaseQuestions({
-    topic: "Spectroscopy",
-    targetSubtopic: "IR Spectroscopy",
+    topic: "Reaction Prediction",
+    targetSubtopic: "Missing Product",
     difficulty: "Introductory",
     count: 4,
     curriculum: "general-first-year",
-    unit: "organic-chemistry",
+    unit: "chemical-reactions",
   })
   const generationMs = Math.max(1, Math.round(performance.now() - start))
 
@@ -41,15 +41,17 @@ export default function QuestionEnginePage() {
             </div>
           </div>
           <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-            ARSHLAB v3.5.1
+            ARSHLAB v3.6.0
           </Badge>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard label="Compounds" value={stats.databaseCounts.compounds} />
           <MetricCard label="Ions" value={stats.databaseCounts.ions} />
           <MetricCard label="Functional Groups" value={stats.databaseCounts.functionalGroups} />
-          <MetricCard label="Reactions" value={stats.databaseCounts.reactions} />
+          <MetricCard label="Reaction Templates" value={stats.databaseCounts.reactions} />
+          <MetricCard label="Reaction Records" value={stats.databaseCounts.reactionRecords} />
+          <MetricCard label="Balancing Exercises" value={stats.databaseCounts.balancingExercises} />
           <MetricCard label="Spectroscopy" value={stats.databaseCounts.spectroscopy} />
           <MetricCard label="IR Peaks" value={stats.databaseCounts.irPeaks} />
         </div>

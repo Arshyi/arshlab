@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import {
   AlertCircle,
   BarChart3,
+  Beaker,
   CheckCircle2,
   ClipboardCheck,
   ClipboardList,
@@ -234,6 +235,27 @@ function getSpectroscopyStats(entries: PracticeProgressEntry[]): SourceStats {
   }
 }
 
+function isReactionEntry(entry: PracticeProgressEntry): boolean {
+  const value = `${entry.topic} ${entry.subtopic}`.toLowerCase()
+  return (
+    value.includes("reaction") ||
+    value.includes("redox") ||
+    value.includes("precipitation") ||
+    value.includes("combustion") ||
+    value.includes("balancing")
+  )
+}
+
+function getReactionStats(entries: PracticeProgressEntry[]): SourceStats {
+  const reactionEntries = entries.filter(isReactionEntry)
+  const correct = reactionEntries.filter((entry) => entry.correct).length
+  return {
+    attempted: reactionEntries.length,
+    correct,
+    accuracy: percentage(correct, reactionEntries.length),
+  }
+}
+
 function conceptRowsToStats(rows: ConceptProgressEntry[]): LearningConceptStats[] {
   const groups = new Map<string, { topic: string; subtopic: string; attempted: number; correct: number }>()
 
@@ -275,6 +297,17 @@ function getAchievements(
   const masteredTopic = topicStats.some((stat) => stat.total >= 5 && stat.mastery >= 90)
   const longestStreak = getLongestCorrectStreak(entries)
   const spectroscopyAttempts = entries.filter(isSpectroscopyEntry).length
+  const reactionAttempts = entries.filter(isReactionEntry)
+  const reactionCorrect = reactionAttempts.filter((entry) => entry.correct).length
+  const balancingAttempts = reactionAttempts.filter((entry) =>
+    `${entry.topic} ${entry.subtopic}`.toLowerCase().includes("balanc"),
+  ).length
+  const redoxAttempts = reactionAttempts.filter((entry) =>
+    `${entry.topic} ${entry.subtopic}`.toLowerCase().includes("redox"),
+  ).length
+  const organicReactionAttempts = reactionAttempts.filter((entry) =>
+    `${entry.topic} ${entry.subtopic}`.toLowerCase().includes("organic"),
+  ).length
   const databaseAttempts = entries.filter((entry) => entry.source === "database").length
   const examAttempts = entries.filter((entry) => entry.examSource || entry.questionType.toLowerCase().includes("exam")).length
   const recoveryAttempts = entries.filter((entry) => entry.questionType === "Recovery Mode").length
@@ -309,6 +342,51 @@ function getAchievements(
       unlocked: databaseAttempts >= 20,
       progress: Math.min(100, Math.round((databaseAttempts / 20) * 100)),
       icon: Database,
+    },
+    {
+      label: "Reaction Rookie",
+      description: "Attempt ten reaction engine questions.",
+      unlocked: reactionAttempts.length >= 10,
+      progress: Math.min(100, Math.round((reactionAttempts.length / 10) * 100)),
+      icon: Beaker,
+    },
+    {
+      label: "Balancing Apprentice",
+      description: "Attempt ten reaction balancing questions.",
+      unlocked: balancingAttempts >= 10,
+      progress: Math.min(100, Math.round((balancingAttempts / 10) * 100)),
+      icon: ClipboardList,
+    },
+    {
+      label: "Reaction Analyst",
+      description: "Answer twenty-five reaction questions correctly.",
+      unlocked: reactionCorrect >= 25,
+      progress: Math.min(100, Math.round((reactionCorrect / 25) * 100)),
+      icon: BarChart3,
+    },
+    {
+      label: "Redox Specialist",
+      description: "Attempt ten redox questions.",
+      unlocked: redoxAttempts >= 10,
+      progress: Math.min(100, Math.round((redoxAttempts / 10) * 100)),
+      icon: Zap,
+    },
+    {
+      label: "Reaction Master",
+      description: "Reach 80% accuracy across thirty reaction questions.",
+      unlocked: reactionAttempts.length >= 30 && percentage(reactionCorrect, reactionAttempts.length) >= 80,
+      progress:
+        reactionAttempts.length >= 30
+          ? percentage(reactionCorrect, reactionAttempts.length)
+          : Math.min(100, Math.round((reactionAttempts.length / 30) * 100)),
+      icon: Trophy,
+    },
+    {
+      label: "Organic Explorer",
+      description: "Attempt ten organic reaction questions.",
+      unlocked: organicReactionAttempts >= 10,
+      progress: Math.min(100, Math.round((organicReactionAttempts / 10) * 100)),
+      icon: Sparkles,
     },
     {
       label: "Exam Veteran",
@@ -555,6 +633,7 @@ export function ProgressClient() {
   const hybridExamStats = useMemo(() => getExamSourceStats(entries, "hybrid"), [entries])
   const adaptiveExamStats = useMemo(() => getExamSourceStats(entries, "adaptive"), [entries])
   const spectroscopyStats = useMemo(() => getSpectroscopyStats(entries), [entries])
+  const reactionStats = useMemo(() => getReactionStats(entries), [entries])
   const conceptStats = useMemo(
     () => (conceptEntries.length > 0 ? conceptRowsToStats(conceptEntries) : calculateConceptStats(entries)),
     [conceptEntries, entries],
@@ -584,6 +663,24 @@ export function ProgressClient() {
   const weakestSpectroscopyConcept = spectroscopyConcepts[0] ?? null
   const strongestSpectroscopyConcept =
     [...spectroscopyConcepts].sort((a, b) => b.mastery - a.mastery || b.attempted - a.attempted)[0] ?? null
+  const reactionConcepts = useMemo(
+    () =>
+      conceptStats
+        .filter((concept) =>
+          [
+            concept.topic,
+            concept.subtopic,
+          ]
+            .join(" ")
+            .toLowerCase()
+            .match(/reaction|redox|precipitation|combustion|balancing/),
+        )
+        .sort((a, b) => a.mastery - b.mastery || b.attempted - a.attempted),
+    [conceptStats],
+  )
+  const weakestReactionConcept = reactionConcepts[0] ?? null
+  const strongestReactionConcept =
+    [...reactionConcepts].sort((a, b) => b.mastery - a.mastery || b.attempted - a.attempted)[0] ?? null
   const recoveryTopics = useMemo(() => detectWeakTopics(entries).slice(0, 3), [entries])
   const recent = entries.slice(0, 16)
   const curriculumSummary = useMemo(
@@ -778,6 +875,21 @@ export function ProgressClient() {
               label="Spectroscopy Attempts"
               value={`${spectroscopyStats.attempted} attempted`}
               detail={`${spectroscopyStats.accuracy}% accuracy across IR and spectroscopy practice`}
+            />
+            <InsightCard
+              label="Reaction Attempts"
+              value={`${reactionStats.attempted} attempted`}
+              detail={`${reactionStats.accuracy}% accuracy across prediction, balancing, and classification`}
+            />
+            <InsightCard
+              label="Weakest Reaction Concept"
+              value={weakestReactionConcept ? weakestReactionConcept.subtopic : "Not enough data"}
+              detail={weakestReactionConcept ? `${weakestReactionConcept.mastery}% mastery` : "Try reaction engine questions"}
+            />
+            <InsightCard
+              label="Strongest Reaction Concept"
+              value={strongestReactionConcept ? strongestReactionConcept.subtopic : "Not enough data"}
+              detail={strongestReactionConcept ? `${strongestReactionConcept.mastery}% mastery` : "Try reaction engine questions"}
             />
             <InsightCard
               label="Weakest Spectroscopy Concept"

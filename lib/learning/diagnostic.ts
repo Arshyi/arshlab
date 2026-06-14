@@ -12,6 +12,13 @@ export const DIAGNOSTIC_TOPICS = [
   "Acids and Bases",
   "Bonding",
   "Stoichiometry",
+  "Reaction Types",
+  "Reaction Prediction",
+  "Reaction Balancing",
+  "Reaction Classification",
+  "Redox",
+  "Precipitation",
+  "Combustion",
 ] as const
 
 export const DIAGNOSTIC_COUNTS = [20, 40, 60] as const

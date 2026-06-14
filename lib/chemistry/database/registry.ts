@@ -7,12 +7,13 @@ import { ALL_FUNCTIONAL_GROUPS } from "./functional-groups"
 import { ALL_ORBITALS } from "./orbitals"
 import { ALL_SPECTROSCOPY } from "./spectroscopy"
 import { REACTION_TEMPLATES } from "./reactions/families"
+import { REACTION_RECORDS } from "../reactions"
 import { VSEPR_PRESETS } from "./vsepr/engine"
 import { ALL_LEWIS_STRUCTURES } from "./lewis/templates"
 import { QUESTION_TOPICS } from "./questions/topics"
 import { EDUCATION_HUB_SECTIONS } from "./education/hub"
 
-export const DATABASE_VERSION = "3.5.1"
+export const DATABASE_VERSION = "3.6.0"
 
 export function getDatabaseMeta(): DatabaseMeta {
   return {
@@ -27,6 +28,7 @@ export function getDatabaseMeta(): DatabaseMeta {
       orbitals: ALL_ORBITALS.length,
       spectroscopy: ALL_SPECTROSCOPY.length,
       reactions: REACTION_TEMPLATES.length,
+      reactionRecords: REACTION_RECORDS.length,
       vseprPresets: VSEPR_PRESETS.length,
       lewisStructures: ALL_LEWIS_STRUCTURES.length,
       questionTopics: QUESTION_TOPICS.length,

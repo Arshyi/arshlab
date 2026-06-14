@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.5.1",
+    version: "3.6.0",
     date: "Current",
+    status: "released",
+    title: "Chemistry Reaction Engine",
+    changes: [
+      "Added deterministic reaction knowledge core with 100+ reaction records across acid-base, precipitation, combustion, displacement, redox, synthesis, decomposition, organic, electrochemistry, and equilibrium categories",
+      "Added /reaction-database with searchable reaction records, category filters, curriculum filters, difficulty filters, and a reaction viewer",
+      "Added local reaction prediction, classification, and balancing helper modules with fail-closed behavior for unknown reactions",
+      "Added deterministic reaction question templates for reaction type, product prediction, missing products, balancing, redox identification, precipitation prediction, acid/base products, combustion products, and classification",
+      "Integrated reaction topics into Practice Generator, Study Mode, Recovery Mode, Curriculum Engine, Exam Engine, Progress analytics, and achievements",
+      "Added Chemistry Hub cards for Reaction Database, Reaction Predictor, Balancing Practice, and Reaction Mastery",
+      "Preserved OpenRouter configuration, free-model-only AI guardrails, and existing Reaction Lab behavior",
+    ],
+  },
+  {
+    version: "3.5.1",
+    date: "Previous",
     status: "released",
     title: "Adaptive Learning Engine Hardening",
     changes: [

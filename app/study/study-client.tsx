@@ -79,6 +79,14 @@ const topics = [
   "Acids and Bases",
   "Bonding",
   "Stoichiometry",
+  "Reaction Types",
+  "Reaction Prediction",
+  "Reaction Balancing",
+  "Reaction Classification",
+  "Redox",
+  "Precipitation",
+  "Combustion",
+  "Organic Reactions",
 ]
 
 const difficulties = ["Introductory", "Intermediate", "Advanced"]
@@ -116,6 +124,20 @@ interface StudySet {
 function isSpectroscopyTopic(value: string): boolean {
   const normalized = value.toLowerCase()
   return normalized.includes("spectroscopy") || normalized.includes("ir")
+}
+
+function isReactionTopic(value: string): boolean {
+  const normalized = value.toLowerCase()
+  return (
+    normalized.includes("reaction") ||
+    normalized.includes("redox") ||
+    normalized.includes("precipitation") ||
+    normalized.includes("combustion")
+  )
+}
+
+function isDatabaseStudyTopic(value: string): boolean {
+  return isSpectroscopyTopic(value) || isReactionTopic(value)
 }
 
 interface AnswerRecord {
@@ -329,9 +351,9 @@ export function StudyClient() {
     if (loading) return
 
     const nextTopic = targetTopic ?? topic
-    const useDatabaseSpectroscopy = isSpectroscopyTopic(nextTopic)
+    const useDatabaseTopic = isDatabaseStudyTopic(nextTopic)
 
-    if (!isLoggedIn && !useDatabaseSpectroscopy && guestRemaining <= 0) {
+    if (!isLoggedIn && !useDatabaseTopic && guestRemaining <= 0) {
       setError("Daily guest AI assistant limit reached. Sign in for a higher limit.")
       return
     }
@@ -350,10 +372,17 @@ export function StudyClient() {
     setCurrentStreak(0)
 
     try {
-      if (useDatabaseSpectroscopy) {
+      if (useDatabaseTopic) {
+        const databaseTopic = isSpectroscopyTopic(nextTopic) ? "Spectroscopy" : nextTopic
+        const databaseSubtopic =
+          targetSubtopic === "all"
+            ? isSpectroscopyTopic(nextTopic)
+              ? "IR Spectroscopy"
+              : undefined
+            : targetSubtopic
         const questions = generateDatabaseQuestions({
-          topic: "Spectroscopy",
-          targetSubtopic: targetSubtopic === "all" ? "IR Spectroscopy" : targetSubtopic,
+          topic: databaseTopic,
+          targetSubtopic: databaseSubtopic,
           difficulty,
           count: Number(questionCount),
           curriculum: curriculumId,

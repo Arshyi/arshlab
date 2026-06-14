@@ -22,6 +22,11 @@ const REVIEW_TOPICS = [
   "Stoichiometry",
   "Electron Configuration",
   "IR Spectroscopy",
+  "Reaction Types",
+  "Reaction Prediction",
+  "Reaction Balancing",
+  "Redox",
+  "Precipitation",
 ]
 
 function clampQuestionCount(count: number): number {

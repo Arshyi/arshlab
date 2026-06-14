@@ -202,6 +202,9 @@ function fallbackTopics(curriculum: ReturnType<typeof getCurriculum>): string[] 
     "Periodic Trends",
     "Bonding",
     "Thermodynamics",
+    "Reaction Types",
+    "Reaction Prediction",
+    "Reaction Balancing",
     "Spectroscopy",
     "Acids and Bases",
   ]
@@ -333,6 +336,22 @@ function buildAchievementDefinitions(
     `${entry.topic} ${entry.subtopic ?? ""}`.toLowerCase().includes("spectroscopy"),
   )
   const database = entries.filter((entry) => entry.source === "database")
+  const reactionEntries = entries.filter((entry) => {
+    const value = `${entry.topic} ${entry.subtopic ?? ""}`.toLowerCase()
+    return (
+      value.includes("reaction") ||
+      value.includes("redox") ||
+      value.includes("precipitation") ||
+      value.includes("combustion") ||
+      value.includes("balancing")
+    )
+  })
+  const balancingEntries = reactionEntries.filter((entry) => `${entry.topic} ${entry.subtopic ?? ""}`.toLowerCase().includes("balanc"))
+  const redoxEntries = reactionEntries.filter((entry) => `${entry.topic} ${entry.subtopic ?? ""}`.toLowerCase().includes("redox"))
+  const organicReactionEntries = reactionEntries.filter((entry) =>
+    `${entry.topic} ${entry.subtopic ?? ""}`.toLowerCase().includes("organic"),
+  )
+  const reactionCorrect = reactionEntries.filter((entry) => entry.correct).length
   const correctStreak = getCorrectStreak(entries)
   const masteredUnit = mastery.unitMastery.some((unit) => unit.completed)
   const masteredTopic = mastery.topicMastery.some((topic) => topic.mastery >= 90 && topic.attempted >= 5)
@@ -358,6 +377,51 @@ function buildAchievementDefinitions(
       description: "Attempt twenty database-generated questions.",
       unlocked: database.length >= 20,
       progress: clampPercent((database.length / 20) * 100),
+    },
+    {
+      id: "reaction-rookie",
+      label: "Reaction Rookie",
+      description: "Attempt ten reaction engine questions.",
+      unlocked: reactionEntries.length >= 10,
+      progress: clampPercent((reactionEntries.length / 10) * 100),
+    },
+    {
+      id: "balancing-apprentice",
+      label: "Balancing Apprentice",
+      description: "Attempt ten balancing questions.",
+      unlocked: balancingEntries.length >= 10,
+      progress: clampPercent((balancingEntries.length / 10) * 100),
+    },
+    {
+      id: "reaction-analyst",
+      label: "Reaction Analyst",
+      description: "Answer twenty-five reaction questions correctly.",
+      unlocked: reactionCorrect >= 25,
+      progress: clampPercent((reactionCorrect / 25) * 100),
+    },
+    {
+      id: "redox-specialist",
+      label: "Redox Specialist",
+      description: "Attempt ten redox questions.",
+      unlocked: redoxEntries.length >= 10,
+      progress: clampPercent((redoxEntries.length / 10) * 100),
+    },
+    {
+      id: "reaction-master",
+      label: "Reaction Master",
+      description: "Reach at least 80% accuracy across thirty reaction questions.",
+      unlocked: reactionEntries.length >= 30 && percentage(reactionCorrect, reactionEntries.length) >= 80,
+      progress:
+        reactionEntries.length >= 30
+          ? percentage(reactionCorrect, reactionEntries.length)
+          : clampPercent((reactionEntries.length / 30) * 100),
+    },
+    {
+      id: "organic-explorer",
+      label: "Organic Explorer",
+      description: "Attempt ten organic reaction questions.",
+      unlocked: organicReactionEntries.length >= 10,
+      progress: clampPercent((organicReactionEntries.length / 10) * 100),
     },
     {
       id: "exam-veteran",

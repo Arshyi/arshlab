@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Atom, Award, BookOpen, BookOpenCheck, Bot, Database, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves } from "lucide-react"
+import { ArrowRightLeft, Atom, Award, BookOpen, BookOpenCheck, Bot, Database, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -16,6 +16,7 @@ import { analytics } from "@/lib/chemistry/database/analytics/tracker"
 const LAB_LINKS = [
   { href: "/ai-assistant", label: "AI Chemistry Assistant" },
   { href: "/chemistry-database", label: "Chemistry Database" },
+  { href: "/reaction-database", label: "Reaction Database" },
   { href: "/question-engine", label: "Question Engine" },
   { href: "/exam-engine", label: "Exam Engine" },
   { href: "/curriculum", label: "Curriculum Engine" },
@@ -250,6 +251,37 @@ export default function ChemistryHubPage() {
             </Link>
           </CardContent>
         </Card>
+
+        <div className="mb-8 grid gap-4 lg:grid-cols-2">
+          <HubActionCard
+            icon={ArrowRightLeft}
+            title="Reaction Database"
+            description="Browse deterministic reaction records for balancing, prediction, classification, and curriculum-aligned practice."
+            href="/reaction-database"
+            action="Open Reactions"
+          />
+          <HubActionCard
+            icon={Sparkles}
+            title="Reaction Predictor"
+            description="Practice missing-product and product-set prediction questions generated from the local reaction engine."
+            href="/practice-generator?topic=Reaction%20Prediction&source=database"
+            action="Practice Prediction"
+          />
+          <HubActionCard
+            icon={ListChecks}
+            title="Balancing Practice"
+            description="Generate deterministic balancing questions from skeleton equations without using AI requests."
+            href="/practice-generator?topic=Reaction%20Balancing&source=database"
+            action="Balance Equations"
+          />
+          <HubActionCard
+            icon={Gauge}
+            title="Reaction Mastery"
+            description="Track reaction attempts, weakest reaction concepts, and reaction achievements from saved progress."
+            href="/progress"
+            action="View Progress"
+          />
+        </div>
 
         <Card className="rounded-2xl mb-8 border-primary/20 bg-primary/5">
           <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -553,5 +585,41 @@ export default function ChemistryHubPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+function HubActionCard({
+  icon: Icon,
+  title,
+  description,
+  href,
+  action,
+}: {
+  icon: React.ElementType
+  title: string
+  description: string
+  href: string
+  action: string
+}) {
+  return (
+    <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+      <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-semibold">{title}</h2>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+        <Link
+          href={href}
+          className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+        >
+          {action}
+        </Link>
+      </CardContent>
+    </Card>
   )
 }
