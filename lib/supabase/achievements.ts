@@ -10,6 +10,8 @@ export interface StoredAchievement {
   achievementId: string
   label: string
   unlockedAt: string
+  createdAt: string
+  updatedAt: string
 }
 
 interface StoredAchievementRow {
@@ -18,6 +20,8 @@ interface StoredAchievementRow {
   achievement_id: string
   label: string
   unlocked_at: string
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 type AchievementFailureReason = "not-configured" | "not-authenticated" | "supabase-error"
@@ -61,7 +65,14 @@ function mapAchievementRow(row: StoredAchievementRow): StoredAchievement {
     achievementId: row.achievement_id,
     label: row.label,
     unlockedAt: row.unlocked_at,
+    createdAt: row.created_at ?? row.unlocked_at,
+    updatedAt: row.updated_at ?? row.unlocked_at,
   }
+}
+
+function cleanAchievementValue(value: string, fallback: string, maxLength: number): string {
+  const cleaned = value.trim().replace(/\s+/g, " ").slice(0, maxLength)
+  return cleaned || fallback
 }
 
 export async function getStoredAchievements(): Promise<AchievementResult<StoredAchievement[]>> {
@@ -109,8 +120,8 @@ export async function syncAchievementUnlocks(
 
   const payload = unlocked.map((achievement) => ({
     user_id: auth.data.user.id,
-    achievement_id: achievement.id,
-    label: achievement.label,
+    achievement_id: cleanAchievementValue(achievement.id, "achievement", 120),
+    label: cleanAchievementValue(achievement.label, "Achievement", 160),
   }))
 
   const { data, error } = await auth.data.supabase

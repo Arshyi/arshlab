@@ -20,15 +20,25 @@ import {
 } from "./recovery"
 
 export type RecommendationPriority = "High" | "Medium" | "Low"
+export type RecommendedMode =
+  | "Practice Generator"
+  | "Recovery Mode"
+  | "Study Mode"
+  | "Exam Generator"
+  | "Curriculum Review"
+  | "Diagnostic"
 
 export interface LearningRecommendation {
   id: string
   title: string
+  topic: string
   action: string
   href: string
   priority: RecommendationPriority
   mastery: number
   reason: string
+  suggestedMode: RecommendedMode
+  estimatedTimeMinutes: number
 }
 
 export interface AchievementDefinition {
@@ -40,6 +50,7 @@ export interface AchievementDefinition {
 }
 
 export interface AdaptiveLearningSummary {
+  hasUserData: boolean
   strongestTopic: TopicMasteryScore | null
   weakestTopic: TopicMasteryScore | null
   weakestUnit: CurriculumUnitProgress | null
@@ -52,6 +63,7 @@ export interface AdaptiveLearningSummary {
     thisWeek: LearningRecommendation[]
     longTerm: LearningRecommendation[]
   }
+  sevenDayPlan: SevenDayStudyPlanDay[]
   mastery: ChemistryMasteryProfile
   topicStats: LearningTopicStats[]
   conceptStats: LearningConceptStats[]
@@ -65,16 +77,35 @@ export interface AdaptiveLearningSummary {
   achievements: AchievementDefinition[]
 }
 
+export interface SevenDayStudyPlanDay {
+  day: number
+  label: string
+  topics: string[]
+  suggestedMode: RecommendedMode
+  estimatedTimeMinutes: number
+  reason: string
+  href: string
+  priority: RecommendationPriority
+  fallback: boolean
+}
+
 function clampPercent(value: number): number {
-  return Math.max(0, Math.min(100, Math.round(value)))
+  return Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : 0
 }
 
 function percentage(correct: number, total: number): number {
-  return total > 0 ? Math.round((correct / total) * 100) : 0
+  return total > 0 ? clampPercent((correct / total) * 100) : 0
+}
+
+function safeTimestamp(value: string | undefined): number {
+  if (!value) return 0
+  const time = new Date(value).getTime()
+  return Number.isFinite(time) ? time : 0
 }
 
 function recentMissScore(entries: LearningProgressEntry[], topic: string): number {
-  return entries
+  return [...entries]
+    .sort((a, b) => safeTimestamp(b.timestamp) - safeTimestamp(a.timestamp))
     .slice(0, 30)
     .filter((entry) => entry.topic === topic && !entry.correct)
     .length
@@ -123,7 +154,13 @@ export function prioritizeRecoveryTopics(
         recoveryHistoryScore(entries, topic.topic) * 0.05
       return { topic, score }
     })
-    .sort((a, b) => b.score - a.score || a.topic.accuracy - b.topic.accuracy || b.topic.attempted - a.topic.attempted)
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        a.topic.accuracy - b.topic.accuracy ||
+        b.topic.attempted - a.topic.attempted ||
+        a.topic.topic.localeCompare(b.topic.topic),
+    )
     .map(({ topic }) => topic)
 }
 
@@ -152,6 +189,134 @@ function getCorrectStreak(entries: LearningProgressEntry[]): number {
     streak += 1
   }
   return streak
+}
+
+function firstCurriculumTopic(curriculum: ReturnType<typeof getCurriculum>): string {
+  return curriculum.units[0]?.topics[0] ?? curriculum.topics[0] ?? "Stoichiometry"
+}
+
+function fallbackTopics(curriculum: ReturnType<typeof getCurriculum>): string[] {
+  const defaults = [
+    "Stoichiometry",
+    "Electron Configuration",
+    "Periodic Trends",
+    "Bonding",
+    "Thermodynamics",
+    "Spectroscopy",
+    "Acids and Bases",
+  ]
+  const curriculumTopics = curriculum.units.flatMap((unit) => unit.topics)
+  return Array.from(new Set([...curriculumTopics, ...defaults])).slice(0, 7)
+}
+
+function buildSevenDayPlan(input: {
+  hasUserData: boolean
+  curriculum: ReturnType<typeof getCurriculum>
+  nextRecommendedTopic: string
+  suggestedRecoveryTopic: string
+  suggestedExamFocus: string
+  weakestTopic: TopicMasteryScore | null
+  strongestTopic: TopicMasteryScore | null
+  weakestUnit: CurriculumUnitProgress | null
+  nextRecommendedUnit: CurriculumUnitProgress | null
+  conceptStats: LearningConceptStats[]
+}): SevenDayStudyPlanDay[] {
+  const starterTopics = fallbackTopics(input.curriculum)
+  const weakConcept = input.conceptStats.find((concept) => concept.attempted > 0)
+  const reviewTopic = input.strongestTopic?.topic ?? starterTopics[5] ?? input.nextRecommendedTopic
+  const weakestUnitTopic = input.weakestUnit?.unit.topics[0] ?? input.suggestedRecoveryTopic
+
+  if (!input.hasUserData) {
+    return starterTopics.map((topic, index) => ({
+      day: index + 1,
+      label: `Day ${index + 1}`,
+      topics: [topic],
+      suggestedMode: index === 6 ? "Diagnostic" : index === 5 ? "Exam Generator" : "Study Mode",
+      estimatedTimeMinutes: index === 5 ? 35 : index === 6 ? 30 : 20,
+      reason: "Starter plan only: no saved progress exists yet, so ARSHLAB is not personalizing this day.",
+      href: index === 6
+        ? "/diagnostic"
+        : index === 5
+          ? `/exam-generator?source=database&topic=${encodeURIComponent(topic)}`
+          : `/study?topic=${encodeURIComponent(topic)}`,
+      priority: index < 3 ? "Medium" : "Low",
+      fallback: true,
+    }))
+  }
+
+  const personalized: Array<Omit<SevenDayStudyPlanDay, "day" | "label" | "fallback">> = [
+    {
+      topics: [input.nextRecommendedTopic],
+      suggestedMode: "Study Mode",
+      estimatedTimeMinutes: 20,
+      reason: input.nextRecommendedUnit
+        ? `${input.nextRecommendedUnit.unit.title} is next in your selected curriculum path.`
+        : "This topic is the next best step based on your saved attempts.",
+      href: `/study?topic=${encodeURIComponent(input.nextRecommendedTopic)}`,
+      priority: "Medium",
+    },
+    {
+      topics: [input.suggestedRecoveryTopic],
+      suggestedMode: "Recovery Mode",
+      estimatedTimeMinutes: 25,
+      reason: "Recovery Mode is prioritized from recent misses, diagnostic weaknesses, and low mastery.",
+      href: "/recovery",
+      priority: input.weakestTopic && input.weakestTopic.mastery < 60 ? "High" : "Medium",
+    },
+    {
+      topics: [weakestUnitTopic],
+      suggestedMode: "Practice Generator",
+      estimatedTimeMinutes: 15,
+      reason: input.weakestUnit
+        ? `${input.weakestUnit.unit.title} is your weakest curriculum unit.`
+        : "Practice keeps the current weak topic active before moving to exam-style work.",
+      href: `/practice-generator?topic=${encodeURIComponent(weakestUnitTopic)}`,
+      priority: "High",
+    },
+    {
+      topics: [weakConcept?.subtopic ?? input.suggestedRecoveryTopic],
+      suggestedMode: "Study Mode",
+      estimatedTimeMinutes: 20,
+      reason: weakConcept
+        ? `${weakConcept.subtopic} is the weakest tracked concept in your concept analytics.`
+        : "A short study session reinforces the current recovery target.",
+      href: `/study?topic=${encodeURIComponent(weakConcept?.topic ?? input.suggestedRecoveryTopic)}`,
+      priority: weakConcept && weakConcept.mastery < 60 ? "High" : "Medium",
+    },
+    {
+      topics: [input.suggestedExamFocus],
+      suggestedMode: "Exam Generator",
+      estimatedTimeMinutes: 40,
+      reason: "Exam readiness improves when weak units are tested in a mixed setting.",
+      href: `/exam-generator?source=database&mode=adaptive&topic=${encodeURIComponent(input.suggestedRecoveryTopic)}`,
+      priority: "Medium",
+    },
+    {
+      topics: [reviewTopic],
+      suggestedMode: "Curriculum Review",
+      estimatedTimeMinutes: 15,
+      reason: input.strongestTopic
+        ? `${input.strongestTopic.topic} is a stronger area, so this is a quick retention review.`
+        : "Retention review balances weak-topic work with broader curriculum coverage.",
+      href: "/curriculum",
+      priority: "Low",
+    },
+    {
+      topics: [input.suggestedRecoveryTopic, input.nextRecommendedTopic],
+      suggestedMode: "Diagnostic",
+      estimatedTimeMinutes: 30,
+      reason: "End the week by checking whether recovery and study work improved placement-style performance.",
+      href: "/diagnostic",
+      priority: "Medium",
+    },
+  ]
+
+  return personalized.map((day, index) => ({
+    ...day,
+    day: index + 1,
+    label: `Day ${index + 1}`,
+    fallback: false,
+  }))
 }
 
 function buildAchievementDefinitions(
@@ -259,8 +424,9 @@ export function generateLearningRecommendations(
   options: { xp?: number } = {},
 ): AdaptiveLearningSummary {
   const sortedEntries = [...entries].sort(
-    (a, b) => new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime(),
+    (a, b) => safeTimestamp(b.timestamp) - safeTimestamp(a.timestamp),
   )
+  const hasUserData = sortedEntries.length > 0
   const mastery = calculateChemistryMasteryProfile(sortedEntries, curriculumId)
   const curriculum = getCurriculum(curriculumId)
   const curriculumSummary = calculateCurriculumProgress(sortedEntries, curriculum.id)
@@ -279,7 +445,7 @@ export function generateLearningRecommendations(
   const nextRecommendedTopic =
     nextRecommendedUnit?.unit.topics[0] ??
     weakestTopic?.topic ??
-    curriculum.recommendedOrder[0] ??
+    firstCurriculumTopic(curriculum) ??
     "Stoichiometry"
   const examFocus =
     curriculumSummary.weakestUnit?.unit.title ??
@@ -292,22 +458,32 @@ export function generateLearningRecommendations(
     {
       id: "practice-next-topic",
       title: `Practice ${nextRecommendedTopic}`,
+      topic: nextRecommendedTopic,
       action: "Generate Practice",
       href: linkWithTopic("/practice-generator", nextRecommendedTopic, nextUnitId),
-      priority: weakestTopic && weakestTopic.mastery < 60 ? "High" : "Medium",
+      priority: !hasUserData ? "Medium" : weakestTopic && weakestTopic.mastery < 60 ? "High" : "Medium",
       mastery: weakestTopic?.mastery ?? 0,
-      reason: weakestTopic
+      reason: !hasUserData
+        ? "Starter recommendation: no saved progress exists yet, so this begins with curriculum foundations."
+        : weakestTopic
         ? `${weakestTopic.topic} is your lowest tracked topic at ${weakestTopic.mastery}% mastery.`
         : "Start with the first recommended curriculum topic to build baseline data.",
+      suggestedMode: "Practice Generator",
+      estimatedTimeMinutes: 15,
     },
     {
       id: "recovery-target",
       title: `Recovery: ${suggestedRecoveryTopic}`,
+      topic: suggestedRecoveryTopic,
       action: "Start Recovery",
       href: "/recovery",
-      priority: "High",
+      priority: hasUserData ? "High" : "Low",
       mastery: prioritizedRecoveryTopics[0]?.accuracy ?? weakestTopic?.mastery ?? 0,
-      reason: "Recovery prioritizes diagnostic weaknesses, low-mastery units, and recently missed questions.",
+      reason: hasUserData
+        ? "Recovery prioritizes diagnostic weaknesses, low-mastery units, recently missed questions, and exam-readiness gaps."
+        : "Recovery will become personalized after at least a few saved attempts.",
+      suggestedMode: "Recovery Mode",
+      estimatedTimeMinutes: 25,
     },
   ]
 
@@ -315,6 +491,7 @@ export function generateLearningRecommendations(
     {
       id: "study-next-unit",
       title: nextRecommendedUnit ? `Study ${nextRecommendedUnit.unit.title}` : "Build your first study session",
+      topic: nextRecommendedTopic,
       action: "Open Study Mode",
       href: linkWithTopic("/study", nextRecommendedTopic, nextUnitId),
       priority: "Medium",
@@ -322,12 +499,15 @@ export function generateLearningRecommendations(
       reason: nextRecommendedUnit
         ? `${nextRecommendedUnit.unit.title} is next in the curriculum roadmap.`
         : "A study session gives the adaptive engine enough data to personalize future recommendations.",
+      suggestedMode: "Study Mode",
+      estimatedTimeMinutes: 20,
     },
     {
       id: "review-weak-unit",
       title: curriculumSummary.weakestUnit
         ? `Review ${curriculumSummary.weakestUnit.unit.title}`
         : "Review foundational topics",
+      topic: curriculumSummary.weakestUnit?.unit.topics[0] ?? nextRecommendedTopic,
       action: "Open Study Plan",
       href: "/study-plan",
       priority: curriculumSummary.weakestUnit?.mastery && curriculumSummary.weakestUnit.mastery < 60 ? "High" : "Medium",
@@ -335,6 +515,8 @@ export function generateLearningRecommendations(
       reason: curriculumSummary.weakestUnit
         ? `${curriculumSummary.weakestUnit.unit.title} is the weakest unit in your selected curriculum.`
         : "Review starts with curriculum foundations until more progress data exists.",
+      suggestedMode: "Curriculum Review",
+      estimatedTimeMinutes: 20,
     },
   ]
 
@@ -342,27 +524,46 @@ export function generateLearningRecommendations(
     {
       id: "exam-readiness",
       title: `Exam readiness: ${mastery.examReadinessBand}`,
+      topic: suggestedRecoveryTopic,
       action: "Generate Focused Exam",
       href: `/exam-generator?source=database&mode=adaptive&topic=${encodeURIComponent(suggestedRecoveryTopic)}`,
       priority: mastery.examReadiness < 60 ? "High" : mastery.examReadiness < 80 ? "Medium" : "Low",
       mastery: mastery.examReadiness,
-      reason: `Suggested exam focus: ${examFocus}.`,
+      reason: `Suggested exam focus: ${examFocus}. Readiness is ${mastery.examReadiness}/100, so exam practice should close the biggest readiness gap.`,
+      suggestedMode: "Exam Generator",
+      estimatedTimeMinutes: 40,
     },
     {
       id: "curriculum-roadmap",
       title: "Curriculum completion roadmap",
+      topic: nextRecommendedTopic,
       action: "Open Curriculum",
       href: "/curriculum",
       priority: mastery.curriculumCompletion.unitsRemaining > 0 ? "Medium" : "Low",
       mastery: mastery.curriculumCompletion.estimatedCompletion,
       reason: `${mastery.curriculumCompletion.completedUnits} units complete, ${mastery.curriculumCompletion.unitsRemaining} remaining.`,
+      suggestedMode: "Curriculum Review",
+      estimatedTimeMinutes: 20,
     },
   ]
 
+  const sevenDayPlan = buildSevenDayPlan({
+    hasUserData,
+    curriculum,
+    nextRecommendedTopic,
+    suggestedRecoveryTopic,
+    suggestedExamFocus: examFocus,
+    weakestTopic,
+    strongestTopic,
+    weakestUnit: curriculumSummary.weakestUnit,
+    nextRecommendedUnit,
+    conceptStats,
+  })
   const achievements = buildAchievementDefinitions(sortedEntries, mastery, options.xp ?? 0)
-  const recommendationsGenerated = today.length + thisWeek.length + longTerm.length
+  const recommendationsGenerated = today.length + thisWeek.length + longTerm.length + sevenDayPlan.length
 
   return {
+    hasUserData,
     strongestTopic,
     weakestTopic,
     weakestUnit: curriculumSummary.weakestUnit,
@@ -371,6 +572,7 @@ export function generateLearningRecommendations(
     suggestedRecoveryTopic: recoveryUnit ? `${suggestedRecoveryTopic}` : suggestedRecoveryTopic,
     suggestedExamFocus: examFocus,
     recommendations: { today, thisWeek, longTerm },
+    sevenDayPlan,
     mastery,
     topicStats,
     conceptStats,

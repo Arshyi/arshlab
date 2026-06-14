@@ -42,6 +42,11 @@ function RecommendationCard({ recommendation }: { recommendation: LearningRecomm
           <div>
             <h3 className="font-semibold text-foreground">{recommendation.title}</h3>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{recommendation.reason}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Badge variant="outline">{recommendation.topic}</Badge>
+              <Badge variant="secondary">{recommendation.suggestedMode}</Badge>
+              <Badge variant="outline">{recommendation.estimatedTimeMinutes} min</Badge>
+            </div>
           </div>
           <Badge variant={priorityVariant(recommendation.priority)}>{recommendation.priority}</Badge>
         </div>
@@ -149,6 +154,18 @@ export function StudyPlanClient() {
               </Alert>
             )}
 
+            {!summary.hasUserData && (
+              <Alert className="mb-6 rounded-2xl border-primary/20 bg-primary/5">
+                <ClipboardList className="h-4 w-4" />
+                <AlertTitle>Starter plan only</AlertTitle>
+                <AlertDescription>
+                  No saved progress exists yet, so this 7-day plan is a general chemistry starter path.
+                  Personal weak-topic targeting will appear after you save practice, diagnostic, study, recovery,
+                  or exam attempts.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <MetricCard label="Overall Mastery" value={`${summary.mastery.overallMastery}%`} />
               <MetricCard label="Exam Readiness" value={`${summary.mastery.examReadiness}%`} />
@@ -158,6 +175,14 @@ export function StudyPlanClient() {
 
             <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
               <main className="space-y-6">
+                <SectionCard icon={CalendarDays} title="7-Day Adaptive Plan">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {summary.sevenDayPlan.map((day) => (
+                      <DayPlanCard key={day.day} day={day} />
+                    ))}
+                  </div>
+                </SectionCard>
+
                 <SectionCard icon={Target} title="Today">
                   <div className="grid gap-4 md:grid-cols-2">
                     {summary.recommendations.today.map((recommendation) => (
@@ -243,6 +268,10 @@ export function StudyPlanClient() {
                       Recommendations are generated from saved self-marked progress. They are study guidance,
                       not official curriculum completion or exam prediction.
                     </p>
+                    <p>
+                      Mastery uses diagnostic 25%, practice 35%, exam 30%, and recovery 10%.
+                      If a source has no attempts, ARSHLAB leaves it out instead of inventing a score.
+                    </p>
                   </CardContent>
                 </Card>
               </aside>
@@ -272,6 +301,49 @@ function SectionCard({
         </CardTitle>
       </CardHeader>
       <CardContent>{children}</CardContent>
+    </Card>
+  )
+}
+
+function DayPlanCard({
+  day,
+}: {
+  day: {
+    day: number
+    label: string
+    topics: string[]
+    suggestedMode: string
+    estimatedTimeMinutes: number
+    reason: string
+    href: string
+    priority: RecommendationPriority
+    fallback: boolean
+  }
+}) {
+  return (
+    <Card className="rounded-2xl">
+      <CardContent className="space-y-4 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{day.label}</p>
+            <h3 className="mt-1 font-semibold text-foreground">{day.topics.join(" + ")}</h3>
+          </div>
+          <Badge variant={day.fallback ? "secondary" : priorityVariant(day.priority)}>
+            {day.fallback ? "Starter" : day.priority}
+          </Badge>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {day.topics.map((topic) => (
+            <Badge key={topic} variant="outline">{topic}</Badge>
+          ))}
+          <Badge variant="secondary">{day.suggestedMode}</Badge>
+          <Badge variant="outline">{day.estimatedTimeMinutes} min</Badge>
+        </div>
+        <p className="text-sm leading-relaxed text-muted-foreground">{day.reason}</p>
+        <Button asChild variant="outline" className="w-full rounded-xl">
+          <Link href={day.href}>Open {day.suggestedMode}</Link>
+        </Button>
+      </CardContent>
     </Card>
   )
 }

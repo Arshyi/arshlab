@@ -1,11 +1,17 @@
 create table if not exists public.user_achievements (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  achievement_id text not null,
-  label text not null,
+  achievement_id text not null check (length(trim(achievement_id)) between 1 and 120),
+  label text not null check (length(trim(label)) between 1 and 160),
   unlocked_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
   unique (user_id, achievement_id)
 );
+
+alter table public.user_achievements
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
 
 alter table public.user_achievements enable row level security;
 

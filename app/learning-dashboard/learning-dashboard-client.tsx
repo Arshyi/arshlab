@@ -115,7 +115,7 @@ export function LearningDashboardClient() {
             </div>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v3.5.0 connects diagnostics, curriculum, practice, recovery, study, and exams into one adaptive learning view.
+            ARSHLAB v3.5.1 connects diagnostics, curriculum, practice, recovery, study, and exams into one hardened adaptive learning view.
           </p>
         </motion.div>
 
@@ -141,6 +141,29 @@ export function LearningDashboardClient() {
                   </div>
                 </AlertDescription>
               </Alert>
+            )}
+
+            {!summary.hasUserData && (
+              <Card className="mb-6 rounded-2xl border-dashed">
+                <CardContent className="grid gap-4 p-5 md:grid-cols-[1fr_auto] md:items-center">
+                  <div>
+                    <h2 className="text-lg font-semibold">No saved learning data yet</h2>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      The dashboard is showing starter guidance only. ARSHLAB will personalize mastery,
+                      recovery, and exam readiness after you save practice, diagnostic, study, recovery,
+                      or exam attempts.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button asChild className="rounded-xl">
+                      <Link href="/study">Start Study Mode</Link>
+                    </Button>
+                    <Button asChild variant="outline" className="rounded-xl">
+                      <Link href="/diagnostic">Take Diagnostic</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -198,6 +221,13 @@ export function LearningDashboardClient() {
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                       {nextAction?.reason ?? "Generate a few tracked questions so ARSHLAB can personalize recommendations."}
                     </p>
+                    {nextAction && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Badge variant="outline">{nextAction.topic}</Badge>
+                        <Badge variant="secondary">{nextAction.suggestedMode}</Badge>
+                        <Badge variant="outline">{nextAction.estimatedTimeMinutes} min</Badge>
+                      </div>
+                    )}
                   </div>
                   <Button asChild className="w-full rounded-xl">
                     <Link href={nextAction?.href ?? "/study"}>{nextAction?.action ?? "Open Study Mode"}</Link>
@@ -207,6 +237,17 @@ export function LearningDashboardClient() {
                   </Button>
                 </CardContent>
               </Card>
+            </div>
+
+            <div className="mb-6 grid gap-4 lg:grid-cols-2">
+              <ExplanationCard
+                title="How mastery is calculated"
+                body="ARSHLAB combines diagnostic, practice, exam, and recovery progress with fixed weights: diagnostic 25%, practice 35%, exam 30%, and recovery 10%. Missing sources are ignored until attempts exist, then active weights are re-normalized and clamped from 0 to 100."
+              />
+              <ExplanationCard
+                title="Why this recommendation appears"
+                body="Recommendations rank recent misses, low topic mastery, diagnostic weaknesses, weak curriculum units, and exam-readiness gaps. If there is no saved data yet, ARSHLAB shows a starter path instead of pretending it knows your weaknesses."
+              />
             </div>
 
             <div className="mb-6 grid gap-6 lg:grid-cols-2">
@@ -344,6 +385,17 @@ function Insight({ label, value }: { label: string; value: string }) {
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-2 font-semibold text-foreground">{value}</p>
     </div>
+  )
+}
+
+function ExplanationCard({ title, body }: { title: string; body: string }) {
+  return (
+    <Card className="rounded-2xl border-primary/20 bg-primary/5">
+      <CardContent className="p-5">
+        <p className="font-semibold text-foreground">{title}</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
+      </CardContent>
+    </Card>
   )
 }
 

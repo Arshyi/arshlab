@@ -22,6 +22,10 @@ export interface SourceMasteryBreakdown {
   attempted: number
   correct: number
   accuracy: number
+  /**
+   * Fixed v3.5 mastery weight.
+   * Active sources are re-normalized when one source has no attempts yet.
+   */
   weight: number
 }
 
@@ -68,23 +72,46 @@ export const MASTERY_WEIGHTS: Record<LearningSource, number> = {
   recovery: 0.1,
 }
 
+export function clampPercent(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : 0
+}
+
+function safeCount(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0
+}
+
 function percentage(correct: number, total: number): number {
-  return total > 0 ? Math.round((correct / total) * 100) : 0
+  const safeTotal = safeCount(total)
+  if (safeTotal === 0) return 0
+  return clampPercent((safeCount(correct) / safeTotal) * 100)
+}
+
+function normalizeTopic(topic: string | null | undefined): string {
+  const trimmed = topic?.trim()
+  return trimmed ? trimmed.slice(0, 120) : "General Chemistry"
+}
+
+function safeTimestamp(value: string | undefined): number {
+  if (!value) return 0
+  const time = new Date(value).getTime()
+  return Number.isFinite(time) ? time : 0
 }
 
 export function getMasteryBand(score: number): MasteryBand {
-  if (score < 40) return "Needs Work"
-  if (score < 60) return "Developing"
-  if (score < 80) return "Ready"
+  const safeScore = clampPercent(score)
+  if (safeScore < 40) return "Needs Work"
+  if (safeScore < 60) return "Developing"
+  if (safeScore < 80) return "Ready"
   return "Exam Ready"
 }
 
 export function getExamReadinessBand(
   score: number,
 ): "Needs Preparation" | "Developing" | "Ready" | "Exam Ready" {
-  if (score < 40) return "Needs Preparation"
-  if (score < 60) return "Developing"
-  if (score < 80) return "Ready"
+  const safeScore = clampPercent(score)
+  if (safeScore < 40) return "Needs Preparation"
+  if (safeScore < 60) return "Developing"
+  if (safeScore < 80) return "Ready"
   return "Exam Ready"
 }
 
@@ -114,7 +141,7 @@ function calculateWeightedMastery(entries: LearningProgressEntry[]): {
 
   const activeWeight = breakdown
     .filter((item) => item.attempted > 0)
-    .reduce((sum, item) => sum + item.weight, 0)
+    .reduce((sum, item) => sum + (Number.isFinite(item.weight) ? item.weight : 0), 0)
 
   if (activeWeight === 0) return { mastery: 0, breakdown }
 
@@ -122,15 +149,16 @@ function calculateWeightedMastery(entries: LearningProgressEntry[]): {
     .filter((item) => item.attempted > 0)
     .reduce((sum, item) => sum + item.accuracy * (item.weight / activeWeight), 0)
 
-  return { mastery: Math.round(mastery), breakdown }
+  return { mastery: clampPercent(mastery), breakdown }
 }
 
 function groupEntriesByTopic(entries: LearningProgressEntry[]): Map<string, LearningProgressEntry[]> {
   const groups = new Map<string, LearningProgressEntry[]>()
   for (const entry of entries) {
-    const current = groups.get(entry.topic) ?? []
+    const topic = normalizeTopic(entry.topic)
+    const current = groups.get(topic) ?? []
     current.push(entry)
-    groups.set(entry.topic, current)
+    groups.set(topic, current)
   }
   return groups
 }
@@ -158,8 +186,9 @@ function getStudyStreak(entries: LearningProgressEntry[]): number {
 }
 
 function estimateGraduation(unitsRemaining: number, estimatedCompletion: number): string {
-  if (unitsRemaining === 0 || estimatedCompletion >= 100) return "Curriculum complete"
-  const days = Math.max(7, unitsRemaining * 5)
+  const safeRemaining = safeCount(unitsRemaining)
+  if (safeRemaining === 0 || clampPercent(estimatedCompletion) >= 100) return "Curriculum complete"
+  const days = Math.max(7, safeRemaining * 5)
   const date = new Date()
   date.setDate(date.getDate() + days)
   return new Intl.DateTimeFormat("en", {
@@ -172,11 +201,12 @@ function estimateGraduation(unitsRemaining: number, estimatedCompletion: number)
 export function calculateTopicMastery(entries: LearningProgressEntry[]): TopicMasteryScore[] {
   return Array.from(groupEntriesByTopic(entries).entries())
     .map(([topic, topicEntries]) => {
-      const correct = topicEntries.filter((entry) => entry.correct).length
+      const attempted = safeCount(topicEntries.length)
+      const correct = safeCount(topicEntries.filter((entry) => entry.correct).length)
       const weighted = calculateWeightedMastery(topicEntries)
       return {
         topic,
-        attempted: topicEntries.length,
+        attempted,
         correct,
         mastery: weighted.mastery,
         band: getMasteryBand(weighted.mastery),
@@ -190,17 +220,25 @@ export function calculateChemistryMasteryProfile(
   entries: LearningProgressEntry[],
   curriculumId?: CurriculumId | string | null,
 ): ChemistryMasteryProfile {
+  const safeEntries = entries
+    .filter((entry) => Boolean(entry))
+    .map((entry) => ({
+      ...entry,
+      topic: normalizeTopic(entry.topic),
+      correct: Boolean(entry.correct),
+    }))
+    .sort((a, b) => safeTimestamp(b.timestamp) - safeTimestamp(a.timestamp))
   const curriculum = getCurriculum(curriculumId)
-  const curriculumSummary = calculateCurriculumProgress(entries, curriculum.id)
-  const topicMastery = calculateTopicMastery(entries)
-  const overall = calculateWeightedMastery(entries)
-  const examEntries = entries.filter((entry) => classifyLearningSource(entry) === "exam")
+  const curriculumSummary = calculateCurriculumProgress(safeEntries, curriculum.id)
+  const topicMastery = calculateTopicMastery(safeEntries)
+  const overall = calculateWeightedMastery(safeEntries)
+  const examEntries = safeEntries.filter((entry) => classifyLearningSource(entry) === "exam")
   const examCorrect = examEntries.filter((entry) => entry.correct).length
-  const diagnosticEntries = entries.filter((entry) => classifyLearningSource(entry) === "diagnostic")
+  const diagnosticEntries = safeEntries.filter((entry) => classifyLearningSource(entry) === "diagnostic")
   const diagnosticCorrect = diagnosticEntries.filter((entry) => entry.correct).length
   const examAccuracy = percentage(examCorrect, examEntries.length)
   const diagnosticAccuracy = percentage(diagnosticCorrect, diagnosticEntries.length)
-  const examReadiness = Math.round(
+  const examReadiness = clampPercent(
     overall.mastery * 0.5 +
       examAccuracy * 0.25 +
       diagnosticAccuracy * 0.15 +
@@ -208,22 +246,22 @@ export function calculateChemistryMasteryProfile(
   )
   const unitMastery = curriculumSummary.units.map((unit) => ({
     unit: unit.unit,
-    attempted: unit.attempted,
-    correct: unit.correct,
-    mastery: unit.mastery,
-    band: getMasteryBand(unit.mastery),
-    completed: unit.mastery >= 80 && unit.attempted >= 5,
+    attempted: safeCount(unit.attempted),
+    correct: safeCount(unit.correct),
+    mastery: clampPercent(unit.mastery),
+    band: getMasteryBand(clampPercent(unit.mastery)),
+    completed: clampPercent(unit.mastery) >= 80 && safeCount(unit.attempted) >= 5,
   }))
   const completedUnits = unitMastery.filter((unit) => unit.completed).length
   const unitsRemaining = Math.max(0, unitMastery.length - completedUnits)
   const estimatedCompletion = unitMastery.length
-    ? Math.round((completedUnits / unitMastery.length) * 100)
+    ? clampPercent((completedUnits / unitMastery.length) * 100)
     : 0
 
   return {
     topicMastery,
     unitMastery,
-    overallMastery: overall.mastery,
+    overallMastery: clampPercent(overall.mastery),
     overallBand: getMasteryBand(overall.mastery),
     examReadiness,
     examReadinessBand: getExamReadinessBand(examReadiness),
@@ -233,8 +271,8 @@ export function calculateChemistryMasteryProfile(
       estimatedCompletion,
       estimatedGraduation: estimateGraduation(unitsRemaining, estimatedCompletion),
     },
-    diagnosticCoverage: curriculumSummary.diagnosticCoverage,
-    studyStreak: getStudyStreak(entries),
+    diagnosticCoverage: clampPercent(curriculumSummary.diagnosticCoverage),
+    studyStreak: safeCount(getStudyStreak(safeEntries)),
     calculations: topicMastery.length + unitMastery.length + 4,
   }
 }

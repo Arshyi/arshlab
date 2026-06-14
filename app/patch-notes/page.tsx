@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.5.0",
+    version: "3.5.1",
     date: "Current",
+    status: "released",
+    title: "Adaptive Learning Engine Hardening",
+    changes: [
+      "Hardened mastery calculations with clamped 0-100 outputs, safe counts, missing-topic fallbacks, and NaN protection",
+      "Confirmed weighted mastery sources: Diagnostic 25%, Practice 35%, Exam 30%, and Recovery 10%",
+      "Expanded recommendations with topic, priority, suggested mode, estimated time, and clearer reasons",
+      "Added deterministic 7-day adaptive study plans with starter fallback plans when no saved data exists",
+      "Improved Learning Dashboard empty states and explanation cards for mastery and recommendation logic",
+      "Polished Supabase achievement unlock storage with safer constraints, timestamps, unique user-achievement pairs, and RLS",
+      "Kept OpenRouter configuration and free-model-only guardrails unchanged",
+    ],
+  },
+  {
+    version: "3.5.0",
+    date: "Previous",
     status: "released",
     title: "Adaptive Learning Engine",
     changes: [
