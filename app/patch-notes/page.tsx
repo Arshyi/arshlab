@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.4.0",
+    version: "3.5.0",
     date: "Current",
+    status: "released",
+    title: "Adaptive Learning Engine",
+    changes: [
+      "Added weighted mastery scoring across diagnostic, practice, exam, and recovery progress",
+      "Added adaptive recommendation engine for strongest topic, weakest topic, weakest unit, next unit, recovery target, and exam focus",
+      "Added /study-plan with today, this week, and long-term study recommendations",
+      "Added /learning-dashboard with overall mastery, curriculum progress, diagnostic coverage, exam readiness, study streak, weak areas, and strong areas",
+      "Added 0-100 Exam Readiness Index with Needs Preparation, Developing, Ready, and Exam Ready bands",
+      "Upgraded Recovery Mode targeting to prioritize diagnostic weaknesses, low-mastery units, and recently missed questions",
+      "Added curriculum completion tracking with completed units, remaining units, estimated completion, and estimated graduation",
+      "Added achievement unlock storage for adaptive learning milestones",
+      "Added Chemistry Hub, homepage, roadmap, and navigation links for Learning Dashboard and Study Plan",
+    ],
+  },
+  {
+    version: "3.4.0",
+    date: "Previous",
     status: "released",
     title: "Spectroscopy Knowledge Core",
     changes: [

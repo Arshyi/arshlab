@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Atom, BookOpen, BookOpenCheck, Bot, Database, Search, GraduationCap, Orbit, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves } from "lucide-react"
+import { Atom, Award, BookOpen, BookOpenCheck, Bot, Database, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -19,6 +19,8 @@ const LAB_LINKS = [
   { href: "/question-engine", label: "Question Engine" },
   { href: "/exam-engine", label: "Exam Engine" },
   { href: "/curriculum", label: "Curriculum Engine" },
+  { href: "/learning-dashboard", label: "Learning Dashboard" },
+  { href: "/study-plan", label: "Study Plan" },
   { href: "/diagnostic", label: "Diagnostic Assessment" },
   { href: "/study", label: "Study Mode" },
   { href: "/recovery", label: "Recovery Mode" },
@@ -131,6 +133,100 @@ export default function ChemistryHubPage() {
             </Link>
           </CardContent>
         </Card>
+
+        <div className="mb-8 grid gap-4 lg:grid-cols-2">
+          <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                  <Gauge className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="font-semibold">Learning Dashboard</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Review overall mastery, curriculum progress, diagnostic coverage, exam readiness,
+                    streaks, weak areas, strong areas, and recommended next actions.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/learning-dashboard"
+                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+              >
+                Open Dashboard
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border-primary/20 bg-primary/5">
+            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                  <Route className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="font-semibold">Study Plan</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Get today&apos;s practice and recovery actions, this week&apos;s unit plan,
+                    and a long-term curriculum completion roadmap.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/study-plan"
+                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+              >
+                Open Plan
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border-amber-500/20 bg-amber-500/5">
+            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                  <Target className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="font-semibold">Exam Readiness</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Check the 0-100 readiness index, strongest topics, weakest topics,
+                    and recommended exam focus areas.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/learning-dashboard#exam-readiness"
+                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+              >
+                View Readiness
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                  <Award className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="font-semibold">Achievements</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Track adaptive learning milestones including diagnostics, recovery, database practice,
+                    spectroscopy, curriculum mastery, and long-term question goals.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/learning-dashboard#achievements"
+                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+              >
+                View Achievements
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card className="rounded-2xl mb-8 border-teal-500/20 bg-teal-500/5">
           <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">

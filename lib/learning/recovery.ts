@@ -143,11 +143,15 @@ export function getAdaptiveDifficulty(mastery: number): PracticeDifficulty {
 
 function getReviewTopic(weakTopics: LearningTopicStats[], allStats: LearningTopicStats[]): LearningTopicStats {
   const excluded = new Set(weakTopics.slice(0, 2).map((topic) => topic.topic))
-  const candidates = RECOVERY_TOPICS.filter((topic) => !excluded.has(topic))
-  const topic = candidates[Math.floor(Math.random() * candidates.length)] ?? RECOVERY_TOPICS[0]
-  const existing = allStats.find((stat) => stat.topic === topic)
+  const existing = [...allStats]
+    .filter((stat) => !excluded.has(stat.topic))
+    .sort((a, b) => b.attempted - a.attempted || b.accuracy - a.accuracy || a.topic.localeCompare(b.topic))[0]
 
-  return existing ?? {
+  if (existing) return existing
+
+  const topic = RECOVERY_TOPICS.find((candidate) => !excluded.has(candidate)) ?? RECOVERY_TOPICS[0]
+
+  return {
     topic,
     attempted: 0,
     correct: 0,

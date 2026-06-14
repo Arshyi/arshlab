@@ -13,7 +13,7 @@ import type {
 } from "./types"
 import type { SpectroscopyRecord } from "./spectroscopy-types"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.4.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.5.0"
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,

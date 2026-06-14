@@ -33,6 +33,8 @@ import {
   Target,
   Database,
   ListChecks,
+  Gauge,
+  Route,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -62,6 +64,8 @@ const chemistryToolItems = [
   { href: "/question-engine", label: "Question Engine", icon: ListChecks },
   { href: "/exam-engine", label: "Exam Engine", icon: FileQuestion },
   { href: "/curriculum", label: "Curriculum Engine", icon: GraduationCap },
+  { href: "/learning-dashboard", label: "Learning Dashboard", icon: Gauge },
+  { href: "/study-plan", label: "Study Plan", icon: Route },
   { href: "/diagnostic", label: "Diagnostic", icon: ClipboardCheck },
   { href: "/study", label: "Study Mode", icon: BookOpenCheck },
   { href: "/recovery", label: "Recovery Mode", icon: Target },

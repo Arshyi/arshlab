@@ -274,6 +274,10 @@ function getAchievements(
   const firstRecovery = entries.some((entry) => entry.questionType === "Recovery Mode")
   const masteredTopic = topicStats.some((stat) => stat.total >= 5 && stat.mastery >= 90)
   const longestStreak = getLongestCorrectStreak(entries)
+  const spectroscopyAttempts = entries.filter(isSpectroscopyEntry).length
+  const databaseAttempts = entries.filter((entry) => entry.source === "database").length
+  const examAttempts = entries.filter((entry) => entry.examSource || entry.questionType.toLowerCase().includes("exam")).length
+  const recoveryAttempts = entries.filter((entry) => entry.questionType === "Recovery Mode").length
   const bestDiagnosticAccuracy = profile?.bestDiagnosticAccuracy ?? 0
   const previousDiagnosticAccuracy = profile?.previousDiagnosticAccuracy
   const lastDiagnosticAccuracy = profile?.lastDiagnosticAccuracy ?? 0
@@ -285,6 +289,62 @@ function getAchievements(
   const curriculumProgress = curriculumSummary.overallProgress
 
   return [
+    {
+      label: "Diagnostic Explorer",
+      description: "Complete diagnostic-style tracked questions.",
+      unlocked: completedDiagnostics >= 1,
+      progress: Math.min(100, completedDiagnostics * 100),
+      icon: ClipboardCheck,
+    },
+    {
+      label: "Spectroscopy Apprentice",
+      description: "Attempt ten spectroscopy questions.",
+      unlocked: spectroscopyAttempts >= 10,
+      progress: Math.min(100, Math.round((spectroscopyAttempts / 10) * 100)),
+      icon: Sparkles,
+    },
+    {
+      label: "Database Scholar",
+      description: "Attempt twenty database-generated questions.",
+      unlocked: databaseAttempts >= 20,
+      progress: Math.min(100, Math.round((databaseAttempts / 20) * 100)),
+      icon: Database,
+    },
+    {
+      label: "Exam Veteran",
+      description: "Attempt fifty exam questions.",
+      unlocked: examAttempts >= 50,
+      progress: Math.min(100, Math.round((examAttempts / 50) * 100)),
+      icon: Trophy,
+    },
+    {
+      label: "Recovery Specialist",
+      description: "Attempt thirty recovery questions.",
+      unlocked: recoveryAttempts >= 30,
+      progress: Math.min(100, Math.round((recoveryAttempts / 30) * 100)),
+      icon: Flame,
+    },
+    {
+      label: "100 Questions Completed",
+      description: "Complete one hundred tracked chemistry questions.",
+      unlocked: total >= 100,
+      progress: Math.min(100, Math.round((total / 100) * 100)),
+      icon: Target,
+    },
+    {
+      label: "1000 XP",
+      description: "Reach one thousand XP.",
+      unlocked: xp >= 1000,
+      progress: Math.min(100, Math.round((xp / 1000) * 100)),
+      icon: Zap,
+    },
+    {
+      label: "Curriculum Master",
+      description: "Reach 90% overall curriculum mastery.",
+      unlocked: curriculumProgress >= 90,
+      progress: Math.min(100, Math.round((curriculumProgress / 90) * 100)),
+      icon: Trophy,
+    },
     {
       label: "First Question",
       description: "Attempt one self-marked practice question.",

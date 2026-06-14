@@ -49,6 +49,7 @@ import {
   type RecoveryOutcome,
   type RecoveryPlanItem,
 } from "@/lib/learning/recovery"
+import { prioritizeRecoveryTopics } from "@/lib/learning/recommendations"
 import {
   downloadAnswerKeyPdf,
   downloadQuestionPdf,
@@ -231,7 +232,15 @@ export function RecoveryClient() {
   const conceptStats = useMemo(() => calculateConceptStats(entries), [entries])
   const weakTopics = useMemo(() => detectWeakTopics(entries), [entries])
   const weakConcepts = useMemo(() => detectWeakConcepts(entries), [entries])
+  const prioritizedRecoveryTopics = useMemo(
+    () => prioritizeRecoveryTopics(entries, curriculumId),
+    [curriculumId, entries],
+  )
   const weakAreaTopics = useMemo(() => {
+    const adaptiveTopics = prioritizedRecoveryTopics.filter(
+      (topic) => topic.accuracy < 70 || topic.missed > 0,
+    )
+    if (adaptiveTopics.length > 0) return adaptiveTopics
     if (weakTopics.length > 0) return weakTopics
 
     const groups = new Map<string, { attempted: number; correct: number }>()
@@ -251,7 +260,7 @@ export function RecoveryClient() {
         accuracy: stats.attempted ? Math.round((stats.correct / stats.attempted) * 100) : 0,
       }))
       .sort((a, b) => a.accuracy - b.accuracy || b.attempted - a.attempted)
-  }, [weakConcepts, weakTopics])
+  }, [prioritizedRecoveryTopics, weakConcepts, weakTopics])
   const currentQuestion = recoverySet?.questions[currentIndex] ?? null
   const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined
   const totalQuestions = recoverySet?.questions.length ?? 0

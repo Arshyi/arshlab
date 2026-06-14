@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, GraduationCap, Database, ListChecks } from "lucide-react"
+import { ArrowRight, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, GraduationCap, Database, ListChecks, Gauge, Route } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -62,6 +62,18 @@ const features = [
     title: "Curriculum Engine",
     description: "Choose IB, AP, A-Level, CHEM 121, or first-year chemistry paths and track unit mastery.",
     href: "/curriculum",
+  },
+  {
+    icon: Gauge,
+    title: "Learning Dashboard",
+    description: "See overall mastery, exam readiness, curriculum progress, streaks, weak areas, and recommended next actions.",
+    href: "/learning-dashboard",
+  },
+  {
+    icon: Route,
+    title: "Study Plan",
+    description: "Turn saved progress into today, this week, and long-term chemistry study recommendations.",
+    href: "/study-plan",
   },
   {
     icon: Database,
