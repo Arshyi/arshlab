@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import { ArrowRight, Atom, Beaker, Database, FlaskConical, Search, Sigma, Waves } from "lucide-react"
-import { Molecule2DRenderer } from "@/components/chemistry/Molecule2DRenderer"
+import { ElementColorLegend, Molecule2DRenderer } from "@/components/chemistry/Molecule2DRenderer"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -404,6 +404,7 @@ export function ChemistryDatabaseClient() {
                       </div>
                     )}
                   </div>
+                  <ElementColorLegend compact />
                   <div className="grid gap-3">
                     <InfoRow label="Molar mass" value={`${selectedCompound.molarMass.toFixed(3)} g/mol`} />
                     <InfoRow label="Category" value={selectedCompound.category} />
@@ -441,7 +442,7 @@ export function ChemistryDatabaseClient() {
             <div>
               <h2 className="font-semibold">Future-ready chemistry core</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                The v3.7.0 layer now includes local compounds, spectra, reactions, and 2D structure hooks for
+                The v3.7.1 layer now includes local compounds, spectra, reactions, and refined 2D structure hooks for
                 larger libraries, pathway maps, reaction databases, and RAG-assisted tutoring.
               </p>
             </div>

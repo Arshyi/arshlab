@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react"
+import { ArrowDown, ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { COMPOUND_PATHWAYS, getStructureByCompoundId } from "@/lib/chemistry/structures"
 import type { CompoundPathway } from "@/lib/chemistry/visualization-types"
@@ -8,6 +8,10 @@ interface CompoundPathwayGraphProps {
   pathway?: CompoundPathway
   pathwayId?: string
   compact?: boolean
+}
+
+function primaryFunctionalGroup(structure: ReturnType<typeof getStructureByCompoundId>, fallback: string): string {
+  return structure?.functionalGroupHighlights?.[0]?.group ?? fallback
 }
 
 export function CompoundPathwayGraph({ pathway, pathwayId, compact = false }: CompoundPathwayGraphProps) {
@@ -26,41 +30,49 @@ export function CompoundPathwayGraph({ pathway, pathwayId, compact = false }: Co
         </Badge>
       </div>
 
-      <div className="overflow-x-auto pb-2">
-        <div className="flex min-w-max items-stretch gap-3">
-          {selected.nodes.map((node, index) => {
-            const structure = getStructureByCompoundId(node.compoundId)
-            const edge = selected.edges.find((item) => item.from === node.id)
-            return (
-              <div key={node.id} className="flex items-center gap-3">
-                <div className="w-56 rounded-xl border border-border bg-card p-3">
-                  {structure ? (
-                    <Molecule2DRenderer structure={structure} compact={compact} />
-                  ) : (
-                    <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-border bg-secondary/30 text-sm font-medium">
-                      {node.label}
-                    </div>
-                  )}
-                  <p className="mt-2 text-sm font-semibold">{node.label}</p>
-                  {node.note ? <p className="mt-1 text-xs text-muted-foreground">{node.note}</p> : null}
-                </div>
-                {index < selected.nodes.length - 1 ? (
-                  <div className="flex w-32 flex-col items-center gap-2 text-center">
-                    <ArrowRight className="h-5 w-5 text-primary" />
-                    {edge ? (
-                      <>
-                        <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary">
-                          {edge.reactionType}
-                        </span>
-                        {edge.reagent ? <span className="text-[10px] text-muted-foreground">{edge.reagent}</span> : null}
-                      </>
-                    ) : null}
-                  </div>
-                ) : null}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {selected.nodes.map((node, index) => {
+          const structure = getStructureByCompoundId(node.compoundId)
+          const edge = selected.edges.find((item) => item.from === node.id)
+          return (
+            <div key={node.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <Badge variant="outline">Step {index + 1}</Badge>
+                <Badge variant="secondary" className="capitalize">
+                  {primaryFunctionalGroup(structure, node.label)}
+                </Badge>
               </div>
-            )
-          })}
-        </div>
+              {structure ? (
+                <Molecule2DRenderer structure={structure} compact={compact} />
+              ) : (
+                <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-border bg-secondary/30 text-sm font-medium">
+                  {node.label}
+                </div>
+              )}
+              <div className="mt-3 rounded-xl border border-border bg-secondary/20 px-3 py-2">
+                <p className="font-semibold">{structure?.displayName ?? node.label}</p>
+                <p className="font-mono text-xs text-muted-foreground">{structure?.formula ?? "Formula unavailable"}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Functional group: {primaryFunctionalGroup(structure, node.label)}</p>
+                {node.note ? <p className="mt-1 text-xs text-muted-foreground">{node.note}</p> : null}
+              </div>
+              {edge ? (
+                <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
+                  <div className="flex items-center gap-2 font-medium">
+                    <span>{edge.reactionType}</span>
+                    <ArrowRight className="hidden h-4 w-4 text-primary sm:block" />
+                    <ArrowDown className="h-4 w-4 text-primary sm:hidden" />
+                  </div>
+                  {edge.reagent ? <p className="mt-1 text-xs text-muted-foreground">Conditions: {edge.reagent}</p> : null}
+                  {edge.note ? <p className="mt-1 text-xs text-muted-foreground">{edge.note}</p> : null}
+                </div>
+              ) : (
+                <div className="mt-3 rounded-xl border border-border bg-secondary/20 p-3 text-xs text-muted-foreground">
+                  Pathway endpoint
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

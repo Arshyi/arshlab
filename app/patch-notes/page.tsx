@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.7.0",
+    version: "3.7.1",
     date: "Current",
+    status: "released",
+    title: "Molecular Visualization Refinement",
+    changes: [
+      "Added centered atom labels for every visible atom in the 2D molecule renderer",
+      "Added deterministic element colors and an Element Colors legend for common chemistry elements",
+      "Improved single, double, triple, and aromatic bond rendering with clearer visual distinctions",
+      "Added Ball-and-Stick, Condensed Formula, and Skeletal Organic display modes to the Molecular Visualizer",
+      "Added hover tooltips for atoms with element name, atomic number, and atomic mass",
+      "Added direct functional-group overlay labels such as -OH, C=O, -COOH, -COO-, and -NH2",
+      "Improved reaction diagrams with Reactants-to-Products flow and inferred classroom conditions",
+      "Improved pathway cards with compound name, formula, functional group, and reduced horizontal scrolling",
+      "Polished mobile readability for molecule, reaction, pathway, database, and spectroscopy visual cards",
+    ],
+  },
+  {
+    version: "3.7.0",
+    date: "Previous",
     status: "released",
     title: "Molecular Visualization Engine",
     changes: [

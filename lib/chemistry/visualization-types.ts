@@ -1,4 +1,5 @@
 export type BondOrder = 1 | 2 | 3 | "aromatic"
+export type MoleculeDisplayMode = "ball-and-stick" | "condensed" | "skeletal"
 
 export interface AtomNode {
   id: string
@@ -32,6 +33,7 @@ export interface MolecularStructure2D {
   compoundId: string
   displayName: string
   formula: string
+  condensedFormula?: string
   atoms: AtomNode[]
   bonds: BondEdge[]
   functionalGroupHighlights?: FunctionalGroupHighlight[]

@@ -5,7 +5,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { ArrowRightLeft, Database, Network, Search, Sparkles } from "lucide-react"
 import { CompoundPathwayGraph } from "@/components/chemistry/CompoundPathwayGraph"
-import { Molecule2DRenderer } from "@/components/chemistry/Molecule2DRenderer"
+import { ElementColorLegend, Molecule2DRenderer } from "@/components/chemistry/Molecule2DRenderer"
 import { ReactionDiagram } from "@/components/chemistry/ReactionDiagram"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,9 +14,15 @@ import { Input } from "@/components/ui/input"
 import { COMPOUND_PATHWAYS, MOLECULAR_STRUCTURES } from "@/lib/chemistry/structures"
 import { REACTION_RECORDS } from "@/lib/chemistry/reactions"
 import type { ReactionRecord } from "@/lib/chemistry/reaction-types"
+import type { MoleculeDisplayMode } from "@/lib/chemistry/visualization-types"
 import { cn } from "@/lib/utils"
 
 const quickCompounds = ["ethanol", "ethanoic acid", "acetone", "ethyl ethanoate", "benzene", "phenol", "aspirin"]
+const displayModes: Array<{ value: MoleculeDisplayMode; label: string }> = [
+  { value: "ball-and-stick", label: "Ball-and-Stick" },
+  { value: "condensed", label: "Condensed Formula" },
+  { value: "skeletal", label: "Skeletal Organic" },
+]
 const reactionExampleIds = [
   "rxn-organic-ethanol-ethanoic-acid",
   "rxn-organic-ethene-bromine",
@@ -32,6 +38,7 @@ export function MolecularVisualizerClient() {
   const [query, setQuery] = useState("")
   const [selectedId, setSelectedId] = useState("ethanol")
   const [highlight, setHighlight] = useState("all")
+  const [displayMode, setDisplayMode] = useState<MoleculeDisplayMode>("ball-and-stick")
   const [pathwayId, setPathwayId] = useState(COMPOUND_PATHWAYS[0]?.id ?? "")
   const [reactionId, setReactionId] = useState(reactionExampleIds[0])
 
@@ -79,7 +86,7 @@ export function MolecularVisualizerClient() {
                 <Network className="h-6 w-6" />
               </div>
               <div>
-                <Badge variant="secondary">ARSHLAB v3.7.0</Badge>
+                <Badge variant="secondary">ARSHLAB v3.7.1</Badge>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Molecular Visualizer</h1>
                 <p className="mt-2 max-w-3xl text-muted-foreground">
                   Explore deterministic 2D molecular sketches, functional group highlights, reaction diagrams, and compound pathways.
@@ -92,7 +99,7 @@ export function MolecularVisualizerClient() {
           </div>
         </motion.section>
 
-        <section className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
+        <section className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)_340px]">
           <Card className="h-fit rounded-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -147,10 +154,24 @@ export function MolecularVisualizerClient() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {displayModes.map((mode) => (
+                    <Button
+                      key={mode.value}
+                      type="button"
+                      variant={displayMode === mode.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setDisplayMode(mode.value)}
+                    >
+                      {mode.label}
+                    </Button>
+                  ))}
+                </div>
                 {selectedStructure ? (
                   <Molecule2DRenderer
                     structure={selectedStructure}
                     highlightFunctionalGroup={highlight}
+                    displayMode={displayMode}
                     showAtomLabels
                     className="bg-background/80"
                   />
@@ -229,6 +250,7 @@ export function MolecularVisualizerClient() {
                 value={availableHighlights.length ? availableHighlights.map((item) => item.label).join(", ") : "None yet"}
               />
               <InfoRow label="Pathway examples" value={String(COMPOUND_PATHWAYS.length)} />
+              <ElementColorLegend compact />
               <p className="rounded-xl border border-border bg-secondary/20 p-3 text-xs leading-relaxed text-muted-foreground">
                 Structures are simplified educational sketches. They are meant to show connectivity and functional groups, not exact bond lengths or 3D geometry.
               </p>

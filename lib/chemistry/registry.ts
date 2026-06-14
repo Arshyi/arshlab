@@ -28,7 +28,7 @@ import type {
 import type { ReactionRecord } from "./reaction-types"
 import type { SpectroscopyRecord } from "./spectroscopy-types"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.7.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.7.1"
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,
