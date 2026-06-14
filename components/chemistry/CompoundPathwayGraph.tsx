@@ -43,7 +43,7 @@ export function CompoundPathwayGraph({ pathway, pathwayId, compact = false }: Co
                 </Badge>
               </div>
               {structure ? (
-                <Molecule2DRenderer structure={structure} compact={compact} />
+                <Molecule2DRenderer structure={structure} compact={compact} showAtomLabels />
               ) : (
                 <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-border bg-secondary/30 text-sm font-medium">
                   {node.label}

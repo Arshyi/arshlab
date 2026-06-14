@@ -97,6 +97,16 @@ function atomTooltip(atom: AtomNode): string {
   return `${name}\nAtomic Number: ${atomicNumber}\nAtomic Mass: ${visual.atomicMass}`
 }
 
+function atomLabelFontSize(element: string, compact: boolean): number {
+  if (element.length > 2) return compact ? 8 : 10
+  if (element.length > 1) return compact ? 10 : 12
+  return compact ? 13 : 15
+}
+
+function atomTextStroke(textColor: string): string {
+  return textColor === "#ffffff" ? "rgba(0, 0, 0, 0.45)" : "rgba(255, 255, 255, 0.75)"
+}
+
 function bondSymbol(order: BondOrder): string {
   if (order === 2) return "═"
   if (order === 3) return "≡"
@@ -356,7 +366,7 @@ export function Molecule2DRenderer({
             const chargeLabel = item.label && item.label !== item.element ? item.label.replace(item.element, "") : ""
             const visual = elementVisual(item.element)
             const active = highlights.some((highlight) => shouldEmphasize(highlight, highlightFunctionalGroup) && highlight.atomIds.includes(item.id))
-            const radius = displayMode === "skeletal" && item.element === "C" ? 13 : compact ? 15 : 18
+            const radius = displayMode === "skeletal" && item.element === "C" ? (compact ? 17 : 18) : compact ? 18 : 21
             return (
               <g key={item.id}>
                 <title>{atomTooltip(item)}</title>
@@ -371,10 +381,17 @@ export function Molecule2DRenderer({
                 {showAtomLabels ? (
                   <text
                     x={item.x}
-                    y={item.y + 4.5}
+                    y={item.y}
                     textAnchor="middle"
-                    className={cn("font-black", compact ? "text-[11px]" : "text-[13px]")}
+                    dominantBaseline="central"
+                    fontSize={atomLabelFontSize(item.element, compact)}
+                    fontWeight={900}
+                    fontFamily="ui-sans-serif, system-ui, sans-serif"
                     fill={visual.textColor}
+                    stroke={atomTextStroke(visual.textColor)}
+                    strokeWidth={0.6}
+                    paintOrder="stroke"
+                    pointerEvents="none"
                   >
                     {item.element}
                   </text>
@@ -384,8 +401,15 @@ export function Molecule2DRenderer({
                     x={item.x + radius - 2}
                     y={item.y - radius + 7}
                     textAnchor="middle"
-                    className="text-[9px] font-black"
+                    dominantBaseline="central"
+                    fontSize={compact ? 8 : 9}
+                    fontWeight={900}
+                    fontFamily="ui-sans-serif, system-ui, sans-serif"
                     fill={visual.textColor}
+                    stroke={atomTextStroke(visual.textColor)}
+                    strokeWidth={0.45}
+                    paintOrder="stroke"
+                    pointerEvents="none"
                   >
                     {chargeLabel}
                   </text>

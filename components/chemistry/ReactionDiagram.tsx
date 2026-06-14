@@ -31,7 +31,7 @@ function FormulaCard({ value, compact }: { value: string; compact?: boolean }) {
   return (
     <div className="min-w-0 rounded-xl border border-border bg-background/80 p-3">
       {structure ? (
-        <Molecule2DRenderer structure={structure} compact={compact} />
+        <Molecule2DRenderer structure={structure} compact={compact} showAtomLabels />
       ) : (
         <div className="flex min-h-24 items-center justify-center rounded-lg border border-dashed border-border bg-secondary/30 px-3 text-center">
           <span className="font-mono text-sm font-semibold">{value}</span>
