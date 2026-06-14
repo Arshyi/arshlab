@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.6.0",
+    version: "3.7.0",
     date: "Current",
+    status: "released",
+    title: "Molecular Visualization Engine",
+    changes: [
+      "Added deterministic 2D molecular visualization types and hand-authored structure records for common organic, inorganic, acid/base, aromatic, and spectroscopy examples",
+      "Added /molecular-visualizer with compound selection, functional group highlight toggles, reaction diagram examples, and pathway examples",
+      "Added reusable Molecule2DRenderer, ReactionDiagram, and CompoundPathwayGraph components",
+      "Added molecule cards to the Chemistry Database compound viewer with clear unavailable-state messaging",
+      "Added reaction diagrams to the Reaction Database while preserving search, filters, prediction, and classification checks",
+      "Added spectroscopy-to-structure mappings so IR peaks can point to highlighted functional groups in example molecules",
+      "Added visual metadata hooks to database-generated questions for future molecule and reaction rendering",
+      "Added Chemistry Hub, homepage, roadmap, and navigation links for the Molecular Visualizer and Visual Reaction Pathways",
+    ],
+  },
+  {
+    version: "3.6.0",
+    date: "Previous",
     status: "released",
     title: "Chemistry Reaction Engine",
     changes: [

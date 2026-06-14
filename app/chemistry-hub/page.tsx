@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Atom, Award, BookOpen, BookOpenCheck, Bot, Database, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves } from "lucide-react"
+import { ArrowRightLeft, Atom, Award, BookOpen, BookOpenCheck, Bot, Database, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves, Network } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -16,6 +16,7 @@ import { analytics } from "@/lib/chemistry/database/analytics/tracker"
 const LAB_LINKS = [
   { href: "/ai-assistant", label: "AI Chemistry Assistant" },
   { href: "/chemistry-database", label: "Chemistry Database" },
+  { href: "/molecular-visualizer", label: "Molecular Visualizer" },
   { href: "/reaction-database", label: "Reaction Database" },
   { href: "/question-engine", label: "Question Engine" },
   { href: "/exam-engine", label: "Exam Engine" },
@@ -253,6 +254,20 @@ export default function ChemistryHubPage() {
         </Card>
 
         <div className="mb-8 grid gap-4 lg:grid-cols-2">
+          <HubActionCard
+            icon={Network}
+            title="Molecular Visualizer"
+            description="Explore deterministic 2D molecule sketches, functional group highlights, reaction diagrams, and pathway examples."
+            href="/molecular-visualizer"
+            action="Open Visualizer"
+          />
+          <HubActionCard
+            icon={Network}
+            title="Visual Reaction Pathways"
+            description="Follow alkane-to-ester, benzene functionalization, and ethene-to-ester pathways with molecule cards."
+            href="/molecular-visualizer#pathways"
+            action="View Pathways"
+          />
           <HubActionCard
             icon={ArrowRightLeft}
             title="Reaction Database"

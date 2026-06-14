@@ -97,6 +97,7 @@ function question(input: {
     misconceptionNote: input.misconceptionNote,
     source: "database",
     sourceEntry: { kind: "reaction", id: input.record.id, name: input.record.name },
+    visualReactionId: input.record.id,
   }
 }
 

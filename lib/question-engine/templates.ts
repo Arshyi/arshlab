@@ -145,6 +145,9 @@ function buildCompoundQuestion(input: {
   explanation: string
   sourceEntry: { kind: string; id: string; name: string }
   misconceptionNote?: string
+  visualCompoundId?: string
+  visualReactionId?: string
+  visualHighlightGroup?: string
 }): Question | null {
   const labeled = labeledChoices(input.correctText, input.wrongTexts, input.context.index)
   if (!labeled) return null
@@ -162,6 +165,9 @@ function buildCompoundQuestion(input: {
     misconceptionNote: input.misconceptionNote,
     source: "database",
     sourceEntry: input.sourceEntry,
+    visualCompoundId: input.visualCompoundId,
+    visualReactionId: input.visualReactionId,
+    visualHighlightGroup: input.visualHighlightGroup,
   }
 }
 
@@ -183,6 +189,8 @@ function buildFunctionalGroupQuestion(context: QuestionTemplateContext): Questio
     wrongTexts,
     explanation: `${correct.name} contains ${group.identifier}, which is the identifying pattern for the ${group.name.toLowerCase()} functional group.`,
     sourceEntry: { kind: "compound", id: correct.id, name: correct.name },
+    visualCompoundId: correct.id,
+    visualHighlightGroup: group.name,
     misconceptionNote: "Look for the structural pattern, not just the molecular formula.",
   })
 }
@@ -202,6 +210,7 @@ function buildCompoundFormulaQuestion(context: QuestionTemplateContext): Questio
     wrongTexts: similarCompounds(correct).map((compound) => compound.formula),
     explanation: `${correct.name} is represented by the formula ${correct.formula}. Formula recognition supports molar mass and stoichiometry work.`,
     sourceEntry: { kind: "compound", id: correct.id, name: correct.name },
+    visualCompoundId: correct.id,
     misconceptionNote: "Similar names can have different atom counts, especially within homologous organic series.",
   })
 }
@@ -224,6 +233,7 @@ function buildMolarMassQuestion(context: QuestionTemplateContext): Question | nu
       .map((compound) => compound.name),
     explanation: `${correct.name} has an approximate molar mass of ${correct.molarMass.toFixed(1)} g/mol, so it is closest to ${value} g/mol.`,
     sourceEntry: { kind: "compound", id: correct.id, name: correct.name },
+    visualCompoundId: correct.id,
     misconceptionNote: "Use the whole formula, not only the heaviest atom, when comparing molar masses.",
   })
 }
@@ -267,6 +277,7 @@ function buildReactionTypeQuestion(context: QuestionTemplateContext): Question |
     ),
     explanation: `${correctText} matches the ${reaction.type} pattern: ${reaction.generalForm}. ${reaction.description}`,
     sourceEntry: { kind: "reaction-template", id: reaction.id, name: reaction.type },
+    visualReactionId: reaction.id,
     misconceptionNote: "Classify reactions by the pattern of reactants and products, not just by one formula.",
   })
 }
@@ -287,6 +298,8 @@ function buildCompoundClassificationQuestion(context: QuestionTemplateContext): 
     wrongTexts: KNOWLEDGE_COMPOUNDS.filter((compound) => !hasGroup(compound, groupName)).map((compound) => compound.name),
     explanation: `${correct.name} is classified as a ${groupName.toLowerCase()} because its record includes the matching functional group/category.`,
     sourceEntry: { kind: "compound", id: correct.id, name: correct.name },
+    visualCompoundId: correct.id,
+    visualHighlightGroup: groupName,
     misconceptionNote: "Classification depends on the functional group present in the structure.",
   })
 }
@@ -458,5 +471,7 @@ export function getQuestionEngineDatabaseCounts() {
     balancingExercises: BALANCING_EXERCISES.length,
     spectroscopy: SPECTROSCOPY_RECORDS.length,
     irPeaks: CHEMISTRY_KNOWLEDGE_CORE_META.counts.irPeaks,
+    molecularStructures: CHEMISTRY_KNOWLEDGE_CORE_META.counts.molecularStructures,
+    visualHighlights: CHEMISTRY_KNOWLEDGE_CORE_META.counts.functionalGroupHighlights,
   }
 }

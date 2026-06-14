@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import { ArrowRightLeft, Beaker, BookOpenCheck, Database, Filter, Search } from "lucide-react"
+import { ReactionDiagram } from "@/components/chemistry/ReactionDiagram"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -105,7 +106,7 @@ export function ReactionDatabaseClient() {
               </div>
             </div>
             <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v3.6.0
+              ARSHLAB v3.7.0
             </Badge>
           </div>
 
@@ -210,6 +211,8 @@ export function ReactionDatabaseClient() {
                       <Badge variant="outline">{selected.difficulty}</Badge>
                     </div>
                   </div>
+
+                  <ReactionDiagram reaction={selected} compact />
 
                   <div className="rounded-xl border border-border bg-background/80 p-4">
                     <p className="text-xs font-medium uppercase text-muted-foreground">Balanced Equation</p>

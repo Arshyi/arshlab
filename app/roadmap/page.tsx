@@ -20,6 +20,9 @@ const completed = [
   "Adaptive Learning Engine",
   "Adaptive Learning Engine Hardening",
   "Chemistry Reaction Engine",
+  "Molecular Visualization Engine",
+  "Molecular Visualizer",
+  "Visual Reaction Pathways",
   "Reaction Database",
   "Reaction Prediction Engine",
   "Reaction Balancing Practice",
@@ -164,13 +167,13 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <Check className="h-4 w-4" />
                 </div>
-                Chemistry Reaction Engine
+                Molecular Visualization Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: deterministic reaction records, product prediction, classification,
-                balancing practice, reaction database browsing, and reaction mastery analytics.
+                Now available: deterministic 2D molecule sketches, functional group highlights,
+                reaction diagrams, spectroscopy-to-structure overlays, and visual reaction pathways.
               </p>
             </CardContent>
           </Card>
@@ -182,7 +185,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v3.6.0 - Chemistry Reaction Engine
+          ARSHLAB v3.7.0 - Molecular Visualization Engine
         </motion.p>
       </div>
     </div>

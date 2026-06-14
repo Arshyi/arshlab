@@ -41,19 +41,21 @@ export default function QuestionEnginePage() {
             </div>
           </div>
           <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-            ARSHLAB v3.6.0
+            ARSHLAB v3.7.0
           </Badge>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <MetricCard label="Compounds" value={stats.databaseCounts.compounds} />
           <MetricCard label="Ions" value={stats.databaseCounts.ions} />
           <MetricCard label="Functional Groups" value={stats.databaseCounts.functionalGroups} />
-          <MetricCard label="Reaction Templates" value={stats.databaseCounts.reactions} />
           <MetricCard label="Reaction Records" value={stats.databaseCounts.reactionRecords} />
-          <MetricCard label="Balancing Exercises" value={stats.databaseCounts.balancingExercises} />
           <MetricCard label="Spectroscopy" value={stats.databaseCounts.spectroscopy} />
+          <MetricCard label="2D Structures" value={stats.databaseCounts.molecularStructures} />
+          <MetricCard label="Visual Highlights" value={stats.databaseCounts.visualHighlights} />
+          <MetricCard label="Balancing Exercises" value={stats.databaseCounts.balancingExercises} />
           <MetricCard label="IR Peaks" value={stats.databaseCounts.irPeaks} />
+          <MetricCard label="Reaction Templates" value={stats.databaseCounts.reactions} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">

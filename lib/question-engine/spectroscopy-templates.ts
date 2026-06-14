@@ -1,4 +1,5 @@
 import { SPECTROSCOPY_RECORDS } from "@/lib/chemistry/spectroscopy"
+import { getSpectroscopyMapping } from "@/lib/chemistry/structures"
 import type { IRPeak, SpectroscopyRecord } from "@/lib/chemistry/spectroscopy-types"
 import type { Question, QuestionChoice, QuestionTemplate, QuestionTemplateContext } from "./types"
 
@@ -66,6 +67,7 @@ function buildSpectroscopyQuestion(input: {
 }): Question | null {
   const choices = labeledChoices(input.correctText, input.wrongTexts, input.context.index)
   if (!choices) return null
+  const visualMapping = getSpectroscopyMapping(input.record.id)
 
   return {
     id: `db-ir-${input.id}-${input.context.index}`,
@@ -81,6 +83,8 @@ function buildSpectroscopyQuestion(input: {
     misconceptionNote: input.misconceptionNote,
     source: "database",
     sourceEntry: { kind: "spectroscopy", id: input.record.id, name: input.record.name },
+    visualCompoundId: visualMapping?.exampleCompoundId,
+    visualHighlightGroup: visualMapping?.highlightGroup,
   }
 }
 

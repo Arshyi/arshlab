@@ -25,6 +25,9 @@ export interface Question {
   misconceptionNote?: string
   source: QuestionSource
   sourceEntry: QuestionSourceEntry
+  visualCompoundId?: string
+  visualReactionId?: string
+  visualHighlightGroup?: string
 }
 
 export interface GenerateDatabaseQuestionsInput {
@@ -65,5 +68,7 @@ export interface QuestionEngineStats {
     balancingExercises: number
     spectroscopy: number
     irPeaks: number
+    molecularStructures: number
+    visualHighlights: number
   }
 }

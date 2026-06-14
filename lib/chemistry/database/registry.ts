@@ -8,12 +8,13 @@ import { ALL_ORBITALS } from "./orbitals"
 import { ALL_SPECTROSCOPY } from "./spectroscopy"
 import { REACTION_TEMPLATES } from "./reactions/families"
 import { REACTION_RECORDS } from "../reactions"
+import { COMPOUND_PATHWAYS, MOLECULAR_STRUCTURES, SPECTROSCOPY_MAPPINGS, countFunctionalGroupHighlights } from "../structures"
 import { VSEPR_PRESETS } from "./vsepr/engine"
 import { ALL_LEWIS_STRUCTURES } from "./lewis/templates"
 import { QUESTION_TOPICS } from "./questions/topics"
 import { EDUCATION_HUB_SECTIONS } from "./education/hub"
 
-export const DATABASE_VERSION = "3.6.0"
+export const DATABASE_VERSION = "3.7.0"
 
 export function getDatabaseMeta(): DatabaseMeta {
   return {
@@ -29,6 +30,10 @@ export function getDatabaseMeta(): DatabaseMeta {
       spectroscopy: ALL_SPECTROSCOPY.length,
       reactions: REACTION_TEMPLATES.length,
       reactionRecords: REACTION_RECORDS.length,
+      molecularStructures: MOLECULAR_STRUCTURES.length,
+      functionalGroupHighlights: countFunctionalGroupHighlights(),
+      spectroscopyMappings: SPECTROSCOPY_MAPPINGS.length,
+      compoundPathways: COMPOUND_PATHWAYS.length,
       vseprPresets: VSEPR_PRESETS.length,
       lewisStructures: ALL_LEWIS_STRUCTURES.length,
       questionTopics: QUESTION_TOPICS.length,
@@ -66,6 +71,9 @@ export {
   ALL_FUNCTIONAL_GROUPS,
   ALL_ORBITALS,
   ALL_SPECTROSCOPY,
+  COMPOUND_PATHWAYS,
+  MOLECULAR_STRUCTURES,
+  SPECTROSCOPY_MAPPINGS,
   REACTION_TEMPLATES,
   VSEPR_PRESETS,
   ALL_LEWIS_STRUCTURES,

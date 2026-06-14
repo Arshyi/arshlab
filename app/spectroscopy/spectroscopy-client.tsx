@@ -4,27 +4,37 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { BookOpenCheck, Database, Search, Waves } from "lucide-react"
+import { Molecule2DRenderer } from "@/components/chemistry/Molecule2DRenderer"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { SPECTROSCOPY_RECORDS, searchSpectroscopyRecords } from "@/lib/chemistry/spectroscopy"
+import { getExampleStructureForSpectroscopy, getSpectroscopyMapping } from "@/lib/chemistry/structures"
+import { cn } from "@/lib/utils"
 
 const quickSearches = ["carbonyl", "O-H", "N-H", "2250", "aromatic", "ester"]
 
 export function SpectroscopyClient() {
   const [query, setQuery] = useState("")
   const [selectedId, setSelectedId] = useState(SPECTROSCOPY_RECORDS[0]?.id ?? "")
+  const [selectedPeakId, setSelectedPeakId] = useState(SPECTROSCOPY_RECORDS[0]?.irPeaks[0]?.id ?? "")
   const records = useMemo(() => searchSpectroscopyRecords(query), [query])
   const selected =
     SPECTROSCOPY_RECORDS.find((record) => record.id === selectedId) ??
     records[0] ??
     SPECTROSCOPY_RECORDS[0]
+  const selectedPeak = selected?.irPeaks.find((peak) => peak.id === selectedPeakId) ?? selected?.irPeaks[0]
+  const visualMapping = selected ? getSpectroscopyMapping(selected.id) : undefined
+  const exampleStructure = selected ? getExampleStructureForSpectroscopy(selected.id) : undefined
 
   function runSearch(value: string) {
     setQuery(value)
     const next = searchSpectroscopyRecords(value)[0]
-    if (next) setSelectedId(next.id)
+    if (next) {
+      setSelectedId(next.id)
+      setSelectedPeakId(next.irPeaks[0]?.id ?? "")
+    }
   }
 
   return (
@@ -100,7 +110,10 @@ export function SpectroscopyClient() {
                       <tr
                         key={record.id}
                         className="cursor-pointer border-b border-border/70 transition-colors hover:bg-secondary/40"
-                        onClick={() => setSelectedId(record.id)}
+                        onClick={() => {
+                          setSelectedId(record.id)
+                          setSelectedPeakId(record.irPeaks[0]?.id ?? "")
+                        }}
                       >
                         <td className="px-3 py-3 font-medium">{record.name}</td>
                         <td className="px-3 py-3 font-mono text-xs">{record.peakRange}</td>
@@ -141,6 +154,22 @@ export function SpectroscopyClient() {
                       </Badge>
                     ))}
                   </div>
+                  {exampleStructure && visualMapping ? (
+                    <div className="space-y-3">
+                      <Molecule2DRenderer
+                        structure={exampleStructure}
+                        highlightFunctionalGroup={visualMapping.highlightGroup}
+                        showAtomLabels
+                      />
+                      <div className="rounded-xl border border-border bg-background/70 p-3 text-sm text-muted-foreground">
+                        <p className="font-medium text-foreground">Associated functional group</p>
+                        <p className="mt-1">
+                          {visualMapping.assignment} is represented by the highlighted{" "}
+                          {visualMapping.highlightGroup} region in {exampleStructure.displayName}.
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
 
@@ -153,7 +182,17 @@ export function SpectroscopyClient() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {selected.irPeaks.map((peak) => (
-                    <div key={peak.id} className="rounded-xl border border-border bg-secondary/20 p-3">
+                    <button
+                      type="button"
+                      key={peak.id}
+                      onClick={() => setSelectedPeakId(peak.id)}
+                      className={cn(
+                        "w-full rounded-xl border p-3 text-left transition-colors",
+                        selectedPeak?.id === peak.id
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-secondary/20 hover:bg-secondary",
+                      )}
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="font-mono text-sm font-semibold">{peak.range}</p>
                         <Badge variant="outline">{peak.strength}</Badge>
@@ -161,8 +200,17 @@ export function SpectroscopyClient() {
                       <p className="mt-2 text-sm">{peak.assignment}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{peak.shape}</p>
                       {peak.notes && <p className="mt-2 text-xs text-muted-foreground">{peak.notes}</p>}
-                    </div>
+                    </button>
                   ))}
+                  {selectedPeak ? (
+                    <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3 text-sm">
+                      <p className="font-medium">Selected peak</p>
+                      <p className="mt-1 text-muted-foreground">
+                        {selectedPeak.range} highlights {selectedPeak.assignment}
+                        {visualMapping ? ` in the ${visualMapping.functionalGroup} functional group.` : "."}
+                      </p>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
             </aside>

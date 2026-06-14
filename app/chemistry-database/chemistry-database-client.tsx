@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import { ArrowRight, Atom, Beaker, Database, FlaskConical, Search, Sigma, Waves } from "lucide-react"
+import { Molecule2DRenderer } from "@/components/chemistry/Molecule2DRenderer"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,6 +18,9 @@ import {
   SPECTROSCOPY_RECORDS,
   getCompoundByFormula,
   getCompoundByName,
+  getExampleStructureForSpectroscopy,
+  getSpectroscopyMapping,
+  getStructureForCompound,
   searchChemistry,
 } from "@/lib/chemistry/registry"
 import type { ChemistryRecordKind, ChemistrySearchResult, Compound } from "@/lib/chemistry/types"
@@ -65,6 +69,7 @@ export function ChemistryDatabaseClient() {
     KNOWLEDGE_COMPOUNDS.find((compound) => compound.id === selectedCompoundId) ??
     getCompoundByName("ethanol") ??
     KNOWLEDGE_COMPOUNDS[0]
+  const selectedStructure = selectedCompound ? getStructureForCompound(selectedCompound) : undefined
 
   const compoundResults = useMemo(() => {
     if (!query.trim()) return KNOWLEDGE_COMPOUNDS.slice(0, 48)
@@ -143,13 +148,12 @@ export function ChemistryDatabaseClient() {
             </Badge>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <StatCard label="Compounds" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.compounds} />
           <StatCard label="Ions" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions} />
           <StatCard label="Functional Groups" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.functionalGroups} />
-          <StatCard label="Reaction Templates" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.reactionTemplates} />
           <StatCard label="Reaction Records" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.reactionRecords} />
-          <StatCard label="Spectroscopy Records" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.spectroscopyRecords} />
+          <StatCard label="2D Structures" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.molecularStructures} />
         </div>
         </motion.div>
 
@@ -349,6 +353,16 @@ export function ChemistryDatabaseClient() {
                         <p className="mt-2 text-xs text-muted-foreground">
                           Examples: {record.exampleCompounds.join(", ")}
                         </p>
+                        {getSpectroscopyMapping(record.id) ? (
+                          <div className="mt-3 rounded-xl border border-teal-500/20 bg-teal-500/5 p-3">
+                            <p className="text-xs font-medium uppercase text-muted-foreground">Visual mapping</p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {getSpectroscopyMapping(record.id)?.assignment} maps to the highlighted{" "}
+                              {getSpectroscopyMapping(record.id)?.highlightGroup} region in{" "}
+                              {getExampleStructureForSpectroscopy(record.id)?.displayName ?? "an example compound"}.
+                            </p>
+                          </div>
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -376,6 +390,19 @@ export function ChemistryDatabaseClient() {
                   <div>
                     <p className="text-2xl font-bold">{selectedCompound.name}</p>
                     <p className="mt-1 font-mono text-lg text-primary">{selectedCompound.formula}</p>
+                  </div>
+                  <div>
+                    {selectedStructure ? (
+                      <Molecule2DRenderer
+                        structure={selectedStructure}
+                        highlightFunctionalGroup={selectedCompound.functionalGroups[0] ?? "all"}
+                        showAtomLabels
+                      />
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-border bg-background/70 p-4 text-sm text-muted-foreground">
+                        Structure not available yet.
+                      </div>
+                    )}
                   </div>
                   <div className="grid gap-3">
                     <InfoRow label="Molar mass" value={`${selectedCompound.molarMass.toFixed(3)} g/mol`} />
@@ -414,8 +441,8 @@ export function ChemistryDatabaseClient() {
             <div>
               <h2 className="font-semibold">Future-ready chemistry core</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                The v3.1.0 layer is designed to expand toward larger compound libraries, spectroscopy data,
-                ligand records, reaction databases, and RAG-assisted tutoring.
+                The v3.7.0 layer now includes local compounds, spectra, reactions, and 2D structure hooks for
+                larger libraries, pathway maps, reaction databases, and RAG-assisted tutoring.
               </p>
             </div>
             <Button asChild variant="outline">

@@ -3,6 +3,20 @@ import { KNOWLEDGE_FUNCTIONAL_GROUPS } from "./functional-groups"
 import { COMMON_IONS } from "./ions"
 import { REACTION_RECORDS, REACTION_TEMPLATES_KNOWLEDGE } from "./reactions"
 import { SPECTROSCOPY_RECORDS, countIRPeaks, getSpectroscopyRecord } from "./spectroscopy"
+import {
+  COMPOUND_PATHWAYS,
+  MOLECULAR_STRUCTURES,
+  SPECTROSCOPY_MAPPINGS,
+  countFunctionalGroupHighlights,
+  getExampleStructureForSpectroscopy,
+  getSpectroscopyMapping,
+  getStructureByCompoundId,
+  getStructureByFormula,
+  getStructureByFormulaOrName,
+  getStructureByName,
+  getStructureForCompound,
+  getStructuresWithHighlight,
+} from "./structures"
 import type {
   ChemistryRecordKind,
   ChemistrySearchResult,
@@ -14,7 +28,7 @@ import type {
 import type { ReactionRecord } from "./reaction-types"
 import type { SpectroscopyRecord } from "./spectroscopy-types"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.6.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.7.0"
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,
@@ -26,6 +40,10 @@ export const CHEMISTRY_KNOWLEDGE_CORE_META = {
     reactionRecords: REACTION_RECORDS.length,
     spectroscopyRecords: SPECTROSCOPY_RECORDS.length,
     irPeaks: countIRPeaks(),
+    molecularStructures: MOLECULAR_STRUCTURES.length,
+    functionalGroupHighlights: countFunctionalGroupHighlights(),
+    spectroscopyMappings: SPECTROSCOPY_MAPPINGS.length,
+    compoundPathways: COMPOUND_PATHWAYS.length,
   },
 }
 
@@ -414,5 +432,30 @@ export {
   REACTION_RECORDS,
   REACTION_TEMPLATES_KNOWLEDGE,
   SPECTROSCOPY_RECORDS,
+  COMPOUND_PATHWAYS,
+  MOLECULAR_STRUCTURES,
+  SPECTROSCOPY_MAPPINGS,
+  countFunctionalGroupHighlights,
+  getExampleStructureForSpectroscopy,
+  getSpectroscopyMapping,
+  getStructureByCompoundId,
+  getStructureByFormula,
+  getStructureByFormulaOrName,
+  getStructureByName,
+  getStructureForCompound,
+  getStructuresWithHighlight,
 }
 export type { IRPeak, NMRSignal, SpectroscopyQuestion, SpectroscopyRecord } from "./spectroscopy-types"
+export type {
+  AtomNode,
+  BondEdge,
+  BondOrder,
+  CompoundPathway,
+  CompoundPathwayEdge,
+  CompoundPathwayNode,
+  FunctionalGroupHighlight,
+  MolecularStructure2D,
+  ReactionDiagram,
+  ReactionStep,
+  SpectroscopyMapping,
+} from "./visualization-types"
