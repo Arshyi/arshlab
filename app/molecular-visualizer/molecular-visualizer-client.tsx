@@ -86,7 +86,10 @@ export function MolecularVisualizerClient() {
                 <Network className="h-6 w-6" />
               </div>
               <div>
-                <Badge variant="secondary">ARSHLAB v3.7.1</Badge>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">ARSHLAB v3.7.1</Badge>
+                  <Badge variant="outline">Database mode = no AI usage</Badge>
+                </div>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Molecular Visualizer</h1>
                 <p className="mt-2 max-w-3xl text-muted-foreground">
                   Explore deterministic 2D molecular sketches, functional group highlights, reaction diagrams, and compound pathways.
@@ -99,8 +102,8 @@ export function MolecularVisualizerClient() {
           </div>
         </motion.section>
 
-        <section className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)_340px]">
-          <Card className="h-fit rounded-2xl">
+        <section className="grid min-w-0 gap-6 xl:grid-cols-[300px_minmax(0,1fr)_340px]">
+          <Card className="h-fit min-w-0 rounded-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Search className="h-5 w-5" />
@@ -122,30 +125,37 @@ export function MolecularVisualizerClient() {
                 ))}
               </div>
               <div className="grid max-h-[420px] gap-2 overflow-y-auto pr-1">
-                {filteredStructures.map((structure) => (
-                  <button
-                    key={structure.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedId(structure.id)
-                      setHighlight("all")
-                    }}
-                    className={cn(
-                      "rounded-xl border px-3 py-2 text-left transition-colors",
-                      selectedStructure?.id === structure.id
-                        ? "border-primary bg-primary/10"
-                        : "border-border bg-secondary/20 hover:bg-secondary",
-                    )}
-                  >
-                    <span className="block text-sm font-medium">{structure.displayName}</span>
-                    <span className="mt-0.5 block font-mono text-xs text-muted-foreground">{structure.formula}</span>
-                  </button>
-                ))}
+                {filteredStructures.length > 0 ? (
+                  filteredStructures.map((structure) => (
+                    <button
+                      key={structure.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedId(structure.id)
+                        setHighlight("all")
+                      }}
+                      className={cn(
+                        "min-w-0 rounded-xl border px-3 py-2 text-left transition-colors",
+                        selectedStructure?.id === structure.id
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-secondary/20 hover:bg-secondary",
+                      )}
+                    >
+                      <span className="block break-words text-sm font-medium">{structure.displayName}</span>
+                      <span className="mt-0.5 block break-words font-mono text-xs text-muted-foreground">{structure.formula}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
+                    <p className="font-medium text-foreground">No structure matched that search.</p>
+                    <p className="mt-1">Try ethanol, benzene, aspirin, or another local structure.</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -220,23 +230,23 @@ export function MolecularVisualizerClient() {
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                   {reactionExamples.map((record) => (
-                      <Button
-                        key={record.id}
-                        type="button"
-                        variant={reaction?.id === record.id ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setReactionId(record.id)}
-                      >
-                        {record.name}
-                      </Button>
-                    ))}
+                    <Button
+                      key={record.id}
+                      type="button"
+                      variant={reaction?.id === record.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setReactionId(record.id)}
+                    >
+                      {record.name}
+                    </Button>
+                  ))}
                 </div>
                 {reaction ? <ReactionDiagram reaction={reaction} compact /> : null}
               </CardContent>
             </Card>
           </div>
 
-          <Card className="h-fit rounded-2xl">
+          <Card className="h-fit min-w-0 rounded-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Database className="h-5 w-5" />

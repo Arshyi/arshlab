@@ -95,8 +95,8 @@ export default function PeriodicTablePage() {
 
         <Card className="rounded-2xl mb-6">
           <CardContent className="pt-6 space-y-6">
-            <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
-              <div className="space-y-5">
+            <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+              <div className="min-w-0 space-y-5">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Search className="h-4 w-4 text-muted-foreground" />
@@ -213,7 +213,7 @@ export default function PeriodicTablePage() {
                     <p className="font-medium">{activeMetric.label}</p>
                     <p className="text-sm text-muted-foreground">{activeMetric.educationalNote}</p>
                   </div>
-                  <div className="min-w-64">
+                  <div className="w-full min-w-0 sm:min-w-64">
                     <div
                       className="h-3 rounded-full border border-border"
                       style={{ background: LEGEND_GRADIENTS[activeMetric.mode] }}
@@ -282,12 +282,12 @@ function ComparisonPanel({ elements }: { elements: ElementRecord[] }) {
             Enable comparison mode and select up to three elements from the table.
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid min-w-0 gap-4 lg:grid-cols-3">
             {elements.map((element) => (
-              <div key={element.id} className="rounded-2xl border border-border bg-secondary/20 p-4">
+              <div key={element.id} className="min-w-0 rounded-2xl border border-border bg-secondary/20 p-4">
                 <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-xl font-bold">{element.name}</h2>
+                  <div className="min-w-0">
+                    <h2 className="break-words text-xl font-bold">{element.name}</h2>
                     <p className="font-mono text-sm text-muted-foreground">{element.symbol}</p>
                   </div>
                   <Badge variant="outline" className="font-mono">
@@ -329,7 +329,7 @@ function ComparisonPanel({ elements }: { elements: ElementRecord[] }) {
 
                 <div className="mt-4 rounded-xl border border-border bg-card/70 px-3 py-2">
                   <p className="text-[10px] uppercase text-muted-foreground">Electron Configuration</p>
-                  <p className="mt-1 font-mono text-xs leading-relaxed">{element.electronConfiguration}</p>
+                  <p className="mt-1 break-words font-mono text-xs leading-relaxed">{element.electronConfiguration}</p>
                 </div>
               </div>
             ))}
@@ -343,8 +343,8 @@ function ComparisonPanel({ elements }: { elements: ElementRecord[] }) {
 function CompareRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card/70 px-3 py-2">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-right font-mono text-xs">{value}</span>
+      <span className="min-w-0 text-xs text-muted-foreground">{label}</span>
+      <span className="break-words text-right font-mono text-xs">{value}</span>
     </div>
   )
 }

@@ -607,8 +607,8 @@ export function PracticeGeneratorClient() {
           </p>
         </motion.div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-          <motion.main initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <motion.main initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="min-w-0 space-y-6">
             <Card className="rounded-2xl">
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -619,13 +619,13 @@ export function PracticeGeneratorClient() {
                   <Badge variant="secondary">
                     {isLoggedIn
                       ? !needsAi
-                        ? "Database mode: no AI usage"
+                        ? "Database mode = no AI usage"
                         : remaining === null
                         ? "Signed in"
                         : `${remaining} account AI requests left`
                       : needsAi
                         ? `${guestRemaining} guest AI requests left today`
-                        : "Database mode: no AI usage"}
+                        : "Database mode = no AI usage"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -685,7 +685,7 @@ export function PracticeGeneratorClient() {
                   <Button
                     onClick={generateQuestionSet}
                     disabled={loading || (needsAi && !isLoggedIn && guestRemaining <= 0)}
-                    className="h-11 rounded-xl"
+                    className="h-11 rounded-xl sm:shrink-0"
                   >
                     {loading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -708,6 +708,22 @@ export function PracticeGeneratorClient() {
               </Alert>
             )}
 
+            {!practiceSet && !loading && !error && (
+              <Card className="rounded-2xl border-dashed">
+                <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="font-semibold">No practice set generated yet</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Choose a topic, source mode, and question count, then generate a printable or self-marked set.
+                    </p>
+                  </div>
+                  <Button type="button" variant="outline" className="rounded-xl sm:shrink-0" onClick={generateQuestionSet}>
+                    Generate Set
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             {practiceSet && (
               <>
                 {progressMessage && (
@@ -726,11 +742,11 @@ export function PracticeGeneratorClient() {
                         Study Session
                       </CardTitle>
                       <div className="flex flex-wrap gap-2">
-                      <Badge>{questionType}</Badge>
-                      <Badge variant="secondary">{difficulty}</Badge>
-                      <Badge variant="outline">{curriculumStyle}</Badge>
-                      <Badge variant="outline">{questionSource}</Badge>
-                    </div>
+                        <Badge>{questionType}</Badge>
+                        <Badge variant="secondary">{difficulty}</Badge>
+                        <Badge variant="outline">{curriculumStyle}</Badge>
+                        <Badge variant="outline">{questionSource}</Badge>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-5">
@@ -821,7 +837,7 @@ export function PracticeGeneratorClient() {
             )}
           </motion.main>
 
-          <motion.aside initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+          <motion.aside initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} className="min-w-0 space-y-4">
             <Card className="rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">

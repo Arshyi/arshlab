@@ -616,8 +616,8 @@ export function ExamGeneratorClient() {
           </p>
         </motion.div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-          <motion.main initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <motion.main initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="min-w-0 space-y-6">
             <Card className="rounded-2xl">
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -627,7 +627,7 @@ export function ExamGeneratorClient() {
                   </CardTitle>
                   <Badge variant="secondary">
                     {!examNeedsAi
-                      ? "No AI request needed"
+                      ? "Database mode = no AI usage"
                       : isLoggedIn
                         ? remaining === null
                           ? "Signed in"
@@ -806,7 +806,7 @@ export function ExamGeneratorClient() {
             )}
           </motion.main>
 
-          <motion.aside initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+          <motion.aside initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} className="min-w-0 space-y-4">
             {weakTopic && (
               <Card className="rounded-2xl border-orange-500/30 bg-orange-500/5">
                 <CardHeader>

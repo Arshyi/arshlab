@@ -105,7 +105,8 @@ export function LearningDashboardClient() {
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="mb-3 flex items-center gap-3">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Gauge className="h-6 w-6" />
             </div>
@@ -113,6 +114,10 @@ export function LearningDashboardClient() {
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Learning Health Dashboard</h1>
               <p className="text-muted-foreground">Mastery, readiness, streaks, weak areas, and next actions</p>
             </div>
+            </div>
+            <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
+              Database mode = no AI usage
+            </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
             ARSHLAB v3.5.1 connects diagnostics, curriculum, practice, recovery, study, and exams into one hardened adaptive learning view.
@@ -173,8 +178,8 @@ export function LearningDashboardClient() {
               <HealthMetric icon={BookOpenCheck} label="Study Streak" value={summary.mastery.studyStreak} detail="days active" />
             </div>
 
-            <div className="mb-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-              <Card id="exam-readiness" className="rounded-2xl border-primary/20 bg-primary/5">
+            <div className="mb-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+              <Card id="exam-readiness" className="min-w-0 rounded-2xl border-primary/20 bg-primary/5">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Trophy className="h-5 w-5" />
@@ -208,7 +213,7 @@ export function LearningDashboardClient() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl">
+              <Card className="min-w-0 rounded-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Target className="h-5 w-5" />
@@ -255,8 +260,8 @@ export function LearningDashboardClient() {
               <AreaCard title="Strong Areas" icon={Medal} topics={strongAreas} strong />
             </div>
 
-            <div className="mb-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-              <Card className="rounded-2xl">
+            <div className="mb-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+              <Card className="min-w-0 rounded-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Route className="h-5 w-5" />
@@ -271,11 +276,11 @@ export function LearningDashboardClient() {
                     <MiniStat label="Est. Graduation" value={summary.mastery.curriculumCompletion.estimatedGraduation} />
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
-                    {summary.mastery.unitMastery.map((unit, index) => (
+                    {summary.mastery.unitMastery.length > 0 ? summary.mastery.unitMastery.map((unit, index) => (
                       <div key={unit.unit.id} className="rounded-xl border border-border bg-card p-4">
                         <div className="mb-2 flex items-start justify-between gap-2">
-                          <div>
-                            <p className="font-medium">{index + 1}. {unit.unit.title}</p>
+                          <div className="min-w-0">
+                            <p className="break-words font-medium">{index + 1}. {unit.unit.title}</p>
                             <p className="text-xs text-muted-foreground">{unit.correct}/{unit.attempted} correct</p>
                           </div>
                           <Badge variant={unit.completed ? "default" : "secondary"}>
@@ -284,12 +289,16 @@ export function LearningDashboardClient() {
                         </div>
                         <Progress value={unit.mastery} />
                       </div>
-                    ))}
+                    )) : (
+                      <div className="rounded-xl border border-dashed border-border bg-secondary/20 p-4 text-sm text-muted-foreground md:col-span-2">
+                        Curriculum unit tracking appears after saved practice, diagnostic, recovery, or exam attempts.
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl">
+              <Card className="min-w-0 rounded-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Zap className="h-5 w-5" />
@@ -435,9 +444,14 @@ function AreaCard({
             </div>
           ))
         ) : (
-          <p className="rounded-xl border border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
-            Not enough saved progress yet.
-          </p>
+          <div className="rounded-xl border border-dashed border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">
+              {strong ? "No strong areas identified yet" : "No weak areas identified yet"}
+            </p>
+            <p className="mt-1">
+              Save a few practice or diagnostic attempts and this section will turn into a ranked topic list.
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -455,9 +469,9 @@ function MiniStat({ label, value }: { label: string; value: number | string }) {
 
 function MetricRow({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/20 px-4 py-3 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold text-foreground">{value}</span>
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/20 px-4 py-3 text-sm">
+      <span className="min-w-0 text-muted-foreground">{label}</span>
+      <span className="shrink-0 font-semibold text-foreground">{value}</span>
     </div>
   )
 }

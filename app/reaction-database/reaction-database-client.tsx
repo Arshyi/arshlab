@@ -89,6 +89,13 @@ export function ReactionDatabaseClient() {
     if (predicted.matchedReactionId) setSelectedId(predicted.matchedReactionId)
   }
 
+  function resetFilters() {
+    setQuery("")
+    setCategory("All")
+    setDifficulty("All")
+    setCurriculum("All")
+  }
+
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -105,9 +112,14 @@ export function ReactionDatabaseClient() {
                 </p>
               </div>
             </div>
-            <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v3.7.1
-            </Badge>
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
+                ARSHLAB v3.7.1
+              </Badge>
+              <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
+                Database mode = no AI usage
+              </Badge>
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -148,8 +160,8 @@ export function ReactionDatabaseClient() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-          <Card className="rounded-2xl">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+          <Card className="min-w-0 rounded-2xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between gap-3 text-lg">
                 <span className="flex items-center gap-2">
@@ -162,7 +174,11 @@ export function ReactionDatabaseClient() {
             <CardContent>
               {filteredRecords.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
-                  No reaction records matched those filters.
+                  <p className="font-medium text-foreground">No reaction records matched those filters.</p>
+                  <p className="mt-1">Try clearing the query or choosing a broader category.</p>
+                  <Button type="button" variant="outline" size="sm" className="mt-4 rounded-xl" onClick={resetFilters}>
+                    Reset filters
+                  </Button>
                 </div>
               ) : (
                 <div className="grid max-h-[680px] gap-3 overflow-y-auto pr-1">
@@ -185,7 +201,7 @@ export function ReactionDatabaseClient() {
                           <Badge variant="outline">{record.difficulty}</Badge>
                         </div>
                       </div>
-                      <p className="mt-2 font-mono text-xs text-muted-foreground sm:text-sm">{record.balancedEquation}</p>
+                      <p className="mt-2 break-words font-mono text-xs text-muted-foreground sm:text-sm">{record.balancedEquation}</p>
                     </button>
                   ))}
                 </div>
@@ -194,7 +210,7 @@ export function ReactionDatabaseClient() {
           </Card>
 
           {selected && (
-            <aside className="space-y-4">
+            <aside className="min-w-0 space-y-4">
               <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -216,7 +232,7 @@ export function ReactionDatabaseClient() {
 
                   <div className="rounded-xl border border-border bg-background/80 p-4">
                     <p className="text-xs font-medium uppercase text-muted-foreground">Balanced Equation</p>
-                    <p className="mt-2 font-mono text-sm">{selected.balancedEquation}</p>
+                    <p className="mt-2 break-words font-mono text-sm">{selected.balancedEquation}</p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
@@ -279,9 +295,9 @@ function Metric({ label, value }: { label: string; value: number }) {
 
 function InfoBlock({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-background/80 px-3 py-2">
+    <div className="min-w-0 rounded-xl border border-border bg-background/80 px-3 py-2">
       <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-      <p className="mt-1 font-mono text-sm">{value}</p>
+      <p className="mt-1 break-words font-mono text-sm">{value}</p>
     </div>
   )
 }

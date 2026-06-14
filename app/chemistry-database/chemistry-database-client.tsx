@@ -127,6 +127,10 @@ export function ChemistryDatabaseClient() {
     if (compound) setSelectedCompoundId(compound.id)
   }
 
+  function clearSearch() {
+    setQuery("")
+  }
+
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -143,18 +147,23 @@ export function ChemistryDatabaseClient() {
                 </p>
               </div>
             </div>
-            <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-              v{CHEMISTRY_KNOWLEDGE_CORE_META.version}
-            </Badge>
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
+                v{CHEMISTRY_KNOWLEDGE_CORE_META.version}
+              </Badge>
+              <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
+                Database mode = no AI usage
+              </Badge>
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <StatCard label="Compounds" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.compounds} />
-          <StatCard label="Ions" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions} />
-          <StatCard label="Functional Groups" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.functionalGroups} />
-          <StatCard label="Reaction Records" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.reactionRecords} />
-          <StatCard label="2D Structures" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.molecularStructures} />
-        </div>
+            <StatCard label="Compounds" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.compounds} />
+            <StatCard label="Ions" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions} />
+            <StatCard label="Functional Groups" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.functionalGroups} />
+            <StatCard label="Reaction Records" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.reactionRecords} />
+            <StatCard label="2D Structures" value={CHEMISTRY_KNOWLEDGE_CORE_META.counts.molecularStructures} />
+          </div>
         </motion.div>
 
         <Card className="rounded-2xl border-primary/20 bg-primary/5">
@@ -201,8 +210,8 @@ export function ChemistryDatabaseClient() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="space-y-4">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="min-w-0 space-y-4">
             <div className="flex gap-2 overflow-x-auto pb-2">
               {sections.map((section) => {
                 const Icon = section.icon
@@ -221,35 +230,39 @@ export function ChemistryDatabaseClient() {
               })}
             </div>
 
-            <Card className="rounded-2xl">
+            <Card className="min-w-0 rounded-2xl">
               <CardHeader>
                 <CardTitle className="text-lg">{sections.find((section) => section.id === activeSection)?.label}</CardTitle>
               </CardHeader>
               <CardContent>
                 {activeSection === "compound" && (
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {compoundResults.map((compound) => (
-                      <button
-                        key={compound.id}
-                        type="button"
-                        onClick={() => setSelectedCompoundId(compound.id)}
-                        className={cn(
-                          "rounded-xl border px-4 py-3 text-left transition-colors",
-                          selectedCompound?.id === compound.id
-                            ? "border-primary bg-primary/10"
-                            : "border-border bg-secondary/20 hover:bg-secondary",
-                        )}
-                      >
-                        <span className="block font-medium">{compound.name}</span>
-                        <span className="mt-1 block text-xs text-muted-foreground">{compoundLabel(compound)}</span>
-                      </button>
-                    ))}
+                    {compoundResults.length > 0 ? (
+                      compoundResults.map((compound) => (
+                        <button
+                          key={compound.id}
+                          type="button"
+                          onClick={() => setSelectedCompoundId(compound.id)}
+                          className={cn(
+                            "min-w-0 rounded-xl border px-4 py-3 text-left transition-colors",
+                            selectedCompound?.id === compound.id
+                              ? "border-primary bg-primary/10"
+                              : "border-border bg-secondary/20 hover:bg-secondary",
+                          )}
+                        >
+                          <span className="block break-words font-medium">{compound.name}</span>
+                          <span className="mt-1 block break-words text-xs text-muted-foreground">{compoundLabel(compound)}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <EmptySectionState query={query} onClear={clearSearch} />
+                    )}
                   </div>
                 )}
 
                 {activeSection === "ion" && (
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {ionResults.map((record) => (
+                    {ionResults.length > 0 ? ionResults.map((record) => (
                       <div key={record.id} className="rounded-xl border border-border bg-secondary/20 px-4 py-3">
                         <div className="flex items-center justify-between gap-3">
                           <p className="font-medium">{record.name}</p>
@@ -258,13 +271,13 @@ export function ChemistryDatabaseClient() {
                         <p className="mt-1 font-mono text-sm">{record.formula}</p>
                         <p className="mt-1 text-xs text-muted-foreground">{record.category}</p>
                       </div>
-                    ))}
+                    )) : <EmptySectionState query={query} onClear={clearSearch} />}
                   </div>
                 )}
 
                 {activeSection === "functional-group" && (
                   <div className="grid gap-3">
-                    {functionalGroupResults.map((record) => (
+                    {functionalGroupResults.length > 0 ? functionalGroupResults.map((record) => (
                       <div key={record.id} className="rounded-xl border border-border bg-secondary/20 px-4 py-3">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <p className="font-medium">{record.name}</p>
@@ -275,13 +288,13 @@ export function ChemistryDatabaseClient() {
                         <p className="mt-2 text-sm text-muted-foreground">{record.description}</p>
                         <p className="mt-2 text-xs text-muted-foreground">Examples: {record.examples.join(", ")}</p>
                       </div>
-                    ))}
+                    )) : <EmptySectionState query={query} onClear={clearSearch} />}
                   </div>
                 )}
 
                 {activeSection === "reaction-template" && (
                   <div className="grid gap-3">
-                    {reactionResults.map((record) => (
+                    {reactionResults.length > 0 ? reactionResults.map((record) => (
                       <div key={record.id} className="rounded-xl border border-border bg-secondary/20 px-4 py-3">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <p className="font-medium capitalize">{record.type}</p>
@@ -289,19 +302,19 @@ export function ChemistryDatabaseClient() {
                             template
                           </Badge>
                         </div>
-                        <p className="mt-2 font-mono text-xs sm:text-sm">{record.generalForm}</p>
+                        <p className="mt-2 break-words font-mono text-xs sm:text-sm">{record.generalForm}</p>
                         <p className="mt-2 text-sm text-muted-foreground">{record.description}</p>
                         {record.examples?.[0] && (
                           <p className="mt-2 text-xs text-muted-foreground">Example: {record.examples[0]}</p>
                         )}
                       </div>
-                    ))}
+                    )) : <EmptySectionState query={query} onClear={clearSearch} />}
                   </div>
                 )}
 
                 {activeSection === "reaction-record" && (
                   <div className="grid gap-3">
-                    {reactionRecordResults.map((record) => (
+                    {reactionRecordResults.length > 0 ? reactionRecordResults.map((record) => (
                       <div key={record.id} className="rounded-xl border border-border bg-secondary/20 px-4 py-3">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <p className="font-medium">{record.name}</p>
@@ -310,16 +323,16 @@ export function ChemistryDatabaseClient() {
                             <Badge variant="outline">{record.difficulty}</Badge>
                           </div>
                         </div>
-                        <p className="mt-2 font-mono text-xs sm:text-sm">{record.balancedEquation}</p>
+                        <p className="mt-2 break-words font-mono text-xs sm:text-sm">{record.balancedEquation}</p>
                         <p className="mt-2 text-sm text-muted-foreground">{record.explanation}</p>
                       </div>
-                    ))}
+                    )) : <EmptySectionState query={query} onClear={clearSearch} />}
                   </div>
                 )}
 
                 {activeSection === "spectroscopy" && (
                   <div className="grid gap-3">
-                    {spectroscopyResults.map((record) => (
+                    {spectroscopyResults.length > 0 ? spectroscopyResults.map((record) => (
                       <div key={record.id} className="rounded-xl border border-border bg-secondary/20 px-4 py-3">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <p className="font-medium">{record.name}</p>
@@ -364,20 +377,15 @@ export function ChemistryDatabaseClient() {
                           </div>
                         ) : null}
                       </div>
-                    ))}
+                    )) : <EmptySectionState query={query} onClear={clearSearch} />}
                   </div>
                 )}
 
-                {query.trim() && searchResults.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                    No local chemistry records matched that search yet.
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
 
-          <Card className="h-fit rounded-2xl border-teal-500/20 bg-teal-500/5">
+          <Card className="h-fit min-w-0 rounded-2xl border-teal-500/20 bg-teal-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Beaker className="h-5 w-5" />
@@ -472,7 +480,21 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-border bg-background/70 px-3 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium">{value}</p>
+      <p className="break-words text-sm font-medium">{value}</p>
+    </div>
+  )
+}
+
+function EmptySectionState({ query, onClear }: { query: string; onClear: () => void }) {
+  return (
+    <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground sm:col-span-2">
+      <p className="font-medium text-foreground">No records in this section match.</p>
+      <p className="mt-1">{query.trim() ? "Clear the search or try another section." : "This local section has no records yet."}</p>
+      {query.trim() ? (
+        <Button type="button" variant="outline" size="sm" className="mt-4 rounded-xl" onClick={onClear}>
+          Clear search
+        </Button>
+      ) : null}
     </div>
   )
 }

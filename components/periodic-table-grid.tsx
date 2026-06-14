@@ -165,9 +165,23 @@ export function PeriodicTableGrid({
     )
   }
 
+  function renderSeriesPlaceholder(label: string, row: number) {
+    return (
+      <div
+        key={label}
+        className="flex h-12 w-12 flex-col items-center justify-center rounded-lg border border-dashed border-pink-500/40 bg-pink-500/10 text-center text-[9px] font-semibold leading-tight text-pink-700 dark:text-pink-200 sm:h-14 sm:w-14"
+        style={{ gridRow: row, gridColumn: 3 }}
+        title={`${label} are shown in the separated f-block rows below`}
+      >
+        <span>{label}</span>
+        <span className="text-[8px] font-normal text-muted-foreground">below</span>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      <div className="overflow-x-auto pb-2">
+      <div className="max-w-full overflow-x-auto pb-2">
         <div
           className="grid w-max gap-1"
           style={{
@@ -175,6 +189,8 @@ export function PeriodicTableGrid({
             gridTemplateRows: "repeat(7, minmax(3rem, 3.5rem))",
           }}
         >
+          {renderSeriesPlaceholder("La-Lu", 6)}
+          {renderSeriesPlaceholder("Ac-Lr", 7)}
           {mainElements.map((el) => {
             const pos = getElementGridPosition(el.atomicNumber)
             if (!pos) return null
@@ -184,7 +200,7 @@ export function PeriodicTableGrid({
       </div>
 
       <div className="space-y-2">
-        <div className="overflow-x-auto pb-1">
+        <div className="max-w-full overflow-x-auto pb-1">
           <div className="grid w-max gap-1" style={TABLE_GRID_STYLE}>
             <div
               className="flex h-12 items-center rounded-lg border border-dashed border-border/70 bg-secondary/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:h-14"
@@ -195,7 +211,7 @@ export function PeriodicTableGrid({
             {lanthanides.map((el, index) => renderCell(el, 1, index + 3))}
           </div>
         </div>
-        <div className="overflow-x-auto pb-1">
+        <div className="max-w-full overflow-x-auto pb-1">
           <div className="grid w-max gap-1" style={TABLE_GRID_STYLE}>
             <div
               className="flex h-12 items-center rounded-lg border border-dashed border-border/70 bg-secondary/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:h-14"
