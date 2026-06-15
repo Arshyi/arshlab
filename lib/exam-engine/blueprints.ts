@@ -30,6 +30,7 @@ export const EXAM_BLUEPRINTS: ExamBlueprint[] = [
       section("equilibrium", "Equilibrium", "Equilibrium", 2, "equilibrium"),
       section("acids-bases", "Acids/Bases", "Acids and Bases", 2, "acids-bases"),
       section("spectroscopy", "Spectroscopy", "Spectroscopy", 1, "organic-chemistry", "IR Spectroscopy"),
+      section("organic-mechanisms", "Organic Mechanisms", "Organic Mechanisms", 1, "organic-chemistry"),
     ],
   },
   {
@@ -46,6 +47,7 @@ export const EXAM_BLUEPRINTS: ExamBlueprint[] = [
       section("periodic-trends", "Periodic Trends", "Periodic Trends", 6, "periodicity"),
       section("bonding", "Bonding", "Hybridization", 6, "bonding"),
       section("spectroscopy", "Spectroscopy", "Spectroscopy", 2, "measurement-data", "IR Spectroscopy"),
+      section("organic-mechanisms", "Organic Mechanisms", "Organic Mechanisms", 2, "organic-chemistry"),
     ],
   },
   {
@@ -67,6 +69,7 @@ export const EXAM_BLUEPRINTS: ExamBlueprint[] = [
       section("acids-bases", "Acids/Bases", "Acids and Bases", 2, "acids-bases"),
       section("organic", "Organic Chemistry", "Functional Group Identification", 2, "organic"),
       section("spectroscopy", "Spectroscopy", "Spectroscopy", 2, "organic", "IR Spectroscopy"),
+      section("organic-mechanisms", "Organic Mechanisms", "Organic Mechanisms", 2, "organic"),
     ],
   },
   {
@@ -86,6 +89,7 @@ export const EXAM_BLUEPRINTS: ExamBlueprint[] = [
       section("bonding", "Bonding", "Hybridization", 3, "bonding"),
       section("stoichiometry", "Stoichiometry", "Stoichiometry", 2, "stoichiometry"),
       section("spectroscopy", "Spectroscopy", "Spectroscopy", 1, "measurement-data", "IR Spectroscopy"),
+      section("organic-mechanisms", "Organic Mechanisms", "Organic Mechanisms", 1, "organic-chemistry"),
     ],
   },
   {
@@ -102,6 +106,7 @@ export const EXAM_BLUEPRINTS: ExamBlueprint[] = [
       section("reactions", "Chemical Reactions", "Reaction Classification", 4, "chemical-reactions"),
       section("energetics", "Energetics", "Thermodynamics", 4, "energetics"),
       section("organic", "Organic Chemistry", "Functional Group Identification", 4, "organic"),
+      section("organic-mechanisms", "Organic Mechanisms", "Organic Mechanisms", 3, "organic"),
       section("equilibrium", "Equilibria", "Equilibrium", 3, "equilibrium"),
       section("acids-bases", "Acids/Bases", "Acids and Bases", 2, "acids-bases"),
       section("spectroscopy", "Spectroscopy", "Spectroscopy", 2, "organic", "IR Spectroscopy"),

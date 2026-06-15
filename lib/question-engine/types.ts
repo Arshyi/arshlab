@@ -70,5 +70,7 @@ export interface QuestionEngineStats {
     irPeaks: number
     molecularStructures: number
     visualHighlights: number
+    mechanisms: number
+    mechanismSteps: number
   }
 }

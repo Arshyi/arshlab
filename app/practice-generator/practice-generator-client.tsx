@@ -78,12 +78,18 @@ const topics = [
   "Precipitation",
   "Combustion",
   "Organic Reactions",
+  "Organic Mechanisms",
 ]
 
 const questionTypes = [
   "Multiple choice",
   "Short answer",
   "Explanation prompt",
+  "Next step prediction",
+  "Identify intermediate",
+  "Identify mechanism type",
+  "Determine product",
+  "Determine reagent",
 ]
 
 const difficulties = [
@@ -342,6 +348,8 @@ export function PracticeGeneratorClient() {
     () => getSubtopicsForCurriculumTopic(curriculum, topic, curriculumUnit),
     [curriculum, curriculumUnit, topic],
   )
+  const mechanismMode = topic === "Organic Mechanisms"
+  const effectiveQuestionSource: QuestionSourceMode = mechanismMode ? "Database Only" : questionSource
 
   const score = useMemo(() => {
     const total = practiceSet?.questions.length ?? 0
@@ -358,7 +366,9 @@ export function PracticeGeneratorClient() {
     [practiceSet],
   )
 
-  const needsAi = questionSource !== "Database Only" && !(questionSource === "Hybrid" && Number(questionCount) === 1)
+  const needsAi =
+    effectiveQuestionSource !== "Database Only" &&
+    !(effectiveQuestionSource === "Hybrid" && Number(questionCount) === 1)
 
   useEffect(() => {
     if (topicOptions.length > 0 && !topicOptions.includes(topic)) {
@@ -371,6 +381,12 @@ export function PracticeGeneratorClient() {
       setTargetSubtopic("all")
     }
   }, [subtopicOptions, targetSubtopic])
+
+  useEffect(() => {
+    if (mechanismMode && questionSource !== "Database Only") {
+      setQuestionSource("Database Only")
+    }
+  }, [mechanismMode, questionSource])
 
   useEffect(() => {
     if (
@@ -420,9 +436,17 @@ export function PracticeGeneratorClient() {
     try {
       const totalCount = Number(questionCount)
       const databaseCount =
-        questionSource === "Database Only" ? totalCount : questionSource === "Hybrid" ? Math.ceil(totalCount / 2) : 0
+        effectiveQuestionSource === "Database Only"
+          ? totalCount
+          : effectiveQuestionSource === "Hybrid"
+            ? Math.ceil(totalCount / 2)
+            : 0
       const aiCount =
-        questionSource === "AI Only" ? totalCount : questionSource === "Hybrid" ? Math.floor(totalCount / 2) : 0
+        effectiveQuestionSource === "AI Only"
+          ? totalCount
+          : effectiveQuestionSource === "Hybrid"
+            ? Math.floor(totalCount / 2)
+            : 0
 
       const databaseQuestions =
         databaseCount > 0
@@ -457,7 +481,7 @@ export function PracticeGeneratorClient() {
         const data = await response.json()
 
         if (!response.ok || !data.ok || !data.practiceSet) {
-          if (questionSource === "Hybrid" && databaseQuestions.length > 0) {
+          if (effectiveQuestionSource === "Hybrid" && databaseQuestions.length > 0) {
             setPracticeSet({ questions: databaseQuestions })
             setError(data.message || "AI Assistant temporarily unavailable. Database questions were generated instead.")
             return
@@ -474,7 +498,7 @@ export function PracticeGeneratorClient() {
       }
 
       const mergedQuestions =
-        questionSource === "Hybrid"
+        effectiveQuestionSource === "Hybrid"
           ? Array.from({ length: totalCount }, (_unused, index) =>
               index % 2 === 0 ? databaseQuestions.shift() : aiQuestions.shift(),
             ).filter((question): question is PracticeQuestion => Boolean(question))
@@ -518,6 +542,7 @@ export function PracticeGeneratorClient() {
         { label: "Question Type", value: questionType },
         { label: "Difficulty", value: difficulty },
         { label: "Curriculum", value: curriculumStyle },
+        { label: "Source", value: effectiveQuestionSource },
         { label: "Date Generated", value: generatedDateLabel() },
         { label: "Number of Questions", value: practiceSet.questions.length },
       ],
@@ -672,15 +697,17 @@ export function PracticeGeneratorClient() {
                   />
                   <Picker
                     label="Question Source"
-                    value={questionSource}
-                    options={[...questionSources]}
+                    value={effectiveQuestionSource}
+                    options={mechanismMode ? ["Database Only"] : [...questionSources]}
                     onChange={(value) => setQuestionSource(value as QuestionSourceMode)}
                   />
                 </div>
 
                 <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-muted-foreground">
-                    Database mode uses no AI requests. Hybrid alternates database and AI questions when AI is available.
+                    {mechanismMode
+                      ? "Organic Mechanisms are deterministic and always use local mechanism records."
+                      : "Database mode uses no AI requests. Hybrid alternates database and AI questions when AI is available."}
                   </p>
                   <Button
                     onClick={generateQuestionSet}
@@ -689,7 +716,7 @@ export function PracticeGeneratorClient() {
                   >
                     {loading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : questionSource === "Database Only" ? (
+                    ) : effectiveQuestionSource === "Database Only" ? (
                       <Database className="h-4 w-4" />
                     ) : (
                       <Sparkles className="h-4 w-4" />
@@ -745,7 +772,7 @@ export function PracticeGeneratorClient() {
                         <Badge>{questionType}</Badge>
                         <Badge variant="secondary">{difficulty}</Badge>
                         <Badge variant="outline">{curriculumStyle}</Badge>
-                        <Badge variant="outline">{questionSource}</Badge>
+                        <Badge variant="outline">{effectiveQuestionSource}</Badge>
                       </div>
                     </div>
                   </CardHeader>

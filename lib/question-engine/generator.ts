@@ -62,7 +62,7 @@ export function generateDatabaseQuestions(input: GenerateDatabaseQuestionsInput)
     const question = template.build({
       ...input,
       index: attempt + questions.length,
-      questionType: "Multiple choice",
+      questionType: input.questionType ?? "Multiple choice",
     })
     attempt += 1
 

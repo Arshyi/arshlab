@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Atom, Award, BookOpen, BookOpenCheck, Bot, Database, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves, Network } from "lucide-react"
+import { ArrowRightLeft, Atom, Award, BookOpen, BookOpenCheck, Bot, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves, Network } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -17,6 +17,7 @@ const LAB_LINKS = [
   { href: "/ai-assistant", label: "AI Chemistry Assistant" },
   { href: "/chemistry-database", label: "Chemistry Database" },
   { href: "/molecular-visualizer", label: "Molecular Visualizer" },
+  { href: "/mechanism-trainer", label: "Mechanism Trainer" },
   { href: "/reaction-database", label: "Reaction Database" },
   { href: "/question-engine", label: "Question Engine" },
   { href: "/exam-engine", label: "Exam Engine" },
@@ -267,6 +268,13 @@ export default function ChemistryHubPage() {
             description="Follow alkane-to-ester, benzene functionalization, and ethene-to-ester pathways with molecule cards."
             href="/molecular-visualizer#pathways"
             action="View Pathways"
+          />
+          <HubActionCard
+            icon={FlaskConical}
+            title="Mechanism Trainer"
+            description="Step through deterministic organic mechanisms with highlighted atoms, highlighted bonds, and next-step prediction practice."
+            href="/mechanism-trainer"
+            action="Open Trainer"
           />
           <HubActionCard
             icon={ArrowRightLeft}

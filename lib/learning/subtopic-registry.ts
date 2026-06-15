@@ -148,6 +148,18 @@ export const TOPIC_SUBTOPIC_REGISTRY = {
     "Elimination",
     "Oxidation",
   ],
+  "Organic Mechanisms": [
+    "Alkene Bromination",
+    "Alkene Hydration",
+    "Alkene Hydrogenation",
+    "Esterification",
+    "SN1",
+    "SN2",
+    "E1",
+    "E2",
+    "Alcohol Oxidation",
+    "Carboxylic Acid Formation",
+  ],
 } as const
 
 export type LearningTopic = keyof typeof TOPIC_SUBTOPIC_REGISTRY
@@ -186,6 +198,8 @@ const TOPIC_ALIASES: Record<string, LearningTopic> = {
   "precipitation": "Precipitation",
   "combustion": "Combustion",
   "organic reactions": "Organic Reactions",
+  "organic mechanisms": "Organic Mechanisms",
+  "mechanism trainer": "Organic Mechanisms",
 }
 
 const SUBTOPIC_KEYWORDS: Record<string, string[]> = {
@@ -281,6 +295,15 @@ const SUBTOPIC_KEYWORDS: Record<string, string[]> = {
   Substitution: ["substitution", "nucleophilic substitution", "leaving group"],
   Addition: ["addition", "alkene addition", "double bond"],
   Elimination: ["elimination", "dehydration", "forms alkene"],
+  "Alkene Bromination": ["alkene bromination", "bromonium", "br2", "vicinal dibromide"],
+  "Alkene Hydration": ["alkene hydration", "hydration", "markovnikov", "carbocation", "water attacks"],
+  "Alkene Hydrogenation": ["alkene hydrogenation", "hydrogenation", "h2", "pd", "pt", "alkane"],
+  SN1: ["sn1", "carbocation", "polar protic", "tertiary", "ionization"],
+  SN2: ["sn2", "backside attack", "inversion", "concerted", "primary haloalkane"],
+  E1: ["e1", "elimination", "carbocation", "weak base"],
+  E2: ["e2", "anti periplanar", "strong base", "beta hydrogen", "concerted elimination"],
+  "Alcohol Oxidation": ["alcohol oxidation", "primary alcohol", "aldehyde", "oxidation"],
+  "Carboxylic Acid Formation": ["carboxylic acid formation", "aldehyde oxidation", "carboxylic acid", "cooh"],
 }
 
 function normalize(value: string): string {

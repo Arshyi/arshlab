@@ -27,6 +27,9 @@ const REVIEW_TOPICS = [
   "Reaction Balancing",
   "Redox",
   "Precipitation",
+  "Combustion",
+  "Organic Reactions",
+  "Organic Mechanisms",
 ]
 
 function clampQuestionCount(count: number): number {

@@ -2,6 +2,7 @@ import { KNOWLEDGE_COMPOUNDS } from "./compounds"
 import { KNOWLEDGE_FUNCTIONAL_GROUPS } from "./functional-groups"
 import { COMMON_IONS } from "./ions"
 import { REACTION_RECORDS, REACTION_TEMPLATES_KNOWLEDGE } from "./reactions"
+import { ORGANIC_MECHANISMS, getMechanismMetrics } from "./mechanisms"
 import { SPECTROSCOPY_RECORDS, countIRPeaks, getSpectroscopyRecord } from "./spectroscopy"
 import {
   COMPOUND_PATHWAYS,
@@ -28,7 +29,9 @@ import type {
 import type { ReactionRecord } from "./reaction-types"
 import type { SpectroscopyRecord } from "./spectroscopy-types"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.7.1"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.8.0"
+
+const mechanismMetrics = getMechanismMetrics()
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,
@@ -44,6 +47,9 @@ export const CHEMISTRY_KNOWLEDGE_CORE_META = {
     functionalGroupHighlights: countFunctionalGroupHighlights(),
     spectroscopyMappings: SPECTROSCOPY_MAPPINGS.length,
     compoundPathways: COMPOUND_PATHWAYS.length,
+    mechanisms: mechanismMetrics.mechanismsAvailable,
+    mechanismSteps: mechanismMetrics.mechanismSteps,
+    mechanismExercises: mechanismMetrics.interactiveExercises,
   },
 }
 
@@ -431,6 +437,7 @@ export {
   KNOWLEDGE_FUNCTIONAL_GROUPS,
   REACTION_RECORDS,
   REACTION_TEMPLATES_KNOWLEDGE,
+  ORGANIC_MECHANISMS,
   SPECTROSCOPY_RECORDS,
   COMPOUND_PATHWAYS,
   MOLECULAR_STRUCTURES,
@@ -445,6 +452,7 @@ export {
   getStructureForCompound,
   getStructuresWithHighlight,
 }
+export type { MechanismAction, MechanismMetrics, MechanismRecord, MechanismStep } from "./mechanism-types"
 export type { IRPeak, NMRSignal, SpectroscopyQuestion, SpectroscopyRecord } from "./spectroscopy-types"
 export type {
   AtomNode,

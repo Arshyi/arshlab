@@ -318,7 +318,6 @@ export function ExamGeneratorClient() {
     () => Math.max(0, GUEST_LIMIT - guestUsage.count),
     [guestUsage.count],
   )
-  const examNeedsAi = needsAiForExam(examSource)
   const weakTopic = useMemo(() => getWeakTopic(progressEntries), [progressEntries])
   const selectedCurriculum = useMemo(() => getCurriculum(curriculumId), [curriculumId])
   const topicOptions = useMemo(
@@ -329,6 +328,9 @@ export function ExamGeneratorClient() {
     () => getSubtopicsForCurriculumTopic(selectedCurriculum, examTopic, curriculumUnit),
     [curriculumUnit, examTopic, selectedCurriculum],
   )
+  const mechanismExamMode = examTopic === "Organic Mechanisms"
+  const effectiveExamSource: ExamSourceSelection = mechanismExamMode ? "Database Only" : examSource
+  const examNeedsAi = needsAiForExam(effectiveExamSource)
 
   const score = useMemo(() => {
     const total = exam?.questions.length ?? 0
@@ -350,6 +352,12 @@ export function ExamGeneratorClient() {
       setTargetSubtopic("all")
     }
   }, [subtopicOptions, targetSubtopic])
+
+  useEffect(() => {
+    if (mechanismExamMode && examSource !== "Database Only") {
+      setExamSource("Database Only")
+    }
+  }, [examSource, mechanismExamMode])
 
   useEffect(() => {
     if (
@@ -387,7 +395,9 @@ export function ExamGeneratorClient() {
     if (loading) return
 
     const totalCount = targetTopic ? 10 : Number(examLength)
-    const sourceMode = getExamSourceMode(examSource)
+    const targetIsMechanism = (targetTopic ?? examTopic) === "Organic Mechanisms"
+    const sourceSelection: ExamSourceSelection = targetIsMechanism ? "Database Only" : examSource
+    const sourceMode = getExamSourceMode(sourceSelection)
     const adaptive = examMode === "Adaptive Exam" || Boolean(targetTopic)
     const aiRequired = sourceMode === "ai" || sourceMode === "hybrid"
 
@@ -677,20 +687,27 @@ export function ExamGeneratorClient() {
                   <Picker label="Exam Length" value={examLength} options={examLengths} onChange={setExamLength} suffix="Questions" />
                   <Picker label="Difficulty" value={difficulty} options={difficulties} onChange={setDifficulty} />
                   <Picker label="Question Types" value={questionType} options={questionTypes} onChange={setQuestionType} />
-                  <Picker label="Exam Source" value={examSource} options={[...examSources]} onChange={(value) => setExamSource(value as ExamSourceSelection)} />
+                  <Picker
+                    label="Exam Source"
+                    value={effectiveExamSource}
+                    options={mechanismExamMode ? ["Database Only"] : [...examSources]}
+                    onChange={(value) => setExamSource(value as ExamSourceSelection)}
+                  />
                   <Picker label="Exam Mode" value={examMode} options={[...examModes]} onChange={(value) => setExamMode(value as ExamModeSelection)} />
                 </div>
 
                 <div className="grid gap-3 rounded-2xl border border-border bg-secondary/20 p-4 text-sm text-muted-foreground md:grid-cols-4">
-                  <SourceMetric label="Database %" value={examSource === "AI Only" ? "0%" : examSource === "Database Only" ? "100%" : "70%"} />
-                  <SourceMetric label="AI %" value={examSource === "AI Only" ? "100%" : examSource === "Database Only" ? "0%" : "30%"} />
+                  <SourceMetric label="Database %" value={effectiveExamSource === "AI Only" ? "0%" : effectiveExamSource === "Database Only" ? "100%" : "70%"} />
+                  <SourceMetric label="AI %" value={effectiveExamSource === "AI Only" ? "100%" : effectiveExamSource === "Database Only" ? "0%" : "30%"} />
                   <SourceMetric label="Estimated Time" value={`${Math.round(Number(examLength) * 1.5)} min`} />
                   <SourceMetric label="Mode" value={examMode === "Adaptive Exam" ? "Personalized" : "Blueprint"} />
                 </div>
 
                 <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-muted-foreground">
-                    Database exams use local chemistry records and do not consume AI requests. AI-containing exams still use the free-model-only server route.
+                    {mechanismExamMode
+                      ? "Organic Mechanisms exams are deterministic and always use local mechanism records."
+                      : "Database exams use local chemistry records and do not consume AI requests. AI-containing exams still use the free-model-only server route."}
                   </p>
                   <Button
                     onClick={() => void generateExam()}

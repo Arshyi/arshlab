@@ -10,6 +10,7 @@ import {
   BookOpenCheck,
   CheckCircle2,
   ClipboardCheck,
+  FlaskConical,
   Gauge,
   GraduationCap,
   Loader2,
@@ -100,6 +101,10 @@ export function LearningDashboardClient() {
     .slice(0, 5)
   const nextAction = summary.recommendations.today[0]
   const unlockedIds = new Set(storedAchievements.map((achievement) => achievement.achievementId))
+  const mechanismStats = summary.topicStats.find((topic) => topic.topic === "Organic Mechanisms")
+  const missedMechanisms = summary.conceptStats
+    .filter((concept) => concept.topic === "Organic Mechanisms" && concept.missed > 0)
+    .slice(0, 4)
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
@@ -120,7 +125,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v3.5.1 connects diagnostics, curriculum, practice, recovery, study, and exams into one hardened adaptive learning view.
+            ARSHLAB v3.8.0 connects diagnostics, curriculum, practice, recovery, study, exams, and mechanism mastery into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -259,6 +264,42 @@ export function LearningDashboardClient() {
               <AreaCard title="Weak Areas" icon={AlertCircle} topics={weakAreas} />
               <AreaCard title="Strong Areas" icon={Medal} topics={strongAreas} strong />
             </div>
+
+            <Card className="mb-6 rounded-2xl border-teal-500/20 bg-teal-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <FlaskConical className="h-5 w-5" />
+                  Mechanism Mastery
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="rounded-xl border border-border bg-background/80 p-4">
+                  <p className="text-3xl font-bold">{mechanismStats?.accuracy ?? 0}%</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {mechanismStats ? `${mechanismStats.correct}/${mechanismStats.attempted} correct` : "No attempts yet"}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold">Most missed mechanisms</p>
+                  {missedMechanisms.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {missedMechanisms.map((concept) => (
+                        <Badge key={`${concept.topic}-${concept.subtopic}`} variant="outline" className="rounded-full">
+                          {concept.subtopic}: {concept.correct}/{concept.attempted}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Self-mark Organic Mechanisms questions to reveal missed pathways here.
+                    </p>
+                  )}
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/mechanism-trainer">Review Mechanisms</Link>
+                </Button>
+              </CardContent>
+            </Card>
 
             <div className="mb-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
               <Card className="min-w-0 rounded-2xl">

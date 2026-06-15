@@ -26,6 +26,7 @@ export const RECOVERY_TOPICS = [
   "Precipitation",
   "Combustion",
   "Organic Reactions",
+  "Organic Mechanisms",
 ] as const
 
 export type RecoveryTopic = (typeof RECOVERY_TOPICS)[number]

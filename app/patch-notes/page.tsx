@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.7.1",
+    version: "3.8.0",
     date: "Current",
+    status: "released",
+    title: "Organic Mechanism Trainer",
+    changes: [
+      "Added deterministic Organic Mechanism Trainer route with step-by-step visual mechanism playback",
+      "Added local mechanism records for alkene bromination, alkene hydration, alkene hydrogenation, esterification, SN1, SN2, E1, E2, alcohol oxidation, and carboxylic acid formation",
+      "Added highlighted atoms and bonds for each mechanism step using the existing 2D molecule renderer",
+      "Added Predict Next Step student mode with four deterministic answer choices and immediate feedback",
+      "Added Organic Mechanisms database question templates for next-step prediction, intermediate identification, mechanism type, product, and reagent questions",
+      "Added Organic Mechanisms coverage to deterministic exam blueprints, curriculum topics, recovery topics, and learning dashboard mechanism mastery",
+      "Added Chemistry Hub, homepage, and navbar links for Mechanism Trainer",
+      "Kept AI routes, OpenRouter configuration, and free-model guardrails unchanged",
+    ],
+  },
+  {
+    version: "3.7.1",
+    date: "Previous",
     status: "released",
     title: "Molecular Visualization Refinement",
     changes: [

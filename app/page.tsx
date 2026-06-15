@@ -280,6 +280,35 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Mechanism Trainer Feature */}
+      <section className="relative px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+            <CardContent className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:items-center sm:p-8">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                  <FlaskConical className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">New in v3.8.0</p>
+                  <h2 className="mt-1 text-2xl font-bold tracking-tight text-foreground">Organic Mechanism Trainer</h2>
+                  <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+                    Step through SN1, SN2, E1, E2, alkene additions, esterification, and oxidation pathways with highlighted atoms,
+                    highlighted bonds, and deterministic next-step prediction practice.
+                  </p>
+                </div>
+              </div>
+              <Button asChild className="rounded-xl">
+                <Link href="/mechanism-trainer">
+                  Open Trainer
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* Learning Ecosystem Section */}
       <section className="relative px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
