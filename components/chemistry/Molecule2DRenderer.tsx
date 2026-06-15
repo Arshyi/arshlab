@@ -319,18 +319,32 @@ export function Molecule2DRenderer({
             const from = atomsById.get(item.from)
             const to = atomsById.get(item.to)
             if (!from || !to) return null
-            const active = highlights.some((highlight) => shouldEmphasize(highlight, highlightFunctionalGroup) && highlight.bondIds?.includes(item.id))
+            const activeHighlight = highlights.find(
+              (highlight) => shouldEmphasize(highlight, highlightFunctionalGroup) && highlight.bondIds?.includes(item.id),
+            )
+            const active = Boolean(activeHighlight)
+            const activeColor = activeHighlight?.color ?? "#0f766e"
             const midpoint = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 }
             return (
               <g key={item.id}>
                 {bondLines(item, from, to).map((line, index) => (
-                  <line
-                    key={`${item.id}-${index}`}
-                    {...line}
-                    stroke={active ? "#0f766e" : bondStroke(item.order)}
-                    strokeWidth={active ? 4.5 : displayMode === "skeletal" ? 3.8 : 3.2}
-                    strokeLinecap="round"
-                  />
+                  <g key={`${item.id}-${index}`}>
+                    {active ? (
+                      <line
+                        {...line}
+                        stroke={activeColor}
+                        strokeWidth={displayMode === "skeletal" ? 9 : 10}
+                        strokeLinecap="round"
+                        opacity={0.24}
+                      />
+                    ) : null}
+                    <line
+                      {...line}
+                      stroke={active ? activeColor : bondStroke(item.order)}
+                      strokeWidth={active ? 5 : displayMode === "skeletal" ? 3.8 : 3.2}
+                      strokeLinecap="round"
+                    />
+                  </g>
                 ))}
                 {item.order !== "aromatic" ? (
                   <text
@@ -338,7 +352,7 @@ export function Molecule2DRenderer({
                     y={midpoint.y - 9}
                     textAnchor="middle"
                     className="text-[12px] font-black"
-                    fill="hsl(var(--muted-foreground))"
+                    fill={active ? activeColor : "hsl(var(--muted-foreground))"}
                     paintOrder="stroke"
                     stroke="hsl(var(--background))"
                     strokeWidth="3"
@@ -365,18 +379,33 @@ export function Molecule2DRenderer({
           {visibleAtoms.map((item) => {
             const chargeLabel = item.label && item.label !== item.element ? item.label.replace(item.element, "") : ""
             const visual = elementVisual(item.element)
-            const active = highlights.some((highlight) => shouldEmphasize(highlight, highlightFunctionalGroup) && highlight.atomIds.includes(item.id))
+            const activeHighlight = highlights.find(
+              (highlight) => shouldEmphasize(highlight, highlightFunctionalGroup) && highlight.atomIds.includes(item.id),
+            )
+            const active = Boolean(activeHighlight)
+            const activeColor = activeHighlight?.color ?? "#0f766e"
             const radius = displayMode === "skeletal" && item.element === "C" ? (compact ? 17 : 18) : compact ? 18 : 21
             return (
               <g key={item.id}>
                 <title>{atomTooltip(item)}</title>
+                {active ? (
+                  <circle
+                    cx={item.x}
+                    cy={item.y}
+                    r={radius + 7}
+                    fill={activeColor}
+                    opacity={0.18}
+                    stroke={activeColor}
+                    strokeWidth={2}
+                  />
+                ) : null}
                 <circle
                   cx={item.x}
                   cy={item.y}
                   r={radius}
                   fill={visual.color}
-                  stroke={active ? "#0f766e" : "hsl(var(--background))"}
-                  strokeWidth={active ? 4 : 2.5}
+                  stroke={active ? activeColor : "hsl(var(--background))"}
+                  strokeWidth={active ? 4.5 : 2.5}
                 />
                 {showAtomLabels ? (
                   <text

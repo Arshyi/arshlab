@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.8.0",
+    version: "3.8.1",
     date: "Current",
+    status: "released",
+    title: "Mechanism Trainer Polish",
+    changes: [
+      "Improved Organic Mechanism Trainer step readability with clearer structure, electron-flow, and explanation panels",
+      "Made highlighted atoms and bonds more visually obvious in mechanism views",
+      "Expanded Predict Next Step feedback with selected-choice reasoning, correct-answer explanation, and distractor explanations",
+      "Added compact mechanism summary cards for mechanism type, reagents and conditions, key intermediate, and product pattern",
+      "Improved mobile layout and button alignment for the Mechanism Trainer",
+      "Kept Organic Mechanisms practice and exam generation in Database Only mode with no AI route changes",
+    ],
+  },
+  {
+    version: "3.8.0",
+    date: "Previous",
     status: "released",
     title: "Organic Mechanism Trainer",
     changes: [

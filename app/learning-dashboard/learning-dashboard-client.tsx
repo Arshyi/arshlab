@@ -125,7 +125,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v3.8.0 connects diagnostics, curriculum, practice, recovery, study, exams, and mechanism mastery into one adaptive learning view.
+            ARSHLAB v3.8.1 connects diagnostics, curriculum, practice, recovery, study, exams, and mechanism mastery into one adaptive learning view.
           </p>
         </motion.div>
 

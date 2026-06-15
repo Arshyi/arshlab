@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { MechanismRecord } from "@/lib/chemistry/mechanism-types"
-import { buildMechanismStepExercise, evaluateMechanismChoice } from "@/lib/mechanism-engine"
+import { buildMechanismStepExercise, evaluateMechanismChoice, type MechanismChoiceFeedback } from "@/lib/mechanism-engine"
 
 interface MechanismViewerProps {
   mechanism: MechanismRecord
@@ -19,7 +19,7 @@ const choiceLabels = ["A", "B", "C", "D"]
 export function MechanismViewer({ mechanism }: MechanismViewerProps) {
   const [stepIndex, setStepIndex] = useState(0)
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null)
-  const [feedback, setFeedback] = useState<{ correct: boolean; explanation: string } | null>(null)
+  const [feedback, setFeedback] = useState<MechanismChoiceFeedback | null>(null)
 
   const step = mechanism.steps[stepIndex] ?? mechanism.steps[0]
   const exercise = useMemo(
@@ -36,11 +36,11 @@ export function MechanismViewer({ mechanism }: MechanismViewerProps) {
         {
           id: "mechanism-step-highlight",
           group: "mechanism-step",
-          label: "Active site",
+          label: "Electron-flow focus",
           atomIds: step.highlightAtoms,
           bondIds: step.highlightBonds,
-          color: "#14b8a6",
-          description: step.explanation,
+          color: "#f97316",
+          description: step.electronFlow,
         },
       ],
     }
@@ -67,7 +67,7 @@ export function MechanismViewer({ mechanism }: MechanismViewerProps) {
 
   return (
     <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <Card className="min-w-0 rounded-2xl border-teal-500/20 bg-teal-500/5">
+      <Card className="min-w-0 overflow-hidden rounded-2xl border-teal-500/20 bg-teal-500/5">
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -77,9 +77,12 @@ export function MechanismViewer({ mechanism }: MechanismViewerProps) {
               </CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">{step.description}</p>
             </div>
-            <Badge variant="secondary" className="w-fit rounded-full">
-              {stepIndex + 1} / {mechanism.steps.length}
-            </Badge>
+            <div className="flex w-fit items-center gap-2 rounded-full border border-border bg-background/80 px-3 py-1 text-sm font-semibold">
+              <span className="text-muted-foreground">Step</span>
+              <span>{stepIndex + 1}</span>
+              <span className="text-muted-foreground">/</span>
+              <span>{mechanism.steps.length}</span>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -95,26 +98,37 @@ export function MechanismViewer({ mechanism }: MechanismViewerProps) {
                 structure={displayStructure}
                 highlightFunctionalGroup="mechanism-step"
                 showAtomLabels
-                className="bg-background/90"
+                className="bg-background/95"
               />
             </motion.div>
           </AnimatePresence>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <StepCard
+              label="Current structure"
+              body={step.description}
+            />
+            <StepCard
+              label="Electron-flow cue"
+              body={step.electronFlow}
+              accent
+            />
+            <StepCard
+              label="Why this matters"
+              body={step.explanation}
+            />
+          </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Panel title="Reactants" items={mechanism.reactants} />
             <Panel title="Products" items={mechanism.products} />
           </div>
 
-          <div className="rounded-xl border border-border bg-background/80 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Step explanation</p>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.explanation}</p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+          <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
             <Button
               type="button"
               variant="outline"
-              className="rounded-xl"
+              className="w-full rounded-xl sm:w-auto"
               onClick={() => move(-1)}
               disabled={stepIndex === 0}
             >
@@ -123,7 +137,7 @@ export function MechanismViewer({ mechanism }: MechanismViewerProps) {
             </Button>
             <Button
               type="button"
-              className="rounded-xl"
+              className="w-full rounded-xl sm:w-auto"
               onClick={() => move(1)}
               disabled={stepIndex === mechanism.steps.length - 1}
             >
@@ -171,7 +185,7 @@ export function MechanismViewer({ mechanism }: MechanismViewerProps) {
                 </div>
                 {feedback && (
                   <div
-                    className={`rounded-xl border p-3 text-sm ${
+                    className={`space-y-3 rounded-xl border p-3 text-sm ${
                       feedback.correct
                         ? "border-teal-500/30 bg-teal-500/10 text-teal-900 dark:text-teal-100"
                         : "border-destructive/30 bg-destructive/10"
@@ -181,7 +195,34 @@ export function MechanismViewer({ mechanism }: MechanismViewerProps) {
                       {feedback.correct ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                       {feedback.correct ? "Correct next step" : "Not this step"}
                     </div>
-                    <p className="leading-relaxed">{feedback.explanation}</p>
+                    <div className="rounded-lg bg-background/75 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Your choice: {feedback.selectedLabel}
+                      </p>
+                      <p className="mt-1 leading-relaxed">{feedback.selectedExplanation}</p>
+                    </div>
+                    {!feedback.correct ? (
+                      <div className="rounded-lg bg-background/75 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Best move: {feedback.correctLabel}
+                        </p>
+                        <p className="mt-1 leading-relaxed">{feedback.correctExplanation}</p>
+                      </div>
+                    ) : null}
+                    {feedback.distractorExplanations.length > 0 ? (
+                      <div className="rounded-lg bg-background/75 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Why the distractors miss
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          {feedback.distractorExplanations.map((item) => (
+                            <p key={item.label} className="leading-relaxed text-muted-foreground">
+                              <span className="font-medium text-foreground">{item.label}:</span> {item.explanation}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 )}
               </>
@@ -205,6 +246,19 @@ export function MechanismViewer({ mechanism }: MechanismViewerProps) {
           </CardContent>
         </Card>
       </aside>
+    </div>
+  )
+}
+
+function StepCard({ label, body, accent = false }: { label: string; body: string; accent?: boolean }) {
+  return (
+    <div
+      className={`rounded-xl border p-4 ${
+        accent ? "border-orange-500/30 bg-orange-500/10" : "border-border bg-background/80"
+      }`}
+    >
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
     </div>
   )
 }

@@ -29,7 +29,7 @@ import type {
 import type { ReactionRecord } from "./reaction-types"
 import type { SpectroscopyRecord } from "./spectroscopy-types"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.8.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.8.1"
 
 const mechanismMetrics = getMechanismMetrics()
 

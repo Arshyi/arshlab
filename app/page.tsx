@@ -290,7 +290,7 @@ export default function HomePage() {
                   <FlaskConical className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">New in v3.8.0</p>
+                  <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Polished in v3.8.1</p>
                   <h2 className="mt-1 text-2xl font-bold tracking-tight text-foreground">Organic Mechanism Trainer</h2>
                   <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
                     Step through SN1, SN2, E1, E2, alkene additions, esterification, and oxidation pathways with highlighted atoms,

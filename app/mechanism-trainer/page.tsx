@@ -16,6 +16,17 @@ function normalize(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
 }
 
+function keyIntermediate(mechanism: ReturnType<typeof listMechanisms>[number]): string {
+  const intermediate = mechanism.steps.find((step) =>
+    /intermediate|carbocation|transition|bromonium|tetrahedral/i.test(step.title),
+  )
+  return intermediate?.title ?? mechanism.steps[1]?.title ?? "No discrete intermediate"
+}
+
+function productPattern(mechanism: ReturnType<typeof listMechanisms>[number]): string {
+  return mechanism.products.join(" + ")
+}
+
 export default function MechanismTrainerPage() {
   const mechanisms = listMechanisms()
   const metrics = getMechanismMetrics()
@@ -53,7 +64,7 @@ export default function MechanismTrainerPage() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v3.8.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v3.8.1</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                 </div>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Organic Mechanism Trainer</h1>
@@ -62,14 +73,14 @@ export default function MechanismTrainerPage() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button asChild variant="outline" className="rounded-xl">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button asChild variant="outline" className="w-full rounded-xl sm:w-auto">
                 <Link href="/practice-generator?topic=Organic%20Mechanisms&source=database">
                   Practice
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild className="rounded-xl">
+              <Button asChild className="w-full rounded-xl sm:w-auto">
                 <Link href="/exam-generator?topic=Organic%20Mechanisms&source=database">
                   Exam Set
                   <ArrowRight className="h-4 w-4" />
@@ -158,6 +169,16 @@ export default function MechanismTrainerPage() {
                   </CardContent>
                 </Card>
 
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <SummaryTile label="Mechanism type" value={selected.category} />
+                  <SummaryTile
+                    label="Reagents / conditions"
+                    value={`${selected.reagents.join(", ")}${selected.conditions ? ` | ${selected.conditions}` : ""}`}
+                  />
+                  <SummaryTile label="Key intermediate" value={keyIntermediate(selected)} />
+                  <SummaryTile label="Product pattern" value={productPattern(selected)} />
+                </div>
+
                 <MechanismViewer key={selected.id} mechanism={selected} />
 
                 <Card className="rounded-2xl">
@@ -203,6 +224,17 @@ function Metric({ label, value }: { label: string; value: number | string }) {
       <CardContent className="p-4">
         <p className="font-mono text-2xl font-bold">{value}</p>
         <p className="text-sm text-muted-foreground">{label}</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function SummaryTile({ label, value }: { label: string; value: string }) {
+  return (
+    <Card className="rounded-2xl">
+      <CardContent className="p-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="mt-2 break-words text-sm font-semibold leading-relaxed">{value}</p>
       </CardContent>
     </Card>
   )

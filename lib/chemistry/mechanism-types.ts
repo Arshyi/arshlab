@@ -22,6 +22,7 @@ export interface MechanismStep {
   intermediateStructure: MolecularStructure2D
   highlightAtoms: string[]
   highlightBonds: string[]
+  electronFlow: string
   explanation: string
   nextAction?: MechanismAction
   distractorActions: MechanismAction[]

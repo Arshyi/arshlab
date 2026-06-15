@@ -8,6 +8,18 @@ export interface MechanismStepExercise {
   choices: Array<MechanismAction & { correct: boolean }>
 }
 
+export interface MechanismChoiceFeedback {
+  correct: boolean
+  selectedLabel: string
+  selectedExplanation: string
+  correctLabel: string
+  correctExplanation: string
+  distractorExplanations: Array<{
+    label: string
+    explanation: string
+  }>
+}
+
 function rotate<T>(items: T[], offset: number): T[] {
   if (items.length === 0) return items
   const normalized = Math.abs(offset) % items.length
@@ -54,18 +66,34 @@ export function evaluateMechanismChoice(
   mechanismId: string | undefined,
   stepIndex: number,
   choiceId: string,
-): { correct: boolean; explanation: string } {
+): MechanismChoiceFeedback {
   const exercise = getMechanismStepExercise(mechanismId, stepIndex)
   const choice = exercise?.choices.find((item) => item.id === choiceId)
   if (!exercise || !choice) {
     return {
       correct: false,
-      explanation: "No deterministic mechanism exercise is available for this step.",
+      selectedLabel: "Unavailable",
+      selectedExplanation: "No deterministic mechanism exercise is available for this step.",
+      correctLabel: "Unavailable",
+      correctExplanation: "No deterministic mechanism exercise is available for this step.",
+      distractorExplanations: [],
     }
   }
 
+  const correctChoice = exercise.choices.find((item) => item.correct)
+  const correctExplanation = exercise.step.nextAction?.explanation ?? correctChoice?.explanation ?? "This is the best next mechanism move."
+
   return {
     correct: choice.correct,
-    explanation: choice.correct ? exercise.step.nextAction?.explanation ?? choice.explanation : choice.explanation,
+    selectedLabel: choice.label,
+    selectedExplanation: choice.explanation,
+    correctLabel: correctChoice?.label ?? exercise.step.nextAction?.label ?? "Correct next step",
+    correctExplanation,
+    distractorExplanations: exercise.choices
+      .filter((item) => !item.correct)
+      .map((item) => ({
+        label: item.label,
+        explanation: item.explanation,
+      })),
   }
 }

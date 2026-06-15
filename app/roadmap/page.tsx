@@ -187,7 +187,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v3.8.0 - Organic Mechanism Trainer
+          ARSHLAB v3.8.1 - Mechanism Trainer Polish
         </motion.p>
       </div>
     </div>

@@ -28,9 +28,23 @@ function action(id: string, label: string, explanation: string): MechanismAction
   return { id, label, explanation }
 }
 
-function step(input: Omit<MechanismStep, "distractorActions"> & { distractorActions?: MechanismAction[] }): MechanismStep {
+function electronFlowHint(input: Omit<MechanismStep, "distractorActions" | "electronFlow">): string {
+  if (input.nextAction) {
+    return `Electron flow focus: ${input.nextAction.label.toLowerCase()}. ${input.nextAction.explanation}`
+  }
+
+  return `Electron flow focus: follow the highlighted atoms and bonds to the product-forming change. ${input.explanation}`
+}
+
+function step(
+  input: Omit<MechanismStep, "distractorActions" | "electronFlow"> & {
+    distractorActions?: MechanismAction[]
+    electronFlow?: string
+  },
+): MechanismStep {
   return {
     ...input,
+    electronFlow: input.electronFlow ?? electronFlowHint(input),
     distractorActions:
       input.distractorActions ??
       [
