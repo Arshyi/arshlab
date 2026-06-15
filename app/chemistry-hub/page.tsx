@@ -15,6 +15,7 @@ import { analytics } from "@/lib/chemistry/database/analytics/tracker"
 
 const LAB_LINKS = [
   { href: "/ai-assistant", label: "AI Chemistry Assistant" },
+  { href: "/formula-sheet", label: "Formula Sheet" },
   { href: "/chemistry-solver", label: "Chemistry Solver" },
   { href: "/chemistry-database", label: "Chemistry Database" },
   { href: "/molecular-visualizer", label: "Molecular Visualizer" },
@@ -256,6 +257,13 @@ export default function ChemistryHubPage() {
         </Card>
 
         <div className="mb-8 grid gap-4 lg:grid-cols-2">
+          <HubActionCard
+            icon={BookOpenCheck}
+            title="Formula Sheet"
+            description="Search formulas, variables, units, when-to-use notes, common mistakes, and worked examples from the local formula handbook."
+            href="/formula-sheet"
+            action="Open Formula Sheet"
+          />
           <HubActionCard
             icon={Calculator}
             title="Chemistry Solver"

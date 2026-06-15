@@ -52,6 +52,12 @@ const features = [
     href: "/chemistry-solver",
   },
   {
+    icon: BookOpenCheck,
+    title: "Formula Sheet",
+    description: "Search formulas, variables, units, worked examples, and common mistakes in ARSHLAB's deterministic formula handbook.",
+    href: "/formula-sheet",
+  },
+  {
     icon: Sparkles,
     title: "Practice Generator",
     description: "Generate original chemistry practice questions with answer reveal, explanations, and printable PDFs.",

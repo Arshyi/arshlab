@@ -28,6 +28,7 @@ export interface Question {
   visualCompoundId?: string
   visualReactionId?: string
   visualHighlightGroup?: string
+  relevantFormulaId?: string
 }
 
 export interface GenerateDatabaseQuestionsInput {
@@ -74,5 +75,6 @@ export interface QuestionEngineStats {
     mechanismSteps: number
     solverModules: number
     solverExamples: number
+    formulaRecords: number
   }
 }

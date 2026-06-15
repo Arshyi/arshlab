@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { motion } from "framer-motion"
 import {
   AlertCircle,
@@ -52,6 +53,7 @@ import {
 } from "@/lib/pdf/arshlab-pdf"
 import { generateDatabaseQuestions } from "@/lib/question-engine/generator"
 import type { QuestionSource } from "@/lib/question-engine/types"
+import { formulaHref, getFormulaById } from "@/lib/formula-sheet"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -143,6 +145,7 @@ interface PracticeQuestion {
     id: string
     name: string
   }
+  relevantFormulaId?: string
 }
 
 interface PracticeSet {
@@ -949,7 +952,9 @@ function QuestionCard({
   onMark: (status: MarkStatus) => void
   onCopyQuestion: () => void
   onCopySolution: () => void
-}) {
+  }) {
+  const relevantFormula = getFormulaById(question.relevantFormulaId)
+
   return (
     <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -968,24 +973,38 @@ function QuestionCard({
         )}
       </div>
 
-      <p className="break-words text-base leading-relaxed text-foreground">{question.question}</p>
+        <p className="break-words text-base leading-relaxed text-foreground">{question.question}</p>
 
-      {question.choices?.length ? (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {question.choices.map((choice) => (
-            <div
-              key={choice.label}
-              className={
-                answerVisible && answerMatchesChoice(question, choice)
-                  ? "rounded-xl border border-primary bg-primary/10 p-4 text-sm"
-                  : "rounded-xl border border-border bg-secondary/20 p-4 text-sm"
-              }
-            >
-              <span className="font-semibold">{choice.label}.</span> {choice.text}
+        {relevantFormula ? (
+          <div className="mt-4 rounded-xl border border-teal-500/30 bg-teal-500/10 p-3 text-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold">Relevant Formula</p>
+                <p className="mt-1 font-mono text-muted-foreground">{relevantFormula.formula}</p>
+              </div>
+              <Button asChild variant="outline" size="sm" className="w-full rounded-xl sm:w-auto">
+                <Link href={formulaHref(relevantFormula.id)}>Open Formula</Link>
+              </Button>
             </div>
-          ))}
-        </div>
-      ) : null}
+          </div>
+        ) : null}
+
+        {question.choices?.length ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {question.choices.map((choice) => (
+              <div
+                key={choice.label}
+                className={
+                  answerVisible && answerMatchesChoice(question, choice)
+                    ? "rounded-xl border border-primary bg-primary/10 p-4 text-sm"
+                    : "rounded-xl border border-border bg-secondary/20 p-4 text-sm"
+                }
+              >
+                <span className="font-semibold">{choice.label}.</span> {choice.text}
+              </div>
+            ))}
+          </div>
+        ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Button variant="outline" className="min-h-11 rounded-xl" onClick={onToggleAnswer}>

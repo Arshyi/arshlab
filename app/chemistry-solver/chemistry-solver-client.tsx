@@ -5,6 +5,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import {
   ArrowRight,
+  BookOpenCheck,
   Calculator,
   CheckCircle2,
   Database,
@@ -43,6 +44,7 @@ import {
   type SolverModuleId,
   type SolverResult,
 } from "@/lib/solver-engine"
+import { formulaHref, getFormulaForSolverModule } from "@/lib/formula-sheet"
 import { cn } from "@/lib/utils"
 
 const LOCAL_STATS_KEY = "arshlab-solver-local-stats"
@@ -141,6 +143,7 @@ export function ChemistrySolverClient() {
   }, [parsedReaction])
 
   const activeModule = SOLVER_MODULES.find((module) => module.id === moduleId) ?? SOLVER_MODULES[0]
+  const activeFormula = getFormulaForSolverModule(activeModule.id)
   const accuracy = stats.correct + stats.missed > 0 ? Math.round((stats.correct / (stats.correct + stats.missed)) * 100) : 0
 
   function updateStats(patch: Partial<LocalSolverStats>) {
@@ -240,7 +243,7 @@ export function ChemistrySolverClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.0.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.1.0</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                   <Badge variant="outline">Deterministic solver</Badge>
                 </div>
@@ -252,6 +255,12 @@ export function ChemistrySolverClient() {
               </div>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
+              <Button asChild variant="outline" className="w-full rounded-xl sm:w-auto">
+                <Link href="/formula-sheet">
+                  Formula Sheet
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
               <Button asChild variant="outline" className="w-full rounded-xl sm:w-auto">
                 <Link href="/practice-generator?topic=Chemistry%20Calculations&source=database">
                   Solver Practice
@@ -285,25 +294,37 @@ export function ChemistrySolverClient() {
             </CardHeader>
             <CardContent className="grid gap-2">
               {SOLVER_MODULES.map((module) => (
-                <button
+                <div
                   key={module.id}
-                  type="button"
-                  onClick={() => {
-                    setModuleId(module.id)
-                    setResult(null)
-                    setError(null)
-                    setTrackingMessage(null)
-                  }}
                   className={cn(
-                    "rounded-xl border px-3 py-3 text-left transition-colors",
+                    "rounded-xl border p-3 transition-colors",
                     module.id === moduleId
                       ? "border-primary bg-primary/10"
                       : "border-border bg-secondary/20 hover:bg-secondary",
                   )}
                 >
-                  <span className="block text-sm font-semibold">{module.title}</span>
-                  <span className="mt-1 block text-xs text-muted-foreground">{module.formula}</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModuleId(module.id)
+                      setResult(null)
+                      setError(null)
+                      setTrackingMessage(null)
+                    }}
+                    className="w-full text-left"
+                  >
+                    <span className="block text-sm font-semibold">{module.title}</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">{module.formula}</span>
+                  </button>
+                  {getFormulaForSolverModule(module.id) ? (
+                    <Button asChild variant="outline" size="sm" className="mt-3 w-full rounded-xl">
+                      <Link href={formulaHref(getFormulaForSolverModule(module.id)!.id)}>
+                        <BookOpenCheck className="h-4 w-4" />
+                        View Formula
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
               ))}
             </CardContent>
           </Card>
@@ -315,6 +336,14 @@ export function ChemistrySolverClient() {
                   <FlaskConical className="h-5 w-5" />
                   {activeModule.title}
                 </CardTitle>
+                {activeFormula ? (
+                  <Button asChild variant="outline" size="sm" className="w-fit rounded-xl">
+                    <Link href={formulaHref(activeFormula.id)}>
+                      <BookOpenCheck className="h-4 w-4" />
+                      View Formula
+                    </Link>
+                  </Button>
+                ) : null}
               </CardHeader>
               <CardContent className="space-y-5">
                 <SolverInputs

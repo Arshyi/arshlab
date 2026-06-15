@@ -11,6 +11,7 @@ import {
   Calculator,
   CheckCircle2,
   ClipboardCheck,
+  Database,
   FlaskConical,
   Gauge,
   GraduationCap,
@@ -34,6 +35,14 @@ import {
   type StoredAchievement,
 } from "@/lib/supabase/achievements"
 import { generateLearningRecommendations } from "@/lib/learning/recommendations"
+import {
+  formulaHref,
+  formulaMasteryProgress,
+  getFormulaById,
+  mostViewedFormulaIds,
+  readFormulaViewStats,
+  type FormulaViewStats,
+} from "@/lib/formula-sheet"
 import { cn } from "@/lib/utils"
 
 function readinessVariant(score: number): "default" | "secondary" | "destructive" {
@@ -46,6 +55,7 @@ export function LearningDashboardClient() {
   const [entries, setEntries] = useState<PracticeProgressEntry[]>([])
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [storedAchievements, setStoredAchievements] = useState<StoredAchievement[]>([])
+  const [formulaStats, setFormulaStats] = useState<FormulaViewStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -73,6 +83,7 @@ export function LearningDashboardClient() {
       else setStoredAchievements([])
 
       setLoading(false)
+      setFormulaStats(readFormulaViewStats())
     }
 
     void loadDashboard()
@@ -110,6 +121,9 @@ export function LearningDashboardClient() {
   const missedSolverConcepts = summary.conceptStats
     .filter((concept) => concept.topic === "Chemistry Calculations" && concept.missed > 0)
     .slice(0, 4)
+  const formulaMastery = formulaStats ? formulaMasteryProgress(formulaStats) : 0
+  const formulaCategoriesStudied = formulaStats ? Object.keys(formulaStats.categoryViews).length : 0
+  const topFormulaIds = formulaStats ? mostViewedFormulaIds(formulaStats, 4) : []
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
@@ -130,7 +144,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.0.0 connects diagnostics, curriculum, practice, recovery, study, exams, solver mastery, and mechanism mastery into one adaptive learning view.
+            ARSHLAB v4.1.0 connects diagnostics, curriculum, practice, recovery, study, exams, formula views, solver mastery, and mechanism mastery into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -338,6 +352,51 @@ export function LearningDashboardClient() {
                 </div>
                 <Button asChild className="rounded-xl">
                   <Link href="/chemistry-solver">Open Solver</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6 rounded-2xl border-teal-500/20 bg-teal-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Database className="h-5 w-5" />
+                  Formula Sheet Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="rounded-xl border border-border bg-background/80 p-4">
+                  <p className="text-3xl font-bold">{formulaMastery}%</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {formulaStats?.totalViews ?? 0} formula views
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold">Most viewed formulas</p>
+                  {topFormulaIds.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {topFormulaIds.map((id) => {
+                        const formula = getFormulaById(id)
+                        if (!formula) return null
+                        return (
+                          <Button key={id} asChild variant="outline" size="sm" className="rounded-full">
+                            <Link href={formulaHref(id)}>
+                              {formula.name}: {formulaStats?.formulaViews[id] ?? 0}
+                            </Link>
+                          </Button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Open formulas from the Formula Sheet or Solver to build local formula-view history.
+                    </p>
+                  )}
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Categories studied: {formulaCategoriesStudied}
+                  </p>
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/formula-sheet">Open Formula Sheet</Link>
                 </Button>
               </CardContent>
             </Card>

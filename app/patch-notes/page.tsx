@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.0.0",
+    version: "4.1.0",
     date: "Current",
+    status: "released",
+    title: "Formula Sheet Engine",
+    changes: [
+      "Added deterministic Formula Sheet route with searchable chemistry formula records",
+      "Added formula categories for stoichiometry, solutions, gases, thermochemistry, acids and bases, equilibrium, electrochemistry, and organic chemistry",
+      "Added variables, required units, when-to-use notes, common mistakes, and worked examples for each formula",
+      "Added View Formula links from Chemistry Solver modules",
+      "Added Relevant Formula links for database-generated solver practice questions",
+      "Added local Formula Sheet progress tracking on the Learning Dashboard",
+      "Added Formula Sheet links to the homepage, Chemistry Hub, Tools menu, Roadmap, and Patch Notes",
+      "Kept AI routes, OpenRouter configuration, auth, middleware, and solver calculations unchanged",
+    ],
+  },
+  {
+    version: "4.0.0",
+    date: "Previous",
     status: "released",
     title: "Chemistry Solver Engine",
     changes: [

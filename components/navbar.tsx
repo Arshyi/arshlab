@@ -63,6 +63,7 @@ const primaryNavItems = [
 
 const chemistryToolItems = [
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
+  { href: "/formula-sheet", label: "Formula Sheet", icon: BookOpenCheck },
   { href: "/chemistry-solver", label: "Chemistry Solver", icon: Calculator },
   { href: "/chemistry-database", label: "Chemistry Database", icon: Database },
   { href: "/molecular-visualizer", label: "Molecular Visualizer", icon: Network },

@@ -18,6 +18,7 @@ import { SOLVER_QUESTION_TEMPLATES } from "./solver-templates"
 import { BALANCING_EXERCISES } from "@/lib/reaction-engine/balancer"
 import { getMechanismMetrics } from "@/lib/chemistry/mechanisms"
 import { getSolverMetrics } from "@/lib/solver-engine"
+import { getFormulaMetrics } from "@/lib/formula-sheet"
 
 const choiceLabels = ["A", "B", "C", "D"]
 
@@ -470,6 +471,7 @@ export function getQuestionEngineTemplateCoverage(): number {
 export function getQuestionEngineDatabaseCounts() {
   const mechanismMetrics = getMechanismMetrics()
   const solverMetrics = getSolverMetrics()
+  const formulaMetrics = getFormulaMetrics()
   return {
     compounds: CHEMISTRY_KNOWLEDGE_CORE_META.counts.compounds,
     ions: CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions,
@@ -485,5 +487,6 @@ export function getQuestionEngineDatabaseCounts() {
     mechanismSteps: mechanismMetrics.mechanismSteps,
     solverModules: solverMetrics.solverModules,
     solverExamples: solverMetrics.workedExamplesGenerated,
+    formulaRecords: formulaMetrics.formulas,
   }
 }

@@ -1,4 +1,5 @@
 import { SOLVER_MODULES, SOLVER_PRACTICE_EXAMPLES } from "@/lib/solver-engine"
+import { getFormulaForSolverModule } from "@/lib/formula-sheet"
 import type { Question, QuestionChoice, QuestionTemplate, QuestionTemplateContext } from "./types"
 
 const choiceLabels = ["A", "B", "C", "D"]
@@ -48,6 +49,7 @@ function buildSolverQuestion(context: QuestionTemplateContext): Question | null 
   if (!example) return null
   const labeled = labeledChoices(example.correctAnswer, example.distractors, context.index)
   if (!labeled) return null
+  const formula = getFormulaForSolverModule(module.id)
 
   return {
     id: `db-solver-${example.id}-${context.index}`,
@@ -67,6 +69,7 @@ function buildSolverQuestion(context: QuestionTemplateContext): Question | null 
       id: module.id,
       name: module.title,
     },
+    relevantFormulaId: formula?.id,
   }
 }
 
@@ -77,6 +80,7 @@ function buildWorkedExampleQuestion(context: QuestionTemplateContext): Question 
   if (!example) return buildSolverQuestion(context)
   const labeled = labeledChoices(module.formula, SOLVER_MODULES.filter((item) => item.id !== module.id).map((item) => item.formula), context.index)
   if (!labeled) return null
+  const formula = getFormulaForSolverModule(module.id)
 
   return {
     id: `db-solver-worked-${example.id}-${context.index}`,
@@ -96,6 +100,7 @@ function buildWorkedExampleQuestion(context: QuestionTemplateContext): Question 
       id: module.id,
       name: module.title,
     },
+    relevantFormulaId: formula?.id,
   }
 }
 

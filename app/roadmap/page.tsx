@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Calculator, Map, Check, Hammer, Lightbulb } from "lucide-react"
+import { BookOpenCheck, Map, Check, Hammer, Lightbulb } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
@@ -24,6 +24,7 @@ const completed = [
   "Molecular Visualization Refinement",
   "Organic Mechanism Trainer",
   "Chemistry Solver Engine",
+  "Formula Sheet Engine",
   "Molecular Visualizer",
   "Visual Reaction Pathways",
   "Reaction Database",
@@ -168,15 +169,15 @@ export default function RoadmapPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
-                  <Calculator className="h-4 w-4" />
+                  <BookOpenCheck className="h-4 w-4" />
                 </div>
-                Chemistry Solver Engine
+                Formula Sheet Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: deterministic step-by-step chemistry calculations for molarity, dilution,
-                percent yield, empirical formulas, ideal gases, calorimetry, pH, and stoichiometry.
+                Now available: a deterministic searchable chemistry formula handbook with variables,
+                units, worked examples, common mistakes, solver links, and local formula progress tracking.
               </p>
             </CardContent>
           </Card>
@@ -188,7 +189,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v4.0.0 - Chemistry Solver Engine
+          ARSHLAB v4.1.0 - Formula Sheet Engine
         </motion.p>
       </div>
     </div>
