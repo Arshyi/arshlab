@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Atom, Award, BookOpen, BookOpenCheck, Bot, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves, Network } from "lucide-react"
+import { ArrowRightLeft, Atom, Award, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves, Network } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -15,6 +15,7 @@ import { analytics } from "@/lib/chemistry/database/analytics/tracker"
 
 const LAB_LINKS = [
   { href: "/ai-assistant", label: "AI Chemistry Assistant" },
+  { href: "/chemistry-solver", label: "Chemistry Solver" },
   { href: "/chemistry-database", label: "Chemistry Database" },
   { href: "/molecular-visualizer", label: "Molecular Visualizer" },
   { href: "/mechanism-trainer", label: "Mechanism Trainer" },
@@ -255,6 +256,13 @@ export default function ChemistryHubPage() {
         </Card>
 
         <div className="mb-8 grid gap-4 lg:grid-cols-2">
+          <HubActionCard
+            icon={Calculator}
+            title="Chemistry Solver"
+            description="Solve molarity, dilution, percent yield, empirical formula, gas law, calorimetry, pH, and stoichiometry problems step by step."
+            href="/chemistry-solver"
+            action="Open Solver"
+          />
           <HubActionCard
             icon={Network}
             title="Molecular Visualizer"

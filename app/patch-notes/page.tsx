@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "3.8.1",
+    version: "4.0.0",
     date: "Current",
+    status: "released",
+    title: "Chemistry Solver Engine",
+    changes: [
+      "Added deterministic Chemistry Solver route with step-by-step calculation walkthroughs",
+      "Added molarity, dilution, percent yield, empirical formula, ideal gas law, calorimetry, pH, and stoichiometry solver modules",
+      "Added Given, Formula, Substitution, Calculation, Answer, and Unit Check panels for each solver",
+      "Added Solver Practice mode through database-generated calculation questions and worked examples",
+      "Added solver mastery, calculation achievements, and Chemistry Calculations tracking hooks",
+      "Added Chemistry Solver links to the homepage, Chemistry Hub, Tools menu, Roadmap, and Patch Notes",
+      "Kept AI routes, OpenRouter configuration, and free-model guardrails unchanged",
+    ],
+  },
+  {
+    version: "3.8.1",
+    date: "Previous",
     status: "released",
     title: "Mechanism Trainer Polish",
     changes: [

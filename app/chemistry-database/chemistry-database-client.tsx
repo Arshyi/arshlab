@@ -450,7 +450,7 @@ export function ChemistryDatabaseClient() {
             <div>
               <h2 className="font-semibold">Future-ready chemistry core</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                The v3.8.1 layer now includes local compounds, spectra, reactions, mechanisms, and refined 2D structure hooks for
+                The v4.0.0 layer now includes local compounds, spectra, reactions, mechanisms, solvers, and refined 2D structure hooks for
                 larger libraries, pathway maps, reaction databases, mechanism trainers, and RAG-assisted tutoring.
               </p>
             </div>

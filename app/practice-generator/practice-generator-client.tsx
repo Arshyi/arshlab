@@ -77,6 +77,7 @@ const topics = [
   "Redox",
   "Precipitation",
   "Combustion",
+  "Chemistry Calculations",
   "Organic Reactions",
   "Organic Mechanisms",
 ]
@@ -90,6 +91,8 @@ const questionTypes = [
   "Identify mechanism type",
   "Determine product",
   "Determine reagent",
+  "Calculation question",
+  "Worked example",
 ]
 
 const difficulties = [
@@ -348,8 +351,8 @@ export function PracticeGeneratorClient() {
     () => getSubtopicsForCurriculumTopic(curriculum, topic, curriculumUnit),
     [curriculum, curriculumUnit, topic],
   )
-  const mechanismMode = topic === "Organic Mechanisms"
-  const effectiveQuestionSource: QuestionSourceMode = mechanismMode ? "Database Only" : questionSource
+  const deterministicOnlyMode = topic === "Organic Mechanisms" || topic === "Chemistry Calculations"
+  const effectiveQuestionSource: QuestionSourceMode = deterministicOnlyMode ? "Database Only" : questionSource
 
   const score = useMemo(() => {
     const total = practiceSet?.questions.length ?? 0
@@ -383,10 +386,10 @@ export function PracticeGeneratorClient() {
   }, [subtopicOptions, targetSubtopic])
 
   useEffect(() => {
-    if (mechanismMode && questionSource !== "Database Only") {
+    if (deterministicOnlyMode && questionSource !== "Database Only") {
       setQuestionSource("Database Only")
     }
-  }, [mechanismMode, questionSource])
+  }, [deterministicOnlyMode, questionSource])
 
   useEffect(() => {
     if (
@@ -698,15 +701,15 @@ export function PracticeGeneratorClient() {
                   <Picker
                     label="Question Source"
                     value={effectiveQuestionSource}
-                    options={mechanismMode ? ["Database Only"] : [...questionSources]}
+                      options={deterministicOnlyMode ? ["Database Only"] : [...questionSources]}
                     onChange={(value) => setQuestionSource(value as QuestionSourceMode)}
                   />
                 </div>
 
                 <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-muted-foreground">
-                    {mechanismMode
-                      ? "Organic Mechanisms are deterministic and always use local mechanism records."
+                    {deterministicOnlyMode
+                      ? `${topic} questions are deterministic and always use local database records.`
                       : "Database mode uses no AI requests. Hybrid alternates database and AI questions when AI is available."}
                   </p>
                   <Button

@@ -28,10 +28,12 @@ import type {
 } from "./types"
 import type { ReactionRecord } from "./reaction-types"
 import type { SpectroscopyRecord } from "./spectroscopy-types"
+import { getSolverMetrics } from "@/lib/solver-engine"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "3.8.1"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.0.0"
 
 const mechanismMetrics = getMechanismMetrics()
+const solverMetrics = getSolverMetrics()
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,
@@ -50,6 +52,8 @@ export const CHEMISTRY_KNOWLEDGE_CORE_META = {
     mechanisms: mechanismMetrics.mechanismsAvailable,
     mechanismSteps: mechanismMetrics.mechanismSteps,
     mechanismExercises: mechanismMetrics.interactiveExercises,
+    solverModules: solverMetrics.solverModules,
+    solverExamples: solverMetrics.workedExamplesGenerated,
   },
 }
 

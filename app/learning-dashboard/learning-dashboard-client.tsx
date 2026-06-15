@@ -8,6 +8,7 @@ import {
   Award,
   BarChart3,
   BookOpenCheck,
+  Calculator,
   CheckCircle2,
   ClipboardCheck,
   FlaskConical,
@@ -105,6 +106,10 @@ export function LearningDashboardClient() {
   const missedMechanisms = summary.conceptStats
     .filter((concept) => concept.topic === "Organic Mechanisms" && concept.missed > 0)
     .slice(0, 4)
+  const solverStats = summary.topicStats.find((topic) => topic.topic === "Chemistry Calculations")
+  const missedSolverConcepts = summary.conceptStats
+    .filter((concept) => concept.topic === "Chemistry Calculations" && concept.missed > 0)
+    .slice(0, 4)
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
@@ -125,7 +130,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v3.8.1 connects diagnostics, curriculum, practice, recovery, study, exams, and mechanism mastery into one adaptive learning view.
+            ARSHLAB v4.0.0 connects diagnostics, curriculum, practice, recovery, study, exams, solver mastery, and mechanism mastery into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -297,6 +302,42 @@ export function LearningDashboardClient() {
                 </div>
                 <Button asChild className="rounded-xl">
                   <Link href="/mechanism-trainer">Review Mechanisms</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6 rounded-2xl border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Calculator className="h-5 w-5" />
+                  Solver Mastery
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="rounded-xl border border-border bg-background/80 p-4">
+                  <p className="text-3xl font-bold">{solverStats?.accuracy ?? 0}%</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {solverStats ? `${solverStats.correct}/${solverStats.attempted} correct` : "No attempts yet"}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold">Most missed calculations</p>
+                  {missedSolverConcepts.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {missedSolverConcepts.map((concept) => (
+                        <Badge key={`${concept.topic}-${concept.subtopic}`} variant="outline" className="rounded-full">
+                          {concept.subtopic}: {concept.correct}/{concept.attempted}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Solve and mark chemistry calculations to reveal missed modules here.
+                    </p>
+                  )}
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/chemistry-solver">Open Solver</Link>
                 </Button>
               </CardContent>
             </Card>

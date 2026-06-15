@@ -9,16 +9,18 @@ import { ALL_SPECTROSCOPY } from "./spectroscopy"
 import { REACTION_TEMPLATES } from "./reactions/families"
 import { REACTION_RECORDS } from "../reactions"
 import { getMechanismMetrics } from "../mechanisms"
+import { getSolverMetrics } from "@/lib/solver-engine"
 import { COMPOUND_PATHWAYS, MOLECULAR_STRUCTURES, SPECTROSCOPY_MAPPINGS, countFunctionalGroupHighlights } from "../structures"
 import { VSEPR_PRESETS } from "./vsepr/engine"
 import { ALL_LEWIS_STRUCTURES } from "./lewis/templates"
 import { QUESTION_TOPICS } from "./questions/topics"
 import { EDUCATION_HUB_SECTIONS } from "./education/hub"
 
-export const DATABASE_VERSION = "3.8.1"
+export const DATABASE_VERSION = "4.0.0"
 
 export function getDatabaseMeta(): DatabaseMeta {
   const mechanismMetrics = getMechanismMetrics()
+  const solverMetrics = getSolverMetrics()
   return {
     version: DATABASE_VERSION,
     updatedAt: new Date().toISOString().split("T")[0],
@@ -39,6 +41,8 @@ export function getDatabaseMeta(): DatabaseMeta {
       mechanisms: mechanismMetrics.mechanismsAvailable,
       mechanismSteps: mechanismMetrics.mechanismSteps,
       mechanismExercises: mechanismMetrics.interactiveExercises,
+      solverModules: solverMetrics.solverModules,
+      solverExamples: solverMetrics.workedExamplesGenerated,
       vseprPresets: VSEPR_PRESETS.length,
       lewisStructures: ALL_LEWIS_STRUCTURES.length,
       questionTopics: QUESTION_TOPICS.length,

@@ -72,5 +72,7 @@ export interface QuestionEngineStats {
     visualHighlights: number
     mechanisms: number
     mechanismSteps: number
+    solverModules: number
+    solverExamples: number
   }
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, GraduationCap, Database, ListChecks, Gauge, Route, Network } from "lucide-react"
+import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Calculator, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, GraduationCap, Database, ListChecks, Gauge, Route, Network } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -44,6 +44,12 @@ const features = [
     icon: Atom,
     title: "Electron Configuration Builder",
     description: "Search elements, animate orbital filling, and study Aufbau, Hund, Pauli, and d-block exceptions.",
+  },
+  {
+    icon: Calculator,
+    title: "Chemistry Solver",
+    description: "Solve molarity, dilution, yield, empirical formula, gas law, calorimetry, pH, and stoichiometry problems step by step.",
+    href: "/chemistry-solver",
   },
   {
     icon: Sparkles,
@@ -290,7 +296,7 @@ export default function HomePage() {
                   <FlaskConical className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Polished in v3.8.1</p>
+                  <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Organic Mechanism Trainer</p>
                   <h2 className="mt-1 text-2xl font-bold tracking-tight text-foreground">Organic Mechanism Trainer</h2>
                   <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
                     Step through SN1, SN2, E1, E2, alkene additions, esterification, and oxidation pathways with highlighted atoms,

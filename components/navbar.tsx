@@ -25,6 +25,7 @@ import {
   Waves,
   LogOut,
   Bot,
+  Calculator,
   Sparkles,
   BarChart3,
   FileQuestion,
@@ -62,6 +63,7 @@ const primaryNavItems = [
 
 const chemistryToolItems = [
   { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
+  { href: "/chemistry-solver", label: "Chemistry Solver", icon: Calculator },
   { href: "/chemistry-database", label: "Chemistry Database", icon: Database },
   { href: "/molecular-visualizer", label: "Molecular Visualizer", icon: Network },
   { href: "/mechanism-trainer", label: "Mechanism Trainer", icon: FlaskConical },

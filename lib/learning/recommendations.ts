@@ -351,6 +351,13 @@ function buildAchievementDefinitions(
   const organicReactionEntries = reactionEntries.filter((entry) =>
     `${entry.topic} ${entry.subtopic ?? ""}`.toLowerCase().includes("organic"),
   )
+  const calculationEntries = entries.filter((entry) => entry.topic === "Chemistry Calculations")
+  const calculationCorrect = calculationEntries.filter((entry) => entry.correct).length
+  const molarityCorrect = calculationEntries.filter((entry) => entry.correct && entry.subtopic === "Molarity Solver").length
+  const gasLawCorrect = calculationEntries.filter((entry) => entry.correct && entry.subtopic === "Ideal Gas Law").length
+  const stoichSolverCorrect = calculationEntries.filter(
+    (entry) => entry.correct && entry.subtopic === "Stoichiometry Solver",
+  ).length
   const reactionCorrect = reactionEntries.filter((entry) => entry.correct).length
   const correctStreak = getCorrectStreak(entries)
   const masteredUnit = mastery.unitMastery.some((unit) => unit.completed)
@@ -429,6 +436,41 @@ function buildAchievementDefinitions(
       description: "Attempt fifty exam questions.",
       unlocked: exams.length >= 50,
       progress: clampPercent((exams.length / 50) * 100),
+    },
+    {
+      id: "first-calculation",
+      label: "First Calculation",
+      description: "Solve and mark one chemistry calculation.",
+      unlocked: calculationEntries.length >= 1,
+      progress: clampPercent((calculationEntries.length / 1) * 100),
+    },
+    {
+      id: "molarity-master",
+      label: "Molarity Master",
+      description: "Answer five molarity solver attempts correctly.",
+      unlocked: molarityCorrect >= 5,
+      progress: clampPercent((molarityCorrect / 5) * 100),
+    },
+    {
+      id: "gas-law-expert",
+      label: "Gas Law Expert",
+      description: "Answer five ideal gas law solver attempts correctly.",
+      unlocked: gasLawCorrect >= 5,
+      progress: clampPercent((gasLawCorrect / 5) * 100),
+    },
+    {
+      id: "stoichiometry-specialist",
+      label: "Stoichiometry Specialist",
+      description: "Answer five stoichiometry solver attempts correctly.",
+      unlocked: stoichSolverCorrect >= 5,
+      progress: clampPercent((stoichSolverCorrect / 5) * 100),
+    },
+    {
+      id: "calculation-champion",
+      label: "Calculation Champion",
+      description: "Answer twenty-five chemistry calculations correctly.",
+      unlocked: calculationCorrect >= 25,
+      progress: clampPercent((calculationCorrect / 25) * 100),
     },
     {
       id: "curriculum-master",

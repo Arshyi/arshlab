@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Map, Check, Hammer, Lightbulb } from "lucide-react"
+import { Calculator, Map, Check, Hammer, Lightbulb } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
@@ -23,6 +23,7 @@ const completed = [
   "Molecular Visualization Engine",
   "Molecular Visualization Refinement",
   "Organic Mechanism Trainer",
+  "Chemistry Solver Engine",
   "Molecular Visualizer",
   "Visual Reaction Pathways",
   "Reaction Database",
@@ -167,15 +168,15 @@ export default function RoadmapPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
-                  <Check className="h-4 w-4" />
+                  <Calculator className="h-4 w-4" />
                 </div>
-                Organic Mechanism Trainer
+                Chemistry Solver Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: deterministic multi-step organic mechanisms with highlighted atoms and bonds,
-                next-step prediction practice, mechanism question templates, and exam blueprint coverage.
+                Now available: deterministic step-by-step chemistry calculations for molarity, dilution,
+                percent yield, empirical formulas, ideal gases, calorimetry, pH, and stoichiometry.
               </p>
             </CardContent>
           </Card>
@@ -187,7 +188,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v3.8.1 - Mechanism Trainer Polish
+          ARSHLAB v4.0.0 - Chemistry Solver Engine
         </motion.p>
       </div>
     </div>

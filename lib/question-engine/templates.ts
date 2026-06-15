@@ -14,8 +14,10 @@ import type { Question, QuestionChoice, QuestionTemplate, QuestionTemplateContex
 import { SPECTROSCOPY_QUESTION_TEMPLATES } from "./spectroscopy-templates"
 import { REACTION_QUESTION_TEMPLATES } from "./reaction-templates"
 import { MECHANISM_QUESTION_TEMPLATES } from "./mechanism-templates"
+import { SOLVER_QUESTION_TEMPLATES } from "./solver-templates"
 import { BALANCING_EXERCISES } from "@/lib/reaction-engine/balancer"
 import { getMechanismMetrics } from "@/lib/chemistry/mechanisms"
+import { getSolverMetrics } from "@/lib/solver-engine"
 
 const choiceLabels = ["A", "B", "C", "D"]
 
@@ -456,16 +458,18 @@ export const DATABASE_QUESTION_TEMPLATES: QuestionTemplate[] = [
   },
   ...REACTION_QUESTION_TEMPLATES,
   ...MECHANISM_QUESTION_TEMPLATES,
+  ...SOLVER_QUESTION_TEMPLATES,
   ...SPECTROSCOPY_QUESTION_TEMPLATES,
 ]
 
 export function getQuestionEngineTemplateCoverage(): number {
-  const requestedTemplateFamilies = 26
+  const requestedTemplateFamilies = 28
   return Math.round((DATABASE_QUESTION_TEMPLATES.length / requestedTemplateFamilies) * 100)
 }
 
 export function getQuestionEngineDatabaseCounts() {
   const mechanismMetrics = getMechanismMetrics()
+  const solverMetrics = getSolverMetrics()
   return {
     compounds: CHEMISTRY_KNOWLEDGE_CORE_META.counts.compounds,
     ions: CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions,
@@ -479,5 +483,7 @@ export function getQuestionEngineDatabaseCounts() {
     visualHighlights: CHEMISTRY_KNOWLEDGE_CORE_META.counts.functionalGroupHighlights,
     mechanisms: mechanismMetrics.mechanismsAvailable,
     mechanismSteps: mechanismMetrics.mechanismSteps,
+    solverModules: solverMetrics.solverModules,
+    solverExamples: solverMetrics.workedExamplesGenerated,
   }
 }
