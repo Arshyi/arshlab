@@ -5,13 +5,17 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import {
   AlertCircle,
+  ArrowRight,
   BarChart3,
   BookOpenCheck,
+  Calculator,
   CheckCircle2,
   ClipboardCheck,
+  Database,
   GraduationCap,
-  Medal,
+  Map,
   RefreshCw,
+  Route,
   Target,
   Trophy,
   Zap,
@@ -34,6 +38,14 @@ import {
   type CurriculumId,
   type CurriculumUnitProgress,
 } from "@/lib/curriculum/curriculum-registry"
+import { getCurriculumRoadmap, listCurriculumRoadmaps } from "@/lib/curriculum/roadmap"
+import {
+  getCurriculumRoadmapProgressSummary,
+  markCurriculumTopicViewed,
+  readCurriculumRoadmapProgress,
+  setCurriculumTopicCompleted,
+  type CurriculumRoadmapProgressState,
+} from "@/lib/curriculum/roadmap-progress"
 import { getPracticeProgress, type PracticeProgressEntry } from "@/lib/supabase/practice-progress"
 import {
   getLevelFromXp,
@@ -44,6 +56,7 @@ import {
 import { cn } from "@/lib/utils"
 
 const curricula = listCurricula()
+const roadmaps = listCurriculumRoadmaps()
 
 function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
   if (status === "Mastered" || status === "Strong") return "default"
@@ -94,6 +107,9 @@ export function CurriculumClient() {
   const [updating, setUpdating] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [selectedRoadmapId, setSelectedRoadmapId] = useState(roadmaps[0]?.id ?? "general-chemistry")
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(roadmaps[0]?.topics[0]?.id ?? null)
+  const [roadmapProgress, setRoadmapProgress] = useState<CurriculumRoadmapProgressState>({ topics: {} })
 
   const loadCurriculum = useCallback(async () => {
     setLoading(true)
@@ -122,12 +138,45 @@ export function CurriculumClient() {
     void loadCurriculum()
   }, [loadCurriculum])
 
+  useEffect(() => {
+    setRoadmapProgress(readCurriculumRoadmapProgress())
+  }, [])
+
   const summary = useMemo(
     () => calculateCurriculumProgress(entries, profile?.selectedCurriculum),
     [entries, profile?.selectedCurriculum],
   )
+  const selectedRoadmap = useMemo(() => getCurriculumRoadmap(selectedRoadmapId), [selectedRoadmapId])
+  const roadmapSummary = useMemo(
+    () => getCurriculumRoadmapProgressSummary(selectedRoadmap, roadmapProgress),
+    [roadmapProgress, selectedRoadmap],
+  )
+  const selectedRoadmapTopic = useMemo(() => {
+    return (
+      selectedRoadmap.topics.find((topic) => topic.id === selectedTopicId) ??
+      roadmapSummary.currentRecommendedTopic ??
+      selectedRoadmap.topics[0] ??
+      null
+    )
+  }, [roadmapSummary.currentRecommendedTopic, selectedRoadmap, selectedTopicId])
   const level = getLevelFromXp(profile?.xp ?? 0)
   const spectroscopyAccuracy = useMemo(() => getSpectroscopyAccuracy(entries), [entries])
+
+  function handleRoadmapChange(value: string) {
+    const roadmap = getCurriculumRoadmap(value)
+    const nextSummary = getCurriculumRoadmapProgressSummary(roadmap, roadmapProgress)
+    setSelectedRoadmapId(roadmap.id)
+    setSelectedTopicId(nextSummary.currentRecommendedTopic?.id ?? roadmap.topics[0]?.id ?? null)
+  }
+
+  function handleTopicSelect(topicId: string) {
+    setSelectedTopicId(topicId)
+    setRoadmapProgress(markCurriculumTopicViewed(topicId, roadmapProgress))
+  }
+
+  function handleTopicCompleted(topicId: string, completed: boolean) {
+    setRoadmapProgress(setCurriculumTopicCompleted(topicId, completed, roadmapProgress))
+  }
 
   async function handleCurriculumChange(value: string) {
     setUpdating(true)
@@ -147,18 +196,24 @@ export function CurriculumClient() {
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="mb-3 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <GraduationCap className="h-6 w-6" />
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <GraduationCap className="h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Curriculum Engine</h1>
+                <p className="text-muted-foreground">Roadmaps, learning path coverage, unit mastery, and next steps</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Curriculum Engine</h1>
-              <p className="text-muted-foreground">Learning path coverage, unit mastery, and recommended next steps</p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">ARSHLAB v4.2.0</Badge>
+              <Badge variant="outline">Database mode = no AI usage</Badge>
             </div>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Choose a curriculum style, then ARSHLAB maps your saved practice progress, diagnostic performance,
-            recovery needs, and XP into a unit-by-unit learning plan.
+            Follow deterministic General Chemistry and Organic Chemistry roadmaps, then connect each topic to
+            ARSHLAB&apos;s formula sheet, solver, practice, exams, molecular visualizer, mechanism trainer, and reaction database.
           </p>
         </motion.div>
 
@@ -185,11 +240,187 @@ export function CurriculumClient() {
           </Alert>
         )}
 
+        <Card className="mb-6 rounded-2xl border-teal-500/20 bg-teal-500/5">
+          <CardContent className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div>
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Badge>v4.2.0 Curriculum Roadmaps</Badge>
+                <Badge variant="secondary">{selectedRoadmap.topics.length} topics</Badge>
+              </div>
+              <h2 className="text-2xl font-bold">{selectedRoadmap.title}</h2>
+              <p className="mt-1 text-sm font-medium text-muted-foreground">{selectedRoadmap.subtitle}</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{selectedRoadmap.description}</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Roadmap</label>
+              <Select value={selectedRoadmap.id} onValueChange={handleRoadmapChange}>
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {roadmaps.map((roadmap) => (
+                    <SelectItem key={roadmap.id} value={roadmap.id}>
+                      {roadmap.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                <MiniStat label="Completed" value={`${roadmapSummary.completedTopics}/${roadmapSummary.totalTopics}`} />
+                <MiniStat label="Viewed" value={roadmapSummary.viewedTopics} />
+                <MiniStat label="Progress" value={`${roadmapSummary.completionPercentage}%`} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="mb-6 grid gap-6 lg:grid-cols-[minmax(280px,380px)_minmax(0,1fr)]">
+          <Card className="rounded-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Map className="h-5 w-5" />
+                Roadmap Topics
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {selectedRoadmap.topics.map((topic, index) => {
+                const progress = roadmapProgress.topics[topic.id]
+                const selected = selectedRoadmapTopic?.id === topic.id
+                return (
+                  <button
+                    key={topic.id}
+                    type="button"
+                    onClick={() => handleTopicSelect(topic.id)}
+                    className={cn(
+                      "w-full rounded-xl border p-4 text-left transition-all",
+                      selected
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border bg-card hover:border-primary/40 hover:bg-secondary/40",
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={cn(
+                          "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
+                          progress?.completed
+                            ? "border-teal-500 bg-teal-500 text-white"
+                            : progress?.viewed
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-secondary text-muted-foreground",
+                        )}
+                      >
+                        {progress?.completed ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground">{topic.title}</p>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          <Badge variant="outline" className="rounded-full">{topic.difficulty}</Badge>
+                          {progress?.viewed && <Badge variant="secondary" className="rounded-full">Viewed</Badge>}
+                          {progress?.completed && <Badge className="rounded-full">Completed</Badge>}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-6">
+            {selectedRoadmapTopic && (
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <CardTitle className="text-2xl">{selectedRoadmapTopic.title}</CardTitle>
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                        {selectedRoadmapTopic.description}
+                      </p>
+                    </div>
+                    <Badge variant="secondary" className="w-fit rounded-full">
+                      {selectedRoadmapTopic.difficulty}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <TopicListCard title="Prerequisites" items={selectedRoadmapTopic.prerequisites} emptyText="Start here" />
+                    <TopicListCard
+                      title="Recommended Next"
+                      items={selectedRoadmapTopic.recommendedNextTopics}
+                      emptyText="Review and practice"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      className="rounded-xl"
+                      onClick={() =>
+                        handleTopicCompleted(
+                          selectedRoadmapTopic.id,
+                          !roadmapProgress.topics[selectedRoadmapTopic.id]?.completed,
+                        )
+                      }
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      {roadmapProgress.topics[selectedRoadmapTopic.id]?.completed
+                        ? "Mark Not Complete"
+                        : "Mark Topic Complete"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-xl"
+                      onClick={() => handleTopicSelect(selectedRoadmapTopic.id)}
+                    >
+                      <BookOpenCheck className="h-4 w-4" />
+                      Mark Viewed
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {selectedRoadmapTopic && (
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Route className="h-5 w-5" />
+                    Connected ARSHLAB Tools
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3 md:grid-cols-2">
+                  {selectedRoadmapTopic.toolLinks.map((tool) => (
+                    <Link
+                      key={tool.label}
+                      href={tool.href}
+                      className="rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-secondary/40"
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <span className="font-semibold">{tool.label}</span>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{tool.description}</p>
+                    </Link>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <RoadmapMetric icon={BookOpenCheck} label="Current Recommendation" value={roadmapSummary.currentRecommendedTopic?.title ?? "Complete"} />
+              <RoadmapMetric icon={Calculator} label="Formula + Solver" value="Linked" />
+              <RoadmapMetric icon={Database} label="Generation Mode" value="Database Only" />
+            </div>
+          </div>
+        </div>
+
         <Card className="mb-6 rounded-2xl border-primary/20 bg-primary/5">
           <CardContent className="grid gap-5 p-5 lg:grid-cols-[1fr_320px]">
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge>v3.0.0</Badge>
+                <Badge>v4.2.0</Badge>
                 <Badge variant="secondary">{summary.curriculum.level}</Badge>
               </div>
               <h2 className="text-2xl font-bold">{summary.curriculum.name}</h2>
@@ -340,5 +571,56 @@ function MiniStat({ label, value }: { label: string; value: number | string }) {
       <p className="text-lg font-bold text-foreground">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{label}</p>
     </div>
+  )
+}
+
+function TopicListCard({
+  title,
+  items,
+  emptyText,
+}: {
+  title: string
+  items: string[]
+  emptyText: string
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-secondary/20 p-4">
+      <p className="text-sm font-semibold">{title}</p>
+      {items.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {items.map((item) => (
+            <Badge key={item} variant="outline" className="rounded-full">
+              {item}
+            </Badge>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-2 text-sm text-muted-foreground">{emptyText}</p>
+      )}
+    </div>
+  )
+}
+
+function RoadmapMetric({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string
+}) {
+  return (
+    <Card className="rounded-2xl">
+      <CardContent className="flex items-center gap-3 p-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-foreground">{value}</p>
+          <p className="text-xs text-muted-foreground">{label}</p>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

@@ -11,18 +11,20 @@ import { REACTION_RECORDS } from "../reactions"
 import { getMechanismMetrics } from "../mechanisms"
 import { getSolverMetrics } from "@/lib/solver-engine"
 import { getFormulaMetrics } from "@/lib/formula-sheet"
+import { getCurriculumRoadmapMetrics } from "@/lib/curriculum/roadmap"
 import { COMPOUND_PATHWAYS, MOLECULAR_STRUCTURES, SPECTROSCOPY_MAPPINGS, countFunctionalGroupHighlights } from "../structures"
 import { VSEPR_PRESETS } from "./vsepr/engine"
 import { ALL_LEWIS_STRUCTURES } from "./lewis/templates"
 import { QUESTION_TOPICS } from "./questions/topics"
 import { EDUCATION_HUB_SECTIONS } from "./education/hub"
 
-export const DATABASE_VERSION = "4.1.0"
+export const DATABASE_VERSION = "4.2.0"
 
 export function getDatabaseMeta(): DatabaseMeta {
   const mechanismMetrics = getMechanismMetrics()
   const solverMetrics = getSolverMetrics()
   const formulaMetrics = getFormulaMetrics()
+  const curriculumRoadmapMetrics = getCurriculumRoadmapMetrics()
   return {
     version: DATABASE_VERSION,
     updatedAt: new Date().toISOString().split("T")[0],
@@ -47,6 +49,9 @@ export function getDatabaseMeta(): DatabaseMeta {
       solverExamples: solverMetrics.workedExamplesGenerated,
       formulaRecords: formulaMetrics.formulas,
       formulaCategories: formulaMetrics.categories,
+      curriculumRoadmaps: curriculumRoadmapMetrics.roadmaps,
+      curriculumRoadmapTopics: curriculumRoadmapMetrics.roadmapTopics,
+      curriculumRoadmapToolLinks: curriculumRoadmapMetrics.roadmapToolLinks,
       vseprPresets: VSEPR_PRESETS.length,
       lewisStructures: ALL_LEWIS_STRUCTURES.length,
       questionTopics: QUESTION_TOPICS.length,

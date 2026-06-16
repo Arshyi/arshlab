@@ -125,8 +125,8 @@ export default function ChemistryHubPage() {
               <div>
                 <h2 className="font-semibold">Curriculum Engine</h2>
                 <p className="text-sm text-muted-foreground">
-                  Select a learning path, track unit mastery, review diagnostic coverage,
-                  and follow curriculum-aware study recommendations.
+                  Follow deterministic General Chemistry and Organic Chemistry roadmaps,
+                  track topic completion, and open the right ARSHLAB tool for each topic.
                 </p>
               </div>
             </div>

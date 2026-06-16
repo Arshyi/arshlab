@@ -72,7 +72,7 @@ const features = [
   {
     icon: GraduationCap,
     title: "Curriculum Engine",
-    description: "Choose IB, AP, A-Level, CHEM 121, or first-year chemistry paths and track unit mastery.",
+    description: "Follow deterministic General and Organic Chemistry roadmaps with tool links, viewed topics, completion tracking, and recommended next steps.",
     href: "/curriculum",
   },
   {

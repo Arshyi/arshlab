@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.1.0",
+    version: "4.2.0",
     date: "Current",
+    status: "released",
+    title: "Curriculum Engine",
+    changes: [
+      "Added deterministic General Chemistry and Organic Chemistry roadmap views at /curriculum",
+      "Added 25 roadmap topics with descriptions, difficulty labels, prerequisites, and recommended next topics",
+      "Added direct links from each roadmap topic to Formula Sheet, Chemistry Solver, Practice Generator, Exam Generator, Molecular Visualizer, Mechanism Trainer, and Reaction Database",
+      "Added local topic viewed and topic completed tracking with roadmap completion percentages",
+      "Added current recommended roadmap topic logic",
+      "Added Curriculum Progress card to the Learning Dashboard",
+      "Updated homepage, Chemistry Hub, Tools menu, Roadmap, Patch Notes, and version metadata for v4.2.0",
+      "Kept AI routes, OpenRouter configuration, auth, middleware, guardrails, API routes, and solver calculations unchanged",
+    ],
+  },
+  {
+    version: "4.1.0",
+    date: "Previous",
     status: "released",
     title: "Formula Sheet Engine",
     changes: [

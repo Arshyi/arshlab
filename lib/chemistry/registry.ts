@@ -30,12 +30,14 @@ import type { ReactionRecord } from "./reaction-types"
 import type { SpectroscopyRecord } from "./spectroscopy-types"
 import { getSolverMetrics } from "@/lib/solver-engine"
 import { getFormulaMetrics } from "@/lib/formula-sheet"
+import { getCurriculumRoadmapMetrics } from "@/lib/curriculum/roadmap"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.1.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.2.0"
 
 const mechanismMetrics = getMechanismMetrics()
 const solverMetrics = getSolverMetrics()
 const formulaMetrics = getFormulaMetrics()
+const curriculumRoadmapMetrics = getCurriculumRoadmapMetrics()
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,
@@ -58,6 +60,9 @@ export const CHEMISTRY_KNOWLEDGE_CORE_META = {
     solverExamples: solverMetrics.workedExamplesGenerated,
     formulaRecords: formulaMetrics.formulas,
     formulaCategories: formulaMetrics.categories,
+    curriculumRoadmaps: curriculumRoadmapMetrics.roadmaps,
+    curriculumRoadmapTopics: curriculumRoadmapMetrics.roadmapTopics,
+    curriculumRoadmapToolLinks: curriculumRoadmapMetrics.roadmapToolLinks,
   },
 }
 

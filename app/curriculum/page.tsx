@@ -4,7 +4,7 @@ import { CurriculumClient } from "./curriculum-client"
 export const metadata: Metadata = {
   title: "Curriculum Engine | ARSHLAB",
   description:
-    "Track chemistry curriculum coverage, unit mastery, diagnostic performance, and recommended next steps.",
+    "Follow deterministic General and Organic Chemistry roadmaps with topic progress, prerequisites, tool links, and recommended next steps.",
 }
 
 export default function CurriculumPage() {

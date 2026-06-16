@@ -43,6 +43,11 @@ import {
   readFormulaViewStats,
   type FormulaViewStats,
 } from "@/lib/formula-sheet"
+import {
+  getAllCurriculumRoadmapProgressSummaries,
+  readCurriculumRoadmapProgress,
+  type CurriculumRoadmapProgressSummary,
+} from "@/lib/curriculum/roadmap-progress"
 import { cn } from "@/lib/utils"
 
 function readinessVariant(score: number): "default" | "secondary" | "destructive" {
@@ -56,6 +61,7 @@ export function LearningDashboardClient() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [storedAchievements, setStoredAchievements] = useState<StoredAchievement[]>([])
   const [formulaStats, setFormulaStats] = useState<FormulaViewStats | null>(null)
+  const [roadmapStats, setRoadmapStats] = useState<CurriculumRoadmapProgressSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -84,6 +90,7 @@ export function LearningDashboardClient() {
 
       setLoading(false)
       setFormulaStats(readFormulaViewStats())
+      setRoadmapStats(getAllCurriculumRoadmapProgressSummaries(readCurriculumRoadmapProgress()))
     }
 
     void loadDashboard()
@@ -124,6 +131,14 @@ export function LearningDashboardClient() {
   const formulaMastery = formulaStats ? formulaMasteryProgress(formulaStats) : 0
   const formulaCategoriesStudied = formulaStats ? Object.keys(formulaStats.categoryViews).length : 0
   const topFormulaIds = formulaStats ? mostViewedFormulaIds(formulaStats, 4) : []
+  const roadmapTotalTopics = roadmapStats.reduce((sum, roadmap) => sum + roadmap.totalTopics, 0)
+  const roadmapCompletedTopics = roadmapStats.reduce((sum, roadmap) => sum + roadmap.completedTopics, 0)
+  const roadmapViewedTopics = roadmapStats.reduce((sum, roadmap) => sum + roadmap.viewedTopics, 0)
+  const roadmapCompletion = roadmapTotalTopics
+    ? Math.round((roadmapCompletedTopics / roadmapTotalTopics) * 100)
+    : 0
+  const nextRoadmapTopic =
+    roadmapStats.find((roadmap) => roadmap.currentRecommendedTopic)?.currentRecommendedTopic ?? null
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
@@ -144,7 +159,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.1.0 connects diagnostics, curriculum, practice, recovery, study, exams, formula views, solver mastery, and mechanism mastery into one adaptive learning view.
+            ARSHLAB v4.2.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, and mechanism mastery into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -397,6 +412,45 @@ export function LearningDashboardClient() {
                 </div>
                 <Button asChild className="rounded-xl">
                   <Link href="/formula-sheet">Open Formula Sheet</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6 rounded-2xl border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Route className="h-5 w-5" />
+                  Curriculum Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="rounded-xl border border-border bg-background/80 p-4">
+                  <p className="text-3xl font-bold">{roadmapCompletion}%</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {roadmapCompletedTopics}/{roadmapTotalTopics} roadmap topics complete
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold">Current recommended topic</p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {nextRoadmapTopic
+                      ? `${nextRoadmapTopic.title} - ${nextRoadmapTopic.description}`
+                      : "Open the Curriculum Engine to start a deterministic roadmap."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Badge variant="outline" className="rounded-full">
+                      {roadmapViewedTopics} viewed
+                    </Badge>
+                    <Badge variant="secondary" className="rounded-full">
+                      General + Organic Roadmaps
+                    </Badge>
+                    <Badge variant="outline" className="rounded-full">
+                      Database mode = no AI usage
+                    </Badge>
+                  </div>
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/curriculum">Open Curriculum</Link>
                 </Button>
               </CardContent>
             </Card>
