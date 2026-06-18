@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.3.1",
+    version: "4.4.0",
     date: "Current",
+    status: "released",
+    title: "Adaptive Study Mode",
+    changes: [
+      "Added deterministic study-engine modules for study types, local progress events, mastery scoring, and recommendations",
+      "Tracked formula views, solver usage, practice self-marking, mechanism practice, exam generation, and curriculum completion locally",
+      "Added 0-100 topic mastery scores with formula, solver, practice, exam, and curriculum signals",
+      "Added recommended next topic/action logic based on prerequisites, mastery, and curriculum ordering",
+      "Added Adaptive Study Mode cards to the Learning Dashboard with streak, mastered topics, weakest topics, and next action",
+      "Added formula mastery badges to Formula Sheet and confidence estimates to Chemistry Solver",
+      "Added mastery before/after indicators to Practice Generator questions",
+      "Added curriculum roadmap status badges for Completed, In Progress, Recommended, and Locked",
+      "Kept OpenRouter configuration, AI routes, auth, middleware, and guardrails unchanged",
+    ],
+  },
+  {
+    version: "4.3.1",
+    date: "Previous",
     status: "released",
     title: "Graph and Periodic Table Layout Polish",
     changes: [

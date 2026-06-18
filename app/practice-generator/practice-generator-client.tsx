@@ -55,6 +55,12 @@ import { generateDatabaseQuestions } from "@/lib/question-engine/generator"
 import type { QuestionSource } from "@/lib/question-engine/types"
 import { formulaHref, getFormulaById } from "@/lib/formula-sheet"
 import { resolveTopicDeepLink } from "@/lib/deep-links"
+import {
+  calculateStudySnapshot,
+  getStudyTopicForPractice,
+  getTopicMastery,
+} from "@/lib/study-engine/study-engine"
+import { readStudyProgress, recordStudyEvent } from "@/lib/study-engine/study-progress"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -296,6 +302,8 @@ export function PracticeGeneratorClient() {
   const [sessionCompletionAwarded, setSessionCompletionAwarded] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [guestUsage, setGuestUsage] = useState<GuestUsage>({ date: todayKey(), count: 0 })
+  const [studyProgress, setStudyProgress] = useState(() => readStudyProgress())
+  const [masteryBeforeByQuestion, setMasteryBeforeByQuestion] = useState<Record<string, number>>({})
 
   useEffect(() => {
     setGuestUsage(readGuestUsage())
@@ -357,6 +365,12 @@ export function PracticeGeneratorClient() {
   )
   const deterministicOnlyMode = topic === "Organic Mechanisms" || topic === "Chemistry Calculations"
   const effectiveQuestionSource: QuestionSourceMode = deterministicOnlyMode ? "Database Only" : questionSource
+  const studySnapshot = useMemo(
+    () => calculateStudySnapshot({ events: studyProgress.events }),
+    [studyProgress.events],
+  )
+  const selectedStudyTopic = getStudyTopicForPractice(topic, targetSubtopic === "all" ? undefined : targetSubtopic)
+  const selectedTopicMastery = getTopicMastery(studySnapshot, selectedStudyTopic?.id)
 
   const score = useMemo(() => {
     const total = practiceSet?.questions.length ?? 0
@@ -436,6 +450,7 @@ export function PracticeGeneratorClient() {
     setRevealedAnswers({})
     setRevealedExplanations({})
     setMarks({})
+    setMasteryBeforeByQuestion({})
     setSessionCompletionAwarded(false)
     setCopied(null)
     setProgressMessage(null)
@@ -512,6 +527,14 @@ export function PracticeGeneratorClient() {
           : [...databaseQuestions, ...aiQuestions]
 
       setPracticeSet({ questions: mergedQuestions })
+      setMasteryBeforeByQuestion(
+        Object.fromEntries(
+          mergedQuestions.map((question) => [
+            question.id,
+            getTopicMastery(studySnapshot, getStudyTopicForPractice(question.topic, question.subtopic)?.id),
+          ]),
+        ),
+      )
 
       if (needsAi && !isLoggedIn) {
         const nextUsage = { date: todayKey(), count: guestUsage.count + 1 }
@@ -587,13 +610,30 @@ export function PracticeGeneratorClient() {
 
     setMarks((current) => ({ ...current, [id]: status }))
     setProgressMessage(null)
+    const isCorrect = status === "correct"
+    const studyTopic = getStudyTopicForPractice(question.topic, question.subtopic)
+    setStudyProgress(
+      recordStudyEvent({
+        type:
+          studyTopic?.id === "organic-mechanisms"
+            ? isCorrect
+              ? "mechanism_correct"
+              : "mechanism_incorrect"
+            : isCorrect
+              ? "practice_correct"
+              : "practice_incorrect",
+        topicId: studyTopic?.id,
+        topic: question.topic,
+        subtopic: question.subtopic,
+        entityId: question.sourceEntry?.id ?? question.id,
+      }),
+    )
 
     if (!isLoggedIn) {
       setProgressMessage("Local score updated. Sign in to save practice progress permanently.")
       return
     }
 
-    const isCorrect = status === "correct"
     const result = await addPracticeProgress({
       topic: question.topic,
       subtopic: question.subtopic,
@@ -711,11 +751,17 @@ export function PracticeGeneratorClient() {
                 </div>
 
                 <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {deterministicOnlyMode
-                      ? `${topic} questions are deterministic and always use local database records.`
-                      : "Database mode uses no AI requests. Hybrid alternates database and AI questions when AI is available."}
-                  </p>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    <p>
+                      {deterministicOnlyMode
+                        ? `${topic} questions are deterministic and always use local database records.`
+                        : "Database mode uses no AI requests. Hybrid alternates database and AI questions when AI is available."}
+                    </p>
+                    <p>
+                      Current mastery: <span className="font-medium text-foreground">{selectedTopicMastery}%</span>
+                      {selectedStudyTopic ? ` in ${selectedStudyTopic.title}` : ""}
+                    </p>
+                  </div>
                   <Button
                     onClick={generateQuestionSet}
                     disabled={loading || (needsAi && !isLoggedIn && guestRemaining <= 0)}
@@ -835,6 +881,12 @@ export function PracticeGeneratorClient() {
                           key={question.id}
                           question={question}
                           index={index}
+                          masteryBefore={masteryBeforeByQuestion[question.id] ?? 0}
+                          masteryAfter={
+                            marks[question.id]
+                              ? getTopicMastery(studySnapshot, getStudyTopicForPractice(question.topic, question.subtopic)?.id)
+                              : undefined
+                          }
                           answerVisible={Boolean(revealedAnswers[question.id])}
                           explanationVisible={Boolean(revealedExplanations[question.id])}
                           mark={marks[question.id]}
@@ -932,6 +984,8 @@ export function PracticeGeneratorClient() {
 function QuestionCard({
   question,
   index,
+  masteryBefore,
+  masteryAfter,
   answerVisible,
   explanationVisible,
   mark,
@@ -944,6 +998,8 @@ function QuestionCard({
 }: {
   question: PracticeQuestion
   index: number
+  masteryBefore: number
+  masteryAfter?: number
   answerVisible: boolean
   explanationVisible: boolean
   mark?: MarkStatus
@@ -953,7 +1009,7 @@ function QuestionCard({
   onMark: (status: MarkStatus) => void
   onCopyQuestion: () => void
   onCopySolution: () => void
-  }) {
+}) {
   const relevantFormula = getFormulaById(question.relevantFormulaId)
 
   return (
@@ -966,6 +1022,10 @@ function QuestionCard({
           <Badge variant={question.source === "database" ? "default" : "secondary"}>
             {question.source === "database" ? "Database Generated" : "AI Generated"}
           </Badge>
+          <Badge variant="outline">Mastery before {masteryBefore}%</Badge>
+          {typeof masteryAfter === "number" && (
+            <Badge variant="secondary">Mastery after {masteryAfter}%</Badge>
+          )}
         </div>
         {mark && (
           <Badge variant={mark === "correct" ? "default" : "destructive"}>

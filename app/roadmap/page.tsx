@@ -49,6 +49,7 @@ const completed = [
   "Context-Aware Deep Linking",
   "Reaction Explorer / Knowledge Graph",
   "Graph and Periodic Table Layout Polish",
+  "Adaptive Study Mode",
 ]
 
 const inDevelopment = [
@@ -175,13 +176,13 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <Network className="h-4 w-4" />
                 </div>
-                Graph and Periodic Table Layout Polish
+                Adaptive Study Mode
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: clearer Reaction Explorer graph edges and a display-only periodic table
-                layout pass that restores the standard 18-column silhouette while preserving heatmaps and comparison mode.
+                Now available: deterministic local study progress connects Formula Sheet, Solver,
+                Practice Generator, Curriculum, exams, and Learning Dashboard into one recommendation layer.
               </p>
             </CardContent>
           </Card>
@@ -193,7 +194,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v4.3.1 - Graph and Periodic Table Layout Polish
+          ARSHLAB v4.4.0 - Adaptive Study Mode
         </motion.p>
       </div>
     </div>

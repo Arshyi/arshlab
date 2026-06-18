@@ -46,6 +46,8 @@ import {
 } from "@/lib/solver-engine"
 import { formulaHref, getFormulaForSolverModule } from "@/lib/formula-sheet"
 import { resolveSolverModuleDeepLink } from "@/lib/deep-links"
+import { calculateStudySnapshot, getStudyTopicForSolver, getTopicMastery } from "@/lib/study-engine/study-engine"
+import { readStudyProgress, recordStudyEvent } from "@/lib/study-engine/study-progress"
 import { cn } from "@/lib/utils"
 
 const LOCAL_STATS_KEY = "arshlab-solver-local-stats"
@@ -107,6 +109,7 @@ export function ChemistrySolverClient() {
   const [trackingMessage, setTrackingMessage] = useState<string | null>(null)
   const [tracking, setTracking] = useState<"correct" | "missed" | null>(null)
   const [stats, setStats] = useState<LocalSolverStats>(defaultStats)
+  const [studyProgress, setStudyProgress] = useState(() => readStudyProgress())
 
   const [molarity, setMolarity] = useState({ moles: "0.250", volume: "0.500" })
   const [dilution, setDilution] = useState({ m1: "2.0", v1: "0.100", m2: "0.500", v2: "" })
@@ -156,6 +159,12 @@ export function ChemistrySolverClient() {
   const activeModule = SOLVER_MODULES.find((module) => module.id === moduleId) ?? SOLVER_MODULES[0]
   const activeFormula = getFormulaForSolverModule(activeModule.id)
   const accuracy = stats.correct + stats.missed > 0 ? Math.round((stats.correct / (stats.correct + stats.missed)) * 100) : 0
+  const studySnapshot = useMemo(
+    () => calculateStudySnapshot({ events: studyProgress.events }),
+    [studyProgress.events],
+  )
+  const activeStudyTopic = getStudyTopicForSolver(activeModule.id)
+  const activeMastery = getTopicMastery(studySnapshot, activeStudyTopic?.id)
 
   function updateStats(patch: Partial<LocalSolverStats>) {
     setStats((current) => {
@@ -215,6 +224,14 @@ export function ChemistrySolverClient() {
       }
 
       setResult(nextResult)
+      setStudyProgress(
+        recordStudyEvent({
+          type: "solver_used",
+          entityId: activeModule.id,
+          topic: activeModule.topic,
+          subtopic: activeModule.title,
+        }),
+      )
       updateStats({ solved: stats.solved + 1, workedExamples: stats.workedExamples + 1 })
     } catch (caught) {
       setResult(null)
@@ -234,6 +251,15 @@ export function ChemistrySolverClient() {
       source: "database",
       correct,
     })
+    setStudyProgress(
+      recordStudyEvent({
+        type: correct ? "practice_correct" : "practice_incorrect",
+        topicId: activeStudyTopic?.id,
+        topic: "Chemistry Calculations",
+        subtopic: result.title,
+        entityId: activeModule.id,
+      }),
+    )
     updateStats(correct ? { correct: stats.correct + 1 } : { missed: stats.missed + 1 })
     setTracking(null)
     setTrackingMessage(
@@ -254,7 +280,7 @@ export function ChemistrySolverClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.3.1</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.4.0</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                   <Badge variant="outline">Deterministic solver</Badge>
                 </div>
@@ -464,6 +490,7 @@ export function ChemistrySolverClient() {
                 <Info label="Difficulty" value={activeModule.difficulty} />
                 <Info label="Related topic" value={activeModule.topic} />
                 <Info label="Formula" value={activeModule.formula} />
+                <Info label="Confidence estimate" value={`${activeMastery}% mastery`} />
                 <Info label="Local accuracy" value={stats.correct + stats.missed > 0 ? `${accuracy}%` : "No marked attempts yet"} />
               </CardContent>
             </Card>

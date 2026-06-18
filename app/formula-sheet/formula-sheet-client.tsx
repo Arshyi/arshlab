@@ -15,14 +15,18 @@ import {
   getFormulaById,
   getFormulaMetrics,
   recordFormulaView,
+  readFormulaViewStats,
   searchFormulaRecords,
   type FormulaRecord,
+  type FormulaViewStats,
 } from "@/lib/formula-sheet"
 import {
   getSolverModuleForFormulaDeepLink,
   resolveFormulaDeepLink,
   solverModuleHref,
 } from "@/lib/deep-links"
+import { calculateStudySnapshot, getStudyTopicForFormula, getTopicMastery } from "@/lib/study-engine/study-engine"
+import { readStudyProgress, recordStudyEvent } from "@/lib/study-engine/study-progress"
 import { cn } from "@/lib/utils"
 
 const allCategories = Array.from(new Set(FORMULA_RECORDS.map((formula) => formula.category)))
@@ -35,6 +39,8 @@ export function FormulaSheetClient() {
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState("All")
   const [selectedId, setSelectedId] = useState(resolvedFormulaParam ?? FORMULA_RECORDS[0]?.id ?? "")
+  const [studyProgress, setStudyProgress] = useState(() => readStudyProgress())
+  const [formulaStats, setFormulaStats] = useState<FormulaViewStats>(() => readFormulaViewStats())
 
   useEffect(() => {
     if (resolvedFormulaParam && getFormulaById(resolvedFormulaParam)) {
@@ -48,10 +54,15 @@ export function FormulaSheetClient() {
   }, [query, category])
 
   const selected = getFormulaById(selectedId) ?? filtered[0] ?? FORMULA_RECORDS[0]
+  const studySnapshot = useMemo(
+    () => calculateStudySnapshot({ events: studyProgress.events, formulaStats }),
+    [formulaStats, studyProgress.events],
+  )
 
   useEffect(() => {
     if (selected?.id) {
-      recordFormulaView(selected.id)
+      setFormulaStats(recordFormulaView(selected.id))
+      setStudyProgress(recordStudyEvent({ type: "formula_view", entityId: selected.id }))
       document.getElementById(`formula-${selected.id}`)?.scrollIntoView({ block: "start" })
     }
   }, [selected?.id])
@@ -67,7 +78,7 @@ export function FormulaSheetClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.3.1</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.4.0</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                   <Badge variant="outline">Deterministic formula records</Badge>
                 </div>
@@ -150,9 +161,14 @@ export function FormulaSheetClient() {
                     >
                       <span className="block text-sm font-semibold">{formula.name}</span>
                       <span className="mt-1 block font-mono text-xs text-muted-foreground">{formula.formula}</span>
-                      <Badge variant="outline" className="mt-2 rounded-full">
-                        {formula.category}
-                      </Badge>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Badge variant="outline" className="rounded-full">
+                          {formula.category}
+                        </Badge>
+                        <Badge variant="secondary" className="rounded-full">
+                          Mastery {getTopicMastery(studySnapshot, getStudyTopicForFormula(formula.id)?.id)}%
+                        </Badge>
+                      </div>
                     </Link>
                   ))
                 ) : (
@@ -164,14 +180,19 @@ export function FormulaSheetClient() {
             </CardContent>
           </Card>
 
-          {selected ? <FormulaViewer formula={selected} /> : null}
+          {selected ? (
+            <FormulaViewer
+              formula={selected}
+              mastery={getTopicMastery(studySnapshot, getStudyTopicForFormula(selected.id)?.id)}
+            />
+          ) : null}
         </section>
       </div>
     </main>
   )
 }
 
-function FormulaViewer({ formula }: { formula: FormulaRecord }) {
+function FormulaViewer({ formula, mastery }: { formula: FormulaRecord; mastery: number }) {
   const solverModuleId = getSolverModuleForFormulaDeepLink(formula.id)
 
   return (
@@ -183,6 +204,7 @@ function FormulaViewer({ formula }: { formula: FormulaRecord }) {
               <div className="flex flex-wrap gap-2">
                 <Badge>{formula.category}</Badge>
                 <Badge variant="outline">Formula handbook</Badge>
+                <Badge variant="secondary">Mastery {mastery}%</Badge>
               </div>
               <h2 className="mt-3 text-2xl font-bold tracking-tight">{formula.name}</h2>
               <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">{formula.description}</p>

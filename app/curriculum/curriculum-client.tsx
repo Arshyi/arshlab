@@ -47,6 +47,8 @@ import {
   type CurriculumRoadmapProgressState,
 } from "@/lib/curriculum/roadmap-progress"
 import { deepLinkSlug } from "@/lib/deep-links"
+import { calculateStudySnapshot, getStudyTopicForCurriculum } from "@/lib/study-engine/study-engine"
+import { readStudyProgress, recordStudyEvent } from "@/lib/study-engine/study-progress"
 import { getPracticeProgress, type PracticeProgressEntry } from "@/lib/supabase/practice-progress"
 import {
   getLevelFromXp,
@@ -111,6 +113,7 @@ export function CurriculumClient() {
   const [selectedRoadmapId, setSelectedRoadmapId] = useState(roadmaps[0]?.id ?? "general-chemistry")
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(roadmaps[0]?.topics[0]?.id ?? null)
   const [roadmapProgress, setRoadmapProgress] = useState<CurriculumRoadmapProgressState>({ topics: {} })
+  const [studyProgress, setStudyProgress] = useState(() => readStudyProgress())
 
   const loadCurriculum = useCallback(async () => {
     setLoading(true)
@@ -188,6 +191,10 @@ export function CurriculumClient() {
   }, [roadmapSummary.currentRecommendedTopic, selectedRoadmap, selectedTopicId])
   const level = getLevelFromXp(profile?.xp ?? 0)
   const spectroscopyAccuracy = useMemo(() => getSpectroscopyAccuracy(entries), [entries])
+  const studySnapshot = useMemo(
+    () => calculateStudySnapshot({ events: studyProgress.events, practiceEntries: entries, curriculumProgress: roadmapProgress }),
+    [entries, roadmapProgress, studyProgress.events],
+  )
 
   useEffect(() => {
     document.getElementById("curriculum-topic")?.scrollIntoView({ block: "start" })
@@ -206,7 +213,21 @@ export function CurriculumClient() {
   }
 
   function handleTopicCompleted(topicId: string, completed: boolean) {
-    setRoadmapProgress(setCurriculumTopicCompleted(topicId, completed, roadmapProgress))
+    const nextProgress = setCurriculumTopicCompleted(topicId, completed, roadmapProgress)
+    setRoadmapProgress(nextProgress)
+
+    if (completed) {
+      const completedTopic = selectedRoadmap.topics.find((topic) => topic.id === topicId)
+      const studyTopic = getStudyTopicForCurriculum(completedTopic?.title)
+      setStudyProgress(
+        recordStudyEvent({
+          type: "curriculum_completed",
+          topicId: studyTopic?.id,
+          topic: completedTopic?.title,
+          entityId: topicId,
+        }),
+      )
+    }
   }
 
   async function handleCurriculumChange(value: string) {
@@ -238,7 +259,7 @@ export function CurriculumClient() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">ARSHLAB v4.3.1</Badge>
+              <Badge variant="secondary">ARSHLAB v4.4.0</Badge>
               <Badge variant="outline">Database mode = no AI usage</Badge>
             </div>
           </div>
@@ -275,7 +296,7 @@ export function CurriculumClient() {
           <CardContent className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge>v4.3.1 Curriculum Roadmaps</Badge>
+                <Badge>v4.4.0 Curriculum Roadmaps</Badge>
                 <Badge variant="secondary">{selectedRoadmap.topics.length} topics</Badge>
               </div>
               <h2 className="text-2xl font-bold">{selectedRoadmap.title}</h2>
@@ -317,6 +338,17 @@ export function CurriculumClient() {
               {selectedRoadmap.topics.map((topic, index) => {
                 const progress = roadmapProgress.topics[topic.id]
                 const selected = selectedRoadmapTopic?.id === topic.id
+                const studyTopic = getStudyTopicForCurriculum(topic.title)
+                const studyStatus = studySnapshot.topics.find((item) => item.topic.id === studyTopic?.id)?.status
+                const roadmapStatus = progress?.completed
+                  ? "Completed"
+                  : studyStatus === "Locked"
+                    ? "Locked"
+                    : selected || roadmapSummary.currentRecommendedTopic?.id === topic.id || studyStatus === "Recommended"
+                      ? "Recommended"
+                      : progress?.viewed
+                        ? "In Progress"
+                        : "In Progress"
                 return (
                   <button
                     key={topic.id}
@@ -346,6 +378,9 @@ export function CurriculumClient() {
                         <p className="font-semibold text-foreground">{topic.title}</p>
                         <div className="mt-2 flex flex-wrap gap-1">
                           <Badge variant="outline" className="rounded-full">{topic.difficulty}</Badge>
+                          <Badge variant={roadmapStatus === "Completed" ? "default" : roadmapStatus === "Locked" ? "destructive" : "secondary"} className="rounded-full">
+                            {roadmapStatus}
+                          </Badge>
                           {progress?.viewed && <Badge variant="secondary" className="rounded-full">Viewed</Badge>}
                           {progress?.completed && <Badge className="rounded-full">Completed</Badge>}
                         </div>
@@ -451,7 +486,7 @@ export function CurriculumClient() {
           <CardContent className="grid gap-5 p-5 lg:grid-cols-[1fr_320px]">
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge>v4.3.1</Badge>
+                <Badge>v4.4.0</Badge>
                 <Badge variant="secondary">{summary.curriculum.level}</Badge>
               </div>
               <h2 className="text-2xl font-bold">{summary.curriculum.name}</h2>

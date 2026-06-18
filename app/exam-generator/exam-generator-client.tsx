@@ -63,6 +63,8 @@ import {
   type GeneratedEngineExam,
 } from "@/lib/exam-engine/generator"
 import { resolveTopicDeepLink } from "@/lib/deep-links"
+import { getStudyTopicForPractice } from "@/lib/study-engine/study-engine"
+import { recordStudyEvent } from "@/lib/study-engine/study-progress"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -497,6 +499,15 @@ export function ExamGeneratorClient() {
       }
 
       setExam(nextExam)
+      const trackedTopic = targetTopic ?? (examTopic === "all" ? nextExam.questions[0]?.topic : examTopic)
+      const studyTopic = getStudyTopicForPractice(trackedTopic, targetSubtopic === "all" ? undefined : targetSubtopic)
+      recordStudyEvent({
+        type: "exam_generated",
+        topicId: studyTopic?.id,
+        topic: trackedTopic ?? "Exam Generator",
+        subtopic: targetSubtopic === "all" ? undefined : targetSubtopic,
+        entityId: nextExam.title,
+      })
 
       if (!isLoggedIn && aiRequired) {
         const nextUsage = { date: todayKey(), count: guestUsage.count + 1 }

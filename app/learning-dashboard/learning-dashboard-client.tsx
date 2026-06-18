@@ -47,6 +47,7 @@ import {
 import {
   getAllCurriculumRoadmapProgressSummaries,
   readCurriculumRoadmapProgress,
+  type CurriculumRoadmapProgressState,
   type CurriculumRoadmapProgressSummary,
 } from "@/lib/curriculum/roadmap-progress"
 import {
@@ -56,6 +57,8 @@ import {
   resolveSolverModuleDeepLink,
   solverModuleHref,
 } from "@/lib/deep-links"
+import { calculateStudySnapshot } from "@/lib/study-engine/study-engine"
+import { readStudyProgress, type StudyProgressState } from "@/lib/study-engine/study-progress"
 import { cn } from "@/lib/utils"
 
 function readinessVariant(score: number): "default" | "secondary" | "destructive" {
@@ -70,6 +73,8 @@ export function LearningDashboardClient() {
   const [storedAchievements, setStoredAchievements] = useState<StoredAchievement[]>([])
   const [formulaStats, setFormulaStats] = useState<FormulaViewStats | null>(null)
   const [roadmapStats, setRoadmapStats] = useState<CurriculumRoadmapProgressSummary[]>([])
+  const [roadmapProgress, setRoadmapProgress] = useState<CurriculumRoadmapProgressState>({ topics: {} })
+  const [studyProgress, setStudyProgress] = useState<StudyProgressState>({ events: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -98,7 +103,10 @@ export function LearningDashboardClient() {
 
       setLoading(false)
       setFormulaStats(readFormulaViewStats())
-      setRoadmapStats(getAllCurriculumRoadmapProgressSummaries(readCurriculumRoadmapProgress()))
+      const nextRoadmapProgress = readCurriculumRoadmapProgress()
+      setRoadmapProgress(nextRoadmapProgress)
+      setRoadmapStats(getAllCurriculumRoadmapProgressSummaries(nextRoadmapProgress))
+      setStudyProgress(readStudyProgress())
     }
 
     void loadDashboard()
@@ -107,6 +115,16 @@ export function LearningDashboardClient() {
   const summary = useMemo(
     () => generateLearningRecommendations(entries, profile?.selectedCurriculum, { xp: profile?.xp ?? 0 }),
     [entries, profile?.selectedCurriculum, profile?.xp],
+  )
+  const studySnapshot = useMemo(
+    () =>
+      calculateStudySnapshot({
+        events: studyProgress.events,
+        practiceEntries: entries,
+        formulaStats,
+        curriculumProgress: roadmapProgress,
+      }),
+    [entries, formulaStats, roadmapProgress, studyProgress.events],
   )
 
   useEffect(() => {
@@ -169,7 +187,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.3.1 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, context-aware deep links, the Reaction Explorer knowledge graph, and layout-polished periodic table study into one adaptive learning view.
+            ARSHLAB v4.4.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, adaptive study mode, context-aware deep links, and the Reaction Explorer knowledge graph into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -226,6 +244,44 @@ export function LearningDashboardClient() {
               <HealthMetric icon={ClipboardCheck} label="Diagnostic Coverage" value={`${summary.mastery.diagnosticCoverage}%`} detail="Unit coverage" />
               <HealthMetric icon={BookOpenCheck} label="Study Streak" value={summary.mastery.studyStreak} detail="days active" />
             </div>
+
+            <Card className="mb-6 rounded-2xl border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <BookOpenCheck className="h-5 w-5" />
+                  Adaptive Study Mode
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-4">
+                  <MiniStat label="Study Streak" value={studySnapshot.studyStreak} />
+                  <MiniStat label="Topics Mastered" value={studySnapshot.topicsMastered} />
+                  <MiniStat label="Study Mastery" value={`${studySnapshot.overallMastery}%`} />
+                  <MiniStat label="Tracked Topics" value={studySnapshot.topics.length} />
+                </div>
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                  <div className="rounded-xl border border-border bg-background/80 p-4">
+                    <p className="font-semibold">Weakest Topics</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {studySnapshot.weakestTopics.map((topic) => (
+                        <Badge key={topic.topic.id} variant="outline" className="rounded-full">
+                          {topic.topic.title}: {topic.mastery}%
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background/80 p-4">
+                    <p className="font-semibold">Recommended Next Action</p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {studySnapshot.recommendation.why}
+                    </p>
+                    <Button asChild className="mt-3 w-full rounded-xl">
+                      <Link href={studySnapshot.recommendation.href}>{studySnapshot.recommendation.action}</Link>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="mb-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
               <Card id="exam-readiness" className="min-w-0 rounded-2xl border-primary/20 bg-primary/5">
