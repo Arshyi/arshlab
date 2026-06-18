@@ -12,19 +12,21 @@ import { getMechanismMetrics } from "../mechanisms"
 import { getSolverMetrics } from "@/lib/solver-engine"
 import { getFormulaMetrics } from "@/lib/formula-sheet"
 import { getCurriculumRoadmapMetrics } from "@/lib/curriculum/roadmap"
+import { getKnowledgeGraphMetrics } from "@/lib/knowledge-graph/chemistry-graph"
 import { COMPOUND_PATHWAYS, MOLECULAR_STRUCTURES, SPECTROSCOPY_MAPPINGS, countFunctionalGroupHighlights } from "../structures"
 import { VSEPR_PRESETS } from "./vsepr/engine"
 import { ALL_LEWIS_STRUCTURES } from "./lewis/templates"
 import { QUESTION_TOPICS } from "./questions/topics"
 import { EDUCATION_HUB_SECTIONS } from "./education/hub"
 
-export const DATABASE_VERSION = "4.2.1"
+export const DATABASE_VERSION = "4.3.0"
 
 export function getDatabaseMeta(): DatabaseMeta {
   const mechanismMetrics = getMechanismMetrics()
   const solverMetrics = getSolverMetrics()
   const formulaMetrics = getFormulaMetrics()
   const curriculumRoadmapMetrics = getCurriculumRoadmapMetrics()
+  const knowledgeGraphMetrics = getKnowledgeGraphMetrics()
   return {
     version: DATABASE_VERSION,
     updatedAt: new Date().toISOString().split("T")[0],
@@ -52,6 +54,10 @@ export function getDatabaseMeta(): DatabaseMeta {
       curriculumRoadmaps: curriculumRoadmapMetrics.roadmaps,
       curriculumRoadmapTopics: curriculumRoadmapMetrics.roadmapTopics,
       curriculumRoadmapToolLinks: curriculumRoadmapMetrics.roadmapToolLinks,
+      knowledgeGraphNodes: knowledgeGraphMetrics.nodes,
+      knowledgeGraphEdges: knowledgeGraphMetrics.edges,
+      knowledgeGraphPathways: knowledgeGraphMetrics.pathways,
+      knowledgeGraphLinkedTools: knowledgeGraphMetrics.linkedTools,
       vseprPresets: VSEPR_PRESETS.length,
       lewisStructures: ALL_LEWIS_STRUCTURES.length,
       questionTopics: QUESTION_TOPICS.length,

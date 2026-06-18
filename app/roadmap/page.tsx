@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { BookOpenCheck, Map, Check, Hammer, Lightbulb } from "lucide-react"
+import { Map, Check, Hammer, Lightbulb, Network } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
@@ -47,6 +47,7 @@ const completed = [
   "Diagnostic Assessment & Placement Engine",
   "Curriculum Engine",
   "Context-Aware Deep Linking",
+  "Reaction Explorer / Knowledge Graph",
 ]
 
 const inDevelopment = [
@@ -171,15 +172,15 @@ export default function RoadmapPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
-                  <BookOpenCheck className="h-4 w-4" />
+                  <Network className="h-4 w-4" />
                 </div>
-                Context-Aware Deep Linking
+                Reaction Explorer / Knowledge Graph
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: curriculum, formula, solver, mechanism, reaction, molecular visualizer,
-                practice, and exam links can open directly to the relevant content instead of generic landing pages.
+                Now available: a deterministic visual chemistry map connecting compounds, functional groups,
+                reactions, mechanisms, formulas, solvers, practice, exams, and existing ARSHLAB deep links.
               </p>
             </CardContent>
           </Card>
@@ -191,7 +192,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v4.2.1 - Context-Aware Deep Linking
+          ARSHLAB v4.3.0 - Reaction Explorer / Knowledge Graph
         </motion.p>
       </div>
     </div>

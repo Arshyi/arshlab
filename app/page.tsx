@@ -100,6 +100,12 @@ const features = [
     href: "/molecular-visualizer",
   },
   {
+    icon: Network,
+    title: "Reaction Explorer",
+    description: "Map compounds, functional groups, reactions, mechanisms, formulas, solvers, and practice as a connected chemistry graph.",
+    href: "/reaction-explorer",
+  },
+  {
     icon: ArrowRightLeft,
     title: "Reaction Engine",
     description: "Browse 100+ deterministic reaction records for prediction, classification, balancing, and mastery tracking.",

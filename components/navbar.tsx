@@ -67,6 +67,7 @@ const chemistryToolItems = [
   { href: "/chemistry-solver", label: "Chemistry Solver", icon: Calculator },
   { href: "/chemistry-database", label: "Chemistry Database", icon: Database },
   { href: "/molecular-visualizer", label: "Molecular Visualizer", icon: Network },
+  { href: "/reaction-explorer", label: "Reaction Explorer", icon: Network },
   { href: "/mechanism-trainer", label: "Mechanism Trainer", icon: FlaskConical },
   { href: "/reaction-database", label: "Reaction Database", icon: ArrowRightLeft },
   { href: "/question-engine", label: "Question Engine", icon: ListChecks },

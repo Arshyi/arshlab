@@ -19,6 +19,7 @@ const LAB_LINKS = [
   { href: "/chemistry-solver", label: "Chemistry Solver" },
   { href: "/chemistry-database", label: "Chemistry Database" },
   { href: "/molecular-visualizer", label: "Molecular Visualizer" },
+  { href: "/reaction-explorer", label: "Reaction Explorer" },
   { href: "/mechanism-trainer", label: "Mechanism Trainer" },
   { href: "/reaction-database", label: "Reaction Database" },
   { href: "/question-engine", label: "Question Engine" },
@@ -277,6 +278,13 @@ export default function ChemistryHubPage() {
             description="Explore deterministic 2D molecule sketches, functional group highlights, reaction diagrams, and pathway examples."
             href="/molecular-visualizer"
             action="Open Visualizer"
+          />
+          <HubActionCard
+            icon={Network}
+            title="Reaction Explorer"
+            description="Explore a deterministic chemistry graph connecting compounds, functional groups, reactions, mechanisms, formulas, solvers, and practice."
+            href="/reaction-explorer"
+            action="Open Explorer"
           />
           <HubActionCard
             icon={Network}

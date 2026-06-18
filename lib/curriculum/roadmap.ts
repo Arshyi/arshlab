@@ -3,6 +3,7 @@ import {
   mechanismHref,
   molecularVisualizerHref,
   reactionHref,
+  reactionExplorerHref,
   solverModuleHref,
 } from "@/lib/deep-links"
 
@@ -38,6 +39,15 @@ function encodedTopic(topic: string): string {
   return encodeURIComponent(topic)
 }
 
+function graphFocusForTopicTargets(targets: ReturnType<typeof getTopicDeepLinkTargets>): string | undefined {
+  if (targets.mechanismId) return `mechanism:${targets.mechanismId}`
+  if (targets.reactionId) return `reaction:${targets.reactionId}`
+  if (targets.compoundId) return `compound:${targets.compoundId}`
+  if (targets.formulaId) return `formula:${targets.formulaId}`
+  if (targets.solverModuleId) return `solver:${targets.solverModuleId}`
+  return undefined
+}
+
 function toolLinksForTopic(topic: string): CurriculumToolLink[] {
   const query = encodedTopic(topic)
   const targets = getTopicDeepLinkTargets(topic)
@@ -66,6 +76,11 @@ function toolLinksForTopic(topic: string): CurriculumToolLink[] {
       label: "Molecular Visualizer",
       href: targets.compoundId ? molecularVisualizerHref(targets.compoundId) : `/molecular-visualizer?topic=${query}`,
       description: "Connect the topic to structures, pathways, and visual examples.",
+    },
+    {
+      label: "Reaction Explorer",
+      href: reactionExplorerHref(graphFocusForTopicTargets(targets), topic),
+      description: "See how this topic connects to compounds, reactions, mechanisms, formulas, solvers, and practice.",
     },
   ]
 

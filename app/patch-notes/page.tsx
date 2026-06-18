@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.2.1",
+    version: "4.3.0",
     date: "Current",
+    status: "released",
+    title: "Reaction Explorer / Knowledge Graph",
+    changes: [
+      "Added /reaction-explorer with a deterministic visual chemistry knowledge graph",
+      "Added graph nodes for compounds, functional groups, reactions, mechanisms, formulas, solvers, and practice topics",
+      "Added graph edges for contains, reactsTo, oxidizesTo, usesMechanism, usesFormula, solvedBy, and practiceWith relationships",
+      "Added alcohol oxidation and esterification, alkene addition, acid-base, and stoichiometry pathway examples",
+      "Added graph search, General Chemistry / Organic Chemistry filters, mobile pathway cards, and node detail deep links",
+      "Added Reaction Explorer links to the homepage, Chemistry Hub, Tools menu, Curriculum Engine, Learning Dashboard, Roadmap, and chemistry metadata",
+      "Kept OpenRouter configuration, AI routes, auth, middleware, guardrails, and solver calculations unchanged",
+    ],
+  },
+  {
+    version: "4.2.1",
+    date: "Previous",
     status: "released",
     title: "Context-Aware Deep Linking",
     changes: [

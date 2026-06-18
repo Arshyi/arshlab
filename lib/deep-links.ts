@@ -435,3 +435,11 @@ export function reactionHref(reactionId: string): string {
 export function molecularVisualizerHref(compoundId: string): string {
   return `/molecular-visualizer?compound=${encodeURIComponent(compoundId)}#molecule-viewer`
 }
+
+export function reactionExplorerHref(focusId?: string, query?: string): string {
+  const params = new URLSearchParams()
+  if (focusId) params.set("focus", focusId)
+  if (query) params.set("query", query)
+  const suffix = params.toString() ? `?${params.toString()}` : ""
+  return `/reaction-explorer${suffix}#reaction-graph`
+}

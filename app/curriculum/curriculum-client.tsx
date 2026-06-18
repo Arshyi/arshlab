@@ -238,13 +238,13 @@ export function CurriculumClient() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">ARSHLAB v4.2.1</Badge>
+              <Badge variant="secondary">ARSHLAB v4.3.0</Badge>
               <Badge variant="outline">Database mode = no AI usage</Badge>
             </div>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
             Follow deterministic General Chemistry and Organic Chemistry roadmaps, then connect each topic to
-            ARSHLAB&apos;s formula sheet, solver, practice, exams, molecular visualizer, mechanism trainer, and reaction database.
+            ARSHLAB&apos;s formula sheet, solver, practice, exams, molecular visualizer, reaction explorer, mechanism trainer, and reaction database.
           </p>
         </motion.div>
 
@@ -275,7 +275,7 @@ export function CurriculumClient() {
           <CardContent className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge>v4.2.1 Curriculum Roadmaps</Badge>
+                <Badge>v4.3.0 Curriculum Roadmaps</Badge>
                 <Badge variant="secondary">{selectedRoadmap.topics.length} topics</Badge>
               </div>
               <h2 className="text-2xl font-bold">{selectedRoadmap.title}</h2>
@@ -451,7 +451,7 @@ export function CurriculumClient() {
           <CardContent className="grid gap-5 p-5 lg:grid-cols-[1fr_320px]">
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge>v4.2.1</Badge>
+                <Badge>v4.3.0</Badge>
                 <Badge variant="secondary">{summary.curriculum.level}</Badge>
               </div>
               <h2 className="text-2xl font-bold">{summary.curriculum.name}</h2>

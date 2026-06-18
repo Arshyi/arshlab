@@ -17,6 +17,7 @@ import {
   GraduationCap,
   Loader2,
   Medal,
+  Network,
   Route,
   Target,
   Trophy,
@@ -168,7 +169,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.2.1 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, and context-aware deep links into one adaptive learning view.
+            ARSHLAB v4.3.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, context-aware deep links, and the Reaction Explorer knowledge graph into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -302,6 +303,26 @@ export function LearningDashboardClient() {
                 body="Recommendations rank recent misses, low topic mastery, diagnostic weaknesses, weak curriculum units, and exam-readiness gaps. If there is no saved data yet, ARSHLAB shows a starter path instead of pretending it knows your weaknesses."
               />
             </div>
+
+            <Card className="mb-6 rounded-2xl border-teal-500/20 bg-teal-500/5">
+              <CardContent className="grid gap-4 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                    <Network className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold">Reaction Explorer</h2>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      Open the connected chemistry map to see how weak topics relate to compounds,
+                      mechanisms, formulas, solvers, practice, and exams.
+                    </p>
+                  </div>
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/reaction-explorer">Open Reaction Explorer</Link>
+                </Button>
+              </CardContent>
+            </Card>
 
             <div className="mb-6 grid gap-6 lg:grid-cols-2">
               <AreaCard title="Weak Areas" icon={AlertCircle} topics={weakAreas} />
