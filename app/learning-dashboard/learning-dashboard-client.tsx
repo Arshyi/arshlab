@@ -65,6 +65,11 @@ import {
   readStructureScanHistory,
 } from "@/lib/structure-scanner/scanner-utils"
 import type { StructureScanStats } from "@/lib/structure-scanner/scanner-types"
+import {
+  getSynthesisExplorerStats,
+  readSynthesisHistory,
+} from "@/lib/synthesis/pathfinder"
+import type { SynthesisExplorerStats } from "@/lib/synthesis/pathway-types"
 import { cn } from "@/lib/utils"
 
 function readinessVariant(score: number): "default" | "secondary" | "destructive" {
@@ -82,6 +87,7 @@ export function LearningDashboardClient() {
   const [roadmapProgress, setRoadmapProgress] = useState<CurriculumRoadmapProgressState>({ topics: {} })
   const [studyProgress, setStudyProgress] = useState<StudyProgressState>({ events: [] })
   const [scannerStats, setScannerStats] = useState<StructureScanStats>(getStructureScanStats([]))
+  const [synthesisStats, setSynthesisStats] = useState<SynthesisExplorerStats>(getSynthesisExplorerStats([]))
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -115,6 +121,7 @@ export function LearningDashboardClient() {
       setRoadmapStats(getAllCurriculumRoadmapProgressSummaries(nextRoadmapProgress))
       setStudyProgress(readStudyProgress())
       setScannerStats(getStructureScanStats(readStructureScanHistory()))
+      setSynthesisStats(getSynthesisExplorerStats(readSynthesisHistory()))
     }
 
     void loadDashboard()
@@ -177,6 +184,7 @@ export function LearningDashboardClient() {
   const firstMissedSolverModuleId = resolveSolverModuleDeepLink(missedSolverConcepts[0]?.subtopic)
   const topScannedCompound = scannerStats.mostScannedCompounds[0]
   const topScannedGroup = scannerStats.mostScannedFunctionalGroups[0]
+  const topSynthesisCompound = synthesisStats.mostSearchedCompounds[0]
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
@@ -197,7 +205,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.5.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, adaptive study mode, context-aware deep links, the Structure Scanner, and the Reaction Explorer knowledge graph into one adaptive learning view.
+            ARSHLAB v4.6.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, adaptive study mode, context-aware deep links, the Structure Scanner, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -428,6 +436,46 @@ export function LearningDashboardClient() {
                 </div>
                 <Button asChild className="rounded-xl">
                   <Link href="/structure-scanner">Open Scanner</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6 rounded-2xl border-teal-500/20 bg-teal-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Route className="h-5 w-5" />
+                  Synthesis Explorer
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="rounded-xl border border-border bg-background/80 p-4">
+                  <p className="text-3xl font-bold">{synthesisStats.pathwaysExplored}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">pathways explored in this browser</p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold">Pathway metrics</p>
+                  {synthesisStats.pathwaysExplored > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {topSynthesisCompound && (
+                        <Badge variant="outline" className="rounded-full">
+                          {topSynthesisCompound.name}: {topSynthesisCompound.count}
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="rounded-full">
+                        Longest: {synthesisStats.longestPathwayCompleted} steps
+                      </Badge>
+                      <Badge variant="outline" className="rounded-full">
+                        Database mode = no AI usage
+                      </Badge>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Explore a path such as ethene to ethanoic acid to start local synthesis metrics.
+                    </p>
+                  )}
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/synthesis-explorer">Open Explorer</Link>
                 </Button>
               </CardContent>
             </Card>

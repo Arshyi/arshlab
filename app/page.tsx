@@ -100,6 +100,12 @@ const features = [
     href: "/structure-scanner",
   },
   {
+    icon: Route,
+    title: "Synthesis Pathway Explorer",
+    description: "Choose start and target compounds, then find the shortest deterministic reaction pathway through the chemistry graph.",
+    href: "/synthesis-explorer",
+  },
+  {
     icon: Network,
     title: "Molecular Visualizer",
     description: "Explore 2D molecule sketches, functional group highlights, reaction diagrams, and visual reaction pathways.",

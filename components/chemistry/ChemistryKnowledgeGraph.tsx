@@ -13,6 +13,7 @@ import {
   getKnowledgeGraphMetrics,
   getKnowledgeGraphNode,
 } from "@/lib/knowledge-graph/chemistry-graph"
+import { synthesisExplorerHref } from "@/lib/synthesis/pathfinder"
 import type {
   KnowledgeGraphCurriculum,
   KnowledgeGraphEdge,
@@ -334,6 +335,14 @@ function NodeDetail({ node }: { node: KnowledgeGraphNode | undefined }) {
       <CardContent className="space-y-4">
         <p className="text-sm leading-relaxed text-muted-foreground">{node.description}</p>
         <div className="grid gap-2 sm:grid-cols-2">
+          {node.type === "compound" && (
+            <Button asChild className="justify-between rounded-xl">
+              <Link href={synthesisExplorerHref(node.id)}>
+                Find Pathway From Here
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
           {node.actions.map((item) => (
             <Button key={`${node.id}-${item.label}-${item.href}`} asChild variant="outline" className="justify-between rounded-xl">
               <Link href={item.href}>

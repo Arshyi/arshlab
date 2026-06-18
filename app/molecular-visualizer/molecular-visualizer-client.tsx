@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { COMPOUND_PATHWAYS, MOLECULAR_STRUCTURES } from "@/lib/chemistry/structures"
 import { REACTION_RECORDS } from "@/lib/chemistry/reactions"
 import { deepLinkSlug, resolveCompoundDeepLink } from "@/lib/deep-links"
+import { synthesisExplorerHref } from "@/lib/synthesis/pathfinder"
 import type { ReactionRecord } from "@/lib/chemistry/reaction-types"
 import type { MoleculeDisplayMode } from "@/lib/chemistry/visualization-types"
 import { cn } from "@/lib/utils"
@@ -113,7 +114,7 @@ export function MolecularVisualizerClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.5.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.6.0</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                 </div>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Molecular Visualizer</h1>
@@ -122,9 +123,16 @@ export function MolecularVisualizerClient() {
                 </p>
               </div>
             </div>
-            <Button asChild variant="outline" className="rounded-xl">
-              <Link href="/chemistry-database">Open Database</Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href="/chemistry-database">Open Database</Link>
+              </Button>
+              <Button asChild className="rounded-xl">
+                <Link href={synthesisExplorerHref(selectedStructure?.compoundId ?? selectedStructure?.id)}>
+                  Explore Synthesis
+                </Link>
+              </Button>
+            </div>
           </div>
         </motion.section>
 

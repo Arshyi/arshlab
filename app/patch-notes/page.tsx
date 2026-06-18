@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.5.0",
+    version: "4.6.0",
     date: "Current",
+    status: "released",
+    title: "Synthesis Pathway Explorer",
+    changes: [
+      "Added /synthesis-explorer for deterministic pathway searches between compounds",
+      "Added breadth-first search over the existing Reaction Explorer chemistry graph",
+      "Added shortest pathway output with intermediate compounds, reaction names, total steps, and estimated difficulty",
+      "Added pathway node actions for compound views, reactions, mechanisms, practice, and exam sets",
+      "Added deep links such as /synthesis-explorer?start=ethene&target=ethanoic-acid",
+      "Added local Synthesis Explorer metrics to the Learning Dashboard",
+      "Added Synthesis Explorer links to the homepage, Chemistry Hub, Tools menu, Curriculum Roadmaps, Reaction Explorer, Molecular Visualizer, Roadmap, and Patch Notes",
+      "Kept OpenRouter configuration, AI routes, middleware, authentication, guardrails, solver calculations, graph behavior, scanner behavior, and external API usage unchanged",
+    ],
+  },
+  {
+    version: "4.5.0",
+    date: "Previous",
     status: "released",
     title: "Molecular Structure Scanner",
     changes: [

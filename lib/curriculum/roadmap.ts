@@ -6,6 +6,7 @@ import {
   reactionExplorerHref,
   solverModuleHref,
 } from "@/lib/deep-links"
+import { synthesisExplorerHref } from "@/lib/synthesis/pathfinder"
 
 export type CurriculumRoadmapId = "general-chemistry" | "organic-chemistry"
 
@@ -48,6 +49,16 @@ function graphFocusForTopicTargets(targets: ReturnType<typeof getTopicDeepLinkTa
   return undefined
 }
 
+function synthesisTargetForTopic(topic: string): { start: string; target: string } {
+  const normalized = topic.toLowerCase()
+  if (normalized.includes("alkene")) return { start: "ethene", target: "ethanol" }
+  if (normalized.includes("alcohol")) return { start: "ethanol", target: "ethanoic-acid" }
+  if (normalized.includes("carbonyl")) return { start: "ethanol", target: "ethanoic-acid" }
+  if (normalized.includes("carboxylic") || normalized.includes("ester")) return { start: "ethanol", target: "ethyl-ethanoate" }
+  if (normalized.includes("acid") || normalized.includes("base") || normalized.includes("solution")) return { start: "hydrochloric-acid", target: "water" }
+  return { start: "ethene", target: "ethanoic-acid" }
+}
+
 function toolLinksForTopic(topic: string): CurriculumToolLink[] {
   const query = encodedTopic(topic)
   const targets = getTopicDeepLinkTargets(topic)
@@ -81,6 +92,11 @@ function toolLinksForTopic(topic: string): CurriculumToolLink[] {
       label: "Reaction Explorer",
       href: reactionExplorerHref(graphFocusForTopicTargets(targets), topic),
       description: "See how this topic connects to compounds, reactions, mechanisms, formulas, solvers, and practice.",
+    },
+    {
+      label: "Synthesis Explorer",
+      href: synthesisExplorerHref(synthesisTargetForTopic(topic).start, synthesisTargetForTopic(topic).target),
+      description: "Follow a deterministic pathway that uses related compounds, reactions, and mechanisms.",
     },
   ]
 

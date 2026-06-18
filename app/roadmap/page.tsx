@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Map, Check, Hammer, Lightbulb, ScanSearch } from "lucide-react"
+import { Map, Check, Hammer, Lightbulb, Route } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
@@ -51,6 +51,7 @@ const completed = [
   "Graph and Periodic Table Layout Polish",
   "Adaptive Study Mode",
   "Molecular Structure Scanner",
+  "Synthesis Pathway Explorer",
 ]
 
 const inDevelopment = [
@@ -175,16 +176,15 @@ export default function RoadmapPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
-                  <ScanSearch className="h-4 w-4" />
+                  <Route className="h-4 w-4" />
                 </div>
-                Molecular Structure Scanner
+                Synthesis Pathway Explorer
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: upload or describe a molecule, match it against ARSHLAB&apos;s local
-                chemistry records, and open linked visualizers, reactions, formulas, practice, exams,
-                and curriculum topics.
+                Now available: choose a starting compound and target compound, then use deterministic
+                graph traversal to find the shortest known ARSHLAB reaction pathway between them.
               </p>
             </CardContent>
           </Card>
@@ -196,7 +196,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v4.5.0 - Molecular Structure Scanner
+          ARSHLAB v4.6.0 - Synthesis Pathway Explorer
         </motion.p>
       </div>
     </div>

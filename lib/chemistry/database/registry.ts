@@ -14,13 +14,14 @@ import { getFormulaMetrics } from "@/lib/formula-sheet"
 import { getCurriculumRoadmapMetrics } from "@/lib/curriculum/roadmap"
 import { getKnowledgeGraphMetrics } from "@/lib/knowledge-graph/chemistry-graph"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
+import { getSynthesisPathfinderMetrics } from "@/lib/synthesis/pathfinder"
 import { COMPOUND_PATHWAYS, MOLECULAR_STRUCTURES, SPECTROSCOPY_MAPPINGS, countFunctionalGroupHighlights } from "../structures"
 import { VSEPR_PRESETS } from "./vsepr/engine"
 import { ALL_LEWIS_STRUCTURES } from "./lewis/templates"
 import { QUESTION_TOPICS } from "./questions/topics"
 import { EDUCATION_HUB_SECTIONS } from "./education/hub"
 
-export const DATABASE_VERSION = "4.5.0"
+export const DATABASE_VERSION = "4.6.0"
 
 export function getDatabaseMeta(): DatabaseMeta {
   const mechanismMetrics = getMechanismMetrics()
@@ -29,6 +30,7 @@ export function getDatabaseMeta(): DatabaseMeta {
   const curriculumRoadmapMetrics = getCurriculumRoadmapMetrics()
   const knowledgeGraphMetrics = getKnowledgeGraphMetrics()
   const structureScannerMetrics = getStructureScannerMetrics()
+  const synthesisPathfinderMetrics = getSynthesisPathfinderMetrics()
   return {
     version: DATABASE_VERSION,
     updatedAt: new Date().toISOString().split("T")[0],
@@ -64,6 +66,9 @@ export function getDatabaseMeta(): DatabaseMeta {
       structureScannerFunctionalGroups: structureScannerMetrics.functionalGroups,
       structureScannerVisualizerLinks: structureScannerMetrics.visualizerLinks,
       structureScannerReactionGraphLinks: structureScannerMetrics.reactionGraphLinks,
+      synthesisPathfinderCompounds: synthesisPathfinderMetrics.compounds,
+      synthesisPathfinderGraphNodes: synthesisPathfinderMetrics.graphNodes,
+      synthesisPathfinderGraphEdges: synthesisPathfinderMetrics.graphEdges,
       vseprPresets: VSEPR_PRESETS.length,
       lewisStructures: ALL_LEWIS_STRUCTURES.length,
       questionTopics: QUESTION_TOPICS.length,

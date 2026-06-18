@@ -19,6 +19,7 @@ const LAB_LINKS = [
   { href: "/chemistry-solver", label: "Chemistry Solver" },
   { href: "/chemistry-database", label: "Chemistry Database" },
   { href: "/structure-scanner", label: "Structure Scanner" },
+  { href: "/synthesis-explorer", label: "Synthesis Explorer" },
   { href: "/molecular-visualizer", label: "Molecular Visualizer" },
   { href: "/reaction-explorer", label: "Reaction Explorer" },
   { href: "/mechanism-trainer", label: "Mechanism Trainer" },
@@ -279,6 +280,13 @@ export default function ChemistryHubPage() {
             description="Upload or describe a molecule and match it against ARSHLAB's local chemistry database with deep links into the learning tools."
             href="/structure-scanner"
             action="Open Scanner"
+          />
+          <HubActionCard
+            icon={Route}
+            title="Synthesis Pathway Explorer"
+            description="Find shortest deterministic pathways between compounds using the existing Reaction Explorer chemistry graph."
+            href="/synthesis-explorer"
+            action="Find Pathway"
           />
           <HubActionCard
             icon={Network}

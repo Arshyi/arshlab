@@ -33,8 +33,9 @@ import { getFormulaMetrics } from "@/lib/formula-sheet"
 import { getCurriculumRoadmapMetrics } from "@/lib/curriculum/roadmap"
 import { getKnowledgeGraphMetrics } from "@/lib/knowledge-graph/chemistry-graph"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
+import { getSynthesisPathfinderMetrics } from "@/lib/synthesis/pathfinder"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.5.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.6.0"
 
 const mechanismMetrics = getMechanismMetrics()
 const solverMetrics = getSolverMetrics()
@@ -42,6 +43,7 @@ const formulaMetrics = getFormulaMetrics()
 const curriculumRoadmapMetrics = getCurriculumRoadmapMetrics()
 const knowledgeGraphMetrics = getKnowledgeGraphMetrics()
 const structureScannerMetrics = getStructureScannerMetrics()
+const synthesisPathfinderMetrics = getSynthesisPathfinderMetrics()
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,
@@ -75,6 +77,9 @@ export const CHEMISTRY_KNOWLEDGE_CORE_META = {
     structureScannerFunctionalGroups: structureScannerMetrics.functionalGroups,
     structureScannerVisualizerLinks: structureScannerMetrics.visualizerLinks,
     structureScannerReactionGraphLinks: structureScannerMetrics.reactionGraphLinks,
+    synthesisPathfinderCompounds: synthesisPathfinderMetrics.compounds,
+    synthesisPathfinderGraphNodes: synthesisPathfinderMetrics.graphNodes,
+    synthesisPathfinderGraphEdges: synthesisPathfinderMetrics.graphEdges,
   },
 }
 
