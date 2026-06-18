@@ -48,18 +48,77 @@ const nodeLabels: Record<KnowledgeGraphNodeType, string> = {
   practiceTopic: "Practice",
 }
 
-function edgeCenter(edge: KnowledgeGraphEdge, nodesById: Map<string, KnowledgeGraphNode>) {
-  const from = nodesById.get(edge.from)
-  const to = nodesById.get(edge.to)
-  if (!from || !to) return { x: 0, y: 0 }
+const GRAPH_X_SCALE = 1.35
+const NODE_WIDTH = 176
+const NODE_HEIGHT = 84
+const EDGE_GAP = 14
+
+function nodeFrame(node: KnowledgeGraphNode) {
   return {
-    x: (from.x + to.x) / 2 + 88,
-    y: (from.y + to.y) / 2 + 22,
+    x: Math.round(node.x * GRAPH_X_SCALE),
+    y: node.y,
+    width: NODE_WIDTH,
+    height: NODE_HEIGHT,
   }
 }
 
 function nodeCenter(node: KnowledgeGraphNode) {
-  return { x: node.x + 88, y: node.y + 42 }
+  const frame = nodeFrame(node)
+  return {
+    x: frame.x + frame.width / 2,
+    y: frame.y + frame.height / 2,
+  }
+}
+
+function endpointOutsideNode(
+  node: KnowledgeGraphNode,
+  toward: { x: number; y: number },
+) {
+  const center = nodeCenter(node)
+  const dx = toward.x - center.x
+  const dy = toward.y - center.y
+  const distance = Math.hypot(dx, dy) || 1
+  const unitX = dx / distance
+  const unitY = dy / distance
+  const scaleX = Math.abs(unitX) > 0.001 ? NODE_WIDTH / 2 / Math.abs(unitX) : Number.POSITIVE_INFINITY
+  const scaleY = Math.abs(unitY) > 0.001 ? NODE_HEIGHT / 2 / Math.abs(unitY) : Number.POSITIVE_INFINITY
+  const boundary = Math.min(scaleX, scaleY)
+
+  return {
+    x: center.x + unitX * (boundary + EDGE_GAP),
+    y: center.y + unitY * (boundary + EDGE_GAP),
+  }
+}
+
+function edgeCurve(edge: KnowledgeGraphEdge, nodesById: Map<string, KnowledgeGraphNode>) {
+  const from = nodesById.get(edge.from)
+  const to = nodesById.get(edge.to)
+  if (!from || !to) return null
+
+  const fromCenter = nodeCenter(from)
+  const toCenter = nodeCenter(to)
+  const start = endpointOutsideNode(from, toCenter)
+  const end = endpointOutsideNode(to, fromCenter)
+  const dx = end.x - start.x
+  const dy = end.y - start.y
+  const length = Math.hypot(dx, dy) || 1
+  const normal = { x: -dy / length, y: dx / length }
+  const bendSeed = edge.id.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0)
+  const direction = bendSeed % 2 === 0 ? 1 : -1
+  const curveAmount = Math.min(52, Math.max(26, length * 0.12))
+  const control = {
+    x: start.x + dx / 2 + normal.x * curveAmount * direction,
+    y: start.y + dy / 2 + normal.y * curveAmount * direction,
+  }
+  const label = {
+    x: start.x * 0.25 + control.x * 0.5 + end.x * 0.25,
+    y: start.y * 0.25 + control.y * 0.5 + end.y * 0.25,
+  }
+
+  return {
+    path: `M ${start.x.toFixed(1)} ${start.y.toFixed(1)} Q ${control.x.toFixed(1)} ${control.y.toFixed(1)} ${end.x.toFixed(1)} ${end.y.toFixed(1)}`,
+    label,
+  }
 }
 
 export function ChemistryKnowledgeGraph() {
@@ -144,8 +203,8 @@ export function ChemistryKnowledgeGraph() {
               <EmptyGraph />
             ) : (
               <div className="overflow-x-auto rounded-2xl border border-border bg-background/80">
-                <div className="relative h-[1240px] min-w-[1480px]">
-                  <svg className="absolute inset-0 h-full w-full" aria-hidden="true">
+                <div className="relative h-[1240px] min-w-[1980px]">
+                  <svg className="pointer-events-none absolute inset-0 z-0 h-full w-full" aria-hidden="true">
                     <defs>
                       <marker
                         id="graph-arrow"
@@ -160,18 +219,13 @@ export function ChemistryKnowledgeGraph() {
                       </marker>
                     </defs>
                     {graph.edges.map((edge) => {
-                      const from = nodesById.get(edge.from)
-                      const to = nodesById.get(edge.to)
-                      if (!from || !to) return null
-                      const start = nodeCenter(from)
-                      const end = nodeCenter(to)
+                      const curve = edgeCurve(edge, nodesById)
+                      if (!curve) return null
                       return (
-                        <line
+                        <path
                           key={edge.id}
-                          x1={start.x}
-                          y1={start.y}
-                          x2={end.x}
-                          y2={end.y}
+                          d={curve.path}
+                          fill="none"
                           stroke="currentColor"
                           strokeWidth="2"
                           className="text-primary/45"
@@ -182,12 +236,13 @@ export function ChemistryKnowledgeGraph() {
                   </svg>
 
                   {graph.edges.map((edge) => {
-                    const center = edgeCenter(edge, nodesById)
+                    const curve = edgeCurve(edge, nodesById)
+                    if (!curve) return null
                     return (
                       <span
                         key={`${edge.id}-label`}
-                        className="absolute -translate-x-1/2 rounded-full border border-border bg-background/95 px-2 py-1 text-[10px] font-medium text-muted-foreground shadow-sm"
-                        style={{ left: center.x, top: center.y }}
+                        className="absolute z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-semibold text-muted-foreground shadow-sm"
+                        style={{ left: curve.label.x, top: curve.label.y }}
                       >
                         {edge.label}
                       </span>
@@ -200,11 +255,11 @@ export function ChemistryKnowledgeGraph() {
                       type="button"
                       onClick={() => setSelectedId(node.id)}
                       className={cn(
-                        "absolute w-44 rounded-2xl border p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+                        "absolute z-20 h-[84px] w-44 rounded-2xl border p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
                         nodeStyles[node.type],
-                        selected?.id === node.id && "ring-2 ring-primary",
+                        selected?.id === node.id && "z-30 ring-2 ring-primary ring-offset-2 ring-offset-background",
                       )}
-                      style={{ left: node.x, top: node.y }}
+                      style={{ left: nodeFrame(node).x, top: nodeFrame(node).y }}
                     >
                       <span className="block text-xs font-medium uppercase opacity-70">{nodeLabels[node.type]}</span>
                       <span className="mt-1 block text-sm font-bold leading-tight">{node.label}</span>

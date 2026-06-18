@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.3.0",
+    version: "4.3.1",
     date: "Current",
+    status: "released",
+    title: "Graph and Periodic Table Layout Polish",
+    changes: [
+      "Improved Reaction Explorer graph spacing so edge arrows and labels avoid node text",
+      "Changed graph edges from center-to-center lines to curved paths clipped outside node cards",
+      "Added small neutral edge-label pills with safer midpoints and clearer selected-node outlines",
+      "Updated the Periodic Table renderer to use explicit standard 18-column display placement",
+      "Placed H at group 1, He at group 18, B-Ne and Al-Ar at groups 13-18, and f-block placeholders at group 3",
+      "Added group numbers and kept lanthanides and actinides separated below the main table",
+      "Preserved heatmaps, comparison mode, element profiles, OpenRouter configuration, AI routes, auth, middleware, guardrails, and solver calculations",
+    ],
+  },
+  {
+    version: "4.3.0",
+    date: "Previous",
     status: "released",
     title: "Reaction Explorer / Knowledge Graph",
     changes: [

@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   ALL_ELEMENTS,
   getElementBySymbol,
-  getElementGridPosition,
   getElementTrendValue,
   getTrendRange,
   PERIODIC_TREND_METRICS,
@@ -38,8 +37,10 @@ const HEATMAP_HUES: Record<TrendMode, number> = {
 }
 
 const TABLE_GRID_STYLE = {
-  gridTemplateColumns: "repeat(18, minmax(3rem, 3.5rem))",
+  gridTemplateColumns: "repeat(18, minmax(3.25rem, 3.75rem))",
 } as const
+
+const GROUP_NUMBERS = Array.from({ length: 18 }, (_, index) => index + 1)
 
 interface PeriodicTableGridProps {
   focusSymbol?: string | null
@@ -69,6 +70,28 @@ function heatmapStyle(mode: TrendMode, normalized: number): React.CSSProperties 
 function formatCompactValue(mode: TrendMode, value: number): string {
   if (mode === "electronegativity") return value.toFixed(2)
   return String(Math.round(value))
+}
+
+function getStandardElementGridPosition(z: number): { period: number; group: number } | null {
+  if (z === 1) return { period: 1, group: 1 }
+  if (z === 2) return { period: 1, group: 18 }
+  if (z >= 3 && z <= 4) return { period: 2, group: z - 2 }
+  if (z >= 5 && z <= 10) return { period: 2, group: z + 8 }
+  if (z >= 11 && z <= 12) return { period: 3, group: z - 10 }
+  if (z >= 13 && z <= 18) return { period: 3, group: z }
+  if (z >= 19 && z <= 36) return { period: 4, group: z - 18 }
+  if (z >= 37 && z <= 54) return { period: 5, group: z - 36 }
+  if (z >= 55 && z <= 56) return { period: 6, group: z - 54 }
+  if (z >= 57 && z <= 71) return null
+  if (z >= 72 && z <= 86) return { period: 6, group: z - 68 }
+  if (z >= 87 && z <= 88) return { period: 7, group: z - 86 }
+  if (z >= 89 && z <= 103) return null
+  if (z >= 104 && z <= 118) return { period: 7, group: z - 100 }
+  return null
+}
+
+function tableGridRow(period: number): number {
+  return period + 1
 }
 
 export function PeriodicTableGrid({
@@ -137,7 +160,7 @@ export function PeriodicTableGrid({
         type="button"
         onClick={() => handleSelect(el)}
         className={cn(
-          "relative flex h-12 w-12 flex-col items-center justify-center rounded-lg border text-xs transition-all sm:h-14 sm:w-14",
+          "relative flex h-12 w-full min-w-0 flex-col items-center justify-center rounded-lg border text-xs transition-all sm:h-14",
           heatmapMode ? "hover:brightness-95" : categoryColor,
           selected?.id === el.id && !comparisonMode && "ring-2 ring-primary",
           isCompared && "ring-2 ring-primary ring-offset-2 ring-offset-background",
@@ -169,7 +192,7 @@ export function PeriodicTableGrid({
     return (
       <div
         key={label}
-        className="flex h-12 w-12 flex-col items-center justify-center rounded-lg border border-dashed border-pink-500/40 bg-pink-500/10 text-center text-[9px] font-semibold leading-tight text-pink-700 dark:text-pink-200 sm:h-14 sm:w-14"
+        className="flex h-12 w-full min-w-0 flex-col items-center justify-center rounded-lg border border-dashed border-pink-500/40 bg-pink-500/10 text-center text-[9px] font-semibold leading-tight text-pink-700 dark:text-pink-200 sm:h-14"
         style={{ gridRow: row, gridColumn: 3 }}
         title={`${label} are shown in the separated f-block rows below`}
       >
@@ -186,15 +209,24 @@ export function PeriodicTableGrid({
           className="grid w-max gap-1"
           style={{
             ...TABLE_GRID_STYLE,
-            gridTemplateRows: "repeat(7, minmax(3rem, 3.5rem))",
+            gridTemplateRows: "1.25rem repeat(7, minmax(3.25rem, 3.75rem))",
           }}
         >
-          {renderSeriesPlaceholder("La-Lu", 6)}
-          {renderSeriesPlaceholder("Ac-Lr", 7)}
+          {GROUP_NUMBERS.map((group) => (
+            <div
+              key={`group-${group}`}
+              className="flex items-center justify-center text-[10px] font-semibold text-muted-foreground"
+              style={{ gridRow: 1, gridColumn: group }}
+            >
+              {group}
+            </div>
+          ))}
+          {renderSeriesPlaceholder("La-Lu", tableGridRow(6))}
+          {renderSeriesPlaceholder("Ac-Lr", tableGridRow(7))}
           {mainElements.map((el) => {
-            const pos = getElementGridPosition(el.atomicNumber)
+            const pos = getStandardElementGridPosition(el.atomicNumber)
             if (!pos) return null
-            return renderCell(el, pos.row, pos.col)
+            return renderCell(el, tableGridRow(pos.period), pos.group)
           })}
         </div>
       </div>

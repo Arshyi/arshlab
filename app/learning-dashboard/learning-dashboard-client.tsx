@@ -169,7 +169,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.3.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, context-aware deep links, and the Reaction Explorer knowledge graph into one adaptive learning view.
+            ARSHLAB v4.3.1 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, context-aware deep links, the Reaction Explorer knowledge graph, and layout-polished periodic table study into one adaptive learning view.
           </p>
         </motion.div>
 

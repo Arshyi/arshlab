@@ -113,7 +113,7 @@ export function MolecularVisualizerClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.3.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.3.1</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                 </div>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Molecular Visualizer</h1>
