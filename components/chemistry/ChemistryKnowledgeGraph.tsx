@@ -14,6 +14,10 @@ import {
   getKnowledgeGraphNode,
 } from "@/lib/knowledge-graph/chemistry-graph"
 import { synthesisExplorerHref } from "@/lib/synthesis/pathfinder"
+import {
+  getReactionConditionForMechanism,
+  getReactionConditions,
+} from "@/lib/reaction-conditions/reaction-conditions"
 import type {
   KnowledgeGraphCurriculum,
   KnowledgeGraphEdge,
@@ -315,6 +319,13 @@ function NodeDetail({ node }: { node: KnowledgeGraphNode | undefined }) {
     )
   }
 
+  const condition =
+    node.type === "reaction"
+      ? getReactionConditions(node.id.replace(/^reaction:/, ""))
+      : node.type === "mechanism"
+        ? getReactionConditionForMechanism(node.id.replace(/^mechanism:/, ""))
+        : undefined
+
   return (
     <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
       <CardHeader>
@@ -334,6 +345,26 @@ function NodeDetail({ node }: { node: KnowledgeGraphNode | undefined }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm leading-relaxed text-muted-foreground">{node.description}</p>
+        {condition && (
+          <div className="rounded-xl border border-border bg-background/80 p-4">
+            <p className="font-semibold">Reaction Conditions</p>
+            <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+              <ConditionLine label="Reagents" value={condition.reagents.join(" + ")} />
+              <ConditionLine
+                label="Conditions"
+                value={[
+                  condition.catalysts.length ? `Catalyst: ${condition.catalysts.join(", ")}` : "",
+                  condition.temperature,
+                  condition.pressure,
+                ]
+                  .filter(Boolean)
+                  .join(" | ")}
+              />
+              <ConditionLine label="Difficulty" value={condition.difficulty} />
+              <ConditionLine label="Safety" value={condition.safetyNotes.join(" | ")} />
+            </div>
+          </div>
+        )}
         <div className="grid gap-2 sm:grid-cols-2">
           {node.type === "compound" && (
             <Button asChild className="justify-between rounded-xl">
@@ -354,6 +385,15 @@ function NodeDetail({ node }: { node: KnowledgeGraphNode | undefined }) {
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function ConditionLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-secondary/20 px-3 py-2">
+      <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
+      <p className="mt-1 break-words font-medium">{value || "Not specified"}</p>
+    </div>
   )
 }
 

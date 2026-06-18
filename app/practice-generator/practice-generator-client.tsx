@@ -83,6 +83,7 @@ const topics = [
   "Reaction Prediction",
   "Reaction Balancing",
   "Reaction Classification",
+  "Reaction Conditions",
   "Redox",
   "Precipitation",
   "Combustion",
@@ -100,6 +101,7 @@ const questionTypes = [
   "Identify mechanism type",
   "Determine product",
   "Determine reagent",
+  "What reagent is required?",
   "Calculation question",
   "Worked example",
 ]

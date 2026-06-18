@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   Atom,
+  Beaker,
   BookOpen,
   ChevronDown,
   FlaskConical,
@@ -73,6 +74,7 @@ const chemistryToolItems = [
   { href: "/reaction-explorer", label: "Reaction Explorer", icon: Network },
   { href: "/mechanism-trainer", label: "Mechanism Trainer", icon: FlaskConical },
   { href: "/reaction-database", label: "Reaction Database", icon: ArrowRightLeft },
+  { href: "/reaction-database?query=reagent", label: "Reaction Conditions", icon: Beaker },
   { href: "/question-engine", label: "Question Engine", icon: ListChecks },
   { href: "/exam-engine", label: "Exam Engine", icon: FileQuestion },
   { href: "/curriculum", label: "Curriculum Engine", icon: GraduationCap },
@@ -116,8 +118,9 @@ export function Navbar() {
     : [...primaryNavItems, ...chemistryToolItems, ...secondaryNavItems, accountItem]
 
   const isActivePath = (href: string) => {
-    if (href === "/") return pathname === "/"
-    return pathname === href || pathname.startsWith(`${href}/`)
+    const cleanHref = href.split(/[?#]/)[0]
+    if (cleanHref === "/") return pathname === "/"
+    return pathname === cleanHref || pathname.startsWith(`${cleanHref}/`)
   }
 
   const toolsActive = chemistryToolItems.some((item) => isActivePath(item.href))

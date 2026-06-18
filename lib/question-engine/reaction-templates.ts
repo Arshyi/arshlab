@@ -1,6 +1,7 @@
 import { REACTION_RECORDS } from "@/lib/chemistry/reactions"
 import { BALANCING_EXERCISES } from "@/lib/reaction-engine/balancer"
 import type { ReactionRecord } from "@/lib/chemistry/reaction-types"
+import { listReactionConditions } from "@/lib/reaction-conditions/reaction-conditions"
 import type { Question, QuestionChoice, QuestionTemplate, QuestionTemplateContext } from "./types"
 
 const choiceLabels = ["A", "B", "C", "D"]
@@ -11,6 +12,7 @@ const reactionTopics = [
   "Reaction Prediction",
   "Reaction Balancing",
   "Reaction Classification",
+  "Reaction Conditions",
   "Redox",
   "Precipitation",
   "Combustion",
@@ -29,6 +31,7 @@ const reactionSubtopics = [
   "Acid/Base Products",
   "Combustion Products",
   "Reaction Classification",
+  "Reagent Selection",
 ]
 
 function normalize(value: string): string {
@@ -274,6 +277,29 @@ function buildReactionClassification(context: QuestionTemplateContext): Question
   })
 }
 
+function buildReagentSelection(context: QuestionTemplateContext): Question | null {
+  const conditions = listReactionConditions().filter((condition) => condition.reagents.length > 0)
+  const condition = pick(conditions, context.index * 31 + 10)
+  if (!condition) return null
+  const record = REACTION_RECORDS.find((candidate) => candidate.id === condition.reactionId)
+  if (!record) return null
+  const correct = [...condition.reagents, ...condition.catalysts].filter(Boolean).join(" + ")
+  return question({
+    id: `reagent-selection-${record.id}`,
+    context,
+    record,
+    topic: "Reaction Conditions",
+    subtopic: correct,
+    prompt: `What reagent or condition set is commonly used for ${condition.reactionName}?`,
+    correctText: correct,
+    wrongTexts: conditions
+      .filter((candidate) => candidate.reactionId !== condition.reactionId)
+      .map((candidate) => [...candidate.reagents, ...candidate.catalysts].filter(Boolean).join(" + ")),
+    explanation: `${condition.reactionName} commonly uses ${correct}. Conditions: ${condition.temperature}. Safety note: ${condition.safetyNotes[0] ?? "check the reagent hazards"}.`,
+    misconceptionNote: condition.commonMistakes[0] ?? "Match the reagent to the reaction family, not just the product formula.",
+  })
+}
+
 export const REACTION_QUESTION_TEMPLATES: QuestionTemplate[] = [
   {
     id: "reaction-type-v360",
@@ -355,5 +381,14 @@ export const REACTION_QUESTION_TEMPLATES: QuestionTemplate[] = [
     supportedSubtopics: reactionSubtopics,
     estimatedCombinations: REACTION_RECORDS.length,
     build: buildReactionClassification,
+  },
+  {
+    id: "reaction-reagent-selection-v470",
+    name: "What reagent is required?",
+    description: "Ask students to select the reagent or condition set for a known reaction.",
+    supportedTopics: ["Reaction Conditions", "Reaction Types", "Organic Reactions", "Organic Mechanisms", "Redox", "Acids and Bases"],
+    supportedSubtopics: ["Reagent Selection", "Determine reagent"],
+    estimatedCombinations: listReactionConditions().length,
+    build: buildReagentSelection,
   },
 ]

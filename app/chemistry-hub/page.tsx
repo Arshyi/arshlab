@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Atom, Award, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves, Network, ScanSearch } from "lucide-react"
+import { ArrowRightLeft, Atom, Award, Beaker, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves, Network, ScanSearch } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -24,6 +24,7 @@ const LAB_LINKS = [
   { href: "/reaction-explorer", label: "Reaction Explorer" },
   { href: "/mechanism-trainer", label: "Mechanism Trainer" },
   { href: "/reaction-database", label: "Reaction Database" },
+  { href: "/reaction-database?query=reagent", label: "Reaction Conditions" },
   { href: "/question-engine", label: "Question Engine" },
   { href: "/exam-engine", label: "Exam Engine" },
   { href: "/curriculum", label: "Curriculum Engine" },
@@ -315,6 +316,13 @@ export default function ChemistryHubPage() {
             description="Step through deterministic organic mechanisms with highlighted atoms, highlighted bonds, and next-step prediction practice."
             href="/mechanism-trainer"
             action="Open Trainer"
+          />
+          <HubActionCard
+            icon={Beaker}
+            title="Reaction Conditions"
+            description="Review reagents, catalysts, solvents, temperature, pressure, yield notes, safety notes, and common mistakes."
+            href="/reaction-database?query=reagent"
+            action="Open Conditions"
           />
           <HubActionCard
             icon={ArrowRightLeft}

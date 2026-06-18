@@ -34,8 +34,9 @@ import { getCurriculumRoadmapMetrics } from "@/lib/curriculum/roadmap"
 import { getKnowledgeGraphMetrics } from "@/lib/knowledge-graph/chemistry-graph"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
 import { getSynthesisPathfinderMetrics } from "@/lib/synthesis/pathfinder"
+import { getReactionConditionMetrics } from "@/lib/reaction-conditions/reaction-conditions"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.6.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.7.0"
 
 const mechanismMetrics = getMechanismMetrics()
 const solverMetrics = getSolverMetrics()
@@ -44,6 +45,7 @@ const curriculumRoadmapMetrics = getCurriculumRoadmapMetrics()
 const knowledgeGraphMetrics = getKnowledgeGraphMetrics()
 const structureScannerMetrics = getStructureScannerMetrics()
 const synthesisPathfinderMetrics = getSynthesisPathfinderMetrics()
+const reactionConditionMetrics = getReactionConditionMetrics()
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,
@@ -80,6 +82,9 @@ export const CHEMISTRY_KNOWLEDGE_CORE_META = {
     synthesisPathfinderCompounds: synthesisPathfinderMetrics.compounds,
     synthesisPathfinderGraphNodes: synthesisPathfinderMetrics.graphNodes,
     synthesisPathfinderGraphEdges: synthesisPathfinderMetrics.graphEdges,
+    reactionConditionRecords: reactionConditionMetrics.records,
+    reactionConditionMechanismFamilies: reactionConditionMetrics.mechanismFamilies,
+    reactionConditionReagentSets: reactionConditionMetrics.reagentSets,
   },
 }
 

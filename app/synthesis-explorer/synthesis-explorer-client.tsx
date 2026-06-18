@@ -19,6 +19,11 @@ import {
 } from "@/lib/synthesis/pathfinder"
 import type { SynthesisExplorerStats, SynthesisPathwayResult } from "@/lib/synthesis/pathway-types"
 import type { KnowledgeGraphNode } from "@/lib/knowledge-graph/graph-types"
+import {
+  getReactionConditionForMechanism,
+  getReactionConditions,
+} from "@/lib/reaction-conditions/reaction-conditions"
+import type { ReactionConditionRecord } from "@/lib/reaction-conditions/reaction-condition-types"
 import { cn } from "@/lib/utils"
 
 const examplePairs = [
@@ -298,16 +303,55 @@ function PathwayResult({ result }: { result: SynthesisPathwayResult }) {
               <div key={`${node.id}-${index}`} className="space-y-3">
                 <PathNodeCard node={node} />
                 {index < result.nodes.length - 1 && (
-                  <div className="flex items-center gap-3 pl-5 text-sm text-muted-foreground">
-                    <ArrowDown className="h-4 w-4 text-primary" />
-                    <span>{result.steps[index]?.reactionName ?? result.edges[index]?.label}</span>
-                  </div>
+                  <StepConditionSummary
+                    label={result.steps[index]?.reactionName ?? result.edges[index]?.label}
+                    from={node}
+                    to={result.nodes[index + 1]}
+                  />
                 )}
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function conditionsForNodes(from: KnowledgeGraphNode, to: KnowledgeGraphNode): ReactionConditionRecord | undefined {
+  const reactionNode = from.type === "reaction" ? from : to.type === "reaction" ? to : undefined
+  const mechanismNode = from.type === "mechanism" ? from : to.type === "mechanism" ? to : undefined
+  if (reactionNode) return getReactionConditions(reactionNode.id.replace(/^reaction:/, ""))
+  if (mechanismNode) return getReactionConditionForMechanism(mechanismNode.id.replace(/^mechanism:/, ""))
+  return undefined
+}
+
+function StepConditionSummary({
+  label,
+  from,
+  to,
+}: {
+  label: string
+  from: KnowledgeGraphNode
+  to: KnowledgeGraphNode
+}) {
+  const conditions = conditionsForNodes(from, to)
+
+  return (
+    <div className="flex items-start gap-3 pl-5 text-sm text-muted-foreground">
+      <ArrowDown className="mt-1 h-4 w-4 shrink-0 text-primary" />
+      <div className="rounded-xl border border-border bg-background/80 px-3 py-2">
+        <p className="font-semibold text-foreground">{conditions?.reactionName ?? label}</p>
+        {conditions ? (
+          <p className="mt-1 leading-relaxed">
+            ({conditions.reagents.join(", ")}
+            {conditions.catalysts.length ? `; ${conditions.catalysts.join(", ")}` : ""}; {conditions.temperature})
+            <span className="ml-2 font-medium text-foreground">{conditions.difficulty}</span>
+          </p>
+        ) : (
+          <p className="mt-1">{label}</p>
+        )}
+      </div>
     </div>
   )
 }

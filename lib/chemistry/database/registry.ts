@@ -15,13 +15,14 @@ import { getCurriculumRoadmapMetrics } from "@/lib/curriculum/roadmap"
 import { getKnowledgeGraphMetrics } from "@/lib/knowledge-graph/chemistry-graph"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
 import { getSynthesisPathfinderMetrics } from "@/lib/synthesis/pathfinder"
+import { getReactionConditionMetrics } from "@/lib/reaction-conditions/reaction-conditions"
 import { COMPOUND_PATHWAYS, MOLECULAR_STRUCTURES, SPECTROSCOPY_MAPPINGS, countFunctionalGroupHighlights } from "../structures"
 import { VSEPR_PRESETS } from "./vsepr/engine"
 import { ALL_LEWIS_STRUCTURES } from "./lewis/templates"
 import { QUESTION_TOPICS } from "./questions/topics"
 import { EDUCATION_HUB_SECTIONS } from "./education/hub"
 
-export const DATABASE_VERSION = "4.6.0"
+export const DATABASE_VERSION = "4.7.0"
 
 export function getDatabaseMeta(): DatabaseMeta {
   const mechanismMetrics = getMechanismMetrics()
@@ -31,6 +32,7 @@ export function getDatabaseMeta(): DatabaseMeta {
   const knowledgeGraphMetrics = getKnowledgeGraphMetrics()
   const structureScannerMetrics = getStructureScannerMetrics()
   const synthesisPathfinderMetrics = getSynthesisPathfinderMetrics()
+  const reactionConditionMetrics = getReactionConditionMetrics()
   return {
     version: DATABASE_VERSION,
     updatedAt: new Date().toISOString().split("T")[0],
@@ -69,6 +71,9 @@ export function getDatabaseMeta(): DatabaseMeta {
       synthesisPathfinderCompounds: synthesisPathfinderMetrics.compounds,
       synthesisPathfinderGraphNodes: synthesisPathfinderMetrics.graphNodes,
       synthesisPathfinderGraphEdges: synthesisPathfinderMetrics.graphEdges,
+      reactionConditionRecords: reactionConditionMetrics.records,
+      reactionConditionMechanismFamilies: reactionConditionMetrics.mechanismFamilies,
+      reactionConditionReagentSets: reactionConditionMetrics.reagentSets,
       vseprPresets: VSEPR_PRESETS.length,
       lewisStructures: ALL_LEWIS_STRUCTURES.length,
       questionTopics: QUESTION_TOPICS.length,

@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { getMechanismMetrics, listMechanisms } from "@/lib/chemistry/mechanisms"
 import { resolveMechanismDeepLink } from "@/lib/deep-links"
+import { getReactionConditionForMechanism } from "@/lib/reaction-conditions/reaction-conditions"
 import { cn } from "@/lib/utils"
 
 function normalize(value: string): string {
@@ -61,6 +62,7 @@ export default function MechanismTrainerPage() {
   }, [mechanisms, query])
 
   const selected = mechanisms.find((mechanism) => mechanism.id === selectedId) ?? filteredMechanisms[0] ?? mechanisms[0]
+  const selectedCondition = selected ? getReactionConditionForMechanism(selected.id) : undefined
 
   useEffect(() => {
     document.getElementById("mechanism-viewer")?.scrollIntoView({ block: "start" })
@@ -77,7 +79,7 @@ export default function MechanismTrainerPage() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.6.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.7.0</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                 </div>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Organic Mechanism Trainer</h1>
@@ -192,6 +194,29 @@ export default function MechanismTrainerPage() {
                   <SummaryTile label="Product pattern" value={productPattern(selected)} />
                 </div>
 
+                {selectedCondition && (
+                  <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Reaction Context Card</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-3 md:grid-cols-2">
+                      <ContextTile label="Reagents" value={selectedCondition.reagents.join(", ")} />
+                      <ContextTile
+                        label="Conditions"
+                        value={[
+                          selectedCondition.catalysts.length ? `Catalyst: ${selectedCondition.catalysts.join(", ")}` : "",
+                          `Temperature: ${selectedCondition.temperature}`,
+                          `Pressure: ${selectedCondition.pressure}`,
+                        ]
+                          .filter(Boolean)
+                          .join(" | ")}
+                      />
+                      <ContextTile label="Expected products" value={selectedCondition.expectedProducts.join(" + ")} />
+                      <ContextTile label="Typical exam clues" value={selectedCondition.typicalExamClues.join(" | ")} />
+                    </CardContent>
+                  </Card>
+                )}
+
                 <MechanismViewer key={selected.id} mechanism={selected} />
 
                 <Card className="rounded-2xl">
@@ -250,6 +275,15 @@ function SummaryTile({ label, value }: { label: string; value: string }) {
         <p className="mt-2 break-words text-sm font-semibold leading-relaxed">{value}</p>
       </CardContent>
     </Card>
+  )
+}
+
+function ContextTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border bg-background/80 p-4">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-2 break-words text-sm font-semibold leading-relaxed">{value}</p>
+    </div>
   )
 }
 

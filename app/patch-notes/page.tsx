@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.6.0",
+    version: "4.7.0",
     date: "Current",
+    status: "released",
+    title: "Reaction Conditions Engine",
+    changes: [
+      "Added deterministic reaction condition records with reagents, catalysts, solvents, temperature, pressure, yield notes, safety notes, common mistakes, mechanism family, and difficulty",
+      "Added Conditions sections to Reaction Database records",
+      "Added reagent and condition summaries to Synthesis Explorer pathway steps",
+      "Added reaction context cards to Mechanism Trainer",
+      "Added deterministic reagent-selection questions to Practice Generator and Exam Generator database mode",
+      "Added Reaction Conditions Mastery to Learning Dashboard",
+      "Added Reaction Conditions links to the homepage, Chemistry Hub, Tools menu, Curriculum Roadmaps, Roadmap, and Patch Notes",
+      "Kept OpenRouter configuration, AI routes, auth, middleware, guardrails, solver calculations, and Formula Sheet behavior unchanged",
+    ],
+  },
+  {
+    version: "4.6.0",
+    date: "Previous",
     status: "released",
     title: "Synthesis Pathway Explorer",
     changes: [

@@ -124,6 +124,12 @@ const features = [
     href: "/reaction-database",
   },
   {
+    icon: Beaker,
+    title: "Reaction Conditions Engine",
+    description: "Study reagents, catalysts, lab conditions, yields, safety notes, and common mistakes for deterministic reaction records.",
+    href: "/reaction-database?query=reagent",
+  },
+  {
     icon: ListChecks,
     title: "Question Engine",
     description: "Generate deterministic chemistry questions from local database templates with no API calls or token usage.",

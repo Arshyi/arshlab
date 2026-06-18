@@ -7,6 +7,7 @@ import {
   AlertCircle,
   Award,
   BarChart3,
+  Beaker,
   BookOpenCheck,
   Calculator,
   CheckCircle2,
@@ -169,6 +170,17 @@ export function LearningDashboardClient() {
   const missedSolverConcepts = summary.conceptStats
     .filter((concept) => concept.topic === "Chemistry Calculations" && concept.missed > 0)
     .slice(0, 4)
+  const reagentEntries = entries.filter(
+    (entry) =>
+      entry.topic === "Reaction Conditions" ||
+      entry.subtopic === "Reagent Selection" ||
+      /reagent/i.test(entry.questionType ?? ""),
+  )
+  const reagentCorrect = reagentEntries.filter((entry) => entry.correct).length
+  const reagentAccuracy = reagentEntries.length ? Math.round((reagentCorrect / reagentEntries.length) * 100) : 0
+  const missedReagents = summary.conceptStats
+    .filter((concept) => concept.topic === "Reaction Conditions" && concept.missed > 0)
+    .slice(0, 4)
   const formulaMastery = formulaStats ? formulaMasteryProgress(formulaStats) : 0
   const formulaCategoriesStudied = formulaStats ? Object.keys(formulaStats.categoryViews).length : 0
   const topFormulaIds = formulaStats ? mostViewedFormulaIds(formulaStats, 4) : []
@@ -205,7 +217,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.6.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, adaptive study mode, context-aware deep links, the Structure Scanner, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
+            ARSHLAB v4.7.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, adaptive study mode, context-aware deep links, the Structure Scanner, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -563,6 +575,44 @@ export function LearningDashboardClient() {
                 </div>
                 <Button asChild className="rounded-xl">
                   <Link href={firstMissedSolverModuleId ? solverModuleHref(firstMissedSolverModuleId) : "/chemistry-solver"}>Open Solver</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6 rounded-2xl border-teal-500/20 bg-teal-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Beaker className="h-5 w-5" />
+                  Reaction Conditions Mastery
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="rounded-xl border border-border bg-background/80 p-4">
+                  <p className="text-3xl font-bold">{reagentAccuracy}%</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {reagentCorrect}/{reagentEntries.length} reagent questions correct
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold">Most missed reagents</p>
+                  {missedReagents.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {missedReagents.map((concept) => (
+                        <Badge key={`${concept.topic}-${concept.subtopic}`} variant="outline" className="rounded-full">
+                          {concept.subtopic}: {concept.correct}/{concept.attempted}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Generate Reaction Conditions practice to track reagent-selection mastery.
+                    </p>
+                  )}
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/practice-generator?topic=Reaction%20Conditions&subtopic=Reagent%20Selection&source=database">
+                    Practice Reagents
+                  </Link>
                 </Button>
               </CardContent>
             </Card>

@@ -19,6 +19,10 @@ import { REACTION_CATEGORIES, REACTION_DIFFICULTIES } from "@/lib/chemistry/reac
 import type { ReactionCategory, ReactionDifficulty, ReactionRecord } from "@/lib/chemistry/reaction-types"
 import { REACTION_RECORDS, getReactionKnowledgeMetrics } from "@/lib/chemistry/reactions"
 import { deepLinkSlug, resolveReactionDeepLink } from "@/lib/deep-links"
+import {
+  getReactionConditionMetrics,
+  getReactionConditionsForRecord,
+} from "@/lib/reaction-conditions/reaction-conditions"
 import { classifyReaction } from "@/lib/reaction-engine/classifier"
 import { predictReaction } from "@/lib/reaction-engine/predictor"
 import { cn } from "@/lib/utils"
@@ -45,6 +49,7 @@ function normalize(value: string): string {
 function recordMatches(record: ReactionRecord, query: string): boolean {
   if (!query.trim()) return true
   const q = normalize(query)
+  const conditions = getReactionConditionsForRecord(record)
   return normalize(
     [
       record.name,
@@ -54,6 +59,12 @@ function recordMatches(record: ReactionRecord, query: string): boolean {
       record.balancedEquation,
       record.unbalancedEquation,
       record.explanation,
+      conditions.reagents.join(" "),
+      conditions.catalysts.join(" "),
+      conditions.solvents.join(" "),
+      conditions.temperature,
+      conditions.mechanismFamily,
+      conditions.safetyNotes.join(" "),
       ...record.reactants,
       ...record.products,
       ...record.curriculum,
@@ -63,6 +74,7 @@ function recordMatches(record: ReactionRecord, query: string): boolean {
 
 export function ReactionDatabaseClient() {
   const metrics = getReactionKnowledgeMetrics()
+  const conditionMetrics = getReactionConditionMetrics()
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState<CategoryFilter>("All")
   const [difficulty, setDifficulty] = useState<DifficultyFilter>("All")
@@ -72,6 +84,8 @@ export function ReactionDatabaseClient() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const requestedReaction = resolveReactionDeepLink(params.get("reaction"))
+    const requestedQuery = params.get("query")
+    if (requestedQuery) setQuery(requestedQuery)
     if (!requestedReaction) return
 
     const requestedSlug = deepLinkSlug(requestedReaction)
@@ -98,6 +112,7 @@ export function ReactionDatabaseClient() {
   const selected = REACTION_RECORDS.find((record) => record.id === selectedId) ?? filteredRecords[0] ?? REACTION_RECORDS[0]
   const prediction = selected ? predictReaction(selected.reactants) : null
   const classification = selected ? classifyReaction(selected.balancedEquation) : null
+  const selectedConditions = selected ? getReactionConditionsForRecord(selected) : null
 
   useEffect(() => {
     document.getElementById("reaction-viewer")?.scrollIntoView({ block: "start" })
@@ -134,7 +149,7 @@ export function ReactionDatabaseClient() {
             </div>
             <div className="flex flex-wrap gap-2 sm:justify-end">
               <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-                ARSHLAB v4.6.0
+                ARSHLAB v4.7.0
               </Badge>
               <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
                 Database mode = no AI usage
@@ -142,12 +157,13 @@ export function ReactionDatabaseClient() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
             <Metric label="Reaction Records" value={metrics.reactionRecords} />
             <Metric label="Categories" value={metrics.categories} />
             <Metric label="Reaction Types" value={metrics.reactionTypes} />
             <Metric label="Balancing Exercises" value={metrics.balancingExercises} />
             <Metric label="Prediction Templates" value={metrics.predictionTemplates} />
+            <Metric label="Condition Records" value={conditionMetrics.records} />
           </div>
         </motion.div>
 
@@ -260,6 +276,31 @@ export function ReactionDatabaseClient() {
                     <InfoBlock label="Products" value={selected.products.join(" + ")} />
                     <InfoBlock label="Skeleton" value={selected.unbalancedEquation} />
                   </div>
+
+                  {selectedConditions && (
+                    <Card className="rounded-2xl border-primary/20 bg-primary/5">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Conditions</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3 text-sm">
+                        <InfoBlock label="Reagents" value={selectedConditions.reagents.join(" + ") || "None specified"} />
+                        <InfoBlock
+                          label="Conditions"
+                          value={[
+                            selectedConditions.catalysts.length ? `Catalyst: ${selectedConditions.catalysts.join(", ")}` : "",
+                            selectedConditions.solvents.length ? `Solvent: ${selectedConditions.solvents.join(", ")}` : "",
+                            `Temperature: ${selectedConditions.temperature}`,
+                            `Pressure: ${selectedConditions.pressure}`,
+                          ]
+                            .filter(Boolean)
+                            .join(" | ")}
+                        />
+                        <InfoBlock label="Yield" value={selectedConditions.typicalYield} />
+                        <InfoBlock label="Safety" value={selectedConditions.safetyNotes.join(" | ")} />
+                        <InfoBlock label="Common mistakes" value={selectedConditions.commonMistakes.join(" | ")} />
+                      </CardContent>
+                    </Card>
+                  )}
 
                   <p className="rounded-xl border border-border bg-background/80 p-3 text-sm text-muted-foreground">
                     {selected.explanation}

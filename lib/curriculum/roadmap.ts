@@ -59,6 +59,10 @@ function synthesisTargetForTopic(topic: string): { start: string; target: string
   return { start: "ethene", target: "ethanoic-acid" }
 }
 
+function topicUsesReactionConditions(topic: string): boolean {
+  return /reaction|alkene|alkane|alcohol|carbonyl|carboxylic|ester|acid|base|redox|electrochemistry|equilibrium|organic/i.test(topic)
+}
+
 function toolLinksForTopic(topic: string): CurriculumToolLink[] {
   const query = encodedTopic(topic)
   const targets = getTopicDeepLinkTargets(topic)
@@ -99,6 +103,14 @@ function toolLinksForTopic(topic: string): CurriculumToolLink[] {
       description: "Follow a deterministic pathway that uses related compounds, reactions, and mechanisms.",
     },
   ]
+
+  if (topicUsesReactionConditions(topic)) {
+    links.push({
+      label: "Reaction Conditions",
+      href: `/reaction-database?query=${encodeURIComponent(topic)}#reaction-viewer`,
+      description: "Review reagents, catalysts, temperature, safety notes, yields, and common mistakes.",
+    })
+  }
 
   if (targets.mechanismId) {
     links.push({
