@@ -38,6 +38,7 @@ import {
   Route,
   ArrowRightLeft,
   Network,
+  ScanSearch,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -66,6 +67,7 @@ const chemistryToolItems = [
   { href: "/formula-sheet", label: "Formula Sheet", icon: BookOpenCheck },
   { href: "/chemistry-solver", label: "Chemistry Solver", icon: Calculator },
   { href: "/chemistry-database", label: "Chemistry Database", icon: Database },
+  { href: "/structure-scanner", label: "Structure Scanner", icon: ScanSearch },
   { href: "/molecular-visualizer", label: "Molecular Visualizer", icon: Network },
   { href: "/reaction-explorer", label: "Reaction Explorer", icon: Network },
   { href: "/mechanism-trainer", label: "Mechanism Trainer", icon: FlaskConical },

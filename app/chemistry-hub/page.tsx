@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Atom, Award, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves, Network } from "lucide-react"
+import { ArrowRightLeft, Atom, Award, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves, Network, ScanSearch } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -18,6 +18,7 @@ const LAB_LINKS = [
   { href: "/formula-sheet", label: "Formula Sheet" },
   { href: "/chemistry-solver", label: "Chemistry Solver" },
   { href: "/chemistry-database", label: "Chemistry Database" },
+  { href: "/structure-scanner", label: "Structure Scanner" },
   { href: "/molecular-visualizer", label: "Molecular Visualizer" },
   { href: "/reaction-explorer", label: "Reaction Explorer" },
   { href: "/mechanism-trainer", label: "Mechanism Trainer" },
@@ -271,6 +272,13 @@ export default function ChemistryHubPage() {
             description="Solve molarity, dilution, percent yield, empirical formula, gas law, calorimetry, pH, and stoichiometry problems step by step."
             href="/chemistry-solver"
             action="Open Solver"
+          />
+          <HubActionCard
+            icon={ScanSearch}
+            title="Molecular Structure Scanner"
+            description="Upload or describe a molecule and match it against ARSHLAB's local chemistry database with deep links into the learning tools."
+            href="/structure-scanner"
+            action="Open Scanner"
           />
           <HubActionCard
             icon={Network}

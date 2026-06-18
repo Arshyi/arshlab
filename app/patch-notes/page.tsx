@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.4.0",
+    version: "4.5.0",
     date: "Current",
+    status: "released",
+    title: "Molecular Structure Scanner",
+    changes: [
+      "Added /structure-scanner with a deterministic local chemistry database scanner",
+      "Added image upload preview for PNG, JPG, JPEG, and WEBP files with a local processing privacy notice",
+      "Added optional molecule name, formula, and structure hint inputs for database-first matching",
+      "Seeded scanner records with common compounds, formulas, functional groups, aliases, visualizer links, reaction graph links, and curriculum hooks",
+      "Added confidence estimates, match explanations, result cards, and deep links to Molecular Visualizer, Reaction Explorer, Practice Generator, Exam Generator, Formula Sheet, and Curriculum",
+      "Added browser-local scan history for the last 10 scans and Structure Scanner metrics on the Learning Dashboard",
+      "Added Structure Scanner links to the homepage, Chemistry Hub, Tools menu, Roadmap, and Patch Notes",
+      "Kept OpenRouter configuration, AI routes, auth, middleware, guardrails, solver calculations, and curriculum logic unchanged",
+    ],
+  },
+  {
+    version: "4.4.0",
+    date: "Previous",
     status: "released",
     title: "Adaptive Study Mode",
     changes: [

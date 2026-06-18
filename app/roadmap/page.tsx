@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Map, Check, Hammer, Lightbulb, Network } from "lucide-react"
+import { Map, Check, Hammer, Lightbulb, ScanSearch } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
@@ -50,6 +50,7 @@ const completed = [
   "Reaction Explorer / Knowledge Graph",
   "Graph and Periodic Table Layout Polish",
   "Adaptive Study Mode",
+  "Molecular Structure Scanner",
 ]
 
 const inDevelopment = [
@@ -174,15 +175,16 @@ export default function RoadmapPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
-                  <Network className="h-4 w-4" />
+                  <ScanSearch className="h-4 w-4" />
                 </div>
-                Adaptive Study Mode
+                Molecular Structure Scanner
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: deterministic local study progress connects Formula Sheet, Solver,
-                Practice Generator, Curriculum, exams, and Learning Dashboard into one recommendation layer.
+                Now available: upload or describe a molecule, match it against ARSHLAB&apos;s local
+                chemistry records, and open linked visualizers, reactions, formulas, practice, exams,
+                and curriculum topics.
               </p>
             </CardContent>
           </Card>
@@ -194,7 +196,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v4.4.0 - Adaptive Study Mode
+          ARSHLAB v4.5.0 - Molecular Structure Scanner
         </motion.p>
       </div>
     </div>

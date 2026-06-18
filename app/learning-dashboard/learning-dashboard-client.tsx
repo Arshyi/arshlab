@@ -19,6 +19,7 @@ import {
   Medal,
   Network,
   Route,
+  ScanSearch,
   Target,
   Trophy,
   Zap,
@@ -59,6 +60,11 @@ import {
 } from "@/lib/deep-links"
 import { calculateStudySnapshot } from "@/lib/study-engine/study-engine"
 import { readStudyProgress, type StudyProgressState } from "@/lib/study-engine/study-progress"
+import {
+  getStructureScanStats,
+  readStructureScanHistory,
+} from "@/lib/structure-scanner/scanner-utils"
+import type { StructureScanStats } from "@/lib/structure-scanner/scanner-types"
 import { cn } from "@/lib/utils"
 
 function readinessVariant(score: number): "default" | "secondary" | "destructive" {
@@ -75,6 +81,7 @@ export function LearningDashboardClient() {
   const [roadmapStats, setRoadmapStats] = useState<CurriculumRoadmapProgressSummary[]>([])
   const [roadmapProgress, setRoadmapProgress] = useState<CurriculumRoadmapProgressState>({ topics: {} })
   const [studyProgress, setStudyProgress] = useState<StudyProgressState>({ events: [] })
+  const [scannerStats, setScannerStats] = useState<StructureScanStats>(getStructureScanStats([]))
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -107,6 +114,7 @@ export function LearningDashboardClient() {
       setRoadmapProgress(nextRoadmapProgress)
       setRoadmapStats(getAllCurriculumRoadmapProgressSummaries(nextRoadmapProgress))
       setStudyProgress(readStudyProgress())
+      setScannerStats(getStructureScanStats(readStructureScanHistory()))
     }
 
     void loadDashboard()
@@ -167,6 +175,8 @@ export function LearningDashboardClient() {
     roadmapStats.find((roadmap) => roadmap.currentRecommendedTopic)?.currentRecommendedTopic ?? null
   const firstMissedMechanismId = resolveMechanismDeepLink(missedMechanisms[0]?.subtopic)
   const firstMissedSolverModuleId = resolveSolverModuleDeepLink(missedSolverConcepts[0]?.subtopic)
+  const topScannedCompound = scannerStats.mostScannedCompounds[0]
+  const topScannedGroup = scannerStats.mostScannedFunctionalGroups[0]
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
@@ -187,7 +197,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.4.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, adaptive study mode, context-aware deep links, and the Reaction Explorer knowledge graph into one adaptive learning view.
+            ARSHLAB v4.5.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, adaptive study mode, context-aware deep links, the Structure Scanner, and the Reaction Explorer knowledge graph into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -376,6 +386,48 @@ export function LearningDashboardClient() {
                 </div>
                 <Button asChild className="rounded-xl">
                   <Link href="/reaction-explorer">Open Reaction Explorer</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6 rounded-2xl border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ScanSearch className="h-5 w-5" />
+                  Structure Scanner
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="rounded-xl border border-border bg-background/80 p-4">
+                  <p className="text-3xl font-bold">{scannerStats.totalScans}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">local scans saved in this browser</p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold">Most scanned chemistry</p>
+                  {scannerStats.totalScans > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {topScannedCompound && (
+                        <Badge variant="outline" className="rounded-full">
+                          {topScannedCompound.name}: {topScannedCompound.count}
+                        </Badge>
+                      )}
+                      {topScannedGroup && (
+                        <Badge variant="secondary" className="rounded-full">
+                          {topScannedGroup.name}: {topScannedGroup.count}
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="rounded-full">
+                        Scanner mode = local chemistry database
+                      </Badge>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Scan a named molecule or uploaded structure hint to start local structure history.
+                    </p>
+                  )}
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/structure-scanner">Open Scanner</Link>
                 </Button>
               </CardContent>
             </Card>
