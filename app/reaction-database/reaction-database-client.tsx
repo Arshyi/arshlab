@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import { ArrowRightLeft, Beaker, BookOpenCheck, Database, Filter, Search } from "lucide-react"
 import { ReactionDiagram } from "@/components/chemistry/ReactionDiagram"
@@ -18,6 +18,7 @@ import {
 import { REACTION_CATEGORIES, REACTION_DIFFICULTIES } from "@/lib/chemistry/reaction-types"
 import type { ReactionCategory, ReactionDifficulty, ReactionRecord } from "@/lib/chemistry/reaction-types"
 import { REACTION_RECORDS, getReactionKnowledgeMetrics } from "@/lib/chemistry/reactions"
+import { deepLinkSlug, resolveReactionDeepLink } from "@/lib/deep-links"
 import { classifyReaction } from "@/lib/reaction-engine/classifier"
 import { predictReaction } from "@/lib/reaction-engine/predictor"
 import { cn } from "@/lib/utils"
@@ -68,6 +69,21 @@ export function ReactionDatabaseClient() {
   const [curriculum, setCurriculum] = useState("All")
   const [selectedId, setSelectedId] = useState(REACTION_RECORDS[0]?.id ?? "")
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const requestedReaction = resolveReactionDeepLink(params.get("reaction"))
+    if (!requestedReaction) return
+
+    const requestedSlug = deepLinkSlug(requestedReaction)
+    const match = REACTION_RECORDS.find(
+      (record) =>
+        record.id === requestedReaction ||
+        deepLinkSlug(record.id) === requestedSlug ||
+        deepLinkSlug(record.name) === requestedSlug,
+    )
+    if (match) setSelectedId(match.id)
+  }, [])
+
   const filteredRecords = useMemo(
     () =>
       REACTION_RECORDS.filter((record) => {
@@ -82,6 +98,10 @@ export function ReactionDatabaseClient() {
   const selected = REACTION_RECORDS.find((record) => record.id === selectedId) ?? filteredRecords[0] ?? REACTION_RECORDS[0]
   const prediction = selected ? predictReaction(selected.reactants) : null
   const classification = selected ? classifyReaction(selected.balancedEquation) : null
+
+  useEffect(() => {
+    document.getElementById("reaction-viewer")?.scrollIntoView({ block: "start" })
+  }, [selected?.id])
 
   function runQuickSearch(value: string) {
     setQuery(value)
@@ -114,7 +134,7 @@ export function ReactionDatabaseClient() {
             </div>
             <div className="flex flex-wrap gap-2 sm:justify-end">
               <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-                ARSHLAB v4.2.0
+                ARSHLAB v4.2.1
               </Badge>
               <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
                 Database mode = no AI usage
@@ -211,7 +231,7 @@ export function ReactionDatabaseClient() {
 
           {selected && (
             <aside className="min-w-0 space-y-4">
-              <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+              <Card id="reaction-viewer" className="scroll-mt-24 rounded-2xl border-teal-500/20 bg-teal-500/5">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Beaker className="h-5 w-5" />

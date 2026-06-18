@@ -18,6 +18,11 @@ import {
   searchFormulaRecords,
   type FormulaRecord,
 } from "@/lib/formula-sheet"
+import {
+  getSolverModuleForFormulaDeepLink,
+  resolveFormulaDeepLink,
+  solverModuleHref,
+} from "@/lib/deep-links"
 import { cn } from "@/lib/utils"
 
 const allCategories = Array.from(new Set(FORMULA_RECORDS.map((formula) => formula.category)))
@@ -25,16 +30,17 @@ const allCategories = Array.from(new Set(FORMULA_RECORDS.map((formula) => formul
 export function FormulaSheetClient() {
   const searchParams = useSearchParams()
   const formulaParam = searchParams.get("formula")
+  const resolvedFormulaParam = resolveFormulaDeepLink(formulaParam)
   const metrics = getFormulaMetrics()
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState("All")
-  const [selectedId, setSelectedId] = useState(formulaParam ?? FORMULA_RECORDS[0]?.id ?? "")
+  const [selectedId, setSelectedId] = useState(resolvedFormulaParam ?? FORMULA_RECORDS[0]?.id ?? "")
 
   useEffect(() => {
-    if (formulaParam && getFormulaById(formulaParam)) {
-      setSelectedId(formulaParam)
+    if (resolvedFormulaParam && getFormulaById(resolvedFormulaParam)) {
+      setSelectedId(resolvedFormulaParam)
     }
-  }, [formulaParam])
+  }, [resolvedFormulaParam])
 
   const filtered = useMemo(() => {
     const searched = searchFormulaRecords(query)
@@ -46,6 +52,7 @@ export function FormulaSheetClient() {
   useEffect(() => {
     if (selected?.id) {
       recordFormulaView(selected.id)
+      document.getElementById(`formula-${selected.id}`)?.scrollIntoView({ block: "start" })
     }
   }, [selected?.id])
 
@@ -60,7 +67,7 @@ export function FormulaSheetClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.2.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.2.1</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                   <Badge variant="outline">Deterministic formula records</Badge>
                 </div>
@@ -165,6 +172,8 @@ export function FormulaSheetClient() {
 }
 
 function FormulaViewer({ formula }: { formula: FormulaRecord }) {
+  const solverModuleId = getSolverModuleForFormulaDeepLink(formula.id)
+
   return (
     <div id={`formula-${formula.id}`} className="min-w-0 space-y-6 scroll-mt-24">
       <Card className="rounded-2xl border-primary/20 bg-primary/5">
@@ -179,7 +188,7 @@ function FormulaViewer({ formula }: { formula: FormulaRecord }) {
               <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">{formula.description}</p>
             </div>
             <Button asChild variant="outline" className="w-full rounded-xl sm:w-auto">
-              <Link href="/chemistry-solver">
+              <Link href={solverModuleId ? solverModuleHref(solverModuleId) : "/chemistry-solver"}>
                 <Calculator className="h-4 w-4" />
                 Try Solver
               </Link>

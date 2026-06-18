@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.2.0",
+    version: "4.2.1",
     date: "Current",
+    status: "released",
+    title: "Context-Aware Deep Linking",
+    changes: [
+      "Added formula deep links such as /formula-sheet?formula=molarity with alias fallback",
+      "Added solver module deep links such as /chemistry-solver?module=molarity",
+      "Added mechanism, reaction, molecular visualizer, practice, exam, and curriculum topic deep-link support",
+      "Updated curriculum topic tool links to open directly to relevant formulas, solver modules, practice topics, exam topics, mechanisms, reactions, and compounds",
+      "Updated Formula Sheet Try Solver buttons to open matching solver modules",
+      "Updated Learning Dashboard formula, calculation, mechanism, and curriculum links to land in context",
+      "Added graceful fallback behavior for invalid deep-link parameters",
+      "Kept AI routes, OpenRouter configuration, auth, middleware, guardrails, API routes, and solver calculations unchanged",
+    ],
+  },
+  {
+    version: "4.2.0",
+    date: "Previous",
     status: "released",
     title: "Curriculum Engine",
     changes: [

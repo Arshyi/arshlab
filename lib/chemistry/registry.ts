@@ -32,7 +32,7 @@ import { getSolverMetrics } from "@/lib/solver-engine"
 import { getFormulaMetrics } from "@/lib/formula-sheet"
 import { getCurriculumRoadmapMetrics } from "@/lib/curriculum/roadmap"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.2.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.2.1"
 
 const mechanismMetrics = getMechanismMetrics()
 const solverMetrics = getSolverMetrics()

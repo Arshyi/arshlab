@@ -45,6 +45,7 @@ import {
   type SolverResult,
 } from "@/lib/solver-engine"
 import { formulaHref, getFormulaForSolverModule } from "@/lib/formula-sheet"
+import { resolveSolverModuleDeepLink } from "@/lib/deep-links"
 import { cn } from "@/lib/utils"
 
 const LOCAL_STATS_KEY = "arshlab-solver-local-stats"
@@ -130,7 +131,17 @@ export function ChemistrySolverClient() {
 
   useEffect(() => {
     setStats(readLocalStats())
+
+    const params = new URLSearchParams(window.location.search)
+    const requestedModule = resolveSolverModuleDeepLink(params.get("module"))
+    if (requestedModule && SOLVER_MODULES.some((module) => module.id === requestedModule)) {
+      setModuleId(requestedModule as SolverModuleId)
+    }
   }, [])
+
+  useEffect(() => {
+    document.getElementById("solver-module")?.scrollIntoView({ block: "start" })
+  }, [moduleId])
 
   useEffect(() => {
     const firstReactant = parsedReaction?.reactants[0]?.formula ?? ""
@@ -243,7 +254,7 @@ export function ChemistrySolverClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.2.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.2.1</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                   <Badge variant="outline">Deterministic solver</Badge>
                 </div>
@@ -330,7 +341,7 @@ export function ChemistrySolverClient() {
           </Card>
 
           <div className="min-w-0 space-y-6">
-            <Card className="rounded-2xl border-primary/20 bg-primary/5">
+            <Card id="solver-module" className="scroll-mt-24 rounded-2xl border-primary/20 bg-primary/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <FlaskConical className="h-5 w-5" />

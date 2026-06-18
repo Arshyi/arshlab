@@ -46,6 +46,7 @@ import {
   setCurriculumTopicCompleted,
   type CurriculumRoadmapProgressState,
 } from "@/lib/curriculum/roadmap-progress"
+import { deepLinkSlug } from "@/lib/deep-links"
 import { getPracticeProgress, type PracticeProgressEntry } from "@/lib/supabase/practice-progress"
 import {
   getLevelFromXp,
@@ -139,7 +140,33 @@ export function CurriculumClient() {
   }, [loadCurriculum])
 
   useEffect(() => {
-    setRoadmapProgress(readCurriculumRoadmapProgress())
+    const storedProgress = readCurriculumRoadmapProgress()
+    const params = new URLSearchParams(window.location.search)
+    const requestedTopic = params.get("topic")
+
+    if (!requestedTopic) {
+      setRoadmapProgress(storedProgress)
+      return
+    }
+
+    const requestedSlug = deepLinkSlug(requestedTopic)
+    const match = roadmaps
+      .flatMap((roadmap) => roadmap.topics.map((topic) => ({ roadmap, topic })))
+      .find(
+        ({ topic }) =>
+          topic.id === requestedTopic ||
+          deepLinkSlug(topic.id) === requestedSlug ||
+          deepLinkSlug(topic.title) === requestedSlug,
+      )
+
+    if (match) {
+      setSelectedRoadmapId(match.roadmap.id)
+      setSelectedTopicId(match.topic.id)
+      setRoadmapProgress(markCurriculumTopicViewed(match.topic.id, storedProgress))
+      return
+    }
+
+    setRoadmapProgress(storedProgress)
   }, [])
 
   const summary = useMemo(
@@ -161,6 +188,10 @@ export function CurriculumClient() {
   }, [roadmapSummary.currentRecommendedTopic, selectedRoadmap, selectedTopicId])
   const level = getLevelFromXp(profile?.xp ?? 0)
   const spectroscopyAccuracy = useMemo(() => getSpectroscopyAccuracy(entries), [entries])
+
+  useEffect(() => {
+    document.getElementById("curriculum-topic")?.scrollIntoView({ block: "start" })
+  }, [selectedRoadmapTopic?.id])
 
   function handleRoadmapChange(value: string) {
     const roadmap = getCurriculumRoadmap(value)
@@ -207,7 +238,7 @@ export function CurriculumClient() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">ARSHLAB v4.2.0</Badge>
+              <Badge variant="secondary">ARSHLAB v4.2.1</Badge>
               <Badge variant="outline">Database mode = no AI usage</Badge>
             </div>
           </div>
@@ -244,7 +275,7 @@ export function CurriculumClient() {
           <CardContent className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge>v4.2.0 Curriculum Roadmaps</Badge>
+                <Badge>v4.2.1 Curriculum Roadmaps</Badge>
                 <Badge variant="secondary">{selectedRoadmap.topics.length} topics</Badge>
               </div>
               <h2 className="text-2xl font-bold">{selectedRoadmap.title}</h2>
@@ -328,7 +359,7 @@ export function CurriculumClient() {
 
           <div className="space-y-6">
             {selectedRoadmapTopic && (
-              <Card className="rounded-2xl">
+              <Card id="curriculum-topic" className="scroll-mt-24 rounded-2xl">
                 <CardHeader>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -420,7 +451,7 @@ export function CurriculumClient() {
           <CardContent className="grid gap-5 p-5 lg:grid-cols-[1fr_320px]">
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge>v4.2.0</Badge>
+                <Badge>v4.2.1</Badge>
                 <Badge variant="secondary">{summary.curriculum.level}</Badge>
               </div>
               <h2 className="text-2xl font-bold">{summary.curriculum.name}</h2>

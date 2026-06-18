@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { ArrowRight, FlaskConical, ListChecks, Search } from "lucide-react"
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { getMechanismMetrics, listMechanisms } from "@/lib/chemistry/mechanisms"
+import { resolveMechanismDeepLink } from "@/lib/deep-links"
 import { cn } from "@/lib/utils"
 
 function normalize(value: string): string {
@@ -33,6 +34,14 @@ export default function MechanismTrainerPage() {
   const [query, setQuery] = useState("")
   const [selectedId, setSelectedId] = useState(mechanisms[0]?.id ?? "")
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const requestedMechanism = resolveMechanismDeepLink(params.get("mechanism"))
+    if (requestedMechanism && mechanisms.some((mechanism) => mechanism.id === requestedMechanism)) {
+      setSelectedId(requestedMechanism)
+    }
+  }, [mechanisms])
+
   const filteredMechanisms = useMemo(() => {
     const q = normalize(query)
     if (!q) return mechanisms
@@ -53,6 +62,10 @@ export default function MechanismTrainerPage() {
 
   const selected = mechanisms.find((mechanism) => mechanism.id === selectedId) ?? filteredMechanisms[0] ?? mechanisms[0]
 
+  useEffect(() => {
+    document.getElementById("mechanism-viewer")?.scrollIntoView({ block: "start" })
+  }, [selected?.id])
+
   return (
     <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -64,7 +77,7 @@ export default function MechanismTrainerPage() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.2.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.2.1</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                 </div>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Organic Mechanism Trainer</h1>
@@ -152,7 +165,7 @@ export default function MechanismTrainerPage() {
           <div className="min-w-0 space-y-6">
             {selected ? (
               <>
-                <Card className="rounded-2xl border-primary/20 bg-primary/5">
+                <Card id="mechanism-viewer" className="scroll-mt-24 rounded-2xl border-primary/20 bg-primary/5">
                   <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-2xl font-bold">{selected.name}</h2>

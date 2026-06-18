@@ -54,6 +54,7 @@ import {
 import { generateDatabaseQuestions } from "@/lib/question-engine/generator"
 import type { QuestionSource } from "@/lib/question-engine/types"
 import { formulaHref, getFormulaById } from "@/lib/formula-sheet"
+import { resolveTopicDeepLink } from "@/lib/deep-links"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -300,8 +301,8 @@ export function PracticeGeneratorClient() {
     setGuestUsage(readGuestUsage())
 
     const params = new URLSearchParams(window.location.search)
-    const requestedTopic = params.get("topic")
-    if (requestedTopic && topics.includes(requestedTopic)) {
+    const requestedTopic = resolveTopicDeepLink(params.get("topic"), topics)
+    if (requestedTopic) {
       setTopic(requestedTopic)
     }
     const requestedUnit = params.get("unit")

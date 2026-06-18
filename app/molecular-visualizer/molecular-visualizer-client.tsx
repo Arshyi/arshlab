@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { ArrowRightLeft, Database, Network, Search, Sparkles } from "lucide-react"
@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { COMPOUND_PATHWAYS, MOLECULAR_STRUCTURES } from "@/lib/chemistry/structures"
 import { REACTION_RECORDS } from "@/lib/chemistry/reactions"
+import { deepLinkSlug, resolveCompoundDeepLink } from "@/lib/deep-links"
 import type { ReactionRecord } from "@/lib/chemistry/reaction-types"
 import type { MoleculeDisplayMode } from "@/lib/chemistry/visualization-types"
 import { cn } from "@/lib/utils"
@@ -42,6 +43,27 @@ export function MolecularVisualizerClient() {
   const [pathwayId, setPathwayId] = useState(COMPOUND_PATHWAYS[0]?.id ?? "")
   const [reactionId, setReactionId] = useState(reactionExampleIds[0])
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const requestedCompound = resolveCompoundDeepLink(params.get("compound"))
+    if (!requestedCompound) return
+
+    const requestedSlug = deepLinkSlug(requestedCompound)
+    const match = MOLECULAR_STRUCTURES.find(
+      (structure) =>
+        structure.id === requestedCompound ||
+        structure.compoundId === requestedCompound ||
+        deepLinkSlug(structure.id) === requestedSlug ||
+        deepLinkSlug(structure.compoundId) === requestedSlug ||
+        deepLinkSlug(structure.displayName) === requestedSlug,
+    )
+    if (match) {
+      setSelectedId(match.id)
+      setQuery(match.displayName)
+      setHighlight("all")
+    }
+  }, [])
+
   const filteredStructures = useMemo(() => {
     const trimmed = normalize(query)
     if (!trimmed) return MOLECULAR_STRUCTURES
@@ -65,6 +87,10 @@ export function MolecularVisualizerClient() {
     .map((id) => REACTION_RECORDS.find((record) => record.id === id))
     .filter((record): record is ReactionRecord => Boolean(record))
 
+  useEffect(() => {
+    document.getElementById("molecule-viewer")?.scrollIntoView({ block: "start" })
+  }, [selectedStructure?.id])
+
   function chooseCompound(value: string) {
     const match = MOLECULAR_STRUCTURES.find(
       (structure) => normalize(structure.displayName) === normalize(value) || normalize(structure.id) === normalize(value),
@@ -87,7 +113,7 @@ export function MolecularVisualizerClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.2.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.2.1</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                 </div>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Molecular Visualizer</h1>
@@ -156,7 +182,7 @@ export function MolecularVisualizerClient() {
           </Card>
 
           <div className="min-w-0 space-y-6">
-            <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+            <Card id="molecule-viewer" className="scroll-mt-24 rounded-2xl border-teal-500/20 bg-teal-500/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Sparkles className="h-5 w-5" />

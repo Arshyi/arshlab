@@ -48,6 +48,13 @@ import {
   readCurriculumRoadmapProgress,
   type CurriculumRoadmapProgressSummary,
 } from "@/lib/curriculum/roadmap-progress"
+import {
+  curriculumTopicHref,
+  mechanismHref,
+  resolveMechanismDeepLink,
+  resolveSolverModuleDeepLink,
+  solverModuleHref,
+} from "@/lib/deep-links"
 import { cn } from "@/lib/utils"
 
 function readinessVariant(score: number): "default" | "secondary" | "destructive" {
@@ -139,6 +146,8 @@ export function LearningDashboardClient() {
     : 0
   const nextRoadmapTopic =
     roadmapStats.find((roadmap) => roadmap.currentRecommendedTopic)?.currentRecommendedTopic ?? null
+  const firstMissedMechanismId = resolveMechanismDeepLink(missedMechanisms[0]?.subtopic)
+  const firstMissedSolverModuleId = resolveSolverModuleDeepLink(missedSolverConcepts[0]?.subtopic)
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
@@ -159,7 +168,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.2.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, and mechanism mastery into one adaptive learning view.
+            ARSHLAB v4.2.1 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, and context-aware deep links into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -317,11 +326,16 @@ export function LearningDashboardClient() {
                   <p className="font-semibold">Most missed mechanisms</p>
                   {missedMechanisms.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {missedMechanisms.map((concept) => (
-                        <Badge key={`${concept.topic}-${concept.subtopic}`} variant="outline" className="rounded-full">
-                          {concept.subtopic}: {concept.correct}/{concept.attempted}
-                        </Badge>
-                      ))}
+                      {missedMechanisms.map((concept) => {
+                        const mechanismId = resolveMechanismDeepLink(concept.subtopic)
+                        return (
+                          <Button key={`${concept.topic}-${concept.subtopic}`} asChild variant="outline" size="sm" className="rounded-full">
+                            <Link href={mechanismId ? mechanismHref(mechanismId) : "/mechanism-trainer"}>
+                              {concept.subtopic}: {concept.correct}/{concept.attempted}
+                            </Link>
+                          </Button>
+                        )
+                      })}
                     </div>
                   ) : (
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -330,7 +344,7 @@ export function LearningDashboardClient() {
                   )}
                 </div>
                 <Button asChild className="rounded-xl">
-                  <Link href="/mechanism-trainer">Review Mechanisms</Link>
+                  <Link href={firstMissedMechanismId ? mechanismHref(firstMissedMechanismId) : "/mechanism-trainer"}>Review Mechanisms</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -353,11 +367,16 @@ export function LearningDashboardClient() {
                   <p className="font-semibold">Most missed calculations</p>
                   {missedSolverConcepts.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {missedSolverConcepts.map((concept) => (
-                        <Badge key={`${concept.topic}-${concept.subtopic}`} variant="outline" className="rounded-full">
-                          {concept.subtopic}: {concept.correct}/{concept.attempted}
-                        </Badge>
-                      ))}
+                      {missedSolverConcepts.map((concept) => {
+                        const moduleId = resolveSolverModuleDeepLink(concept.subtopic)
+                        return (
+                          <Button key={`${concept.topic}-${concept.subtopic}`} asChild variant="outline" size="sm" className="rounded-full">
+                            <Link href={moduleId ? solverModuleHref(moduleId) : "/chemistry-solver"}>
+                              {concept.subtopic}: {concept.correct}/{concept.attempted}
+                            </Link>
+                          </Button>
+                        )
+                      })}
                     </div>
                   ) : (
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -366,7 +385,7 @@ export function LearningDashboardClient() {
                   )}
                 </div>
                 <Button asChild className="rounded-xl">
-                  <Link href="/chemistry-solver">Open Solver</Link>
+                  <Link href={firstMissedSolverModuleId ? solverModuleHref(firstMissedSolverModuleId) : "/chemistry-solver"}>Open Solver</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -450,7 +469,7 @@ export function LearningDashboardClient() {
                   </div>
                 </div>
                 <Button asChild className="rounded-xl">
-                  <Link href="/curriculum">Open Curriculum</Link>
+                  <Link href={nextRoadmapTopic ? curriculumTopicHref(nextRoadmapTopic.id) : "/curriculum"}>Open Curriculum</Link>
                 </Button>
               </CardContent>
             </Card>

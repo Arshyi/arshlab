@@ -1,3 +1,11 @@
+import {
+  getTopicDeepLinkTargets,
+  mechanismHref,
+  molecularVisualizerHref,
+  reactionHref,
+  solverModuleHref,
+} from "@/lib/deep-links"
+
 export type CurriculumRoadmapId = "general-chemistry" | "organic-chemistry"
 
 export type CurriculumRoadmapDifficulty = "Introductory" | "Intermediate" | "Advanced"
@@ -32,44 +40,52 @@ function encodedTopic(topic: string): string {
 
 function toolLinksForTopic(topic: string): CurriculumToolLink[] {
   const query = encodedTopic(topic)
-
-  return [
+  const targets = getTopicDeepLinkTargets(topic)
+  const links: CurriculumToolLink[] = [
     {
       label: "Formula Sheet",
-      href: `/formula-sheet?search=${query}`,
+      href: `/formula-sheet?formula=${encodeURIComponent(targets.formulaId)}#formula-${targets.formulaId}`,
       description: "Review equations, variables, units, and common mistakes.",
     },
     {
       label: "Chemistry Solver",
-      href: `/chemistry-solver?topic=${query}`,
+      href: solverModuleHref(targets.solverModuleId),
       description: "Open calculation modules and worked step-by-step examples.",
     },
     {
       label: "Practice Generator",
-      href: `/practice-generator?topic=${query}&source=database`,
+      href: `/practice-generator?topic=${encodedTopic(targets.practiceTopic)}&source=database`,
       description: "Generate deterministic database-backed practice.",
     },
     {
       label: "Exam Generator",
-      href: `/exam-generator?topic=${query}&source=database&mode=adaptive`,
+      href: `/exam-generator?topic=${encodedTopic(targets.examTopic)}&source=database&mode=adaptive`,
       description: "Build a focused practice exam around this topic.",
     },
     {
       label: "Molecular Visualizer",
-      href: `/molecular-visualizer?topic=${query}`,
+      href: targets.compoundId ? molecularVisualizerHref(targets.compoundId) : `/molecular-visualizer?topic=${query}`,
       description: "Connect the topic to structures, pathways, and visual examples.",
     },
-    {
-      label: "Mechanism Trainer",
-      href: `/mechanism-trainer?topic=${query}`,
-      description: "Use mechanism steps when the topic involves organic pathways.",
-    },
-    {
-      label: "Reaction Database",
-      href: `/reaction-database?topic=${query}`,
-      description: "Browse deterministic reaction records and examples.",
-    },
   ]
+
+  if (targets.mechanismId) {
+    links.push({
+      label: "Mechanism Trainer",
+      href: mechanismHref(targets.mechanismId),
+      description: "Use mechanism steps when the topic involves organic pathways.",
+    })
+  }
+
+  if (targets.reactionId) {
+    links.push({
+      label: "Reaction Database",
+      href: reactionHref(targets.reactionId),
+      description: "Browse deterministic reaction records and examples.",
+    })
+  }
+
+  return links
 }
 
 function topic(input: Omit<CurriculumRoadmapTopic, "toolLinks">): CurriculumRoadmapTopic {

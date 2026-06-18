@@ -62,6 +62,7 @@ import {
   type ExamEngineQuestion,
   type GeneratedEngineExam,
 } from "@/lib/exam-engine/generator"
+import { resolveTopicDeepLink } from "@/lib/deep-links"
 
 const GUEST_USAGE_KEY = "arshlab-ai-guest-usage"
 const GUEST_LIMIT = 3
@@ -266,7 +267,10 @@ export function ExamGeneratorClient() {
     const params = new URLSearchParams(window.location.search)
     const requestedUnit = params.get("unit")
     if (requestedUnit) setCurriculumUnit(requestedUnit)
-    const requestedTopic = params.get("topic")
+    const requestedTopic = resolveTopicDeepLink(params.get("topic"), [
+      "all",
+      ...Array.from(new Set(curriculumOptions.flatMap((option) => option.topics))),
+    ])
     if (requestedTopic) setExamTopic(requestedTopic)
     const requestedSubtopic = params.get("subtopic")
     if (requestedSubtopic) setTargetSubtopic(requestedSubtopic)
