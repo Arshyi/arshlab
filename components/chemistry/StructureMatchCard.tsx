@@ -6,6 +6,7 @@ import {
   FlaskConical,
   GraduationCap,
   Network,
+  Route,
   Sigma,
   Target,
   Waves,
@@ -23,6 +24,7 @@ import {
   reactionHref,
 } from "@/lib/deep-links"
 import { spectroscopyExplorerHref } from "@/lib/spectroscopy/spectroscopy-engine"
+import { synthesisExplorerHref } from "@/lib/synthesis/pathfinder"
 import type { StructureScanMatch } from "@/lib/structure-scanner/scanner-types"
 
 interface StructureMatchCardProps {
@@ -60,6 +62,10 @@ export function StructureMatchCard({ match, primary = false }: StructureMatchCar
           </Badge>
         </div>
         <Progress value={match.confidence} />
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {confidenceExplanation(match.confidence)} Confidence reflects agreement between your manual hints,
+          uploaded filename, and local records; it is not a probability from image recognition.
+        </p>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-3">
@@ -129,6 +135,7 @@ export function StructureMatchCard({ match, primary = false }: StructureMatchCar
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <ActionLink href={molecularVisualizerHref(visualizerId)} icon={Network} label="Open Molecular Visualizer" />
             <ActionLink href={reactionExplorerHref(undefined, record.name)} icon={Sigma} label="Open Reaction Explorer" />
+            <ActionLink href={synthesisExplorerHref(record.id)} icon={Route} label="Explore Synthesis" />
             <ActionLink href={spectroscopyExplorerHref({ compound: record.id })} icon={Waves} label="View Spectra" />
             <ActionLink href={practiceHref(record.practiceTopic)} icon={Target} label="Practice This" />
             <ActionLink href={examHref(record.examTopic)} icon={FileQuestion} label="Generate Exam Set" />
@@ -143,6 +150,12 @@ export function StructureMatchCard({ match, primary = false }: StructureMatchCar
       </CardContent>
     </Card>
   )
+}
+
+function confidenceExplanation(confidence: number): string {
+  if (confidence >= 85) return "High confidence: several strong local clues agree."
+  if (confidence >= 65) return "Moderate confidence: at least one strong clue matches, but alternatives remain."
+  return "Tentative match: only limited clues agree; add or correct a name, formula, or functional group."
 }
 
 function InfoTile({ label, value }: { label: string; value: string }) {

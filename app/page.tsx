@@ -96,7 +96,7 @@ const features = [
   {
     icon: ScanSearch,
     title: "Molecular Structure Scanner",
-    description: "Upload or describe a structure, match it against local chemistry records, and jump into visualizers, reactions, practice, exams, formulas, and curriculum.",
+    description: "Upload and preprocess a structure locally, add manual chemistry clues, correct the match, and open connected learning tools.",
     href: "/structure-scanner",
   },
   {

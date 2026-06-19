@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.9.0",
+    version: "5.0.0",
     date: "Current",
+    status: "released",
+    title: "Structure Recognition Upgrade",
+    changes: [
+      "Upgraded /structure-scanner into an upload-first local recognition workflow",
+      "Added local image preprocessing previews with crop positioning, zoom, rotation, contrast, grayscale, and reset controls",
+      "Added manual correction fields for compound name, molecular formula, condensed formula, and functional-group hints",
+      "Added a text-extraction placeholder with clear no-readable-text guidance while keeping OCR disabled",
+      "Added explainable confidence bands and correction-aware browser-local scan history",
+      "Added total scans, corrected scans, most scanned compounds, and most scanned functional groups to Learning Dashboard",
+      "Added direct result links to Molecular Visualizer, Reaction Explorer, Synthesis Explorer, Spectroscopy Explorer, Formula Sheet, Practice Generator, Exam Generator, and Curriculum",
+      "Updated privacy wording to state that uploaded images are previewed locally, never permanently stored, and live camera access is not enabled",
+      "Kept OpenRouter configuration, AI routes, auth, middleware, guardrails, and solver calculations unchanged",
+    ],
+  },
+  {
+    version: "4.9.0",
+    date: "Previous",
     status: "released",
     title: "Lab Explorer",
     changes: [

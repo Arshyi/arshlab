@@ -51,6 +51,7 @@ const completed = [
   "Graph and Periodic Table Layout Polish",
   "Adaptive Study Mode",
   "Molecular Structure Scanner",
+  "Structure Recognition Upgrade",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -181,14 +182,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Lab Explorer
+                Structure Recognition Upgrade
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: deterministic lab technique records connect safety, glassware,
-                procedures, common mistakes, lab-report checklists, practice, exams, and
-                learning analytics.
+                Now available: upload-first local structure previews with crop, rotation,
+                contrast, grayscale, correction-aware scan history, confidence explanations,
+                and direct links into ARSHLAB chemistry tools.
               </p>
             </CardContent>
           </Card>
@@ -200,7 +201,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v4.9.0 - Lab Explorer
+          ARSHLAB v5.0.0 - Structure Recognition Upgrade
         </motion.p>
       </div>
     </div>

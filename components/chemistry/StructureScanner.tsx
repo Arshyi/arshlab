@@ -1,18 +1,30 @@
 "use client"
 
 import { type ChangeEvent, useEffect, useMemo, useState } from "react"
-import { AlertCircle, Clock, Database, Loader2, ScanSearch, Search, Sparkles, Upload } from "lucide-react"
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Database,
+  FileSearch,
+  Loader2,
+  PencilLine,
+  ScanSearch,
+  Search,
+  Sparkles,
+  Upload,
+} from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { scanStructure } from "@/lib/structure-scanner/scanner-engine"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
 import {
   formatStructureScanTimestamp,
+  correctStructureScan,
   getStructureScanStats,
   isAllowedStructureImage,
   readStructureScanHistory,
@@ -29,11 +41,14 @@ export function StructureScanner() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [moleculeName, setMoleculeName] = useState("")
   const [formula, setFormula] = useState("")
-  const [structureHint, setStructureHint] = useState("")
+  const [functionalGroupHint, setFunctionalGroupHint] = useState("")
+  const [condensedFormula, setCondensedFormula] = useState("")
   const [result, setResult] = useState<StructureScanResult | null>(null)
   const [history, setHistory] = useState<StructureScanHistoryEntry[]>([])
   const [error, setError] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
+  const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null)
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
 
   const metrics = useMemo(() => getStructureScannerMetrics(), [])
   const stats = useMemo(() => getStructureScanStats(history), [history])
@@ -62,12 +77,18 @@ export function StructureScanner() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setFile(selected)
     setPreviewUrl(URL.createObjectURL(selected))
+    setResult(null)
+    setCurrentHistoryId(null)
+    setFeedbackMessage(null)
   }
 
   function clearFile() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setFile(null)
     setPreviewUrl(null)
+    setResult(null)
+    setCurrentHistoryId(null)
+    setFeedbackMessage(null)
   }
 
   function applyQuickHint(value: string) {
@@ -76,28 +97,44 @@ export function StructureScanner() {
   }
 
   function runScan() {
-    const hasInput = Boolean(file || moleculeName.trim() || formula.trim() || structureHint.trim())
-    if (!hasInput) {
-      setError("Add an image, molecule name, formula, or structure hint before scanning.")
+    if (!file) {
+      setError("Upload a structure image before scanning. Live camera input is not enabled in v5.0.")
       return
     }
 
     setScanning(true)
     setError(null)
+    setCurrentHistoryId(null)
+    setFeedbackMessage(null)
 
     window.setTimeout(() => {
       const nextResult = scanStructure({
         moleculeName,
         formula,
-        structureHint,
+        functionalGroupHint,
+        condensedFormula,
         fileName: file?.name,
       })
       setResult(nextResult)
       if (nextResult.bestMatch) {
-        setHistory(recordStructureScan(nextResult.bestMatch))
+        const nextHistory = recordStructureScan(nextResult.bestMatch)
+        setHistory(nextHistory)
+        setCurrentHistoryId(nextHistory[0]?.id ?? null)
       }
       setScanning(false)
     }, 250)
+  }
+
+  function saveCorrection() {
+    if (!currentHistoryId) return
+    const nextHistory = correctStructureScan(currentHistoryId, {
+      compoundName: moleculeName,
+      formula,
+      functionalGroupHint,
+      condensedFormula,
+    })
+    setHistory(nextHistory)
+    setFeedbackMessage("Correction saved only in this browser. The uploaded image was not stored.")
   }
 
   return (
@@ -106,11 +143,34 @@ export function StructureScanner() {
         <div className="space-y-6">
           <StructurePreview previewUrl={previewUrl} fileName={file?.name ?? null} onClear={file ? clearFile : undefined} />
 
+          <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <FileSearch className="h-5 w-5" />
+                Optional Text Extraction
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Badge variant="outline" className="rounded-full">Placeholder - no image text is transmitted</Badge>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Automated text extraction is not enabled in v5.0. ARSHLAB currently uses the local filename and the manual correction fields below.
+              </p>
+              {file && !moleculeName.trim() && !formula.trim() && !condensedFormula.trim() && (
+                <Alert className="rounded-xl border-amber-500/30 bg-amber-500/10">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    No readable formula/name detected. Add a hint to improve matching.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="rounded-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Upload className="h-5 w-5" />
-                Scan Inputs
+                Upload and Manual Corrections
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -118,7 +178,7 @@ export function StructureScanner() {
                 <Label htmlFor="structure-image">Structure image</Label>
                 <Input id="structure-image" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleFileChange} />
                 <p className="text-xs text-muted-foreground">
-                  MVP note: the image is previewed locally. Matching is deterministic from the filename and optional chemistry hints.
+                  Upload-only workflow. The image remains local and matching uses deterministic database clues.
                 </p>
               </div>
 
@@ -141,17 +201,24 @@ export function StructureScanner() {
                     placeholder="C2H5OH, C6H6, NaCl"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="structure-hint">Structure hint</Label>
-                <Textarea
-                  id="structure-hint"
-                  value={structureHint}
-                  onChange={(event) => setStructureHint(event.target.value)}
-                  placeholder="Example: alcohol with -OH group, benzene ring, carbonyl, ester, haloalkane..."
-                  className="min-h-24"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="condensed-formula">Condensed formula</Label>
+                  <Input
+                    id="condensed-formula"
+                    value={condensedFormula}
+                    onChange={(event) => setCondensedFormula(event.target.value)}
+                    placeholder="CH3CH2OH, CH3COOH"
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="functional-group-hint">Functional group hint</Label>
+                  <Input
+                    id="functional-group-hint"
+                    value={functionalGroupHint}
+                    onChange={(event) => setFunctionalGroupHint(event.target.value)}
+                    placeholder="alcohol, carbonyl, ester, alkene, arene"
+                  />
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -170,7 +237,7 @@ export function StructureScanner() {
                 </Alert>
               )}
 
-              <Button type="button" onClick={runScan} disabled={scanning} className="w-full rounded-xl">
+              <Button type="button" onClick={runScan} disabled={scanning || !file} className="w-full rounded-xl">
                 {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanSearch className="h-4 w-4" />}
                 {scanning ? "Scanning local records..." : "Scan Local Database"}
               </Button>
@@ -191,13 +258,15 @@ export function StructureScanner() {
                 Scanner mode = local chemistry database
               </Badge>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <Metric label="Local scans" value={stats.totalScans} />
+                <Metric label="Corrected scans" value={stats.correctedScans} />
                 <Metric label="Compounds" value={metrics.compounds} />
                 <Metric label="Functional group families" value={metrics.functionalGroups} />
                 <Metric label="Visualizer links" value={metrics.visualizerLinks} />
                 <Metric label="Reaction graph links" value={metrics.reactionGraphLinks} />
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                This alpha estimates likely structure matches from local chemistry records and user-provided clues. It does not call AI, OCR, or external chemistry APIs.
+                This upgrade estimates likely structure matches from local chemistry records and user-provided clues. It does not call AI, OCR, or external chemistry APIs.
               </p>
             </CardContent>
           </Card>
@@ -216,9 +285,10 @@ export function StructureScanner() {
                     <div key={entry.id} className="rounded-xl border border-border p-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="font-medium">{entry.name}</p>
-                        <Badge variant="secondary" className="rounded-full">
-                          {entry.confidence}%
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          {entry.corrected && <Badge className="rounded-full">Corrected</Badge>}
+                          <Badge variant="secondary" className="rounded-full">{entry.confidence}%</Badge>
+                        </div>
                       </div>
                       <p className="mt-1 font-mono text-sm text-muted-foreground">{entry.formula}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{formatStructureScanTimestamp(entry.timestamp)}</p>
@@ -227,7 +297,7 @@ export function StructureScanner() {
                 </div>
               ) : (
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Your last 10 local scans will appear here. History stays in this browser.
+                  Your local scans and corrected labels will appear here. History stays in this browser.
                 </p>
               )}
             </CardContent>
@@ -246,6 +316,32 @@ export function StructureScanner() {
               {result.matches.length} local matches
             </Badge>
           </div>
+
+          {result.bestMatch && currentHistoryId && (
+            <Card className="rounded-2xl border-dashed">
+              <CardContent className="grid gap-4 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                <div>
+                  <p className="flex items-center gap-2 font-semibold">
+                    <PencilLine className="h-4 w-4" />
+                    Help your local history stay accurate
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Edit the manual fields above, then save your corrected label. Feedback remains in this browser and does not upload the image.
+                  </p>
+                  {feedbackMessage && (
+                    <p className="mt-2 flex items-center gap-2 text-sm text-teal-700 dark:text-teal-300">
+                      <CheckCircle2 className="h-4 w-4" />
+                      {feedbackMessage}
+                    </p>
+                  )}
+                </div>
+                <Button type="button" variant="outline" className="rounded-xl" onClick={saveCorrection}>
+                  <PencilLine className="h-4 w-4" />
+                  I corrected this result
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {result.bestMatch ? (
             <div className="space-y-4">
@@ -282,7 +378,7 @@ export function StructureScanner() {
           <div>
             <h2 className="font-semibold">What this scanner is good for</h2>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Use it as a study bridge: upload or name a structure, confirm the likely compound, then jump into visualizer views, reaction pathways, mechanism practice, formula review, curriculum topics, and database-only practice.
+              Use it as a study bridge: upload a structure, add any clues you recognize, confirm or correct the likely compound, then jump into visualizer views, reaction pathways, spectra, formulas, curriculum topics, and database-only practice.
             </p>
           </div>
         </CardContent>

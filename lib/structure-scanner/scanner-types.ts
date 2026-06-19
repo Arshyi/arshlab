@@ -32,6 +32,9 @@ export interface StructureScannerRecord {
 export interface StructureScanInput {
   moleculeName?: string
   formula?: string
+  functionalGroupHint?: string
+  condensedFormula?: string
+  /** Retained for older callers; v5 uses functionalGroupHint. */
   structureHint?: string
   fileName?: string
 }
@@ -58,10 +61,23 @@ export interface StructureScanHistoryEntry {
   functionalGroups: string[]
   confidence: number
   timestamp: string
+  corrected: boolean
+  correctedAt?: string
+  originalName?: string
+  originalFormula?: string
+  correction?: StructureScanCorrection
+}
+
+export interface StructureScanCorrection {
+  compoundName?: string
+  formula?: string
+  functionalGroupHint?: string
+  condensedFormula?: string
 }
 
 export interface StructureScanStats {
   totalScans: number
+  correctedScans: number
   mostScannedCompounds: Array<{ name: string; count: number }>
   mostScannedFunctionalGroups: Array<{ name: string; count: number }>
   recent: StructureScanHistoryEntry[]

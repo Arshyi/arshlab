@@ -279,7 +279,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.9.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, context-aware deep links, the Structure Scanner, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
+            ARSHLAB v5.0.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, context-aware deep links, the upgraded Structure Scanner, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -479,10 +479,16 @@ export function LearningDashboardClient() {
                   Structure Scanner
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
-                <div className="rounded-xl border border-border bg-background/80 p-4">
-                  <p className="text-3xl font-bold">{scannerStats.totalScans}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">local scans saved in this browser</p>
+              <CardContent className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-border bg-background/80 p-4">
+                    <p className="text-3xl font-bold">{scannerStats.totalScans}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">total scans</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background/80 p-4">
+                    <p className="text-3xl font-bold">{scannerStats.correctedScans}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">corrected scans</p>
+                  </div>
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold">Most scanned chemistry</p>
@@ -504,7 +510,7 @@ export function LearningDashboardClient() {
                     </div>
                   ) : (
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Scan a named molecule or uploaded structure hint to start local structure history.
+                      Upload a structure image and scan it to start private browser-local history.
                     </p>
                   )}
                 </div>

@@ -280,7 +280,7 @@ export default function ChemistryHubPage() {
           <HubActionCard
             icon={ScanSearch}
             title="Molecular Structure Scanner"
-            description="Upload or describe a molecule and match it against ARSHLAB's local chemistry database with deep links into the learning tools."
+            description="Upload and preprocess a structure locally, match it with deterministic chemistry hints, save corrections, and open connected learning tools."
             href="/structure-scanner"
             action="Open Scanner"
           />

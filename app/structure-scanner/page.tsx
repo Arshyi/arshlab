@@ -1,13 +1,13 @@
 import type { Metadata } from "next"
-import { Camera, Database, Network, ShieldCheck } from "lucide-react"
+import { Database, ImageUp, Network, ShieldCheck } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { StructureScanner } from "@/components/chemistry/StructureScanner"
 
 export const metadata: Metadata = {
-  title: "Molecular Structure Scanner | ARSHLAB",
+  title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload or describe a molecule and match it against ARSHLAB's local chemistry database with deterministic scanner links.",
+    "Upload and preprocess a molecular structure image locally, then match it against ARSHLAB's deterministic chemistry database.",
 }
 
 export default function StructureScannerPage() {
@@ -18,19 +18,19 @@ export default function StructureScannerPage() {
           <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <Camera className="h-6 w-6" />
+                <ImageUp className="h-6 w-6" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Molecular Structure Scanner</h1>
-                <p className="text-muted-foreground">Database-first structure recognition bridge</p>
+                <p className="text-muted-foreground">Upload-first local recognition workflow</p>
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v4.9.0
+              ARSHLAB v5.0.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image, add a formula or name hint, and ARSHLAB searches its local chemistry database for the most likely compound. The scanner is deterministic, private, and built to connect structures to visualizers, reactions, formulas, practice, exams, and curriculum topics.
+            Upload a structure image, improve its local preview, add any chemistry clues you recognize, and ARSHLAB searches its local database for likely compounds. No live camera, remote image processing, or permanent image storage is enabled in v5.0.
           </p>
         </div>
 
@@ -42,8 +42,8 @@ export default function StructureScannerPage() {
           />
           <ScannerFeature
             icon={ShieldCheck}
-            title="Private Preview"
-            description="Images stay in the browser for preview and are not permanently stored by this alpha scanner."
+            title="Local Image Workspace"
+            description="Crop, rotate, adjust contrast, and use grayscale locally. Uploaded images are never added to scan history."
           />
           <ScannerFeature
             icon={Network}

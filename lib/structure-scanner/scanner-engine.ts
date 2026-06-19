@@ -13,6 +13,28 @@ function normalizeFormula(value: string | null | undefined): string {
   return (value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "")
 }
 
+function formulaComposition(value: string | null | undefined): string {
+  const source = (value ?? "").replace(/[\s()[\]{}+\-=#]/g, "")
+  if (!source) return ""
+
+  const counts = new Map<string, number>()
+  const tokens = source.match(/[A-Z][a-z]?\d*/g)
+  if (!tokens || tokens.join("") !== source) return ""
+
+  for (const token of tokens) {
+    const match = token.match(/^([A-Z][a-z]?)(\d*)$/)
+    if (!match) return ""
+    const element = match[1]
+    const count = Number(match[2] || "1")
+    counts.set(element, (counts.get(element) ?? 0) + count)
+  }
+
+  return Array.from(counts.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([element, count]) => `${element}${count}`)
+    .join("")
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
@@ -24,15 +46,23 @@ function uniqueReasons(reasons: string[]): string[] {
 function scoreRecord(record: StructureScannerRecord, input: StructureScanInput): StructureScanMatch | null {
   const nameQuery = normalizeText(input.moleculeName)
   const formulaQuery = normalizeFormula(input.formula)
-  const hintQuery = normalizeText(input.structureHint)
+  const condensedFormulaQuery = normalizeFormula(input.condensedFormula)
+  const formulaCompositionQuery = formulaComposition(input.formula)
+  const condensedCompositionQuery = formulaComposition(input.condensedFormula)
+  const hintQuery = normalizeText(input.functionalGroupHint ?? input.structureHint)
   const fileQuery = normalizeText(input.fileName?.replace(/\.[a-z0-9]+$/i, ""))
-  const combined = normalizeText([input.moleculeName, input.formula, input.structureHint, input.fileName].filter(Boolean).join(" "))
+  const combined = normalizeText(
+    [input.moleculeName, input.formula, input.condensedFormula, input.functionalGroupHint, input.structureHint, input.fileName]
+      .filter(Boolean)
+      .join(" "),
+  )
   const combinedFormula = normalizeFormula(combined)
 
   if (!combined && !formulaQuery) return null
 
   const recordName = normalizeText(record.name)
   const recordFormula = normalizeFormula(record.formula)
+  const recordFormulaComposition = formulaComposition(record.formula)
   const aliases = record.commonAliases.map(normalizeText)
   const functionalGroups = record.functionalGroups.map(normalizeText)
   const keywords = (record.keywords ?? []).map(normalizeText)
@@ -50,6 +80,22 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
   } else if (combinedFormula && combinedFormula.includes(recordFormula)) {
     score += 38
     reasons.push("Formula appears in the hint")
+  }
+
+  if (
+    condensedFormulaQuery &&
+    condensedCompositionQuery &&
+    condensedCompositionQuery === recordFormulaComposition
+  ) {
+    score += 68
+    reasons.push("Condensed formula composition match")
+  } else if (
+    formulaCompositionQuery &&
+    formulaCompositionQuery === recordFormulaComposition &&
+    formulaQuery !== recordFormula
+  ) {
+    score += 58
+    reasons.push("Molecular formula composition match")
   }
 
   if (nameQuery && nameQuery === recordName) {
@@ -77,8 +123,8 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
   }
 
   for (const group of functionalGroups) {
-    if (group && combined.includes(group)) {
-      score += 24
+    if (group && hintQuery.includes(group)) {
+      score += 36
       reasons.push(`Functional group match: ${group}`)
     }
   }
@@ -126,8 +172,8 @@ export function scanStructure(input: StructureScanInput): StructureScanResult {
 
   const bestMatch = scoredMatches[0] ?? null
   const message = bestMatch
-    ? "Local database match generated. This is a deterministic educational estimate, not image recognition."
-    : "No confident local database match yet. Add a molecule name, formula, or structure hint to improve the scan."
+    ? "Local database match generated from the uploaded filename and manual chemistry hints."
+    : "No readable formula/name detected. Add a hint to improve matching."
 
   return {
     query: input,

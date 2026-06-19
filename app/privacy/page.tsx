@@ -31,6 +31,10 @@ const sections = [
     body: "Signed-in users may save XP, daily goal preference, selected curriculum, completed study sessions, completed exams, completed diagnostics, last and best diagnostic accuracy, achievement progress, topic mastery, concept mastery, curriculum unit progress, and mistake analytics derived from practice_progress rows. ARSHLAB uses this data to show adaptive recommendations, recovery sessions, placement summaries, curriculum dashboards, and progress dashboards.",
   },
   {
+    title: "Structure Scanner Images And Camera",
+    body: "The v5.0 Structure Scanner supports uploaded images only. Image previews, crop positioning, rotation, grayscale, and contrast adjustments run locally in the browser. Uploaded images are not permanently stored, are not included in local scan history, and are not sent to ARSHLAB, Supabase, OpenRouter, or another image service. Local scan history stores only match labels, confidence, functional-group labels, timestamps, and corrections. Live camera access is not enabled in v5.0.",
+  },
+  {
     title: "Curriculum Labels",
     body: "Curriculum labels describe study style and topic alignment. ARSHLAB does not claim official syllabus coverage, official placement, official exam prediction, or endorsement by any examination board or institution.",
   },
@@ -65,7 +69,7 @@ export default function PrivacyPage() {
         <Card className="rounded-2xl">
           <CardHeader>
             <CardTitle>ARSHLAB Privacy Policy</CardTitle>
-            <p className="text-sm text-muted-foreground">Last updated: June 10, 2026</p>
+            <p className="text-sm text-muted-foreground">Last updated: June 19, 2026</p>
           </CardHeader>
           <CardContent className="space-y-5">
             {sections.map((section) => (
