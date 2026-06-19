@@ -24,6 +24,7 @@ const REVIEW_TOPICS = [
   "IR Spectroscopy",
   "NMR Spectroscopy",
   "Mass Spectrometry",
+  "Lab Skills",
   "Reaction Types",
   "Reaction Prediction",
   "Reaction Balancing",

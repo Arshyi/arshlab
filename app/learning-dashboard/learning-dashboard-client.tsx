@@ -12,6 +12,7 @@ import {
   Calculator,
   CheckCircle2,
   ClipboardCheck,
+  ClipboardList,
   Database,
   FlaskConical,
   Gauge,
@@ -72,6 +73,7 @@ import {
   readSynthesisHistory,
 } from "@/lib/synthesis/pathfinder"
 import type { SynthesisExplorerStats } from "@/lib/synthesis/pathway-types"
+import { getLabTechnique } from "@/lib/lab/lab-engine"
 import { cn } from "@/lib/utils"
 
 function readinessVariant(score: number): "default" | "secondary" | "destructive" {
@@ -218,6 +220,29 @@ export function LearningDashboardClient() {
   }, {})
   const mostStudiedSpectroscopyCategory =
     Object.entries(spectroscopyCategoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "No attempts yet"
+  const labEntries = entries.filter(
+    (entry) =>
+      entry.topic === "Lab Skills" ||
+      /lab|laboratory|glassware|titration|meniscus|burette|pipette|tlc|safety|waste|ppe|error/i.test(
+        `${entry.topic} ${entry.subtopic} ${entry.questionType ?? ""}`,
+      ),
+  )
+  const labCorrect = labEntries.filter((entry) => entry.correct).length
+  const labAccuracy = labEntries.length ? Math.round((labCorrect / labEntries.length) * 100) : 0
+  const weakestLabTechniques = summary.conceptStats
+    .filter(
+      (concept) =>
+        concept.topic === "Lab Skills" ||
+        /lab|titration|meniscus|burette|pipette|tlc|safety|waste|glassware|error/i.test(concept.subtopic),
+    )
+    .filter((concept) => concept.missed > 0)
+    .slice(0, 4)
+  const labCategoryCounts = labEntries.reduce<Record<string, number>>((counts, entry) => {
+    const category = getLabTechnique(entry.subtopic)?.category ?? "Lab Skills"
+    counts[category] = (counts[category] ?? 0) + 1
+    return counts
+  }, {})
+  const mostStudiedLabCategory = Object.entries(labCategoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "No attempts yet"
   const formulaMastery = formulaStats ? formulaMasteryProgress(formulaStats) : 0
   const formulaCategoriesStudied = formulaStats ? Object.keys(formulaStats.categoryViews).length : 0
   const topFormulaIds = formulaStats ? mostViewedFormulaIds(formulaStats, 4) : []
@@ -254,7 +279,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.8.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, adaptive study mode, context-aware deep links, the Structure Scanner, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
+            ARSHLAB v4.9.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, context-aware deep links, the Structure Scanner, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -689,6 +714,45 @@ export function LearningDashboardClient() {
                 </div>
                 <Button asChild className="rounded-xl">
                   <Link href="/spectroscopy-explorer">Open Spectroscopy Explorer</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6 rounded-2xl border-teal-500/20 bg-teal-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ClipboardList className="h-5 w-5" />
+                  Lab Skills Mastery
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="rounded-xl border border-border bg-background/80 p-4">
+                  <p className="text-3xl font-bold">{labAccuracy}%</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {labCorrect}/{labEntries.length} lab questions correct
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold">Weakest lab techniques</p>
+                  {weakestLabTechniques.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {weakestLabTechniques.map((concept) => (
+                        <Badge key={`${concept.topic}-${concept.subtopic}`} variant="outline" className="rounded-full">
+                          {concept.subtopic}: {concept.correct}/{concept.attempted}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Generate deterministic lab skills practice to track safety, glassware, technique, and error-analysis mastery.
+                    </p>
+                  )}
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Most studied lab category: {mostStudiedLabCategory}
+                  </p>
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/lab-explorer">Open Lab Explorer</Link>
                 </Button>
               </CardContent>
             </Card>

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Calculator, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, GraduationCap, Database, ListChecks, Gauge, Route, Network, ScanSearch } from "lucide-react"
+import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Calculator, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, ClipboardList, GraduationCap, Database, ListChecks, Gauge, Route, Network, ScanSearch } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -98,6 +98,12 @@ const features = [
     title: "Molecular Structure Scanner",
     description: "Upload or describe a structure, match it against local chemistry records, and jump into visualizers, reactions, practice, exams, formulas, and curriculum.",
     href: "/structure-scanner",
+  },
+  {
+    icon: ClipboardList,
+    title: "Lab Explorer",
+    description: "Study deterministic lab techniques, glassware, safety, common mistakes, lab-report checklists, and error analysis.",
+    href: "/lab-explorer",
   },
   {
     icon: Route,

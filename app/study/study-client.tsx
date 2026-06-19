@@ -73,6 +73,7 @@ const topics = [
   "Spectroscopy",
   "NMR Spectroscopy",
   "Mass Spectrometry",
+  "Lab Skills",
   "Thermodynamics",
   "Electron Configuration",
   "IR Spectroscopy",

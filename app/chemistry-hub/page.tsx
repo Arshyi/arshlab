@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Atom, Award, Beaker, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ListChecks, Waves, Network, ScanSearch } from "lucide-react"
+import { ArrowRightLeft, Atom, Award, Beaker, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ClipboardList, ListChecks, Waves, Network, ScanSearch } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -19,6 +19,7 @@ const LAB_LINKS = [
   { href: "/chemistry-solver", label: "Chemistry Solver" },
   { href: "/chemistry-database", label: "Chemistry Database" },
   { href: "/structure-scanner", label: "Structure Scanner" },
+  { href: "/lab-explorer", label: "Lab Explorer" },
   { href: "/synthesis-explorer", label: "Synthesis Explorer" },
   { href: "/molecular-visualizer", label: "Molecular Visualizer" },
   { href: "/reaction-explorer", label: "Reaction Explorer" },
@@ -282,6 +283,13 @@ export default function ChemistryHubPage() {
             description="Upload or describe a molecule and match it against ARSHLAB's local chemistry database with deep links into the learning tools."
             href="/structure-scanner"
             action="Open Scanner"
+          />
+          <HubActionCard
+            icon={ClipboardList}
+            title="Lab Explorer"
+            description="Review lab techniques, glassware, safety, common mistakes, lab-report checklists, and deterministic lab skills practice."
+            href="/lab-explorer"
+            action="Open Lab Explorer"
           />
           <HubActionCard
             icon={Route}

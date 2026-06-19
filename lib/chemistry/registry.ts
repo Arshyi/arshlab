@@ -36,8 +36,9 @@ import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-data
 import { getSynthesisPathfinderMetrics } from "@/lib/synthesis/pathfinder"
 import { getReactionConditionMetrics } from "@/lib/reaction-conditions/reaction-conditions"
 import { getSpectroscopyMetrics } from "@/lib/spectroscopy/spectroscopy-engine"
+import { getLabMetrics } from "@/lib/lab/lab-engine"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.8.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.9.0"
 
 const mechanismMetrics = getMechanismMetrics()
 const solverMetrics = getSolverMetrics()
@@ -48,6 +49,7 @@ const structureScannerMetrics = getStructureScannerMetrics()
 const synthesisPathfinderMetrics = getSynthesisPathfinderMetrics()
 const reactionConditionMetrics = getReactionConditionMetrics()
 const spectroscopyExplorerMetrics = getSpectroscopyMetrics()
+const labMetrics = getLabMetrics()
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,
@@ -90,6 +92,9 @@ export const CHEMISTRY_KNOWLEDGE_CORE_META = {
     spectroscopyExplorerSignals: spectroscopyExplorerMetrics.signalRecords,
     spectroscopyExplorerCompoundProfiles: spectroscopyExplorerMetrics.compoundProfiles,
     spectroscopyExplorerReactionChanges: spectroscopyExplorerMetrics.reactionChangeRecords,
+    labTechniques: labMetrics.techniques,
+    labCategories: labMetrics.categories,
+    labEquipmentItems: labMetrics.equipmentItems,
   },
 }
 

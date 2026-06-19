@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Map, Check, Hammer, Lightbulb, Waves } from "lucide-react"
+import { Map, Check, Hammer, Lightbulb, ClipboardList } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
@@ -54,6 +54,7 @@ const completed = [
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
+  "Lab Explorer",
 ]
 
 const inDevelopment = [
@@ -178,15 +179,16 @@ export default function RoadmapPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
-                  <Waves className="h-4 w-4" />
+                  <ClipboardList className="h-4 w-4" />
                 </div>
-                Spectroscopy Explorer
+                Lab Explorer
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: deterministic IR, 1H NMR, 13C NMR, and mass spectrometry records
-                connect compound spectra, reaction spectral changes, practice, exams, and learning analytics.
+                Now available: deterministic lab technique records connect safety, glassware,
+                procedures, common mistakes, lab-report checklists, practice, exams, and
+                learning analytics.
               </p>
             </CardContent>
           </Card>
@@ -198,7 +200,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v4.8.0 - Spectroscopy Explorer
+          ARSHLAB v4.9.0 - Lab Explorer
         </motion.p>
       </div>
     </div>

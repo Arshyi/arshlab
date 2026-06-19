@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.8.0",
+    version: "4.9.0",
     date: "Current",
+    status: "released",
+    title: "Lab Explorer",
+    changes: [
+      "Added /lab-explorer with a deterministic searchable lab technique database",
+      "Added local lab records for titration, pipetting, burette reading, meniscus reading, filtration, recrystallization, distillation, extraction, TLC, IR sample prep, NMR sample prep, calorimetry, safety symbols, PPE, waste disposal, and common lab glassware",
+      "Added technique detail panels with equipment, step-by-step procedure, common mistakes, safety notes, exam clues, and lab-report checklist items",
+      "Added deterministic lab skills question templates for safety, meniscus/titration concepts, glassware identification, technique selection, and error analysis",
+      "Added Lab Skills coverage to Practice Generator, Exam Generator, Study Mode, Curriculum, and subtopic mastery classification",
+      "Added Lab Skills Mastery to the Learning Dashboard",
+      "Added Lab Explorer links to the homepage, Chemistry Hub, Tools menu, Curriculum Roadmaps, Roadmap, and Patch Notes",
+      "Kept OpenRouter configuration, AI routes, auth, middleware, guardrails, solver calculations, uploads, and camera features unchanged",
+    ],
+  },
+  {
+    version: "4.8.0",
+    date: "Previous",
     status: "released",
     title: "Spectroscopy Explorer",
     changes: [

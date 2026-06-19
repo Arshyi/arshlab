@@ -81,5 +81,8 @@ export interface QuestionEngineStats {
     carbonNmrSignals: number
     massSpecSignals: number
     compoundSpectroscopyProfiles: number
+    labTechniques: number
+    labCategories: number
+    labEquipmentItems: number
   }
 }

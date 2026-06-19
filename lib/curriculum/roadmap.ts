@@ -7,6 +7,7 @@ import {
   solverModuleHref,
 } from "@/lib/deep-links"
 import { synthesisExplorerHref } from "@/lib/synthesis/pathfinder"
+import { labExplorerHref } from "@/lib/lab/lab-engine"
 
 export type CurriculumRoadmapId = "general-chemistry" | "organic-chemistry"
 
@@ -67,6 +68,10 @@ function topicUsesSpectroscopy(topic: string): boolean {
   return /spectroscopy|functional group|structure|aromatic|alkene|alkyne|alcohol|carbonyl|carboxylic|ester|organic/i.test(topic)
 }
 
+function topicUsesLabSkills(topic: string): boolean {
+  return /lab|laboratory|titration|measurement|data quality|solution|acid|base|thermo|organic|spectroscopy|separation/i.test(topic)
+}
+
 function toolLinksForTopic(topic: string): CurriculumToolLink[] {
   const query = encodedTopic(topic)
   const targets = getTopicDeepLinkTargets(topic)
@@ -123,6 +128,14 @@ function toolLinksForTopic(topic: string): CurriculumToolLink[] {
         ? `/spectroscopy-explorer?compound=${encodeURIComponent(targets.compoundId)}`
         : `/spectroscopy-explorer?topic=${encodeURIComponent(topic)}`,
       description: "Interpret IR, 1H NMR, 13C NMR, and mass spectrometry evidence for this topic.",
+    })
+  }
+
+  if (topicUsesLabSkills(topic)) {
+    links.push({
+      label: "Lab Explorer",
+      href: labExplorerHref({ technique: topic.toLowerCase().includes("titration") ? "titration" : undefined }),
+      description: "Review lab techniques, safety notes, glassware, common mistakes, and lab-report checklists.",
     })
   }
 
@@ -222,6 +235,15 @@ export const CURRICULUM_ROADMAPS: CurriculumRoadmap[] = [
         difficulty: "Introductory",
         prerequisites: ["Atomic Structure"],
         recommendedNextTopics: ["Solutions", "Gas Laws"],
+      }),
+      topic({
+        id: "general-laboratory-skills",
+        title: "Laboratory Skills",
+        description:
+          "Build first-year lab technique fluency: safety, glassware, meniscus reading, titration, calorimetry, separation, and error analysis.",
+        difficulty: "Introductory",
+        prerequisites: ["Stoichiometry"],
+        recommendedNextTopics: ["Solutions", "Thermochemistry", "Acids and Bases"],
       }),
       topic({
         id: "general-solutions",

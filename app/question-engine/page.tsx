@@ -41,7 +41,7 @@ export default function QuestionEnginePage() {
             </div>
           </div>
           <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-            ARSHLAB v4.8.0
+            ARSHLAB v4.9.0
           </Badge>
         </div>
 
@@ -61,6 +61,8 @@ export default function QuestionEnginePage() {
           <MetricCard label="Solver Modules" value={stats.databaseCounts.solverModules} />
           <MetricCard label="Solver Examples" value={stats.databaseCounts.solverExamples} />
           <MetricCard label="Formula Records" value={stats.databaseCounts.formulaRecords} />
+          <MetricCard label="Lab Techniques" value={stats.databaseCounts.labTechniques} />
+          <MetricCard label="Lab Equipment" value={stats.databaseCounts.labEquipmentItems} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">

@@ -73,6 +73,7 @@ const topics = [
   "Spectroscopy",
   "NMR Spectroscopy",
   "Mass Spectrometry",
+  "Lab Skills",
   "Thermodynamics",
   "Electron Configuration",
   "IR Spectroscopy",
@@ -107,6 +108,10 @@ const questionTypes = [
   "IR interpretation",
   "NMR interpretation",
   "Mass Spec interpretation",
+  "Lab safety question",
+  "Glassware identification",
+  "Technique selection",
+  "Error analysis",
   "Calculation question",
   "Worked example",
 ]

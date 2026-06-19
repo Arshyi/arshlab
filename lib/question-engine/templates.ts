@@ -16,11 +16,13 @@ import { ADVANCED_SPECTROSCOPY_QUESTION_TEMPLATES } from "./advanced-spectroscop
 import { REACTION_QUESTION_TEMPLATES } from "./reaction-templates"
 import { MECHANISM_QUESTION_TEMPLATES } from "./mechanism-templates"
 import { SOLVER_QUESTION_TEMPLATES } from "./solver-templates"
+import { LAB_QUESTION_TEMPLATES } from "./lab-templates"
 import { BALANCING_EXERCISES } from "@/lib/reaction-engine/balancer"
 import { getMechanismMetrics } from "@/lib/chemistry/mechanisms"
 import { getSolverMetrics } from "@/lib/solver-engine"
 import { getFormulaMetrics } from "@/lib/formula-sheet"
 import { getSpectroscopyMetrics } from "@/lib/spectroscopy/spectroscopy-engine"
+import { getLabMetrics } from "@/lib/lab/lab-engine"
 
 const choiceLabels = ["A", "B", "C", "D"]
 
@@ -464,6 +466,7 @@ export const DATABASE_QUESTION_TEMPLATES: QuestionTemplate[] = [
   ...SOLVER_QUESTION_TEMPLATES,
   ...SPECTROSCOPY_QUESTION_TEMPLATES,
   ...ADVANCED_SPECTROSCOPY_QUESTION_TEMPLATES,
+  ...LAB_QUESTION_TEMPLATES,
 ]
 
 export function getQuestionEngineTemplateCoverage(): number {
@@ -476,6 +479,7 @@ export function getQuestionEngineDatabaseCounts() {
   const solverMetrics = getSolverMetrics()
   const formulaMetrics = getFormulaMetrics()
   const spectroscopyMetrics = getSpectroscopyMetrics()
+  const labMetrics = getLabMetrics()
   return {
     compounds: CHEMISTRY_KNOWLEDGE_CORE_META.counts.compounds,
     ions: CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions,
@@ -497,5 +501,8 @@ export function getQuestionEngineDatabaseCounts() {
     carbonNmrSignals: spectroscopyMetrics.carbonNmrSignals,
     massSpecSignals: spectroscopyMetrics.massSpecSignals,
     compoundSpectroscopyProfiles: spectroscopyMetrics.compoundProfiles,
+    labTechniques: labMetrics.techniques,
+    labCategories: labMetrics.categories,
+    labEquipmentItems: labMetrics.equipmentItems,
   }
 }
