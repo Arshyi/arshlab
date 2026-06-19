@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Beaker, BookOpenCheck, Database, Filter, Search } from "lucide-react"
+import { ArrowRightLeft, Beaker, BookOpenCheck, Database, Filter, Search, Waves } from "lucide-react"
 import { ReactionDiagram } from "@/components/chemistry/ReactionDiagram"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,7 @@ import {
   getReactionConditionMetrics,
   getReactionConditionsForRecord,
 } from "@/lib/reaction-conditions/reaction-conditions"
+import { getReactionSpectralChanges } from "@/lib/spectroscopy/spectroscopy-engine"
 import { classifyReaction } from "@/lib/reaction-engine/classifier"
 import { predictReaction } from "@/lib/reaction-engine/predictor"
 import { cn } from "@/lib/utils"
@@ -50,6 +51,7 @@ function recordMatches(record: ReactionRecord, query: string): boolean {
   if (!query.trim()) return true
   const q = normalize(query)
   const conditions = getReactionConditionsForRecord(record)
+  const spectralChanges = getReactionSpectralChanges(record.id)
   return normalize(
     [
       record.name,
@@ -65,6 +67,10 @@ function recordMatches(record: ReactionRecord, query: string): boolean {
       conditions.temperature,
       conditions.mechanismFamily,
       conditions.safetyNotes.join(" "),
+      spectralChanges?.irChanges.join(" ") ?? "",
+      spectralChanges?.protonNmrChanges.join(" ") ?? "",
+      spectralChanges?.carbonNmrChanges.join(" ") ?? "",
+      spectralChanges?.massSpecChanges.join(" ") ?? "",
       ...record.reactants,
       ...record.products,
       ...record.curriculum,
@@ -113,6 +119,7 @@ export function ReactionDatabaseClient() {
   const prediction = selected ? predictReaction(selected.reactants) : null
   const classification = selected ? classifyReaction(selected.balancedEquation) : null
   const selectedConditions = selected ? getReactionConditionsForRecord(selected) : null
+  const selectedSpectralChanges = selected ? getReactionSpectralChanges(selected.id) : null
 
   useEffect(() => {
     document.getElementById("reaction-viewer")?.scrollIntoView({ block: "start" })
@@ -149,7 +156,7 @@ export function ReactionDatabaseClient() {
             </div>
             <div className="flex flex-wrap gap-2 sm:justify-end">
               <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-                ARSHLAB v4.7.0
+                ARSHLAB v4.8.0
               </Badge>
               <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
                 Database mode = no AI usage
@@ -300,6 +307,24 @@ export function ReactionDatabaseClient() {
                         <InfoBlock label="Common mistakes" value={selectedConditions.commonMistakes.join(" | ")} />
                       </CardContent>
                     </Card>
+                  )}
+
+                  {selectedSpectralChanges && (
+                    <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-4">
+                      <div className="mb-3 flex items-center gap-2">
+                        <Waves className="h-5 w-5" />
+                        <h3 className="font-semibold">Expected Spectral Changes</h3>
+                      </div>
+                      <div className="grid gap-3">
+                        <InfoBlock label="Transformation" value={`${selectedSpectralChanges.reactantClass} -> ${selectedSpectralChanges.productClass}`} />
+                        <InfoBlock label="IR" value={selectedSpectralChanges.irChanges.join(" | ")} />
+                        <InfoBlock label="1H NMR" value={selectedSpectralChanges.protonNmrChanges.join(" | ")} />
+                        <InfoBlock label="13C NMR" value={selectedSpectralChanges.carbonNmrChanges.join(" | ")} />
+                      </div>
+                      <p className="mt-3 rounded-xl border border-border bg-background/80 p-3 text-sm text-muted-foreground">
+                        {selectedSpectralChanges.explanation}
+                      </p>
+                    </div>
                   )}
 
                   <p className="rounded-xl border border-border bg-background/80 p-3 text-sm text-muted-foreground">

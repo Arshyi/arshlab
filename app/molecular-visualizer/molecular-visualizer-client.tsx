@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Database, Network, Search, Sparkles } from "lucide-react"
+import { ArrowRightLeft, Database, Network, Search, Sparkles, Waves } from "lucide-react"
 import { CompoundPathwayGraph } from "@/components/chemistry/CompoundPathwayGraph"
 import { ElementColorLegend, Molecule2DRenderer } from "@/components/chemistry/Molecule2DRenderer"
 import { ReactionDiagram } from "@/components/chemistry/ReactionDiagram"
@@ -15,6 +15,11 @@ import { COMPOUND_PATHWAYS, MOLECULAR_STRUCTURES } from "@/lib/chemistry/structu
 import { REACTION_RECORDS } from "@/lib/chemistry/reactions"
 import { deepLinkSlug, resolveCompoundDeepLink } from "@/lib/deep-links"
 import { synthesisExplorerHref } from "@/lib/synthesis/pathfinder"
+import {
+  getCompoundSpectroscopyProfile,
+  getExpectedIrSignals,
+  spectroscopyExplorerHref,
+} from "@/lib/spectroscopy/spectroscopy-engine"
 import type { ReactionRecord } from "@/lib/chemistry/reaction-types"
 import type { MoleculeDisplayMode } from "@/lib/chemistry/visualization-types"
 import { cn } from "@/lib/utils"
@@ -80,6 +85,8 @@ export function MolecularVisualizerClient() {
     filteredStructures[0] ??
     MOLECULAR_STRUCTURES[0]
   const availableHighlights = selectedStructure?.functionalGroupHighlights ?? []
+  const spectroscopyProfile = getCompoundSpectroscopyProfile(selectedStructure?.compoundId ?? selectedStructure?.id)
+  const expectedIrSignals = getExpectedIrSignals(spectroscopyProfile)
   const reaction =
     REACTION_RECORDS.find((record) => record.id === reactionId) ??
     REACTION_RECORDS.find((record) => reactionExampleIds.includes(record.id)) ??
@@ -114,7 +121,7 @@ export function MolecularVisualizerClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v4.7.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v4.8.0</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                 </div>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Molecular Visualizer</h1>
@@ -130,6 +137,11 @@ export function MolecularVisualizerClient() {
               <Button asChild className="rounded-xl">
                 <Link href={synthesisExplorerHref(selectedStructure?.compoundId ?? selectedStructure?.id)}>
                   Explore Synthesis
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href={spectroscopyExplorerHref({ compound: selectedStructure?.compoundId ?? selectedStructure?.id })}>
+                  Expected Spectroscopy
                 </Link>
               </Button>
             </div>
@@ -254,6 +266,46 @@ export function MolecularVisualizerClient() {
               </CardContent>
             </Card>
 
+            <Card className="rounded-2xl border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Waves className="h-5 w-5" />
+                  Expected Spectroscopy
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {spectroscopyProfile ? (
+                  <>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{spectroscopyProfile.notes}</p>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <SpectraMiniList title="IR" items={expectedIrSignals.map((signal) => `${signal.signal}: ${signal.range}`)} />
+                      <SpectraMiniList
+                        title="1H NMR"
+                        items={spectroscopyProfile.protonNmr.map((signal) => `${signal.environment}: ${signal.shiftRange}`)}
+                      />
+                      <SpectraMiniList
+                        title="13C NMR"
+                        items={spectroscopyProfile.carbonNmr.map((signal) => `${signal.environment}: ${signal.shiftRange}`)}
+                      />
+                      <SpectraMiniList
+                        title="Mass Spec"
+                        items={spectroscopyProfile.massSpec.map((signal) => `${signal.peak} m/z ${signal.mz}`)}
+                      />
+                    </div>
+                    <Button asChild className="rounded-xl">
+                      <Link href={spectroscopyExplorerHref({ compound: spectroscopyProfile.compoundId })}>
+                        Open Spectroscopy Explorer
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                    No expected spectra profile is attached to this local structure yet.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Card className="rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -336,6 +388,25 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     <div className="rounded-xl border border-border bg-secondary/20 px-3 py-2">
       <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
+    </div>
+  )
+}
+
+function SpectraMiniList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="rounded-xl border border-border bg-background/80 p-3">
+      <p className="text-sm font-semibold">{title}</p>
+      <div className="mt-2 space-y-1">
+        {items.length ? (
+          items.slice(0, 3).map((item) => (
+            <p key={item} className="text-xs leading-relaxed text-muted-foreground">
+              {item}
+            </p>
+          ))
+        ) : (
+          <p className="text-xs text-muted-foreground">No local signals listed yet.</p>
+        )}
+      </div>
     </div>
   )
 }

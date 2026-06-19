@@ -22,6 +22,8 @@ const REVIEW_TOPICS = [
   "Stoichiometry",
   "Electron Configuration",
   "IR Spectroscopy",
+  "NMR Spectroscopy",
+  "Mass Spectrometry",
   "Reaction Types",
   "Reaction Prediction",
   "Reaction Balancing",

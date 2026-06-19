@@ -12,6 +12,7 @@ import type { Compound, FunctionalGroup, Ion, ReactionTemplate } from "@/lib/che
 import type { ElementRecord } from "@/lib/chemistry/database/types"
 import type { Question, QuestionChoice, QuestionTemplate, QuestionTemplateContext } from "./types"
 import { SPECTROSCOPY_QUESTION_TEMPLATES } from "./spectroscopy-templates"
+import { ADVANCED_SPECTROSCOPY_QUESTION_TEMPLATES } from "./advanced-spectroscopy-templates"
 import { REACTION_QUESTION_TEMPLATES } from "./reaction-templates"
 import { MECHANISM_QUESTION_TEMPLATES } from "./mechanism-templates"
 import { SOLVER_QUESTION_TEMPLATES } from "./solver-templates"
@@ -19,6 +20,7 @@ import { BALANCING_EXERCISES } from "@/lib/reaction-engine/balancer"
 import { getMechanismMetrics } from "@/lib/chemistry/mechanisms"
 import { getSolverMetrics } from "@/lib/solver-engine"
 import { getFormulaMetrics } from "@/lib/formula-sheet"
+import { getSpectroscopyMetrics } from "@/lib/spectroscopy/spectroscopy-engine"
 
 const choiceLabels = ["A", "B", "C", "D"]
 
@@ -461,6 +463,7 @@ export const DATABASE_QUESTION_TEMPLATES: QuestionTemplate[] = [
   ...MECHANISM_QUESTION_TEMPLATES,
   ...SOLVER_QUESTION_TEMPLATES,
   ...SPECTROSCOPY_QUESTION_TEMPLATES,
+  ...ADVANCED_SPECTROSCOPY_QUESTION_TEMPLATES,
 ]
 
 export function getQuestionEngineTemplateCoverage(): number {
@@ -472,6 +475,7 @@ export function getQuestionEngineDatabaseCounts() {
   const mechanismMetrics = getMechanismMetrics()
   const solverMetrics = getSolverMetrics()
   const formulaMetrics = getFormulaMetrics()
+  const spectroscopyMetrics = getSpectroscopyMetrics()
   return {
     compounds: CHEMISTRY_KNOWLEDGE_CORE_META.counts.compounds,
     ions: CHEMISTRY_KNOWLEDGE_CORE_META.counts.ions,
@@ -488,5 +492,10 @@ export function getQuestionEngineDatabaseCounts() {
     solverModules: solverMetrics.solverModules,
     solverExamples: solverMetrics.workedExamplesGenerated,
     formulaRecords: formulaMetrics.formulas,
+    spectroscopySignals: spectroscopyMetrics.signalRecords,
+    protonNmrSignals: spectroscopyMetrics.protonNmrSignals,
+    carbonNmrSignals: spectroscopyMetrics.carbonNmrSignals,
+    massSpecSignals: spectroscopyMetrics.massSpecSignals,
+    compoundSpectroscopyProfiles: spectroscopyMetrics.compoundProfiles,
   }
 }

@@ -71,6 +71,8 @@ const topics = [
   "VSEPR Geometry",
   "Periodic Trends",
   "Spectroscopy",
+  "NMR Spectroscopy",
+  "Mass Spectrometry",
   "Thermodynamics",
   "Electron Configuration",
   "IR Spectroscopy",
@@ -102,6 +104,9 @@ const questionTypes = [
   "Determine product",
   "Determine reagent",
   "What reagent is required?",
+  "IR interpretation",
+  "NMR interpretation",
+  "Mass Spec interpretation",
   "Calculation question",
   "Worked example",
 ]

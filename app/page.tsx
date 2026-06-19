@@ -176,6 +176,12 @@ const features = [
     description: "Explore all 9 IB HL functional groups with properties, naming rules, and spectroscopy hints.",
   },
   {
+    icon: Waves,
+    title: "Spectroscopy Explorer",
+    description: "Interpret deterministic IR, 1H NMR, 13C NMR, and mass spectrometry clues with compound spectra and practice links.",
+    href: "/spectroscopy-explorer",
+  },
+  {
     icon: Radio,
     title: "Spectroscopy Reference",
     description: "Study deterministic IR peak ranges for functional groups and practice offline spectroscopy questions.",

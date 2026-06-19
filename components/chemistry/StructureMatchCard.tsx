@@ -8,6 +8,7 @@ import {
   Network,
   Sigma,
   Target,
+  Waves,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,6 +22,7 @@ import {
   reactionExplorerHref,
   reactionHref,
 } from "@/lib/deep-links"
+import { spectroscopyExplorerHref } from "@/lib/spectroscopy/spectroscopy-engine"
 import type { StructureScanMatch } from "@/lib/structure-scanner/scanner-types"
 
 interface StructureMatchCardProps {
@@ -127,6 +129,7 @@ export function StructureMatchCard({ match, primary = false }: StructureMatchCar
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <ActionLink href={molecularVisualizerHref(visualizerId)} icon={Network} label="Open Molecular Visualizer" />
             <ActionLink href={reactionExplorerHref(undefined, record.name)} icon={Sigma} label="Open Reaction Explorer" />
+            <ActionLink href={spectroscopyExplorerHref({ compound: record.id })} icon={Waves} label="View Spectra" />
             <ActionLink href={practiceHref(record.practiceTopic)} icon={Target} label="Practice This" />
             <ActionLink href={examHref(record.examTopic)} icon={FileQuestion} label="Generate Exam Set" />
             <ActionLink href={formulaHref(record.formulaId ?? "organic-homologous-series")} icon={BookOpenCheck} label="Open Formula Sheet" />

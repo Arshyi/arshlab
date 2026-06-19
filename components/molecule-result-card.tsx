@@ -33,6 +33,7 @@ import {
   getStudyNotes,
 } from "@/lib/chemistry/functional-group-detection"
 import { getSpectroscopyForCompound } from "@/lib/chemistry/spectroscopy"
+import { spectroscopyExplorerHref } from "@/lib/spectroscopy/spectroscopy-engine"
 import { getFgColors } from "@/lib/fg-colors"
 
 const MoleculeViewer3D = dynamic(
@@ -348,7 +349,7 @@ export function MoleculeResultCard({
                 IUPAC hint: <span className="font-mono text-foreground">{compound.condensed}</span>
               </p>
               {hasSpectroscopy && (
-                <Link href={`/spectroscopy-lab?q=${encodeURIComponent(compound.name)}`}>
+                <Link href={spectroscopyExplorerHref({ compound: compound.name })}>
                   <Button variant="outline" size="sm" className="mt-2 rounded-lg gap-1.5">
                     <Radio className="h-3.5 w-3.5" />
                     View Spectra

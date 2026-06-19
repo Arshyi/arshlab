@@ -86,6 +86,9 @@ const TOPIC_ALIASES: Record<string, string> = {
   periodicity: "Periodic Trends",
   spectroscopy: "Spectroscopy",
   "ir-spectroscopy": "IR Spectroscopy",
+  "nmr-spectroscopy": "NMR Spectroscopy",
+  "mass-spectrometry": "Mass Spectrometry",
+  "spectroscopy-and-structure-identification": "Spectroscopy",
   thermodynamics: "Thermodynamics",
   thermochemistry: "Thermodynamics",
   "electron-configuration": "Electron Configuration",
@@ -264,6 +267,13 @@ const CURRICULUM_TOPIC_TARGETS: Record<string, TopicDeepLinkTargets> = {
     solverModuleId: "stoichiometry",
     practiceTopic: "Functional Group Identification",
     examTopic: "Functional Group Identification",
+    compoundId: "ethanol",
+  },
+  "spectroscopy-and-structure-identification": {
+    formulaId: "organic-degree-unsaturation",
+    solverModuleId: "stoichiometry",
+    practiceTopic: "Spectroscopy",
+    examTopic: "Spectroscopy",
     compoundId: "ethanol",
   },
   nomenclature: {

@@ -76,5 +76,10 @@ export interface QuestionEngineStats {
     solverModules: number
     solverExamples: number
     formulaRecords: number
+    spectroscopySignals: number
+    protonNmrSignals: number
+    carbonNmrSignals: number
+    massSpecSignals: number
+    compoundSpectroscopyProfiles: number
   }
 }

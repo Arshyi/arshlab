@@ -71,6 +71,8 @@ const topics = [
   "VSEPR Geometry",
   "Periodic Trends",
   "Spectroscopy",
+  "NMR Spectroscopy",
+  "Mass Spectrometry",
   "Thermodynamics",
   "Electron Configuration",
   "IR Spectroscopy",

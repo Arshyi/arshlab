@@ -35,8 +35,9 @@ import { getKnowledgeGraphMetrics } from "@/lib/knowledge-graph/chemistry-graph"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
 import { getSynthesisPathfinderMetrics } from "@/lib/synthesis/pathfinder"
 import { getReactionConditionMetrics } from "@/lib/reaction-conditions/reaction-conditions"
+import { getSpectroscopyMetrics } from "@/lib/spectroscopy/spectroscopy-engine"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.7.0"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "4.8.0"
 
 const mechanismMetrics = getMechanismMetrics()
 const solverMetrics = getSolverMetrics()
@@ -46,6 +47,7 @@ const knowledgeGraphMetrics = getKnowledgeGraphMetrics()
 const structureScannerMetrics = getStructureScannerMetrics()
 const synthesisPathfinderMetrics = getSynthesisPathfinderMetrics()
 const reactionConditionMetrics = getReactionConditionMetrics()
+const spectroscopyExplorerMetrics = getSpectroscopyMetrics()
 
 export const CHEMISTRY_KNOWLEDGE_CORE_META = {
   version: CHEMISTRY_KNOWLEDGE_CORE_VERSION,
@@ -85,6 +87,9 @@ export const CHEMISTRY_KNOWLEDGE_CORE_META = {
     reactionConditionRecords: reactionConditionMetrics.records,
     reactionConditionMechanismFamilies: reactionConditionMetrics.mechanismFamilies,
     reactionConditionReagentSets: reactionConditionMetrics.reagentSets,
+    spectroscopyExplorerSignals: spectroscopyExplorerMetrics.signalRecords,
+    spectroscopyExplorerCompoundProfiles: spectroscopyExplorerMetrics.compoundProfiles,
+    spectroscopyExplorerReactionChanges: spectroscopyExplorerMetrics.reactionChangeRecords,
   },
 }
 

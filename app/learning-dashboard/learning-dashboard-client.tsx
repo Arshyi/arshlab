@@ -23,6 +23,7 @@ import {
   ScanSearch,
   Target,
   Trophy,
+  Waves,
   Zap,
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -181,6 +182,42 @@ export function LearningDashboardClient() {
   const missedReagents = summary.conceptStats
     .filter((concept) => concept.topic === "Reaction Conditions" && concept.missed > 0)
     .slice(0, 4)
+  const spectroscopyTopics = new Set(["Spectroscopy", "IR Spectroscopy", "NMR Spectroscopy", "Mass Spectrometry"])
+  const spectroscopyEntries = entries.filter(
+    (entry) =>
+      spectroscopyTopics.has(entry.topic) ||
+      /spectroscopy|nmr|mass spec|molecular ion|base peak|carbonyl/i.test(`${entry.topic} ${entry.subtopic} ${entry.questionType ?? ""}`),
+  )
+  const spectroscopyCorrect = spectroscopyEntries.filter((entry) => entry.correct).length
+  const spectroscopyAccuracy = spectroscopyEntries.length
+    ? Math.round((spectroscopyCorrect / spectroscopyEntries.length) * 100)
+    : 0
+  const missedSpectroscopySignals = summary.conceptStats
+    .filter(
+      (concept) =>
+        spectroscopyTopics.has(concept.topic) ||
+        /nmr|mass|spectroscopy|carbonyl|base peak|molecular ion|isotope/i.test(`${concept.topic} ${concept.subtopic}`),
+    )
+    .filter((concept) => concept.missed > 0)
+    .slice(0, 4)
+  const spectroscopyCategoryCounts = spectroscopyEntries.reduce<Record<string, number>>((counts, entry) => {
+    const key =
+      entry.topic === "IR Spectroscopy"
+        ? "IR"
+        : entry.topic === "NMR Spectroscopy"
+          ? "NMR"
+          : entry.topic === "Mass Spectrometry"
+            ? "Mass Spec"
+            : /mass/i.test(entry.subtopic)
+              ? "Mass Spec"
+              : /nmr|ppm|proton|carbon/i.test(entry.subtopic)
+                ? "NMR"
+                : "Spectroscopy"
+    counts[key] = (counts[key] ?? 0) + 1
+    return counts
+  }, {})
+  const mostStudiedSpectroscopyCategory =
+    Object.entries(spectroscopyCategoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "No attempts yet"
   const formulaMastery = formulaStats ? formulaMasteryProgress(formulaStats) : 0
   const formulaCategoriesStudied = formulaStats ? Object.keys(formulaStats.categoryViews).length : 0
   const topFormulaIds = formulaStats ? mostViewedFormulaIds(formulaStats, 4) : []
@@ -217,7 +254,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v4.7.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, adaptive study mode, context-aware deep links, the Structure Scanner, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
+            ARSHLAB v4.8.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, adaptive study mode, context-aware deep links, the Structure Scanner, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -613,6 +650,45 @@ export function LearningDashboardClient() {
                   <Link href="/practice-generator?topic=Reaction%20Conditions&subtopic=Reagent%20Selection&source=database">
                     Practice Reagents
                   </Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6 rounded-2xl border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Waves className="h-5 w-5" />
+                  Spectroscopy Mastery
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="rounded-xl border border-border bg-background/80 p-4">
+                  <p className="text-3xl font-bold">{spectroscopyAccuracy}%</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {spectroscopyCorrect}/{spectroscopyEntries.length} spectroscopy questions correct
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold">Most missed signal types</p>
+                  {missedSpectroscopySignals.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {missedSpectroscopySignals.map((concept) => (
+                        <Badge key={`${concept.topic}-${concept.subtopic}`} variant="outline" className="rounded-full">
+                          {concept.subtopic}: {concept.correct}/{concept.attempted}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Generate deterministic spectroscopy practice to track missed IR, NMR, and mass spec signals.
+                    </p>
+                  )}
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Most studied category: {mostStudiedSpectroscopyCategory}
+                  </p>
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/spectroscopy-explorer">Open Spectroscopy Explorer</Link>
                 </Button>
               </CardContent>
             </Card>

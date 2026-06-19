@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "4.7.0",
+    version: "4.8.0",
     date: "Current",
+    status: "released",
+    title: "Spectroscopy Explorer",
+    changes: [
+      "Added /spectroscopy-explorer with deterministic IR, 1H NMR, 13C NMR, and mass spectrometry tabs",
+      "Added local spectroscopy records for O-H, N-H, C=O, C=C, C#C, C#N, aromatic, alkane C-H, alcohol, carboxylic acid, ester, ketone, aldehyde, amine, NMR, and mass spec clues",
+      "Added expected spectra profiles for common ARSHLAB compounds including ethanol, propanone, ethanal, ethanoic acid, ethyl ethanoate, benzene, and phenol",
+      "Added reaction spectral-change summaries such as alcohol to aldehyde/carboxylic acid and alkene to alcohol transformations",
+      "Added deterministic IR, NMR, mass spectrometry, and compound-spectra question templates to Practice Generator and Exam Generator database mode",
+      "Added Spectroscopy Mastery to the Learning Dashboard",
+      "Added Spectroscopy Explorer links to the homepage, Chemistry Hub, Tools menu, Curriculum Roadmaps, Structure Scanner, Molecular Visualizer, Roadmap, and Patch Notes",
+      "Kept OpenRouter configuration, AI routes, auth, middleware, guardrails, and solver calculations unchanged",
+    ],
+  },
+  {
+    version: "4.7.0",
+    date: "Previous",
     status: "released",
     title: "Reaction Conditions Engine",
     changes: [

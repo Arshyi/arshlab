@@ -63,6 +63,10 @@ function topicUsesReactionConditions(topic: string): boolean {
   return /reaction|alkene|alkane|alcohol|carbonyl|carboxylic|ester|acid|base|redox|electrochemistry|equilibrium|organic/i.test(topic)
 }
 
+function topicUsesSpectroscopy(topic: string): boolean {
+  return /spectroscopy|functional group|structure|aromatic|alkene|alkyne|alcohol|carbonyl|carboxylic|ester|organic/i.test(topic)
+}
+
 function toolLinksForTopic(topic: string): CurriculumToolLink[] {
   const query = encodedTopic(topic)
   const targets = getTopicDeepLinkTargets(topic)
@@ -109,6 +113,16 @@ function toolLinksForTopic(topic: string): CurriculumToolLink[] {
       label: "Reaction Conditions",
       href: `/reaction-database?query=${encodeURIComponent(topic)}#reaction-viewer`,
       description: "Review reagents, catalysts, temperature, safety notes, yields, and common mistakes.",
+    })
+  }
+
+  if (topicUsesSpectroscopy(topic)) {
+    links.push({
+      label: "Spectroscopy Explorer",
+      href: targets.compoundId
+        ? `/spectroscopy-explorer?compound=${encodeURIComponent(targets.compoundId)}`
+        : `/spectroscopy-explorer?topic=${encodeURIComponent(topic)}`,
+      description: "Interpret IR, 1H NMR, 13C NMR, and mass spectrometry evidence for this topic.",
     })
   }
 
@@ -279,7 +293,16 @@ export const CURRICULUM_ROADMAPS: CurriculumRoadmap[] = [
           "Recognize alcohols, amines, carbonyls, carboxylic acids, esters, amides, haloalkanes, alkenes, alkynes, and arenes.",
         difficulty: "Introductory",
         prerequisites: ["Bonding"],
-        recommendedNextTopics: ["Nomenclature", "Isomerism"],
+        recommendedNextTopics: ["Spectroscopy and Structure Identification", "Nomenclature", "Isomerism"],
+      }),
+      topic({
+        id: "organic-spectroscopy-structure-identification",
+        title: "Spectroscopy and Structure Identification",
+        description:
+          "Use IR, 1H NMR, 13C NMR, and mass spectrometry together to identify functional groups and likely structures.",
+        difficulty: "Intermediate",
+        prerequisites: ["Functional Groups"],
+        recommendedNextTopics: ["Nomenclature", "Isomerism", "Carbonyl Chemistry"],
       }),
       topic({
         id: "organic-nomenclature",
@@ -287,7 +310,7 @@ export const CURRICULUM_ROADMAPS: CurriculumRoadmap[] = [
         description:
           "Name carbon chains, substituents, locations, suffixes, prefixes, and priority functional groups.",
         difficulty: "Introductory",
-        prerequisites: ["Functional Groups"],
+        prerequisites: ["Functional Groups", "Spectroscopy and Structure Identification"],
         recommendedNextTopics: ["Isomerism", "Alkanes"],
       }),
       topic({
