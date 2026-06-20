@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.1.1",
+    version: "5.2.0",
     date: "Current",
+    status: "released",
+    title: "Structure Shape Detection",
+    changes: [
+      "Added browser-local dark-stroke extraction from the processed structure preview",
+      "Added deterministic line-segment, closed-loop, six-membered-ring, parallel-bond, and simple-chain heuristics",
+      "Added visual cues for aromatic rings, carbonyls, hydroxyl groups, carboxyl groups, and double bonds",
+      "Combined visual evidence with OCR, manual hints, filename hints, and existing database scoring",
+      "Added a Vision Debug Panel with line, loop, ring, functional-group, and candidate evidence",
+      "Added conservative visual uncertainty guidance and top candidate behavior",
+      "Added executable synthetic checks for benzene, methanal, ethanol, and blank-image fallback behavior",
+      "Kept image processing local with no AI, external chemistry API, camera, or permanent image storage",
+    ],
+  },
+  {
+    version: "5.1.1",
+    date: "Previous",
     status: "released",
     title: "OCR Scanner Accuracy Hardening",
     changes: [

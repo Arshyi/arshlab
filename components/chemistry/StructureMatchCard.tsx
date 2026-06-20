@@ -63,8 +63,8 @@ export function StructureMatchCard({ match, primary = false }: StructureMatchCar
         </div>
         <Progress value={match.confidence} />
         <p className="text-sm leading-relaxed text-muted-foreground">
-          {confidenceExplanation(match.confidence)} The weighted score combines formula, corrected formula,
-          name or alias, functional-group, filename, aromatic, and OCR-quality evidence.
+          {confidenceExplanation(match.confidence)} The weighted score combines visual structure, formula,
+          corrected formula, name or alias, functional-group, filename, aromatic, and OCR-quality evidence.
         </p>
       </CardHeader>
       <CardContent className="space-y-5">

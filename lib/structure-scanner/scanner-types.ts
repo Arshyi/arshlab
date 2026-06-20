@@ -1,3 +1,5 @@
+import type { StructureVisionAnalysis } from "../structure-vision/vision-types"
+
 export type StructureScannerDifficulty = "Introductory" | "Intermediate" | "Advanced"
 
 export interface ScannerRelatedLink {
@@ -41,6 +43,7 @@ export interface StructureScanInput {
   ocrText?: string
   ocrQuality?: number
   ocrFormulaCorrected?: boolean
+  visualAnalysis?: StructureVisionAnalysis
 }
 
 export interface StructureScanMatch {

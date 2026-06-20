@@ -22,6 +22,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { recognizeChemistryImage, type ChemistryOCRResult, type OCRProgressUpdate } from "@/lib/ocr/ocr-engine"
+import { analyzeStructureImage } from "@/lib/structure-vision/vision-engine"
+import type { StructureVisionAnalysis } from "@/lib/structure-vision/vision-types"
 import { scanStructure } from "@/lib/structure-scanner/scanner-engine"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
 import {
@@ -37,6 +39,7 @@ import type { StructureScanHistoryEntry, StructureScanResult } from "@/lib/struc
 import { StructureMatchCard } from "./StructureMatchCard"
 import { OCRDebugPanel } from "./OCRDebugPanel"
 import { StructurePreview } from "./StructurePreview"
+import { VisionDebugPanel } from "./VisionDebugPanel"
 
 const QUICK_HINTS = ["ethanol", "benzene", "aspirin", "acetone", "ethene", "ethanoic acid", "sodium chloride"]
 
@@ -57,6 +60,8 @@ export function StructureScanner() {
   const [ocrResult, setOCRResult] = useState<ChemistryOCRResult | null>(null)
   const [ocrProgress, setOCRProgress] = useState<OCRProgressUpdate | null>(null)
   const [ocrError, setOCRError] = useState<string | null>(null)
+  const [visionAnalysis, setVisionAnalysis] = useState<StructureVisionAnalysis | null>(null)
+  const [visionError, setVisionError] = useState<string | null>(null)
   const [ocrMetricsRevision, setOCRMetricsRevision] = useState(0)
 
   const metrics = useMemo(() => getStructureScannerMetrics(), [])
@@ -91,6 +96,8 @@ export function StructureScanner() {
     setOCRResult(null)
     setOCRProgress(null)
     setOCRError(null)
+    setVisionAnalysis(null)
+    setVisionError(null)
     setCurrentHistoryId(null)
     setFeedbackMessage(null)
   }
@@ -104,6 +111,8 @@ export function StructureScanner() {
     setOCRResult(null)
     setOCRProgress(null)
     setOCRError(null)
+    setVisionAnalysis(null)
+    setVisionError(null)
     setCurrentHistoryId(null)
     setFeedbackMessage(null)
   }
@@ -115,7 +124,7 @@ export function StructureScanner() {
 
   async function runScan() {
     if (!file) {
-      setError("Upload a structure image before scanning. Live camera input is not enabled in v5.1.")
+      setError("Upload a structure image before scanning. Live camera input is not enabled in v5.2.")
       return
     }
 
@@ -124,6 +133,7 @@ export function StructureScanner() {
     setCurrentHistoryId(null)
     setFeedbackMessage(null)
     setOCRError(null)
+    setVisionError(null)
     setOCRProgress({ status: "Preparing local OCR", progress: 0 })
 
     let nextOCRResult: ChemistryOCRResult | null = null
@@ -134,6 +144,18 @@ export function StructureScanner() {
       const message = ocrFailure instanceof Error ? ocrFailure.message : "Local OCR could not start."
       setOCRError(message)
       setOCRResult(null)
+    }
+
+    let nextVisionAnalysis: StructureVisionAnalysis | null = null
+    try {
+      nextVisionAnalysis = await analyzeStructureImage(processedImage ?? file, {
+        recognizedText: nextOCRResult?.rawText,
+      })
+      setVisionAnalysis(nextVisionAnalysis)
+    } catch (visionFailure) {
+      const message = visionFailure instanceof Error ? visionFailure.message : "Local shape detection could not start."
+      setVisionError(message)
+      setVisionAnalysis(null)
     }
 
     try {
@@ -148,6 +170,7 @@ export function StructureScanner() {
         ocrText: parsed?.cleanedText,
         ocrQuality: nextOCRResult?.ocrConfidence,
         ocrFormulaCorrected: parsed?.detectedFormulaWasCorrected,
+        visualAnalysis: nextVisionAnalysis ?? undefined,
       })
       setResult(nextResult)
       let historyEntryId: string | undefined
@@ -246,6 +269,8 @@ export function StructureScanner() {
             error={ocrError}
           />
 
+          <VisionDebugPanel analysis={visionAnalysis} error={visionError} />
+
           <Card className="rounded-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -335,7 +360,7 @@ export function StructureScanner() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Badge variant="outline" className="rounded-full">
-                Scanner mode = local chemistry database
+                Scanner mode = OCR + local shape heuristics
               </Badge>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 <Metric label="Local scans" value={stats.totalScans} />
@@ -349,7 +374,7 @@ export function StructureScanner() {
                 <Metric label="Reaction graph links" value={metrics.reactionGraphLinks} />
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                OCR runs locally with Tesseract.js, then deterministic chemistry parsing and the ARSHLAB database produce the match. No OpenRouter or external AI API is used.
+                OCR and shape detection run locally, then deterministic chemistry parsing and the ARSHLAB database produce the match. No OpenRouter or external AI API is used.
               </p>
             </CardContent>
           </Card>
@@ -403,7 +428,7 @@ export function StructureScanner() {
           {!result.isConfident && (
             <Alert className="rounded-2xl border-amber-500/30 bg-amber-500/10">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>ARSHLAB could not confidently identify this structure.</AlertTitle>
+              <AlertTitle>{result.message}</AlertTitle>
               <AlertDescription>
                 <ul className="mt-2 grid gap-1 sm:grid-cols-2">
                   <li>- Add a formula hint</li>

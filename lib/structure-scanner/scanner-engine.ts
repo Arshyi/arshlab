@@ -59,7 +59,7 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
       .join(" "),
   )
 
-  if (!combined && !fileQuery && !input.ocrCompoundIds?.length) return null
+  if (!combined && !fileQuery && !input.ocrCompoundIds?.length && !input.visualAnalysis?.candidates.length) return null
 
   const recordName = normalizeText(record.name)
   const recordFormula = normalizeFormula(record.formula)
@@ -85,6 +85,15 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
 
   if (input.ocrCompoundIds?.includes(record.id)) {
     addScore(40, "Parsed OCR token database hit")
+  }
+
+  const visualCandidate = input.visualAnalysis?.candidates.find((candidate) => candidate.compoundId === record.id)
+  if (visualCandidate) {
+    addScore(
+      visualCandidate.score,
+      visualCandidate.score >= 45 ? "Strong visual structure pattern match" : "Visual heuristic candidate",
+    )
+    visualCandidate.reasons.slice(0, 2).forEach((reason) => reasons.push(`Visual: ${reason}`))
   }
 
   if (formulaQuery && formulaQuery === recordFormula) {
@@ -168,10 +177,10 @@ function confidenceFromMatch(match: StructureScanMatch, nextScore: number): numb
   let confidence = 25 + Math.max(0, match.score) * 0.55 + Math.min(14, margin * 0.15)
   const positive = match.contributions.filter((contribution) => contribution.points > 0)
   const hasStrongEvidence = positive.some((contribution) =>
-    /exact formula|corrected formula|condensed formula|exact name|name or alias|ocr token database/i.test(contribution.label),
+    /exact formula|corrected formula|condensed formula|exact name|name or alias|ocr token database|strong visual/i.test(contribution.label),
   )
   const onlyWeakEvidence = positive.every((contribution) =>
-    /filename|structure clue|reaction pathway|aromatic|ring/i.test(contribution.label),
+    /filename|structure clue|reaction pathway|aromatic|ring|visual heuristic/i.test(contribution.label),
   )
 
   if (!hasStrongEvidence) confidence = Math.min(confidence, 54)
@@ -195,10 +204,12 @@ export function scanStructure(input: StructureScanInput): StructureScanResult {
   const bestMatch = scoredMatches[0] ?? null
   const isConfident = Boolean(bestMatch && bestMatch.confidence >= CONFIDENCE_THRESHOLD)
   const message = isConfident
-    ? "Deterministic database match generated from OCR tokens, the uploaded filename, and manual chemistry hints."
-    : bestMatch
-      ? "ARSHLAB could not confidently identify this structure."
-      : "No readable formula or name was matched. Add a hint or improve the image crop."
+    ? "Deterministic database match generated from local visual cues, OCR tokens, the uploaded filename, and manual chemistry hints."
+    : input.visualAnalysis?.isUncertain
+      ? "Visual structure recognition is uncertain. Add a formula/name hint or crop closer."
+      : bestMatch
+        ? "ARSHLAB could not confidently identify this structure."
+        : "No readable formula or name was matched. Add a hint or improve the image crop."
 
   return {
     query: input,

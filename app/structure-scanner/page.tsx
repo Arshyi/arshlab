@@ -7,7 +7,7 @@ import { StructureScanner } from "@/components/chemistry/StructureScanner"
 export const metadata: Metadata = {
   title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload and preprocess a molecular structure image locally, then match it against ARSHLAB's deterministic chemistry database.",
+    "Upload and locally analyze a molecular drawing using OCR, shape heuristics, and ARSHLAB's deterministic chemistry database.",
 }
 
 export default function StructureScannerPage() {
@@ -26,19 +26,19 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.1.1
+              ARSHLAB v5.2.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image, improve its local preview, run browser-side OCR, and match parsed chemistry tokens against ARSHLAB's local database. No live camera, remote image processing, or permanent image storage is enabled.
+            Upload a structure image, improve its local preview, then combine browser-side OCR with dark-stroke, line, loop, ring, and functional-group heuristics against ARSHLAB&apos;s local database. No live camera, remote image processing, or permanent image storage is enabled.
           </p>
         </div>
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <ScannerFeature
             icon={Database}
-            title="Local Chemistry Database"
-            description="OCR tokens are matched against ARSHLAB records. No OpenRouter calls, paid models, or external chemistry APIs."
+            title="Local Shape And OCR Analysis"
+            description="Visual cues and OCR tokens are matched against ARSHLAB records. No OpenRouter calls, paid models, or external chemistry APIs."
           />
           <ScannerFeature
             icon={ShieldCheck}
