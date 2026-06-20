@@ -62,6 +62,47 @@ function drawLine(mask, start, end, thickness = 2) {
   }
 }
 
+function shortenedEdge(start, end, gap) {
+  const length = Math.hypot(end.x - start.x, end.y - start.y)
+  const inset = Math.min(gap, length * 0.3) / Math.max(1, length)
+  return [
+    { x: start.x + (end.x - start.x) * inset, y: start.y + (end.y - start.y) * inset },
+    { x: end.x - (end.x - start.x) * inset, y: end.y - (end.y - start.y) * inset },
+  ]
+}
+
+function polygonMask(points, { gap = 0, missingEdge = -1, doubleEdges = [] } = {}) {
+  const mask = createMask()
+  points.forEach((point, index) => {
+    if (index === missingEdge) return
+    const next = points[(index + 1) % points.length]
+    const [start, end] = shortenedEdge(point, next, gap)
+    drawLine(mask, start, end, 1)
+    if (doubleEdges.includes(index)) {
+      const center = { x: 60, y: 50 }
+      const offsetScale = 0.16
+      drawLine(mask, {
+        x: start.x + (center.x - start.x) * offsetScale,
+        y: start.y + (center.y - start.y) * offsetScale,
+      }, {
+        x: end.x + (center.x - end.x) * offsetScale,
+        y: end.y + (center.y - end.y) * offsetScale,
+      }, 1)
+    }
+  })
+  return mask
+}
+
+const hexagonPoints = [
+  { x: 26, y: 50 }, { x: 44, y: 20 }, { x: 80, y: 18 },
+  { x: 102, y: 49 }, { x: 82, y: 81 }, { x: 46, y: 79 },
+]
+
+const pentagonPoints = [
+  { x: 60, y: 16 }, { x: 101, y: 46 }, { x: 85, y: 86 },
+  { x: 36, y: 84 }, { x: 19, y: 45 },
+]
+
 function benzeneMask() {
   const mask = createMask()
   const points = [
@@ -109,8 +150,46 @@ const empty = analyzeDarkPixelMask(createMask(), "")
 assert.equal(empty.isUncertain, true, "empty image remains uncertain")
 assert.equal(empty.candidates.length, 0, "empty image has no candidate")
 
+const imperfectBenzene = analyzeDarkPixelMask(polygonMask(hexagonPoints, { gap: 4 }), "C6H6 benzene")
+assert.equal(imperfectBenzene.closedLoops.length, 0, "gapped benzene does not require a pixel loop")
+assert.ok(imperfectBenzene.graph.cycleCandidates.length + imperfectBenzene.graph.nearRingCandidates.length >= 1, "gapped benzene graph ring")
+assert.equal(imperfectBenzene.candidates[0]?.compoundId, "benzene", "gapped benzene candidate")
+
+const alternatingBenzene = analyzeDarkPixelMask(
+  polygonMask(hexagonPoints, { gap: 2, doubleEdges: [0, 2, 4] }),
+  "aromatic",
+)
+assert.ok(alternatingBenzene.parallelLinePairs >= 2, "alternating double-bond cues")
+assert.equal(alternatingBenzene.candidates[0]?.compoundId, "benzene", "alternating benzene candidate")
+
+const cyclohexane = analyzeDarkPixelMask(polygonMask(hexagonPoints, { gap: 3 }), "")
+assert.ok(cyclohexane.ringCandidates.some((ring) => ring.sidesEstimate === 6), "cyclohexane ring detected")
+assert.equal(cyclohexane.candidates[0]?.compoundId, "cyclohexane", "saturated ring prefers cyclohexane")
+const cyclohexaneBenzene = cyclohexane.candidates.find((candidate) => candidate.compoundId === "benzene")
+assert.ok(!cyclohexaneBenzene || cyclohexaneBenzene.score < 45, "saturated ring does not overclaim benzene")
+
+const fiveMemberRing = analyzeDarkPixelMask(polygonMask(pentagonPoints, { gap: 3 }), "")
+assert.ok(fiveMemberRing.ringCandidates.some((ring) => ring.sidesEstimate === 5), "five-membered ring detected")
+
+const incompleteBenzene = analyzeDarkPixelMask(
+  polygonMask(hexagonPoints, { gap: 3, missingEdge: 5, doubleEdges: [0, 2, 4] }),
+  "benzene aromatic C6H6",
+)
+assert.ok(incompleteBenzene.graph.nearRingCandidates.length >= 1, "missing-edge near-ring detected")
+assert.equal(incompleteBenzene.candidates[0]?.compoundId, "benzene", "missing-edge benzene candidate")
+
+const openChain = createMask()
+drawLine(openChain, { x: 12, y: 54 }, { x: 45, y: 30 }, 1)
+drawLine(openChain, { x: 14, y: 60 }, { x: 47, y: 36 }, 1)
+drawLine(openChain, { x: 45, y: 30 }, { x: 78, y: 55 }, 1)
+drawLine(openChain, { x: 78, y: 55 }, { x: 108, y: 30 }, 1)
+const nonRing = analyzeDarkPixelMask(openChain, "alkene chain")
+assert.equal(nonRing.ringCandidates.length, 0, "parallel open chain is not a ring")
+assert.ok(!nonRing.candidates.some((candidate) => candidate.compoundId === "benzene"), "parallel open chain is not benzene")
+
 console.log(`Benzene: ${benzene.lineSegments.length} lines, ${benzene.closedLoops.length} loop, score ${benzene.candidates[0].score}`)
 console.log(`Methanal: ${methanal.parallelLinePairs} parallel pair(s), score ${methanal.candidates[0].score}`)
 console.log(`Ethanol: ${ethanol.simpleChainLength}-atom chain, score ${ethanol.candidates[0].score}`)
-console.log("Verified 3 synthetic structure drawings and the uncertain-image fallback.")
+console.log(`Fuzzy rings: ${imperfectBenzene.graph.cycleCandidates.length} cycles, ${incompleteBenzene.graph.nearRingCandidates.length} near-rings`)
+console.log("Verified 6 fuzzy-ring cases, 3 structure drawings, and the uncertain-image fallback.")
 rmSync(outputDirectory, { recursive: true, force: true })

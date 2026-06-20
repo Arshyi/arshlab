@@ -26,11 +26,14 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.2.0
+              ARSHLAB v5.2.1
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
             Upload a structure image, improve its local preview, then combine browser-side OCR with dark-stroke, line, loop, ring, and functional-group heuristics against ARSHLAB&apos;s local database. No live camera, remote image processing, or permanent image storage is enabled.
+          </p>
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            Visual recognition uses local educational heuristics for lines, rings, and functional-group cues. It is not a full chemical drawing parser yet.
           </p>
         </div>
 

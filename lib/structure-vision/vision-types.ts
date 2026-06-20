@@ -34,6 +34,52 @@ export interface VisionRingCandidate {
   sidesEstimate: number
   confidence: number
   benzeneLike: boolean
+  nearRing: boolean
+  source: "pixel-loop" | "graph-cycle" | "graph-near-cycle"
+  nodeIds: number[]
+  closureQuality: number
+  endpointMergeQuality: number
+  polygonRegularity: number
+  lineCoverage: number
+  doubleBondCue: number
+  aromaticCueScore: number
+  reason: string
+  scoreBreakdown: VisionScoreBreakdown[]
+}
+
+export interface VisionGraphNode {
+  id: number
+  point: VisionPoint
+  endpointCount: number
+  mergeRadius: number
+  mergeQuality: number
+}
+
+export interface VisionGraphEdge {
+  id: number
+  startNodeId: number
+  endNodeId: number
+  length: number
+  sourceSegmentIndexes: number[]
+}
+
+export interface VisionScoreBreakdown {
+  label: string
+  points: number
+  maximum: number
+}
+
+export interface VisionGraphAnalysis {
+  nodes: VisionGraphNode[]
+  edges: VisionGraphEdge[]
+  mergedEndpointCount: number
+  endpointTolerance: number
+  averageLineLength: number
+  cycleCandidates: VisionRingCandidate[]
+  nearRingCandidates: VisionRingCandidate[]
+  bestRingConfidence: number
+  aromaticCueScore: number
+  explanation: string
 }
 
 export type VisionFunctionalGroupCueKind =
@@ -56,6 +102,7 @@ export interface VisionCompoundCandidate {
   label: string
   score: number
   reasons: string[]
+  scoreBreakdown: VisionScoreBreakdown[]
 }
 
 export interface StructureVisionAnalysis {
@@ -67,6 +114,7 @@ export interface StructureVisionAnalysis {
   lineSegments: VisionLineSegment[]
   closedLoops: VisionClosedLoop[]
   ringCandidates: VisionRingCandidate[]
+  graph: VisionGraphAnalysis
   parallelLinePairs: number
   simpleChainLength: number
   functionalGroupCues: VisionFunctionalGroupCue[]

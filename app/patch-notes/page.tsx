@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.2.0",
+    version: "5.2.1",
     date: "Current",
+    status: "released",
+    title: "Fuzzy Ring Detection",
+    changes: [
+      "Added adaptive graph construction from detected bond-line endpoints",
+      "Added endpoint merging based on image size and median line length",
+      "Added deterministic 5-, 6-, and 7-member graph-cycle detection",
+      "Added near-ring recovery when one short closing edge is missing",
+      "Added ring scoring for closure, endpoint merging, polygon regularity, line coverage, and aromatic evidence",
+      "Separated OCR, manual hint, filename, visual shape, ring/aromatic, and penalty contributions",
+      "Expanded the Vision Debug Panel with graph metrics, ring confidence, aromatic scores, and candidate breakdowns",
+      "Added six fuzzy-ring regression cases, including saturated rings and an open-chain false-positive guard",
+      "Kept all image processing local with no AI, external APIs, camera, or permanent image storage",
+    ],
+  },
+  {
+    version: "5.2.0",
+    date: "Previous",
     status: "released",
     title: "Structure Shape Detection",
     changes: [

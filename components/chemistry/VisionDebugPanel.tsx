@@ -21,7 +21,7 @@ export function VisionDebugPanel({ analysis, error }: { analysis: StructureVisio
             </span>
             <span>
               <span className="block font-semibold">Vision Debug Panel</span>
-              <span className="block text-sm text-muted-foreground">Lines, loops, rings, visual cues, and local candidates</span>
+              <span className="block text-sm text-muted-foreground">Line graph, fuzzy cycles, aromatic evidence, and local candidates</span>
             </span>
           </span>
           <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", open && "rotate-180")} />
@@ -36,8 +36,12 @@ export function VisionDebugPanel({ analysis, error }: { analysis: StructureVisio
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Metric label="Detected lines" value={analysis?.lineSegments.length ?? 0} />
-              <Metric label="Closed loops" value={analysis?.closedLoops.length ?? 0} />
-              <Metric label="Ring candidates" value={analysis?.ringCandidates.length ?? 0} />
+              <Metric label="Graph nodes" value={analysis?.graph.nodes.length ?? 0} />
+              <Metric label="Merged endpoints" value={analysis?.graph.mergedEndpointCount ?? 0} />
+              <Metric label="Graph edges" value={analysis?.graph.edges.length ?? 0} />
+              <Metric label="Pixel closed loops" value={analysis?.closedLoops.length ?? 0} />
+              <Metric label="Cycle candidates" value={analysis?.graph.cycleCandidates.length ?? 0} />
+              <Metric label="Near-ring candidates" value={analysis?.graph.nearRingCandidates.length ?? 0} />
               <Metric label="Parallel line pairs" value={analysis?.parallelLinePairs ?? 0} />
             </div>
 
@@ -71,6 +75,10 @@ export function VisionDebugPanel({ analysis, error }: { analysis: StructureVisio
                 </h3>
                 <div className="mt-3 space-y-2 text-sm text-muted-foreground">
                   <p>Simple chain estimate: <span className="font-semibold text-foreground">{analysis?.simpleChainLength || "Not detected"}</span></p>
+                  <p>Endpoint merge tolerance: <span className="font-semibold text-foreground">{analysis ? `${analysis.graph.endpointTolerance.toFixed(1)} px` : "Not analyzed"}</span></p>
+                  <p>Average line length: <span className="font-semibold text-foreground">{analysis ? `${analysis.graph.averageLineLength.toFixed(1)} px` : "Not analyzed"}</span></p>
+                  <p>Best ring confidence: <span className="font-semibold text-foreground">{analysis ? `${analysis.graph.bestRingConfidence}%` : "Not analyzed"}</span></p>
+                  <p>Aromatic cue score: <span className="font-semibold text-foreground">{analysis ? `${analysis.graph.aromaticCueScore}%` : "Not analyzed"}</span></p>
                   <p>Dark stroke pixels: <span className="font-semibold text-foreground">{analysis?.darkPixelCount.toLocaleString() ?? 0}</span></p>
                   <p>Dark pixel coverage: <span className="font-semibold text-foreground">{analysis ? `${(analysis.darkPixelRatio * 100).toFixed(1)}%` : "Not analyzed"}</span></p>
                   <p>Adaptive darkness threshold: <span className="font-semibold text-foreground">{analysis?.threshold ?? "Not analyzed"}</span></p>
@@ -82,6 +90,21 @@ export function VisionDebugPanel({ analysis, error }: { analysis: StructureVisio
                 ) : null}
               </section>
             </div>
+
+            <section className="rounded-xl border border-border p-4">
+              <h3 className="text-sm font-semibold">Why fuzzy ring detection succeeded or failed</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {analysis?.graph.explanation ?? "Run the scanner to build an endpoint graph."}
+              </p>
+              {analysis?.ringCandidates[0] && (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <RingValue label="Member count" value={`${analysis.ringCandidates[0].sidesEstimate}`} />
+                  <RingValue label="Closure" value={`${analysis.ringCandidates[0].closureQuality}%`} />
+                  <RingValue label="Regularity" value={`${analysis.ringCandidates[0].polygonRegularity}%`} />
+                  <RingValue label="Line coverage" value={`${analysis.ringCandidates[0].lineCoverage}%`} />
+                </div>
+              )}
+            </section>
 
             <section className="rounded-xl border border-border p-4">
               <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -98,6 +121,14 @@ export function VisionDebugPanel({ analysis, error }: { analysis: StructureVisio
                         <Badge variant="secondary" className="rounded-full">{candidate.score}</Badge>
                       </div>
                       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{candidate.reasons.join("; ")}</p>
+                      <div className="mt-3 space-y-1 border-t border-border pt-2">
+                        {candidate.scoreBreakdown.map((entry) => (
+                          <div key={entry.label} className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                            <span>{entry.label}</span>
+                            <span className="font-mono">+{Math.round(entry.points)}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -107,12 +138,21 @@ export function VisionDebugPanel({ analysis, error }: { analysis: StructureVisio
             </section>
 
             <p className="text-xs text-muted-foreground">
-              Shape detection is an educational local heuristic, not a chemical drawing parser. OCR, manual hints, filenames, and visual evidence are scored separately before database matching.
+              Visual recognition uses local educational heuristics for lines, rings, and functional-group cues. It is not a full chemical drawing parser yet.
             </p>
           </CardContent>
         </CollapsibleContent>
       </Card>
     </Collapsible>
+  )
+}
+
+function RingValue({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-secondary/40 p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 font-mono text-sm font-semibold">{value}</p>
+    </div>
   )
 }
 

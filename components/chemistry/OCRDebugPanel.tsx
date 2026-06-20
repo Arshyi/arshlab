@@ -21,6 +21,19 @@ export function OCRDebugPanel({
   error?: string | null
 }) {
   const [open, setOpen] = useState(false)
+  const scoreCategories = [
+    { id: "ocr", label: "OCR score" },
+    { id: "manual", label: "Manual hint score" },
+    { id: "filename", label: "Filename score" },
+    { id: "visual", label: "Visual shape score" },
+    { id: "ring", label: "Ring / aromatic score" },
+    { id: "penalty", label: "Penalties" },
+  ].map((category) => ({
+    ...category,
+    total: match?.contributions
+      .filter((contribution) => contribution.category === category.id)
+      .reduce((sum, contribution) => sum + contribution.points, 0) ?? 0,
+  }))
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -133,15 +146,25 @@ export function OCRDebugPanel({
                   Confidence Contributions
                 </h3>
                 {match?.contributions.length ? (
-                  <div className="mt-3 space-y-2">
-                    {match.contributions.map((contribution, index) => (
-                      <div key={`${contribution.label}-${index}`} className="flex items-center justify-between gap-3 text-sm">
-                        <span className="text-muted-foreground">{contribution.label}</span>
-                        <Badge variant={contribution.points < 0 ? "destructive" : "secondary"} className="rounded-full">
-                          {contribution.points > 0 ? "+" : ""}{contribution.points}
-                        </Badge>
-                      </div>
-                    ))}
+                  <div className="mt-3 space-y-4">
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {scoreCategories.map((category) => (
+                        <div key={category.id} className="flex items-center justify-between gap-2 rounded-lg bg-secondary/40 p-2 text-xs">
+                          <span className="text-muted-foreground">{category.label}</span>
+                          <span className="font-mono font-semibold">{category.total > 0 ? "+" : ""}{category.total}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="space-y-2 border-t border-border pt-3">
+                      {match.contributions.map((contribution, index) => (
+                        <div key={`${contribution.label}-${index}`} className="flex items-center justify-between gap-3 text-sm">
+                          <span className="text-muted-foreground">{contribution.label}</span>
+                          <Badge variant={contribution.points < 0 ? "destructive" : "secondary"} className="rounded-full">
+                            {contribution.points > 0 ? "+" : ""}{contribution.points}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <p className="mt-3 text-sm text-muted-foreground">No scoring contributions available.</p>

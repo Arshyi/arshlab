@@ -4,6 +4,9 @@ import type {
   VisionClosedLoop,
   VisionCompoundCandidate,
   VisionFunctionalGroupCue,
+  VisionGraphAnalysis,
+  VisionGraphEdge,
+  VisionGraphNode,
   VisionLineSegment,
   VisionPoint,
   VisionRingCandidate,
@@ -233,9 +236,350 @@ export function detectRingCandidates(
         sidesEstimate,
         confidence,
         benzeneLike,
+        nearRing: false,
+        source: "pixel-loop" as const,
+        nodeIds: [] as number[],
+        closureQuality: 100,
+        endpointMergeQuality: 90,
+        polygonRegularity: balanced ? 82 : 55,
+        lineCoverage: 100,
+        doubleBondCue: 0,
+        aromaticCueScore: 0,
+        reason: "A fully enclosed light region was found inside connected bond strokes.",
+        scoreBreakdown: [
+          { label: "Pixel-loop closure", points: 35, maximum: 35 },
+          { label: "Balanced ring bounds", points: balanced ? 12 : 6, maximum: 12 },
+          { label: "Bond-direction coverage", points: directions.length >= 3 ? 10 : 4, maximum: 10 },
+        ],
       }
     })
     .sort((left, right) => right.confidence - left.confidence)
+}
+
+function average(values: number[]): number {
+  return values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length)
+}
+
+function coefficientRegularity(values: number[]): number {
+  if (!values.length) return 0
+  const mean = average(values)
+  if (mean <= 0) return 0
+  const deviation = Math.sqrt(average(values.map((value) => (value - mean) ** 2)))
+  return clamp(100 - (deviation / mean) * 145, 0, 100)
+}
+
+function polygonArea(points: VisionPoint[]): number {
+  let area = 0
+  for (let index = 0; index < points.length; index += 1) {
+    const current = points[index]
+    const next = points[(index + 1) % points.length]
+    area += current.x * next.y - next.x * current.y
+  }
+  return Math.abs(area) / 2
+}
+
+function orientation(first: VisionPoint, second: VisionPoint, third: VisionPoint): number {
+  return (second.y - first.y) * (third.x - second.x) - (second.x - first.x) * (third.y - second.y)
+}
+
+function segmentsIntersect(first: VisionPoint, second: VisionPoint, third: VisionPoint, fourth: VisionPoint): boolean {
+  const firstOrientation = orientation(first, second, third)
+  const secondOrientation = orientation(first, second, fourth)
+  const thirdOrientation = orientation(third, fourth, first)
+  const fourthOrientation = orientation(third, fourth, second)
+  return firstOrientation * secondOrientation < 0 && thirdOrientation * fourthOrientation < 0
+}
+
+function isSimplePolygon(points: VisionPoint[]): boolean {
+  for (let left = 0; left < points.length; left += 1) {
+    const leftNext = (left + 1) % points.length
+    for (let right = left + 1; right < points.length; right += 1) {
+      const rightNext = (right + 1) % points.length
+      if (left === right || leftNext === right || rightNext === left) continue
+      if (segmentsIntersect(points[left], points[leftNext], points[right], points[rightNext])) return false
+    }
+  }
+  return true
+}
+
+function canonicalCycle(nodeIds: number[]): string {
+  const rotations: string[] = []
+  const addRotations = (values: number[]) => {
+    for (let index = 0; index < values.length; index += 1) {
+      rotations.push([...values.slice(index), ...values.slice(0, index)].join("-"))
+    }
+  }
+  addRotations(nodeIds)
+  addRotations([...nodeIds].reverse())
+  return rotations.sort()[0]
+}
+
+function canonicalPath(nodeIds: number[]): string {
+  const forward = nodeIds.join("-")
+  const reverse = [...nodeIds].reverse().join("-")
+  return forward < reverse ? forward : reverse
+}
+
+export function buildSegmentGraph(mask: DarkPixelMask, segments: VisionLineSegment[]): VisionGraphAnalysis {
+  const sortedLengths = segments.map((segment) => segment.length).sort((left, right) => left - right)
+  const averageLineLength = sortedLengths.length
+    ? sortedLengths[Math.floor(sortedLengths.length / 2)]
+    : 0
+  const maximumDimension = Math.max(mask.width, mask.height)
+  const endpointTolerance = clamp(
+    averageLineLength * 0.32,
+    Math.max(10, maximumDimension * 0.09),
+    Math.min(35, maximumDimension * 0.16),
+  )
+
+  interface EndpointCluster {
+    points: VisionPoint[]
+    segmentIndexes: Set<number>
+    center: VisionPoint
+  }
+
+  const clusters: EndpointCluster[] = []
+  const endpointClusterIds: Array<[number, number]> = []
+  segments.forEach((segment, segmentIndex) => {
+    const clusterIds = [segment.start, segment.end].map((point) => {
+      let nearestIndex = -1
+      let nearestDistance = Number.POSITIVE_INFINITY
+      clusters.forEach((cluster, clusterIndex) => {
+        if (cluster.segmentIndexes.has(segmentIndex)) return
+        const candidateDistance = distance(cluster.center, point)
+        if (candidateDistance <= endpointTolerance && candidateDistance < nearestDistance) {
+          nearestIndex = clusterIndex
+          nearestDistance = candidateDistance
+        }
+      })
+
+      if (nearestIndex < 0) {
+        clusters.push({ points: [point], segmentIndexes: new Set([segmentIndex]), center: { ...point } })
+        return clusters.length - 1
+      }
+
+      const cluster = clusters[nearestIndex]
+      cluster.points.push(point)
+      cluster.segmentIndexes.add(segmentIndex)
+      cluster.center = {
+        x: average(cluster.points.map((clusterPoint) => clusterPoint.x)),
+        y: average(cluster.points.map((clusterPoint) => clusterPoint.y)),
+      }
+      return nearestIndex
+    })
+    endpointClusterIds.push([clusterIds[0], clusterIds[1]])
+  })
+
+  const nodes: VisionGraphNode[] = clusters.map((cluster, id) => {
+    const mergeRadius = Math.max(0, ...cluster.points.map((point) => distance(point, cluster.center)))
+    return {
+      id,
+      point: cluster.center,
+      endpointCount: cluster.points.length,
+      mergeRadius,
+      mergeQuality: clamp(100 - (mergeRadius / Math.max(1, endpointTolerance)) * 70, 20, 100),
+    }
+  })
+
+  const edgeByNodes = new Map<string, VisionGraphEdge>()
+  endpointClusterIds.forEach(([startNodeId, endNodeId], segmentIndex) => {
+    if (startNodeId === endNodeId) return
+    const nodeDistance = distance(nodes[startNodeId].point, nodes[endNodeId].point)
+    if (nodeDistance < endpointTolerance * 0.42) return
+    const key = [startNodeId, endNodeId].sort((left, right) => left - right).join("-")
+    const existing = edgeByNodes.get(key)
+    if (existing) {
+      existing.sourceSegmentIndexes.push(segmentIndex)
+      existing.length = Math.max(existing.length, nodeDistance)
+      return
+    }
+    edgeByNodes.set(key, {
+      id: edgeByNodes.size,
+      startNodeId,
+      endNodeId,
+      length: nodeDistance,
+      sourceSegmentIndexes: [segmentIndex],
+    })
+  })
+  const edges = Array.from(edgeByNodes.values()).map((edge, id) => ({ ...edge, id }))
+  const mergedEndpointCount = segments.length * 2 - nodes.length
+
+  return {
+    nodes,
+    edges,
+    mergedEndpointCount,
+    endpointTolerance,
+    averageLineLength,
+    cycleCandidates: [],
+    nearRingCandidates: [],
+    bestRingConfidence: 0,
+    aromaticCueScore: 0,
+    explanation: segments.length
+      ? "Line endpoints were merged into an adaptive graph; cycle scoring has not run yet."
+      : "No stable line segments were available for graph construction.",
+  }
+}
+
+function scoreGraphRing(
+  graph: VisionGraphAnalysis,
+  nodeIds: number[],
+  nearRing: boolean,
+  parallelLinePairs: number,
+  recognizedText: string,
+): VisionRingCandidate | null {
+  const points = nodeIds.map((nodeId) => graph.nodes[nodeId].point)
+  if (!isSimplePolygon(points)) return null
+  const area = polygonArea(points)
+  const minimumX = Math.min(...points.map((point) => point.x))
+  const maximumX = Math.max(...points.map((point) => point.x))
+  const minimumY = Math.min(...points.map((point) => point.y))
+  const maximumY = Math.max(...points.map((point) => point.y))
+  const width = maximumX - minimumX
+  const height = maximumY - minimumY
+  if (width < graph.endpointTolerance * 1.1 || height < graph.endpointTolerance * 1.1) return null
+  if (area / Math.max(1, width * height) < 0.22) return null
+
+  const sideLengths = points.map((point, index) => distance(point, points[(index + 1) % points.length]))
+  const pathSideLengths = nearRing ? sideLengths.slice(0, -1) : sideLengths
+  const meanSideLength = average(pathSideLengths)
+  const closureGap = sideLengths[sideLengths.length - 1]
+  if (nearRing && (closureGap > meanSideLength * 1.75 || closureGap < graph.endpointTolerance * 0.42)) return null
+
+  const center = { x: average(points.map((point) => point.x)), y: average(points.map((point) => point.y)) }
+  const polygonRegularity = Math.round(
+    coefficientRegularity(sideLengths) * 0.58 +
+    coefficientRegularity(points.map((point) => distance(point, center))) * 0.42,
+  )
+  const closureQuality = nearRing
+    ? clamp(88 - Math.abs(closureGap - meanSideLength) / Math.max(1, meanSideLength) * 55, 35, 88)
+    : 100
+  const endpointMergeQuality = average(nodeIds.map((nodeId) => graph.nodes[nodeId].mergeQuality))
+  const lineCoverage = nearRing ? ((nodeIds.length - 1) / nodeIds.length) * 100 : 100
+  const cycleLengthQuality = nodeIds.length === 6 ? 100 : 82
+  const doubleBondCue = clamp((parallelLinePairs / 3) * 100, 0, 100)
+  const compactText = recognizedText.toLowerCase().replace(/[^a-z0-9]/g, "")
+  const hasAromaticText = /benzene|aromatic|c6h6|phenyl|hexagon|ring/.test(compactText)
+  const aromaticCueScore = hasAromaticText ? 100 : 0
+  const scoreBreakdown = [
+    { label: `${nodeIds.length}-member cycle fit`, points: cycleLengthQuality * 0.22, maximum: 22 },
+    { label: nearRing ? "Near-ring closure" : "Closed-cycle quality", points: closureQuality * 0.15, maximum: 15 },
+    { label: "Endpoint merge quality", points: endpointMergeQuality * 0.14, maximum: 14 },
+    { label: "Polygon regularity", points: polygonRegularity * 0.18, maximum: 18 },
+    { label: "Line coverage", points: lineCoverage * 0.12, maximum: 12 },
+    { label: "Parallel/double-bond cues", points: doubleBondCue * 0.12, maximum: 12 },
+    { label: "Aromatic text cue", points: aromaticCueScore * 0.07, maximum: 7 },
+  ].map((entry) => ({ ...entry, points: Math.round(entry.points * 10) / 10 }))
+  const confidence = clamp(
+    Math.round(scoreBreakdown.reduce((sum, entry) => sum + entry.points, 0) - (nearRing ? 5 : 0)),
+    0,
+    96,
+  )
+  const benzeneLike = (
+    nodeIds.length === 6 && confidence >= 56 && (parallelLinePairs >= 2 || hasAromaticText)
+  ) || (
+    nodeIds.length >= 5 && nodeIds.length <= 7 && parallelLinePairs >= 3 && hasAromaticText && confidence >= 54
+  )
+
+  return {
+    center,
+    width,
+    height,
+    sidesEstimate: nodeIds.length,
+    confidence,
+    benzeneLike,
+    nearRing,
+    source: nearRing ? "graph-near-cycle" : "graph-cycle",
+    nodeIds,
+    closureQuality: Math.round(closureQuality),
+    endpointMergeQuality: Math.round(endpointMergeQuality),
+    polygonRegularity,
+    lineCoverage: Math.round(lineCoverage),
+    doubleBondCue: Math.round(doubleBondCue),
+    aromaticCueScore,
+    reason: nearRing
+      ? `${nodeIds.length}-member path is missing one short closing edge but has ring-like geometry.`
+      : `${nodeIds.length}-member graph cycle closes through merged bond endpoints.`,
+    scoreBreakdown,
+  }
+}
+
+export function detectGraphRings(
+  graph: VisionGraphAnalysis,
+  parallelLinePairs: number,
+  recognizedText: string,
+): VisionGraphAnalysis {
+  const adjacency = graph.nodes.map(() => [] as number[])
+  graph.edges.forEach((edge) => {
+    adjacency[edge.startNodeId].push(edge.endNodeId)
+    adjacency[edge.endNodeId].push(edge.startNodeId)
+  })
+
+  const cycleKeys = new Set<string>()
+  const cycles: VisionRingCandidate[] = []
+  const visitCycle = (start: number, current: number, path: number[]) => {
+    if (path.length > 7) return
+    for (const neighbor of adjacency[current]) {
+      if (neighbor === start && path.length >= 5 && path.length <= 7) {
+        const key = canonicalCycle(path)
+        if (cycleKeys.has(key)) continue
+        cycleKeys.add(key)
+        const candidate = scoreGraphRing(graph, path, false, parallelLinePairs, recognizedText)
+        if (candidate) cycles.push(candidate)
+        continue
+      }
+      if (path.includes(neighbor) || path.length >= 7) continue
+      visitCycle(start, neighbor, [...path, neighbor])
+    }
+  }
+  graph.nodes.forEach((node) => visitCycle(node.id, node.id, [node.id]))
+
+  const closedNodeSets = cycles.map((cycle) => new Set(cycle.nodeIds))
+  const nearKeys = new Set<string>()
+  const nearRings: VisionRingCandidate[] = []
+  const visitPath = (current: number, path: number[]) => {
+    if (path.length >= 5 && path.length <= 7) {
+      const first = path[0]
+      const hasClosingEdge = adjacency[current].includes(first)
+      const containedByCycle = closedNodeSets.some((cycleNodes) => path.every((nodeId) => cycleNodes.has(nodeId)))
+      if (!hasClosingEdge && !containedByCycle) {
+        const key = canonicalPath(path)
+        if (!nearKeys.has(key)) {
+          nearKeys.add(key)
+          const candidate = scoreGraphRing(graph, path, true, parallelLinePairs, recognizedText)
+          if (candidate) nearRings.push(candidate)
+        }
+      }
+    }
+    if (path.length >= 7) return
+    for (const neighbor of adjacency[current]) {
+      if (path.includes(neighbor)) continue
+      visitPath(neighbor, [...path, neighbor])
+    }
+  }
+  graph.nodes.forEach((node) => visitPath(node.id, [node.id]))
+
+  cycles.sort((left, right) => right.confidence - left.confidence)
+  nearRings.sort((left, right) => right.confidence - left.confidence)
+  const best = [...cycles, ...nearRings].sort((left, right) => right.confidence - left.confidence)[0]
+  const aromaticCueScore = best
+    ? clamp(Math.round(best.doubleBondCue * 0.65 + best.aromaticCueScore * 0.35), 0, 100)
+    : 0
+  const explanation = best
+    ? best.nearRing
+      ? `A ${best.sidesEstimate}-member near-ring was recovered by adaptive endpoint merging; closure confidence is ${best.closureQuality}%.`
+      : `A ${best.sidesEstimate}-member graph cycle was recovered with ${best.polygonRegularity}% polygon regularity.`
+    : graph.edges.length >= 4
+      ? "Ring-like strokes detected, but closure was weak. Try cropping closer or increasing contrast."
+      : "Too few connected graph edges were available to test a 5-7 member ring."
+
+  return {
+    ...graph,
+    cycleCandidates: cycles.slice(0, 12),
+    nearRingCandidates: nearRings.slice(0, 12),
+    bestRingConfidence: best?.confidence ?? 0,
+    aromaticCueScore,
+    explanation,
+  }
 }
 
 function projectedOverlap(left: VisionLineSegment, right: VisionLineSegment): number {
@@ -248,20 +592,37 @@ function projectedOverlap(left: VisionLineSegment, right: VisionLineSegment): nu
 }
 
 export function countParallelLinePairs(segments: VisionLineSegment[], mask: DarkPixelMask): number {
-  let pairs = 0
+  const pairs: Array<{ angle: number; center: VisionPoint; length: number }> = []
+  const minimumSeparation = Math.max(3.2, Math.min(mask.width, mask.height) * 0.018)
   const maximumSeparation = Math.max(4, Math.min(mask.width, mask.height) * 0.055)
   for (let leftIndex = 0; leftIndex < segments.length; leftIndex += 1) {
     for (let rightIndex = leftIndex + 1; rightIndex < segments.length; rightIndex += 1) {
       const left = segments[leftIndex]
       const right = segments[rightIndex]
       if (angleDifference(left.angle, right.angle) > 7) continue
-      const separation = distance(left.midpoint, right.midpoint)
-      if (separation < 2 || separation > maximumSeparation) continue
+      const radians = (left.angle * Math.PI) / 180
+      const separation = Math.abs(
+        (right.midpoint.x - left.midpoint.x) * -Math.sin(radians) +
+        (right.midpoint.y - left.midpoint.y) * Math.cos(radians),
+      )
+      if (separation < minimumSeparation || separation > maximumSeparation) continue
       if (projectedOverlap(left, right) < Math.min(left.length, right.length) * 0.42) continue
-      pairs += 1
+      const pair = {
+        angle: left.angle,
+        center: {
+          x: (left.midpoint.x + right.midpoint.x) / 2,
+          y: (left.midpoint.y + right.midpoint.y) / 2,
+        },
+        length: Math.min(left.length, right.length),
+      }
+      const duplicate = pairs.some((existing) =>
+        angleDifference(existing.angle, pair.angle) <= 9 &&
+        distance(existing.center, pair.center) <= Math.min(existing.length, pair.length) * 0.28,
+      )
+      if (!duplicate) pairs.push(pair)
     }
   }
-  return Math.min(pairs, 8)
+  return Math.min(pairs.length, 8)
 }
 
 export function estimateSimpleChainLength(segments: VisionLineSegment[], mask: DarkPixelMask): number {
@@ -335,8 +696,14 @@ function buildCues(
     if (!cues.some((existing) => existing.kind === cue.kind)) cues.push(cue)
   }
 
-  if (rings.some((ring) => ring.benzeneLike)) {
-    add({ kind: "aromatic", label: "Six-membered aromatic ring", confidence: parallelLinePairs >= 2 ? 91 : 76, evidence: "Closed balanced loop with approximately six bond edges" })
+  const aromaticRing = rings.find((ring) => ring.benzeneLike)
+  if (aromaticRing) {
+    add({
+      kind: "aromatic",
+      label: aromaticRing.nearRing ? "Fuzzy aromatic near-ring" : "Six-membered aromatic ring",
+      confidence: clamp(Math.round(aromaticRing.confidence * 0.72 + aromaticRing.doubleBondCue * 0.28), 0, 94),
+      evidence: `${aromaticRing.reason} ${parallelLinePairs} double-bond-like cue${parallelLinePairs === 1 ? "" : "s"} support aromaticity.`,
+    })
   }
   if (parallelLinePairs > 0) {
     add({ kind: "double-bond", label: "Parallel bond strokes", confidence: clamp(55 + parallelLinePairs * 8, 0, 90), evidence: `${parallelLinePairs} close parallel line pair${parallelLinePairs === 1 ? "" : "s"}` })
@@ -350,7 +717,7 @@ function buildCues(
   if (/o-h|oh|hydroxyl|alcohol/.test(compact)) {
     add({ kind: "hydroxyl", label: "Hydroxyl-like O-H", confidence: 82, evidence: "O-H or OH text cue detected in the drawing" })
   }
-  if (chainLength >= 2 && !rings.some((ring) => ring.benzeneLike)) {
+  if (chainLength >= 2 && rings.length === 0) {
     add({ kind: "simple-chain", label: `${chainLength}-atom simple chain`, confidence: clamp(45 + chainLength * 5, 0, 82), evidence: "Connected line-segment endpoint path" })
   }
   return cues
@@ -366,23 +733,63 @@ function buildCandidates(
   const text = recognizedText.toLowerCase().replace(/[^a-z0-9=#-]/g, "")
   const hasCue = (kind: VisionFunctionalGroupCue["kind"]) => cues.some((cue) => cue.kind === kind)
   const candidates: VisionCompoundCandidate[] = []
-  const add = (compoundId: string, label: string, score: number, reasons: string[]) => {
-    candidates.push({ compoundId, label, score: clamp(Math.round(score), 0, 58), reasons })
+  const add = (
+    compoundId: string,
+    label: string,
+    score: number,
+    reasons: string[],
+    scoreBreakdown: VisionCompoundCandidate["scoreBreakdown"],
+  ) => {
+    candidates.push({ compoundId, label, score: clamp(Math.round(score), 0, 58), reasons, scoreBreakdown })
   }
 
-  const benzeneRing = rings.some((ring) => ring.benzeneLike)
-  if (benzeneRing) {
-    const reasons = ["Six-membered closed ring candidate"]
-    let score = 38
-    if (parallelLinePairs >= 2) {
-      score += 12
-      reasons.push("Alternating double-bond-like parallel strokes")
-    }
-    if (/benzene|aromatic|c6h6|phenyl|hexagon|ring/.test(text)) {
-      score += 10
-      reasons.push("Aromatic OCR cue")
-    }
-    add("benzene", "Benzene", score, reasons)
+  const bestRing = rings[0]
+  const aromaticText = /benzene|aromatic|c6h6|phenyl|hexagon|ring/.test(text)
+  if (bestRing?.benzeneLike) {
+    const shapePoints = Math.min(38, Math.round(bestRing.confidence * 0.42))
+    const doubleBondPoints = Math.min(12, parallelLinePairs * 4)
+    const aromaticPoints = aromaticText ? 8 : 0
+    const reasons = [bestRing.reason]
+    if (parallelLinePairs >= 2) reasons.push("Alternating double-bond-like parallel strokes")
+    if (aromaticText) reasons.push("OCR/manual aromatic cue")
+    add(
+      "benzene",
+      bestRing.confidence < 68 && !aromaticText ? "Possible benzene / aromatic ring" : "Benzene",
+      shapePoints + doubleBondPoints + aromaticPoints,
+      reasons,
+      [
+        { label: "Ring shape", points: shapePoints, maximum: 38 },
+        { label: "Ring/aromatic double bonds", points: doubleBondPoints, maximum: 12 },
+        { label: "Aromatic text support", points: aromaticPoints, maximum: 8 },
+      ],
+    )
+  } else if (bestRing && bestRing.sidesEstimate >= 5 && bestRing.sidesEstimate <= 7 && bestRing.confidence >= 48) {
+    const possiblePoints = Math.min(30, Math.round(bestRing.confidence * 0.38))
+    add(
+      "benzene",
+      "Possible benzene / aromatic ring",
+      possiblePoints,
+      [bestRing.reason, "No strong aromatic or alternating-double-bond support"],
+      [
+        { label: "Moderate ring shape", points: possiblePoints, maximum: 30 },
+        { label: "Aromatic support missing", points: 0, maximum: 18 },
+      ],
+    )
+  }
+
+  if (bestRing?.sidesEstimate === 6 && !bestRing.benzeneLike) {
+    const ringPoints = Math.min(44, Math.round(bestRing.confidence * 0.5))
+    const namePoints = /cyclohexane|c6h12/.test(text) ? 10 : 0
+    add(
+      "cyclohexane",
+      "Cyclohexane-like ring",
+      ringPoints + namePoints,
+      [bestRing.reason, "Six-membered ring without reliable aromatic double-bond evidence"],
+      [
+        { label: "Saturated six-membered ring", points: ringPoints, maximum: 44 },
+        { label: "Cyclohexane text support", points: namePoints, maximum: 10 },
+      ],
+    )
   }
 
   if (hasCue("carbonyl")) {
@@ -396,27 +803,45 @@ function buildCandidates(
       methanalScore += 7
       methanalReasons.push("Small carbonyl skeleton")
     }
-    add("methanal", "Methanal", methanalScore, methanalReasons)
+    add("methanal", "Methanal", methanalScore, methanalReasons, [
+      { label: "Carbonyl visual cue", points: 38, maximum: 38 },
+      { label: "Methanal text arrangement", points: explicitMethanal ? 16 : 0, maximum: 16 },
+    ])
 
     if (!explicitMethanal && (chainLength >= 3 || /ch3coch3|propanone|acetone/.test(text))) {
-      add("acetone", "Acetone", 36 + Math.min(16, chainLength * 3), ["Carbonyl cue within a longer carbon chain"])
+      const chainPoints = Math.min(16, chainLength * 3)
+      add("acetone", "Acetone", 36 + chainPoints, ["Carbonyl cue within a longer carbon chain"], [
+        { label: "Carbonyl visual cue", points: 36, maximum: 36 },
+        { label: "Longer chain support", points: chainPoints, maximum: 16 },
+      ])
     }
   }
 
   if (hasCue("carboxyl")) {
-    add("ethanoic-acid", "Ethanoic acid", chainLength >= 2 ? 54 : 47, ["COOH-like visual cue", "Carbon chain attached to carboxyl group"])
+    const chainPoints = chainLength >= 2 ? 9 : 2
+    add("ethanoic-acid", "Ethanoic acid", 45 + chainPoints, ["COOH-like visual cue", "Carbon chain attached to carboxyl group"], [
+      { label: "Carboxyl visual cue", points: 45, maximum: 45 },
+      { label: "Carbon chain support", points: chainPoints, maximum: 9 },
+    ])
   }
 
   if (hasCue("hydroxyl") && chainLength >= 2) {
     const formulaCue = /ch3ch2oh|c2h5oh|cco-h|ccoh/.test(text)
-    add("ethanol", "Ethanol", 38 + Math.min(10, chainLength * 3) + (formulaCue ? 10 : 0), [
+    const chainPoints = Math.min(10, chainLength * 3)
+    add("ethanol", "Ethanol", 38 + chainPoints + (formulaCue ? 10 : 0), [
       "Hydroxyl cue at a simple chain",
       formulaCue ? "C-C-O-H text sequence" : "Connected chain with terminal O-H cue",
+    ], [
+      { label: "Hydroxyl visual cue", points: 38, maximum: 38 },
+      { label: "Simple chain support", points: chainPoints, maximum: 10 },
+      { label: "C-C-O-H text support", points: formulaCue ? 10 : 0, maximum: 10 },
     ])
   }
 
   if (parallelLinePairs > 0 && chainLength === 2 && !hasCue("carbonyl")) {
-    add("ethene", "Ethene", 34, ["Two-atom chain with a double-bond-like line pair"])
+    add("ethene", "Ethene", 34, ["Two-atom chain with a double-bond-like line pair"], [
+      { label: "Open-chain double bond", points: 34, maximum: 34 },
+    ])
   }
 
   return candidates.sort((left, right) => right.score - left.score || left.label.localeCompare(right.label)).slice(0, 5)
@@ -425,8 +850,44 @@ function buildCandidates(
 export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): StructureVisionAnalysis {
   const lineSegments = detectLineSegments(mask)
   const closedLoops = detectClosedLoops(mask)
-  const ringCandidates = detectRingCandidates(mask, closedLoops, lineSegments)
   const parallelLinePairs = countParallelLinePairs(lineSegments, mask)
+  const aromaticText = /benzene|aromatic|c6h6|phenyl|hexagon|ring/.test(
+    recognizedText.toLowerCase().replace(/[^a-z0-9]/g, ""),
+  )
+  const pixelRings = detectRingCandidates(mask, closedLoops, lineSegments).map((ring) => ({
+    ...ring,
+    benzeneLike: ring.sidesEstimate === 6 && (parallelLinePairs >= 2 || aromaticText),
+    doubleBondCue: clamp(Math.round((parallelLinePairs / 3) * 100), 0, 100),
+    aromaticCueScore: aromaticText ? 100 : 0,
+  }))
+  const graph = detectGraphRings(buildSegmentGraph(mask, lineSegments), parallelLinePairs, recognizedText)
+  const rawRingCandidates = [
+    ...graph.cycleCandidates,
+    ...graph.nearRingCandidates,
+    ...pixelRings,
+  ].sort((left, right) => right.confidence - left.confidence)
+  const ringCandidates: VisionRingCandidate[] = []
+  rawRingCandidates.forEach((candidate) => {
+    const duplicate = ringCandidates.some((existing) =>
+      existing.sidesEstimate === candidate.sidesEstimate &&
+      distance(existing.center, candidate.center) <= Math.max(5, Math.min(existing.width, existing.height) * 0.22),
+    )
+    if (!duplicate) ringCandidates.push(candidate)
+  })
+  const bestRing = ringCandidates[0]
+  const graphSummary: VisionGraphAnalysis = {
+    ...graph,
+    bestRingConfidence: Math.max(graph.bestRingConfidence, bestRing?.confidence ?? 0),
+    aromaticCueScore: Math.max(
+      graph.aromaticCueScore,
+      bestRing ? Math.round(bestRing.doubleBondCue * 0.65 + bestRing.aromaticCueScore * 0.35) : 0,
+    ),
+    explanation: graph.bestRingConfidence > 0
+      ? graph.explanation
+      : bestRing
+        ? bestRing.reason
+        : graph.explanation,
+  }
   const simpleChainLength = estimateSimpleChainLength(lineSegments, mask)
   const functionalGroupCues = buildCues(ringCandidates, parallelLinePairs, simpleChainLength, recognizedText)
   const candidates = buildCandidates(functionalGroupCues, ringCandidates, parallelLinePairs, simpleChainLength, recognizedText)
@@ -436,6 +897,9 @@ export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): 
   if (darkPixelRatio < 0.003) warnings.push("Very few dark strokes were detected. Increase contrast or crop closer.")
   if (darkPixelRatio > 0.42) warnings.push("The preview is unusually dark. Reduce contrast or use a cleaner crop.")
   if (!lineSegments.length) warnings.push("No stable bond-like line segments were detected.")
+  if (!ringCandidates.length && graph.edges.length >= 4) {
+    warnings.push("Ring-like strokes detected, but closure was weak. Try cropping closer or increasing contrast.")
+  }
 
   return {
     width: mask.width,
@@ -446,6 +910,7 @@ export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): 
     lineSegments,
     closedLoops,
     ringCandidates,
+    graph: graphSummary,
     parallelLinePairs,
     simpleChainLength,
     functionalGroupCues,

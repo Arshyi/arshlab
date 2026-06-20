@@ -1,5 +1,11 @@
 import { STRUCTURE_SCANNER_RECORDS } from "./scanner-database"
-import type { StructureScanInput, StructureScanMatch, StructureScanResult, StructureScannerRecord } from "./scanner-types"
+import type {
+  StructureScanInput,
+  StructureScanMatch,
+  StructureScanResult,
+  StructureScannerRecord,
+  StructureScoreContribution,
+} from "./scanner-types"
 
 const CONFIDENCE_THRESHOLD = 58
 
@@ -75,90 +81,112 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
   let score = 0
   let directNameMatch = false
   const reasons: string[] = []
-  const contributions: Array<{ label: string; points: number }> = []
+  const contributions: StructureScoreContribution[] = []
 
-  function addScore(points: number, label: string) {
+  function addScore(points: number, label: string, category: StructureScoreContribution["category"] = "other") {
     score += points
     reasons.push(label)
-    contributions.push({ label, points })
+    contributions.push({ label, points, category })
   }
 
+  const ocrNormalized = normalizeText(input.ocrText)
+  const textEvidenceCategory = (value: string | undefined): StructureScoreContribution["category"] =>
+    value && ocrNormalized.includes(normalizeText(value)) ? "ocr" : "manual"
+
   if (input.ocrCompoundIds?.includes(record.id)) {
-    addScore(40, "Parsed OCR token database hit")
+    addScore(40, "Parsed OCR token database hit", "ocr")
   }
 
   const visualCandidate = input.visualAnalysis?.candidates.find((candidate) => candidate.compoundId === record.id)
   if (visualCandidate) {
-    addScore(
-      visualCandidate.score,
-      visualCandidate.score >= 45 ? "Strong visual structure pattern match" : "Visual heuristic candidate",
-    )
+    const rawTotal = visualCandidate.scoreBreakdown.reduce((sum, contribution) => sum + contribution.points, 0)
+    let assigned = 0
+    visualCandidate.scoreBreakdown.forEach((contribution, index) => {
+      const points = index === visualCandidate.scoreBreakdown.length - 1
+        ? visualCandidate.score - assigned
+        : Math.max(0, Math.round(contribution.points * visualCandidate.score / Math.max(1, rawTotal)))
+      assigned += points
+      addScore(
+        points,
+        contribution.label,
+        /ring|aromatic/i.test(contribution.label) ? "ring" : "visual",
+      )
+    })
     visualCandidate.reasons.slice(0, 2).forEach((reason) => reasons.push(`Visual: ${reason}`))
   }
 
   if (formulaQuery && formulaQuery === recordFormula) {
-    addScore(input.ocrFormulaCorrected ? 45 : 55, input.ocrFormulaCorrected ? "Corrected formula match" : "Exact formula match")
+    addScore(
+      input.ocrFormulaCorrected ? 45 : 55,
+      input.ocrFormulaCorrected ? "Corrected formula match" : "Exact formula match",
+      textEvidenceCategory(input.formula),
+    )
   } else if (formulaQuery && recordFormula.includes(formulaQuery)) {
-    addScore(20, "Partial formula match")
+    addScore(20, "Partial formula match", textEvidenceCategory(input.formula))
   }
 
   if (condensedFormulaQuery && condensedCompositionQuery === recordFormulaComposition) {
     addScore(
       input.ocrFormulaCorrected ? 42 : 55,
       input.ocrFormulaCorrected ? "Corrected condensed formula match" : "Condensed formula match",
+      textEvidenceCategory(input.condensedFormula),
     )
   } else if (
     formulaCompositionQuery &&
     formulaCompositionQuery === recordFormulaComposition &&
     formulaQuery !== recordFormula
   ) {
-    addScore(input.ocrFormulaCorrected ? 30 : 38, input.ocrFormulaCorrected ? "Corrected formula composition match" : "Formula composition match")
+    addScore(
+      input.ocrFormulaCorrected ? 30 : 38,
+      input.ocrFormulaCorrected ? "Corrected formula composition match" : "Formula composition match",
+      textEvidenceCategory(input.formula),
+    )
   }
 
   if (nameQuery && nameQuery === recordName) {
-    addScore(55, "Exact name match")
+    addScore(55, "Exact name match", textEvidenceCategory(input.moleculeName))
     directNameMatch = true
   } else if (nameQuery && aliases.includes(nameQuery)) {
-    addScore(50, "Name or alias match")
+    addScore(50, "Name or alias match", textEvidenceCategory(input.moleculeName))
     directNameMatch = true
   } else if (nameQuery && (recordName.includes(nameQuery) || nameQuery.includes(recordName))) {
-    addScore(25, "Name similarity match")
+    addScore(25, "Name similarity match", textEvidenceCategory(input.moleculeName))
     directNameMatch = true
   }
 
   if (!directNameMatch && aliases.some((alias) => alias && combined.includes(alias))) {
-    addScore(22, "Alias appears in OCR or hints")
+    addScore(22, "Alias appears in OCR or hints", "ocr")
   }
 
   if (fileQuery && (fileQuery.includes(recordName) || aliases.some((alias) => fileQuery.includes(alias)))) {
-    addScore(12, "Filename hint match")
+    addScore(12, "Filename hint match", "filename")
   }
 
   for (const group of functionalGroups) {
-    if (group && hintQuery.includes(group)) addScore(25, `Functional group hint match: ${group}`)
+    if (group && hintQuery.includes(group)) addScore(25, `Functional group hint match: ${group}`, "manual")
   }
 
   for (const keyword of keywords) {
-    if (keyword && combined.includes(keyword)) addScore(8, `Structure clue match: ${keyword}`)
+    if (keyword && combined.includes(keyword)) addScore(8, `Structure clue match: ${keyword}`, "other")
   }
 
   for (const reactionTerm of reactionTerms) {
-    if (reactionTerm && combined.includes(reactionTerm)) addScore(4, "Related reaction pathway match")
+    if (reactionTerm && combined.includes(reactionTerm)) addScore(4, "Related reaction pathway match", "other")
   }
 
   if (record.id === "benzene" && /\b(benzene|c6h6|hexagon)\b/.test(aromaticSource)) {
-    addScore(22, "Benzene or six-membered ring clue")
+    addScore(22, "Benzene or six-membered ring clue", "ring")
   } else if (
     functionalGroups.some((group) => group === "arene" || group === "aromatic") &&
     /\b(aromatic|phenyl|ring)\b/.test(aromaticSource)
   ) {
-    addScore(10, "Aromatic or phenyl clue")
+    addScore(10, "Aromatic or phenyl clue", "ring")
   }
 
   if (input.ocrQuality !== undefined) {
-    if (input.ocrQuality < 35) addScore(-24, "OCR quality penalty: very low text confidence")
-    else if (input.ocrQuality < 55) addScore(-14, "OCR quality penalty: low text confidence")
-    else if (input.ocrQuality < 70) addScore(-6, "OCR quality penalty: moderate text confidence")
+    if (input.ocrQuality < 35) addScore(-24, "OCR quality penalty: very low text confidence", "penalty")
+    else if (input.ocrQuality < 55) addScore(-14, "OCR quality penalty: low text confidence", "penalty")
+    else if (input.ocrQuality < 70) addScore(-6, "OCR quality penalty: moderate text confidence", "penalty")
   }
 
   if (score <= 0) return null
@@ -168,7 +196,7 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
     confidence: 0,
     reasons: uniqueReasons(reasons),
     score,
-    contributions: contributions.slice(0, 10),
+    contributions: contributions.slice(0, 14),
   }
 }
 
@@ -176,10 +204,13 @@ function confidenceFromMatch(match: StructureScanMatch, nextScore: number): numb
   const margin = Math.max(0, match.score - nextScore)
   let confidence = 25 + Math.max(0, match.score) * 0.55 + Math.min(14, margin * 0.15)
   const positive = match.contributions.filter((contribution) => contribution.points > 0)
+  const visualScore = positive
+    .filter((contribution) => contribution.category === "visual" || contribution.category === "ring")
+    .reduce((sum, contribution) => sum + contribution.points, 0)
   const hasStrongEvidence = positive.some((contribution) =>
     /exact formula|corrected formula|condensed formula|exact name|name or alias|ocr token database|strong visual/i.test(contribution.label),
-  )
-  const onlyWeakEvidence = positive.every((contribution) =>
+  ) || visualScore >= 45
+  const onlyWeakEvidence = visualScore < 45 && positive.every((contribution) =>
     /filename|structure clue|reaction pathway|aromatic|ring|visual heuristic/i.test(contribution.label),
   )
 

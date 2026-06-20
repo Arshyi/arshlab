@@ -32,7 +32,7 @@ const sections = [
   },
   {
     title: "Structure Scanner Images And Camera",
-    body: "The v5.2.0 Structure Scanner supports uploaded images only. Image preprocessing, Tesseract.js OCR, dark-pixel extraction, and shape heuristics run locally in the browser. Images and detected image geometry are not uploaded to ARSHLAB servers, Supabase, OpenRouter, or an external AI API. Images are not permanently stored or included in local scan history. Local history stores only match labels, confidence, functional-group labels, timestamps, and corrections. Live camera access is not enabled in v5.2.0.",
+    body: "The v5.2.1 Structure Scanner supports uploaded images only. Image preprocessing, Tesseract.js OCR, dark-pixel extraction, endpoint graphs, and fuzzy ring heuristics run locally in the browser. Images and detected image geometry are not uploaded to ARSHLAB servers, Supabase, OpenRouter, or an external AI API. Images are not permanently stored or included in local scan history. Local history stores only match labels, confidence, functional-group labels, timestamps, and corrections. Live camera access is not enabled in v5.2.1.",
   },
   {
     title: "Curriculum Labels",
