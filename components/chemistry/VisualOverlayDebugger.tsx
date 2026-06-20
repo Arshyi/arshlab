@@ -1,0 +1,283 @@
+"use client"
+
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Bug, ChevronDown, Download, ImageOff } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import {
+  DEFAULT_VISION_OVERLAYS,
+  renderVisionOverlay,
+  VISION_OVERLAY_COLORS,
+  type VisionOverlayVisibility,
+} from "@/lib/structure-vision/overlay-renderer"
+import type { StructureVisionAnalysis, VisionRingCandidate } from "@/lib/structure-vision/vision-types"
+import type { StructureScanResult } from "@/lib/structure-scanner/scanner-types"
+import { cn } from "@/lib/utils"
+
+const TOGGLES: Array<{ id: keyof VisionOverlayVisibility; label: string; color?: string }> = [
+  { id: "rawImage", label: "Raw image" },
+  { id: "lineSegments", label: "Detected line segments", color: VISION_OVERLAY_COLORS.lineSegments },
+  { id: "endpoints", label: "Endpoints", color: VISION_OVERLAY_COLORS.endpoints },
+  { id: "graphNodes", label: "Merged graph nodes", color: VISION_OVERLAY_COLORS.nodes },
+  { id: "graphEdges", label: "Graph edges", color: VISION_OVERLAY_COLORS.edges },
+  { id: "cycles", label: "Cycle candidates", color: VISION_OVERLAY_COLORS.cycles },
+  { id: "nearRings", label: "Near-ring candidates", color: VISION_OVERLAY_COLORS.cycles },
+  { id: "selectedRing", label: "Selected ring candidate", color: VISION_OVERLAY_COLORS.selected },
+  { id: "parallelBonds", label: "Parallel bond pairs", color: VISION_OVERLAY_COLORS.parallel },
+  { id: "aromaticCues", label: "Aromatic cues", color: VISION_OVERLAY_COLORS.aromatic },
+  { id: "functionalGroupCues", label: "Functional-group cues", color: VISION_OVERLAY_COLORS.aromatic },
+]
+
+export function VisualOverlayDebugger({
+  imageBlob,
+  analysis,
+  result,
+}: {
+  imageBlob: Blob | null
+  analysis: StructureVisionAnalysis | null
+  result: StructureScanResult | null
+}) {
+  const [open, setOpen] = useState(false)
+  const [visibility, setVisibility] = useState<VisionOverlayVisibility>(DEFAULT_VISION_OVERLAYS)
+  const [renderError, setRenderError] = useState<string | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!open || !canvas || !analysis) return
+    const context = canvas.getContext("2d")
+    if (!context) {
+      setRenderError("Canvas rendering is unavailable in this browser.")
+      return
+    }
+
+    const scale = Math.max(2, Math.min(5, 960 / Math.max(1, analysis.width)))
+    canvas.width = Math.round(analysis.width * scale)
+    canvas.height = Math.round(analysis.height * scale)
+
+    if (!imageBlob) {
+      renderVisionOverlay({ context, analysis, visibility, image: null })
+      return
+    }
+
+    const imageUrl = URL.createObjectURL(imageBlob)
+    const image = new Image()
+    image.onload = () => {
+      renderVisionOverlay({ context, analysis, visibility, image })
+      setRenderError(null)
+      URL.revokeObjectURL(imageUrl)
+    }
+    image.onerror = () => {
+      renderVisionOverlay({ context, analysis, visibility, image: null })
+      setRenderError("The preview could not be decoded, so the overlay is shown without the raw image.")
+      URL.revokeObjectURL(imageUrl)
+    }
+    image.src = imageUrl
+
+    return () => {
+      image.onload = null
+      image.onerror = null
+      URL.revokeObjectURL(imageUrl)
+    }
+  }, [analysis, imageBlob, open, visibility])
+
+  const ringCandidates = useMemo(() => {
+    if (!analysis) return []
+    const candidates = [...analysis.graph.cycleCandidates, ...analysis.graph.nearRingCandidates]
+      .sort((left, right) => right.confidence - left.confidence)
+    const unique: VisionRingCandidate[] = []
+    candidates.forEach((candidate) => {
+      if (!unique.some((existing) => existing.source === candidate.source && existing.nodeIds.join("-") === candidate.nodeIds.join("-"))) {
+        unique.push(candidate)
+      }
+    })
+    return unique.slice(0, 3)
+  }, [analysis])
+
+  const benzeneVisual = analysis?.candidates.find((candidate) => candidate.compoundId === "benzene")
+  const benzeneMatch = result?.matches.find((match) => match.record.id === "benzene")
+  const contributionTotal = (category: "ocr" | "manual" | "filename" | "penalty") =>
+    benzeneMatch?.contributions
+      .filter((contribution) => contribution.category === category)
+      .reduce((sum, contribution) => sum + contribution.points, 0) ?? 0
+  const ringScore = benzeneVisual?.scoreBreakdown
+    .filter((entry) => /ring candidate|fuzzy ring/i.test(entry.label))
+    .reduce((sum, entry) => sum + entry.points, 0) ?? 0
+  const doubleBondScore = benzeneVisual?.scoreBreakdown
+    .filter((entry) => /double-bond/i.test(entry.label))
+    .reduce((sum, entry) => sum + entry.points, 0) ?? 0
+
+  function updateVisibility(id: keyof VisionOverlayVisibility, checked: boolean) {
+    setVisibility((current) => ({ ...current, [id]: checked }))
+  }
+
+  function exportOverlay() {
+    const canvas = canvasRef.current
+    if (!canvas || !analysis) return
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        setRenderError("The browser could not export this overlay.")
+        return
+      }
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement("a")
+      anchor.href = url
+      anchor.download = "arshlab-structure-overlay.png"
+      anchor.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    }, "image/png")
+  }
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Card className="rounded-2xl border-dashed border-cyan-500/30">
+        <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 p-5 text-left">
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-700 dark:text-cyan-300">
+              <Bug className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="flex flex-wrap items-center gap-2 font-semibold">
+                Visual Overlay Debugger
+                <Badge variant="outline" className="rounded-full border-cyan-500/30">Developer Vision Tools</Badge>
+              </span>
+              <span className="block text-sm text-muted-foreground">Inspect image-to-graph conversion and candidate selection</span>
+            </span>
+          </span>
+          <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", open && "rotate-180")} />
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <CardContent className="space-y-6 border-t border-border pt-5">
+            {!analysis ? (
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-10 text-center">
+                <ImageOff className="h-7 w-7 text-muted-foreground" />
+                <div>
+                  <p className="font-semibold">Run a scan to build the overlay</p>
+                  <p className="mt-1 text-sm text-muted-foreground">The image and all overlay geometry remain in this browser.</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <section>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold">Overlay layers</h3>
+                      <p className="text-sm text-muted-foreground">Enable several layers together to inspect graph construction.</p>
+                    </div>
+                    <Button type="button" variant="outline" onClick={exportOverlay}>
+                      <Download className="h-4 w-4" />
+                      Export Overlay
+                    </Button>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {TOGGLES.map((toggle) => (
+                      <label key={toggle.id} className="flex min-w-0 items-center gap-3 rounded-lg border border-border p-3 text-sm">
+                        <Checkbox
+                          checked={visibility[toggle.id]}
+                          onCheckedChange={(checked) => updateVisibility(toggle.id, checked === true)}
+                        />
+                        {toggle.color && <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: toggle.color }} />}
+                        <span>{toggle.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="overflow-hidden rounded-xl border border-border bg-slate-950">
+                  <div className="overflow-auto">
+                    <canvas
+                      ref={canvasRef}
+                      aria-label="Structure vision overlay showing lines, graph nodes, cycles, and candidate evidence"
+                      className="block h-auto min-w-[640px] max-w-none sm:min-w-full"
+                      style={{ width: "100%", aspectRatio: `${analysis.width} / ${analysis.height}` }}
+                    />
+                  </div>
+                </section>
+
+                {renderError && <p className="text-sm text-amber-700 dark:text-amber-300">{renderError}</p>}
+
+                <section className="rounded-xl border border-border p-4">
+                  <h3 className="font-semibold">Why this ring was selected</h3>
+                  {ringCandidates.length ? (
+                    <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                      {ringCandidates.map((candidate, index) => (
+                        <div key={`${candidate.source}-${candidate.nodeIds.join("-")}-${index}`} className={cn(
+                          "rounded-lg border p-3",
+                          index === 0 ? "border-orange-500/40 bg-orange-500/10" : "border-border bg-secondary/30",
+                        )}>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-semibold">Candidate {String.fromCharCode(65 + index)}</p>
+                            {index === 0 && <Badge className="rounded-full bg-orange-600">Selected</Badge>}
+                          </div>
+                          <p className="mt-2 text-sm">{candidate.sidesEstimate}-member {candidate.nearRing ? "near-ring" : "ring"}</p>
+                          <dl className="mt-2 space-y-1 text-xs text-muted-foreground">
+                            <DiagnosticRow label="Closure" value={`${candidate.closureQuality}%`} />
+                            <DiagnosticRow label="Regularity" value={`${candidate.polygonRegularity}%`} />
+                            <DiagnosticRow label="Confidence" value={`${candidate.confidence}%`} />
+                          </dl>
+                          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{candidate.reason}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-muted-foreground">No 5-7 member cycle or near-ring survived geometric validation.</p>
+                  )}
+                  {ringCandidates[0] && (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Candidate A wins because it has the highest combined closure, endpoint-merge, regularity, line-coverage, and aromatic-support confidence after duplicate rings are removed.
+                    </p>
+                  )}
+                </section>
+
+                <section className="rounded-xl border border-border p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-semibold">Benzene Classification Breakdown</h3>
+                    <Badge variant="outline" className="rounded-full">Local deterministic score</Badge>
+                  </div>
+                  {benzeneVisual ? (
+                    <div className="mt-4 space-y-2 font-mono text-sm">
+                      <DiagnosticRow label="Ring geometry" value={formatPoints(ringScore)} />
+                      <DiagnosticRow label="Double-bond support" value={formatPoints(doubleBondScore)} />
+                      <DiagnosticRow label="Aromatic cue score" value={`${analysis.graph.aromaticCueScore}%`} />
+                      <DiagnosticRow label="OCR support" value={formatPoints(contributionTotal("ocr"))} />
+                      <DiagnosticRow label="Manual hint support" value={formatPoints(contributionTotal("manual"))} />
+                      <DiagnosticRow label="Filename support" value={formatPoints(contributionTotal("filename"))} />
+                      <DiagnosticRow label="Penalty values" value={formatPoints(contributionTotal("penalty"))} />
+                      <div className="mt-3 border-t border-border pt-3">
+                        <DiagnosticRow label="Final visual score" value={`${benzeneVisual.score}`} strong />
+                        <DiagnosticRow label="Final database confidence" value={benzeneMatch ? `${benzeneMatch.confidence}%` : "Not ranked"} strong />
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-muted-foreground">No benzene candidate was generated for this drawing.</p>
+                  )}
+                </section>
+
+                <p className="text-xs text-muted-foreground">
+                  Development overlay only. Rendering and PNG export happen locally; ARSHLAB does not upload or retain the image.
+                </p>
+              </>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  )
+}
+
+function DiagnosticRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className={cn("flex items-center justify-between gap-3", strong && "font-semibold text-foreground")}>
+      <span>{label}</span>
+      <span>{value}</span>
+    </div>
+  )
+}
+
+function formatPoints(value: number): string {
+  return `${value > 0 ? "+" : ""}${value}`
+}

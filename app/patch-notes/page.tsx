@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.2.2",
+    version: "5.2.3",
     date: "Current",
+    status: "released",
+    title: "Visual Overlay Debugger",
+    changes: [
+      "Added an expandable Developer Vision Tools overlay panel to the Structure Scanner",
+      "Added combinable layers for raw images, lines, endpoints, graph nodes, graph edges, cycles, near-rings, selected rings, parallel bonds, aromatic evidence, and functional-group cues",
+      "Added node IDs, degrees, coordinates, edge lengths, connected-node labels, and ring confidence labels",
+      "Added Why this ring was selected candidate comparisons",
+      "Added a Benzene Classification Breakdown linked to visual and final database scoring",
+      "Added local PNG export for the active image and overlay layers",
+      "Added committed metric snapshots for seven deterministic structure-vision examples",
+      "Kept overlay rendering and export entirely in-browser with no uploads or external APIs",
+    ],
+  },
+  {
+    version: "5.2.2",
+    date: "Previous",
     status: "released",
     title: "Benzene Ring Calibration",
     changes: [

@@ -40,6 +40,7 @@ import { StructureMatchCard } from "./StructureMatchCard"
 import { OCRDebugPanel } from "./OCRDebugPanel"
 import { StructurePreview } from "./StructurePreview"
 import { VisionDebugPanel } from "./VisionDebugPanel"
+import { VisualOverlayDebugger } from "./VisualOverlayDebugger"
 
 const QUICK_HINTS = ["ethanol", "benzene", "aspirin", "acetone", "ethene", "ethanoic acid", "sodium chloride"]
 
@@ -277,6 +278,12 @@ export function StructureScanner() {
           />
 
           <VisionDebugPanel analysis={visionAnalysis} error={visionError} />
+
+          <VisualOverlayDebugger
+            imageBlob={processedImage ?? file}
+            analysis={visionAnalysis}
+            result={result}
+          />
 
           <Card className="rounded-2xl">
             <CardHeader>

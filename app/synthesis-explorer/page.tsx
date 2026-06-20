@@ -26,7 +26,7 @@ export default function SynthesisExplorerPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">ARSHLAB v5.2.2</Badge>
+              <Badge variant="secondary">ARSHLAB v5.2.3</Badge>
               <Badge variant="outline">Database mode = no AI usage</Badge>
             </div>
           </div>

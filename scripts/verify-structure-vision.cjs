@@ -3,6 +3,7 @@ const { rmSync } = require("node:fs")
 const { tmpdir } = require("node:os")
 const path = require("node:path")
 const { spawnSync } = require("node:child_process")
+const expectedOverlaySnapshots = require("./fixtures/vision-overlay-snapshots.json")
 
 const root = path.resolve(__dirname, "..")
 const outputDirectory = path.join(tmpdir(), "arshlab-structure-vision-checks")
@@ -236,10 +237,40 @@ const observedScan = scanStructure({ moleculeName: "benzene", visualAnalysis: ob
 assert.equal(observedScan.bestMatch?.record.id, "benzene", "combined scan prefers benzene")
 assert.ok(observedScan.bestMatch.confidence >= 70 && observedScan.bestMatch.confidence <= 85, "visual plus hint reaches calibrated confidence")
 
+function overlaySnapshot(analysis) {
+  return {
+    lines: analysis.lineSegments.length,
+    endpoints: analysis.lineSegments.length * 2,
+    graphNodes: analysis.graph.nodes.length,
+    graphEdges: analysis.graph.edges.length,
+    cycles: analysis.graph.cycleCandidates.length,
+    nearRings: analysis.graph.nearRingCandidates.length,
+    selectedRingMembers: analysis.ringCandidates[0]?.sidesEstimate ?? 0,
+    selectedRingConfidence: analysis.ringCandidates[0]?.confidence ?? 0,
+    parallelPairs: analysis.parallelBondPairs.length,
+    aromaticCueScore: analysis.graph.aromaticCueScore,
+    functionalCues: analysis.functionalGroupCues.map((cue) => cue.kind),
+    topCandidate: analysis.candidates[0]?.compoundId ?? null,
+    topVisualScore: analysis.candidates[0]?.score ?? 0,
+  }
+}
+
+const overlaySnapshots = {
+  handDrawnBenzene: overlaySnapshot(benzene),
+  imperfectBenzene: overlaySnapshot(imperfectBenzene),
+  cyclohexane: overlaySnapshot(cyclohexane),
+  pentagonalRing: overlaySnapshot(fiveMemberRing),
+  incompleteBenzene: overlaySnapshot(incompleteBenzene),
+  ethanolSkeleton: overlaySnapshot(ethanol),
+  carbonylExample: overlaySnapshot(methanal),
+}
+assert.deepEqual(overlaySnapshots, expectedOverlaySnapshots, "visual overlay metric snapshots")
+
 console.log(`Benzene: ${benzene.lineSegments.length} lines, ${benzene.closedLoops.length} loop, score ${benzene.candidates[0].score}`)
 console.log(`Methanal: ${methanal.parallelLinePairs} parallel pair(s), score ${methanal.candidates[0].score}`)
 console.log(`Ethanol: ${ethanol.simpleChainLength}-atom chain, score ${ethanol.candidates[0].score}`)
 console.log(`Fuzzy rings: ${imperfectBenzene.graph.cycleCandidates.length} cycles, ${incompleteBenzene.graph.nearRingCandidates.length} near-rings`)
 console.log(`Observed calibration: ${observedCandidate.score} visual / ${observedScan.bestMatch.confidence}% final confidence`)
+console.log(`Verified ${Object.keys(overlaySnapshots).length} visual overlay snapshots.`)
 console.log("Verified 7 ring-calibration cases, 3 structure drawings, and the uncertain-image fallback.")
 rmSync(outputDirectory, { recursive: true, force: true })

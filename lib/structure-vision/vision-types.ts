@@ -20,6 +20,16 @@ export interface VisionLineSegment {
   strength: number
 }
 
+export interface VisionParallelBondPair {
+  id: number
+  firstSegmentIndex: number
+  secondSegmentIndex: number
+  center: VisionPoint
+  angle: number
+  separation: number
+  overlap: number
+}
+
 export interface VisionClosedLoop {
   bounds: { x: number; y: number; width: number; height: number }
   center: VisionPoint
@@ -115,6 +125,7 @@ export interface StructureVisionAnalysis {
   closedLoops: VisionClosedLoop[]
   ringCandidates: VisionRingCandidate[]
   graph: VisionGraphAnalysis
+  parallelBondPairs: VisionParallelBondPair[]
   parallelLinePairs: number
   simpleChainLength: number
   functionalGroupCues: VisionFunctionalGroupCue[]

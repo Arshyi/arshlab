@@ -57,6 +57,7 @@ const completed = [
   "Structure Shape Detection",
   "Fuzzy Ring Detection",
   "Benzene Ring Calibration",
+  "Visual Overlay Debugger",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -187,14 +188,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Benzene Ring Calibration
+                Visual Overlay Debugger
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: imperfect aromatic near-rings combine calibrated ring confidence,
-                parallel-bond evidence, and benzene/arene hints while visual-only results remain
-                moderate and saturated or open-chain drawings retain strict safeguards.
+                Now available: developer overlays draw detected lines, endpoints, graph nodes, graph edges,
+                cycles, near-rings, parallel bonds, aromatic evidence, and selected candidates directly
+                over the locally processed image, with PNG export and regression snapshots.
               </p>
             </CardContent>
           </Card>
@@ -206,7 +207,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.2.2 - Benzene Ring Calibration
+          ARSHLAB v5.2.3 - Visual Overlay Debugger
         </motion.p>
       </div>
     </div>

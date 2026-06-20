@@ -8,6 +8,7 @@ import type {
   VisionGraphEdge,
   VisionGraphNode,
   VisionLineSegment,
+  VisionParallelBondPair,
   VisionPoint,
   VisionRingCandidate,
 } from "./vision-types"
@@ -591,8 +592,11 @@ function projectedOverlap(left: VisionLineSegment, right: VisionLineSegment): nu
   return Math.max(0, Math.min(leftRange[1], rightRange[1]) - Math.max(leftRange[0], rightRange[0]))
 }
 
-export function countParallelLinePairs(segments: VisionLineSegment[], mask: DarkPixelMask): number {
-  const pairs: Array<{ angle: number; center: VisionPoint; length: number }> = []
+export function detectParallelBondPairs(
+  segments: VisionLineSegment[],
+  mask: DarkPixelMask,
+): VisionParallelBondPair[] {
+  const pairs: Array<VisionParallelBondPair & { length: number }> = []
   const minimumSeparation = Math.max(3.2, Math.min(mask.width, mask.height) * 0.018)
   const maximumSeparation = Math.max(4, Math.min(mask.width, mask.height) * 0.055)
   for (let leftIndex = 0; leftIndex < segments.length; leftIndex += 1) {
@@ -606,13 +610,19 @@ export function countParallelLinePairs(segments: VisionLineSegment[], mask: Dark
         (right.midpoint.y - left.midpoint.y) * Math.cos(radians),
       )
       if (separation < minimumSeparation || separation > maximumSeparation) continue
-      if (projectedOverlap(left, right) < Math.min(left.length, right.length) * 0.42) continue
+      const overlap = projectedOverlap(left, right)
+      if (overlap < Math.min(left.length, right.length) * 0.42) continue
       const pair = {
+        id: pairs.length,
+        firstSegmentIndex: leftIndex,
+        secondSegmentIndex: rightIndex,
         angle: left.angle,
         center: {
           x: (left.midpoint.x + right.midpoint.x) / 2,
           y: (left.midpoint.y + right.midpoint.y) / 2,
         },
+        separation,
+        overlap,
         length: Math.min(left.length, right.length),
       }
       const duplicate = pairs.some((existing) =>
@@ -622,7 +632,11 @@ export function countParallelLinePairs(segments: VisionLineSegment[], mask: Dark
       if (!duplicate) pairs.push(pair)
     }
   }
-  return Math.min(pairs.length, 8)
+  return pairs.slice(0, 8).map(({ length: _length, ...pair }, id) => ({ ...pair, id }))
+}
+
+export function countParallelLinePairs(segments: VisionLineSegment[], mask: DarkPixelMask): number {
+  return detectParallelBondPairs(segments, mask).length
 }
 
 export function estimateSimpleChainLength(segments: VisionLineSegment[], mask: DarkPixelMask): number {
@@ -873,7 +887,8 @@ function buildCandidates(
 export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): StructureVisionAnalysis {
   const lineSegments = detectLineSegments(mask)
   const closedLoops = detectClosedLoops(mask)
-  const parallelLinePairs = countParallelLinePairs(lineSegments, mask)
+  const parallelBondPairs = detectParallelBondPairs(lineSegments, mask)
+  const parallelLinePairs = parallelBondPairs.length
   const aromaticText = /benzene|aromatic|c6h6|phenyl|hexagon|ring/.test(
     recognizedText.toLowerCase().replace(/[^a-z0-9]/g, ""),
   )
@@ -941,6 +956,7 @@ export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): 
     closedLoops,
     ringCandidates,
     graph: graphSummary,
+    parallelBondPairs,
     parallelLinePairs,
     simpleChainLength,
     functionalGroupCues,
