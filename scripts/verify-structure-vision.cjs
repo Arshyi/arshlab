@@ -15,6 +15,9 @@ const compile = spawnSync(
     tscPath,
     "lib/structure-vision/vision-types.ts",
     "lib/structure-vision/shape-heuristics.ts",
+    "lib/structure-scanner/scanner-engine.ts",
+    "lib/structure-scanner/scanner-database.ts",
+    "lib/structure-scanner/scanner-types.ts",
     "--module",
     "commonjs",
     "--target",
@@ -33,7 +36,8 @@ if (compile.status !== 0) {
   process.exit(compile.status ?? 1)
 }
 
-const { analyzeDarkPixelMask } = require(path.join(outputDirectory, "shape-heuristics.js"))
+const { analyzeDarkPixelMask, calibrateBenzeneCandidate } = require(path.join(outputDirectory, "structure-vision", "shape-heuristics.js"))
+const { scanStructure } = require(path.join(outputDirectory, "structure-scanner", "scanner-engine.js"))
 
 function createMask(width = 120, height = 100) {
   return { width, height, pixels: new Uint8Array(width * height), darkPixelCount: 0, threshold: 160 }
@@ -187,9 +191,55 @@ const nonRing = analyzeDarkPixelMask(openChain, "alkene chain")
 assert.equal(nonRing.ringCandidates.length, 0, "parallel open chain is not a ring")
 assert.ok(!nonRing.candidates.some((candidate) => candidate.compoundId === "benzene"), "parallel open chain is not benzene")
 
+const observedRing = {
+  ...incompleteBenzene.ringCandidates[0],
+  sidesEstimate: 7,
+  confidence: 66,
+  nearRing: true,
+  source: "graph-near-cycle",
+  doubleBondCue: 100,
+  aromaticCueScore: 0,
+}
+const observedCandidate = calibrateBenzeneCandidate(observedRing, 7, 65, "benzene C6H6 ring")
+assert.ok(observedCandidate, "observed debug case produces a benzene candidate")
+assert.equal(observedCandidate.compoundId, "benzene", "observed debug case prefers benzene")
+assert.equal(observedCandidate.label, "Likely benzene / aromatic ring", "moderate aromatic ring label")
+assert.ok(observedCandidate.score > 33, "observed visual score improves above 33")
+assert.ok(
+  observedCandidate.reasons.includes("Aromatic support detected from parallel/double-bond strokes."),
+  "observed case explains aromatic support",
+)
+assert.ok(!observedCandidate.scoreBreakdown.some((entry) => entry.label === "Aromatic support missing"), "debug reason is calibrated")
+
+const observedAnalysis = {
+  ...incompleteBenzene,
+  lineSegments: benzene.lineSegments.slice(0, 28),
+  parallelLinePairs: 7,
+  ringCandidates: [observedRing],
+  candidates: [observedCandidate],
+  visualConfidence: observedCandidate.score,
+  graph: {
+    ...incompleteBenzene.graph,
+    nodes: Array.from({ length: 7 }, (_, id) => ({ id })),
+    edges: Array.from({ length: 9 }, (_, id) => ({ id })),
+    nearRingCandidates: [observedRing, { ...observedRing, nodeIds: [...observedRing.nodeIds].reverse() }],
+    cycleCandidates: [],
+    bestRingConfidence: 66,
+    aromaticCueScore: 65,
+  },
+}
+assert.equal(observedAnalysis.lineSegments.length, 28, "observed line count")
+assert.equal(observedAnalysis.graph.nodes.length, 7, "observed graph node count")
+assert.equal(observedAnalysis.graph.edges.length, 9, "observed graph edge count")
+assert.equal(observedAnalysis.graph.nearRingCandidates.length, 2, "observed near-ring count")
+const observedScan = scanStructure({ moleculeName: "benzene", visualAnalysis: observedAnalysis })
+assert.equal(observedScan.bestMatch?.record.id, "benzene", "combined scan prefers benzene")
+assert.ok(observedScan.bestMatch.confidence >= 70 && observedScan.bestMatch.confidence <= 85, "visual plus hint reaches calibrated confidence")
+
 console.log(`Benzene: ${benzene.lineSegments.length} lines, ${benzene.closedLoops.length} loop, score ${benzene.candidates[0].score}`)
 console.log(`Methanal: ${methanal.parallelLinePairs} parallel pair(s), score ${methanal.candidates[0].score}`)
 console.log(`Ethanol: ${ethanol.simpleChainLength}-atom chain, score ${ethanol.candidates[0].score}`)
 console.log(`Fuzzy rings: ${imperfectBenzene.graph.cycleCandidates.length} cycles, ${incompleteBenzene.graph.nearRingCandidates.length} near-rings`)
-console.log("Verified 6 fuzzy-ring cases, 3 structure drawings, and the uncertain-image fallback.")
+console.log(`Observed calibration: ${observedCandidate.score} visual / ${observedScan.bestMatch.confidence}% final confidence`)
+console.log("Verified 7 ring-calibration cases, 3 structure drawings, and the uncertain-image fallback.")
 rmSync(outputDirectory, { recursive: true, force: true })

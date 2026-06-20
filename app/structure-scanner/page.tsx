@@ -26,7 +26,7 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.2.1
+              ARSHLAB v5.2.2
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">

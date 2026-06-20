@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.2.1",
+    version: "5.2.2",
     date: "Current",
+    status: "released",
+    title: "Benzene Ring Calibration",
+    changes: [
+      "Calibrated imperfect 5-7 member near-rings using ring confidence, parallel bonds, aromatic cues, and local hints",
+      "Added the Likely benzene / aromatic ring visual candidate label",
+      "Added explicit 25/25/15/25 scoring for near-ring, aromatic, fuzzy-ring, and benzene-hint evidence",
+      "Fixed misleading aromatic-support-missing feedback when parallel or double-bond strokes are present",
+      "Added moderate visual-only and 85% visual-plus-hint confidence ceilings",
+      "Preserved safeguards for open chains, carbonyl drawings, and saturated cyclohexane-like rings",
+      "Added a regression fixture matching the observed 28-line, 7-pair, 66% ring, and 65% aromatic case",
+      "Kept all recognition local with no AI, external APIs, camera, or permanent image storage",
+    ],
+  },
+  {
+    version: "5.2.1",
+    date: "Previous",
     status: "released",
     title: "Fuzzy Ring Detection",
     changes: [

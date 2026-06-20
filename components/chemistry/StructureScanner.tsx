@@ -149,7 +149,14 @@ export function StructureScanner() {
     let nextVisionAnalysis: StructureVisionAnalysis | null = null
     try {
       nextVisionAnalysis = await analyzeStructureImage(processedImage ?? file, {
-        recognizedText: nextOCRResult?.rawText,
+        recognizedText: [
+          nextOCRResult?.rawText,
+          moleculeName,
+          formula,
+          condensedFormula,
+          functionalGroupHint,
+          file.name,
+        ].filter(Boolean).join(" "),
       })
       setVisionAnalysis(nextVisionAnalysis)
     } catch (visionFailure) {

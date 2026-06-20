@@ -56,6 +56,7 @@ const completed = [
   "OCR Scanner Accuracy Hardening",
   "Structure Shape Detection",
   "Fuzzy Ring Detection",
+  "Benzene Ring Calibration",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -186,14 +187,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Fuzzy Ring Detection
+                Benzene Ring Calibration
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: adaptive endpoint graphs recover imperfect 5-7 member rings and near-rings,
-                distinguish saturated rings from aromatic candidates, and explain closure, regularity,
-                double-bond, OCR, manual, and filename evidence.
+                Now available: imperfect aromatic near-rings combine calibrated ring confidence,
+                parallel-bond evidence, and benzene/arene hints while visual-only results remain
+                moderate and saturated or open-chain drawings retain strict safeguards.
               </p>
             </CardContent>
           </Card>
@@ -205,7 +206,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.2.1 - Fuzzy Ring Detection
+          ARSHLAB v5.2.2 - Benzene Ring Calibration
         </motion.p>
       </div>
     </div>

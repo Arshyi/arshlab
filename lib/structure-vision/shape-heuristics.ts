@@ -723,12 +723,59 @@ function buildCues(
   return cues
 }
 
+export function calibrateBenzeneCandidate(
+  ring: VisionRingCandidate | undefined,
+  parallelLinePairs: number,
+  aromaticCueScore: number,
+  recognizedText: string,
+): VisionCompoundCandidate | null {
+  if (!ring || ring.sidesEstimate < 5 || ring.sidesEstimate > 7 || ring.confidence < 48) return null
+
+  const text = recognizedText.toLowerCase().replace(/[^a-z0-9]/g, "")
+  const hasBenzeneHint = /benzene|arene|aromatic|phenyl|c6h6|hexagon|ring/.test(text)
+  const effectiveAromaticScore = Math.max(
+    aromaticCueScore,
+    Math.round(ring.doubleBondCue * 0.65 + ring.aromaticCueScore * 0.35),
+  )
+  const hasAromaticStrokes = effectiveAromaticScore >= 50 || parallelLinePairs >= 3
+  const calibratedMatch = ring.confidence >= 55 &&
+    parallelLinePairs >= 3 &&
+    effectiveAromaticScore >= 50 &&
+    hasBenzeneHint
+
+  const nearRingPoints = ring.nearRing ? 25 : ring.confidence >= 55 ? 20 : 12
+  const aromaticPoints = hasAromaticStrokes ? 25 : 0
+  const fuzzyRingPoints = ring.confidence >= 55 ? 15 : 10
+  const hintPoints = hasBenzeneHint ? 25 : 0
+  const score = nearRingPoints + aromaticPoints + fuzzyRingPoints + hintPoints
+  const aromaticReason = hasAromaticStrokes
+    ? "Aromatic support detected from parallel/double-bond strokes."
+    : "Aromatic support missing"
+  const label = ring.confidence >= 55 && hasAromaticStrokes
+    ? "Likely benzene / aromatic ring"
+    : "Possible benzene / aromatic ring"
+
+  return {
+    compoundId: "benzene",
+    label,
+    score: clamp(score, 0, calibratedMatch ? 90 : hasBenzeneHint ? 78 : 50),
+    reasons: [ring.reason, aromaticReason, ...(hasBenzeneHint ? ["Benzene/arene hint supports the visual ring"] : [])],
+    scoreBreakdown: [
+      { label: ring.nearRing ? "Near-ring candidate" : "Closed ring candidate", points: nearRingPoints, maximum: 25 },
+      { label: hasAromaticStrokes ? "Aromatic/double-bond support" : "Aromatic support missing", points: aromaticPoints, maximum: 25 },
+      { label: "5-7 member fuzzy ring", points: fuzzyRingPoints, maximum: 15 },
+      { label: "Benzene/arene hint support", points: hintPoints, maximum: 25 },
+    ],
+  }
+}
+
 function buildCandidates(
   cues: VisionFunctionalGroupCue[],
   rings: VisionRingCandidate[],
   parallelLinePairs: number,
   chainLength: number,
   recognizedText: string,
+  aromaticCueScore: number,
 ): VisionCompoundCandidate[] {
   const text = recognizedText.toLowerCase().replace(/[^a-z0-9=#-]/g, "")
   const hasCue = (kind: VisionFunctionalGroupCue["kind"]) => cues.some((cue) => cue.kind === kind)
@@ -739,43 +786,19 @@ function buildCandidates(
     score: number,
     reasons: string[],
     scoreBreakdown: VisionCompoundCandidate["scoreBreakdown"],
+    maximumScore = 58,
   ) => {
-    candidates.push({ compoundId, label, score: clamp(Math.round(score), 0, 58), reasons, scoreBreakdown })
+    candidates.push({ compoundId, label, score: clamp(Math.round(score), 0, maximumScore), reasons, scoreBreakdown })
   }
 
   const bestRing = rings[0]
-  const aromaticText = /benzene|aromatic|c6h6|phenyl|hexagon|ring/.test(text)
-  if (bestRing?.benzeneLike) {
-    const shapePoints = Math.min(38, Math.round(bestRing.confidence * 0.42))
-    const doubleBondPoints = Math.min(12, parallelLinePairs * 4)
-    const aromaticPoints = aromaticText ? 8 : 0
-    const reasons = [bestRing.reason]
-    if (parallelLinePairs >= 2) reasons.push("Alternating double-bond-like parallel strokes")
-    if (aromaticText) reasons.push("OCR/manual aromatic cue")
-    add(
-      "benzene",
-      bestRing.confidence < 68 && !aromaticText ? "Possible benzene / aromatic ring" : "Benzene",
-      shapePoints + doubleBondPoints + aromaticPoints,
-      reasons,
-      [
-        { label: "Ring shape", points: shapePoints, maximum: 38 },
-        { label: "Ring/aromatic double bonds", points: doubleBondPoints, maximum: 12 },
-        { label: "Aromatic text support", points: aromaticPoints, maximum: 8 },
-      ],
-    )
-  } else if (bestRing && bestRing.sidesEstimate >= 5 && bestRing.sidesEstimate <= 7 && bestRing.confidence >= 48) {
-    const possiblePoints = Math.min(30, Math.round(bestRing.confidence * 0.38))
-    add(
-      "benzene",
-      "Possible benzene / aromatic ring",
-      possiblePoints,
-      [bestRing.reason, "No strong aromatic or alternating-double-bond support"],
-      [
-        { label: "Moderate ring shape", points: possiblePoints, maximum: 30 },
-        { label: "Aromatic support missing", points: 0, maximum: 18 },
-      ],
-    )
-  }
+  const benzeneCandidate = calibrateBenzeneCandidate(
+    bestRing,
+    parallelLinePairs,
+    aromaticCueScore,
+    recognizedText,
+  )
+  if (benzeneCandidate) candidates.push(benzeneCandidate)
 
   if (bestRing?.sidesEstimate === 6 && !bestRing.benzeneLike) {
     const ringPoints = Math.min(44, Math.round(bestRing.confidence * 0.5))
@@ -890,7 +913,14 @@ export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): 
   }
   const simpleChainLength = estimateSimpleChainLength(lineSegments, mask)
   const functionalGroupCues = buildCues(ringCandidates, parallelLinePairs, simpleChainLength, recognizedText)
-  const candidates = buildCandidates(functionalGroupCues, ringCandidates, parallelLinePairs, simpleChainLength, recognizedText)
+  const candidates = buildCandidates(
+    functionalGroupCues,
+    ringCandidates,
+    parallelLinePairs,
+    simpleChainLength,
+    recognizedText,
+    graphSummary.aromaticCueScore,
+  )
   const visualConfidence = candidates[0]?.score ?? 0
   const darkPixelRatio = mask.darkPixelCount / Math.max(1, mask.width * mask.height)
   const warnings: string[] = []

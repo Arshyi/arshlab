@@ -77,6 +77,10 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
   const aromaticSource = normalizeText(
     [input.ocrText, input.fileName, input.functionalGroupHint, input.moleculeName, input.formula].filter(Boolean).join(" "),
   )
+  const manualAromaticSource = normalizeText(
+    [input.functionalGroupHint, input.moleculeName, input.formula, input.condensedFormula].filter(Boolean).join(" "),
+  )
+  const aromaticHintPattern = /\b(benzene|arene|aromatic|phenyl|c6h6|hexagon|ring)\b/
 
   let score = 0
   let directNameMatch = false
@@ -174,8 +178,13 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
     if (reactionTerm && combined.includes(reactionTerm)) addScore(4, "Related reaction pathway match", "other")
   }
 
-  if (record.id === "benzene" && /\b(benzene|c6h6|hexagon)\b/.test(aromaticSource)) {
-    addScore(22, "Benzene or six-membered ring clue", "ring")
+  if (record.id === "benzene" && aromaticHintPattern.test(aromaticSource)) {
+    const category: StructureScoreContribution["category"] = aromaticHintPattern.test(manualAromaticSource)
+      ? "manual"
+      : aromaticHintPattern.test(fileQuery)
+        ? "filename"
+        : "ocr"
+    addScore(22, "Benzene/arene name, formula, or ring hint", category)
   } else if (
     functionalGroups.some((group) => group === "arene" || group === "aromatic") &&
     /\b(aromatic|phenyl|ring)\b/.test(aromaticSource)
@@ -218,6 +227,15 @@ function confidenceFromMatch(match: StructureScanMatch, nextScore: number): numb
   if (onlyWeakEvidence) confidence = Math.min(confidence, 42)
   if (match.contributions.some((contribution) => contribution.points <= -20)) confidence = Math.min(confidence, 57)
   if (match.contributions.some((contribution) => /corrected/i.test(contribution.label))) confidence = Math.min(confidence, 88)
+  const calibratedBenzene = match.record.id === "benzene" && positive.some((contribution) =>
+    /near-ring candidate|5-7 member fuzzy ring|aromatic\/double-bond support/i.test(contribution.label),
+  )
+  if (calibratedBenzene) {
+    const hasIndependentHint = positive.some((contribution) =>
+      contribution.category === "ocr" || contribution.category === "manual" || contribution.category === "filename",
+    )
+    confidence = Math.min(confidence, hasIndependentHint ? 85 : 68)
+  }
   return clamp(Math.round(confidence), 12, 96)
 }
 

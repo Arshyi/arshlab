@@ -96,6 +96,18 @@ export function VisionDebugPanel({ analysis, error }: { analysis: StructureVisio
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {analysis?.graph.explanation ?? "Run the scanner to build an endpoint graph."}
               </p>
+              {analysis && analysis.ringCandidates.length > 0 && (
+                <p className={cn(
+                  "mt-3 rounded-lg border p-3 text-sm",
+                  analysis.graph.aromaticCueScore >= 50 || analysis.parallelLinePairs >= 3
+                    ? "border-teal-500/30 bg-teal-500/10 text-teal-800 dark:text-teal-200"
+                    : "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200",
+                )}>
+                  {analysis.graph.aromaticCueScore >= 50 || analysis.parallelLinePairs >= 3
+                    ? "Aromatic support detected from parallel/double-bond strokes."
+                    : "Ring geometry was detected, but aromatic double-bond support remains limited."}
+                </p>
+              )}
               {analysis?.ringCandidates[0] && (
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                   <RingValue label="Member count" value={`${analysis.ringCandidates[0].sidesEstimate}`} />
