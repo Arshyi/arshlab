@@ -1,6 +1,8 @@
 import { STRUCTURE_SCANNER_RECORDS } from "./scanner-database"
 import type { StructureScanInput, StructureScanMatch, StructureScanResult, StructureScannerRecord } from "./scanner-types"
 
+const CONFIDENCE_THRESHOLD = 58
+
 function normalizeText(value: string | null | undefined): string {
   return (value ?? "")
     .toLowerCase()
@@ -24,13 +26,13 @@ function formulaComposition(value: string | null | undefined): string {
   for (const token of tokens) {
     const match = token.match(/^([A-Z][a-z]?)(\d*)$/)
     if (!match) return ""
-    const element = match[1]
     const count = Number(match[2] || "1")
-    counts.set(element, (counts.get(element) ?? 0) + count)
+    if (!Number.isFinite(count) || count <= 0) return ""
+    counts.set(match[1], (counts.get(match[1]) ?? 0) + count)
   }
 
   return Array.from(counts.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([left], [right]) => left.localeCompare(right))
     .map(([element, count]) => `${element}${count}`)
     .join("")
 }
@@ -40,7 +42,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function uniqueReasons(reasons: string[]): string[] {
-  return Array.from(new Set(reasons)).slice(0, 5)
+  return Array.from(new Set(reasons)).slice(0, 7)
 }
 
 function scoreRecord(record: StructureScannerRecord, input: StructureScanInput): StructureScanMatch | null {
@@ -52,13 +54,12 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
   const hintQuery = normalizeText(input.functionalGroupHint ?? input.structureHint)
   const fileQuery = normalizeText(input.fileName?.replace(/\.[a-z0-9]+$/i, ""))
   const combined = normalizeText(
-    [input.moleculeName, input.formula, input.condensedFormula, input.functionalGroupHint, input.structureHint, input.fileName]
+    [input.moleculeName, input.formula, input.condensedFormula, input.functionalGroupHint, input.ocrText]
       .filter(Boolean)
       .join(" "),
   )
-  const combinedFormula = normalizeFormula(combined)
 
-  if (!combined && !formulaQuery) return null
+  if (!combined && !fileQuery && !input.ocrCompoundIds?.length) return null
 
   const recordName = normalizeText(record.name)
   const recordFormula = normalizeFormula(record.formula)
@@ -67,80 +68,88 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
   const functionalGroups = record.functionalGroups.map(normalizeText)
   const keywords = (record.keywords ?? []).map(normalizeText)
   const reactionTerms = record.reactionGraphLinks.map(normalizeText)
+  const aromaticSource = normalizeText(
+    [input.ocrText, input.fileName, input.functionalGroupHint, input.moleculeName, input.formula].filter(Boolean).join(" "),
+  )
 
   let score = 0
+  let directNameMatch = false
   const reasons: string[] = []
+  const contributions: Array<{ label: string; points: number }> = []
 
-  if (formulaQuery && formulaQuery === recordFormula) {
-    score += 78
-    reasons.push("Exact formula match")
-  } else if (formulaQuery && recordFormula.includes(formulaQuery)) {
-    score += 42
-    reasons.push("Partial formula match")
-  } else if (combinedFormula && combinedFormula.includes(recordFormula)) {
-    score += 38
-    reasons.push("Formula appears in the hint")
+  function addScore(points: number, label: string) {
+    score += points
+    reasons.push(label)
+    contributions.push({ label, points })
   }
 
-  if (
-    condensedFormulaQuery &&
-    condensedCompositionQuery &&
-    condensedCompositionQuery === recordFormulaComposition
-  ) {
-    score += 68
-    reasons.push("Condensed formula composition match")
+  if (input.ocrCompoundIds?.includes(record.id)) {
+    addScore(40, "Parsed OCR token database hit")
+  }
+
+  if (formulaQuery && formulaQuery === recordFormula) {
+    addScore(input.ocrFormulaCorrected ? 45 : 55, input.ocrFormulaCorrected ? "Corrected formula match" : "Exact formula match")
+  } else if (formulaQuery && recordFormula.includes(formulaQuery)) {
+    addScore(20, "Partial formula match")
+  }
+
+  if (condensedFormulaQuery && condensedCompositionQuery === recordFormulaComposition) {
+    addScore(
+      input.ocrFormulaCorrected ? 42 : 55,
+      input.ocrFormulaCorrected ? "Corrected condensed formula match" : "Condensed formula match",
+    )
   } else if (
     formulaCompositionQuery &&
     formulaCompositionQuery === recordFormulaComposition &&
     formulaQuery !== recordFormula
   ) {
-    score += 58
-    reasons.push("Molecular formula composition match")
+    addScore(input.ocrFormulaCorrected ? 30 : 38, input.ocrFormulaCorrected ? "Corrected formula composition match" : "Formula composition match")
   }
 
   if (nameQuery && nameQuery === recordName) {
-    score += 82
-    reasons.push("Exact molecule name match")
+    addScore(55, "Exact name match")
+    directNameMatch = true
   } else if (nameQuery && aliases.includes(nameQuery)) {
-    score += 74
-    reasons.push("Common alias match")
+    addScore(50, "Name or alias match")
+    directNameMatch = true
   } else if (nameQuery && (recordName.includes(nameQuery) || nameQuery.includes(recordName))) {
-    score += 46
-    reasons.push("Molecule name similarity")
+    addScore(25, "Name similarity match")
+    directNameMatch = true
   }
 
-  for (const alias of aliases) {
-    if (alias && combined.includes(alias)) {
-      score += 38
-      reasons.push("Common alias appears in the query")
-      break
-    }
+  if (!directNameMatch && aliases.some((alias) => alias && combined.includes(alias))) {
+    addScore(22, "Alias appears in OCR or hints")
   }
 
   if (fileQuery && (fileQuery.includes(recordName) || aliases.some((alias) => fileQuery.includes(alias)))) {
-    score += 36
-    reasons.push("Uploaded filename resembles this compound")
+    addScore(12, "Filename hint match")
   }
 
   for (const group of functionalGroups) {
-    if (group && hintQuery.includes(group)) {
-      score += 36
-      reasons.push(`Functional group match: ${group}`)
-    }
+    if (group && hintQuery.includes(group)) addScore(25, `Functional group hint match: ${group}`)
   }
 
   for (const keyword of keywords) {
-    if (keyword && combined.includes(keyword)) {
-      score += 14
-      reasons.push(`Structure hint match: ${keyword}`)
-    }
+    if (keyword && combined.includes(keyword)) addScore(8, `Structure clue match: ${keyword}`)
   }
 
   for (const reactionTerm of reactionTerms) {
-    if (reactionTerm && combined.includes(reactionTerm)) {
-      score += 8
-      reasons.push("Related reaction pathway match")
-    }
+    if (reactionTerm && combined.includes(reactionTerm)) addScore(4, "Related reaction pathway match")
+  }
+
+  if (record.id === "benzene" && /\b(benzene|c6h6|hexagon)\b/.test(aromaticSource)) {
+    addScore(22, "Benzene or six-membered ring clue")
+  } else if (
+    functionalGroups.some((group) => group === "arene" || group === "aromatic") &&
+    /\b(aromatic|phenyl|ring)\b/.test(aromaticSource)
+  ) {
+    addScore(10, "Aromatic or phenyl clue")
+  }
+
+  if (input.ocrQuality !== undefined) {
+    if (input.ocrQuality < 35) addScore(-24, "OCR quality penalty: very low text confidence")
+    else if (input.ocrQuality < 55) addScore(-14, "OCR quality penalty: low text confidence")
+    else if (input.ocrQuality < 70) addScore(-6, "OCR quality penalty: moderate text confidence")
   }
 
   if (score <= 0) return null
@@ -150,35 +159,53 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
     confidence: 0,
     reasons: uniqueReasons(reasons),
     score,
+    contributions: contributions.slice(0, 10),
   }
 }
 
-function confidenceFromScore(score: number, nextScore: number): number {
-  const margin = Math.max(0, score - nextScore)
-  const raw = Math.round(score * 0.82 + margin * 0.18)
-  return clamp(raw, 18, 99)
+function confidenceFromMatch(match: StructureScanMatch, nextScore: number): number {
+  const margin = Math.max(0, match.score - nextScore)
+  let confidence = 25 + Math.max(0, match.score) * 0.55 + Math.min(14, margin * 0.15)
+  const positive = match.contributions.filter((contribution) => contribution.points > 0)
+  const hasStrongEvidence = positive.some((contribution) =>
+    /exact formula|corrected formula|condensed formula|exact name|name or alias|ocr token database/i.test(contribution.label),
+  )
+  const onlyWeakEvidence = positive.every((contribution) =>
+    /filename|structure clue|reaction pathway|aromatic|ring/i.test(contribution.label),
+  )
+
+  if (!hasStrongEvidence) confidence = Math.min(confidence, 54)
+  if (onlyWeakEvidence) confidence = Math.min(confidence, 42)
+  if (match.contributions.some((contribution) => contribution.points <= -20)) confidence = Math.min(confidence, 57)
+  if (match.contributions.some((contribution) => /corrected/i.test(contribution.label))) confidence = Math.min(confidence, 88)
+  return clamp(Math.round(confidence), 12, 96)
 }
 
 export function scanStructure(input: StructureScanInput): StructureScanResult {
   const matches = STRUCTURE_SCANNER_RECORDS.map((record) => scoreRecord(record, input))
     .filter((match): match is StructureScanMatch => Boolean(match))
-    .sort((a, b) => b.score - a.score || a.record.name.localeCompare(b.record.name))
+    .sort((left, right) => right.score - left.score || left.record.name.localeCompare(right.record.name))
     .slice(0, 5)
 
   const scoredMatches = matches.map((match, index) => ({
     ...match,
-    confidence: confidenceFromScore(match.score, matches[index + 1]?.score ?? 0),
+    confidence: confidenceFromMatch(match, matches[index + 1]?.score ?? 0),
   }))
 
   const bestMatch = scoredMatches[0] ?? null
-  const message = bestMatch
-    ? "Local database match generated from the uploaded filename and manual chemistry hints."
-    : "No readable formula/name detected. Add a hint to improve matching."
+  const isConfident = Boolean(bestMatch && bestMatch.confidence >= CONFIDENCE_THRESHOLD)
+  const message = isConfident
+    ? "Deterministic database match generated from OCR tokens, the uploaded filename, and manual chemistry hints."
+    : bestMatch
+      ? "ARSHLAB could not confidently identify this structure."
+      : "No readable formula or name was matched. Add a hint or improve the image crop."
 
   return {
     query: input,
     bestMatch,
     matches: scoredMatches,
     message,
+    isConfident,
+    confidenceThreshold: CONFIDENCE_THRESHOLD,
   }
 }

@@ -18,8 +18,41 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.0.0",
+    version: "5.1.1",
     date: "Current",
+    status: "released",
+    title: "OCR Scanner Accuracy Hardening",
+    changes: [
+      "Added chemistry-aware OCR cleanup for common O/0, I/l/1, S/5, Z/2, B/8, chlorine, bromine, and sodium recognition errors",
+      "Expanded molecular, condensed, displayed, carbonyl, and aromatic formula parsing",
+      "Added deterministic matching for formaldehyde, ethanoic acid, propanone, phenol, toluene, and ethyl ethanoate formulas",
+      "Added browser-local OCR fallback recognition with an alternate page layout when the first pass is weak",
+      "Rebalanced formula, name, functional-group, filename, aromatic, and OCR-quality confidence contributions",
+      "Added low-confidence guidance and top-three possible matches instead of presenting a weak guess as detected",
+      "Expanded the OCR Debug Panel with cleaned text, corrections, parsed formulas, parsed names, and top candidate scores",
+      "Added executable local OCR parser and scanner checks for seven common chemistry cases",
+      "Kept OpenRouter configuration, AI routes, auth, middleware, guardrails, camera behavior, and solver calculations unchanged",
+    ],
+  },
+  {
+    version: "5.1.0",
+    date: "Previous",
+    status: "released",
+    title: "OCR Structure Recognition Foundation",
+    changes: [
+      "Added browser-side Tesseract.js OCR to the Molecular Structure Scanner",
+      "Added deterministic chemistry parsing for molecular formulas, condensed formulas, and common compound names",
+      "Connected processed crop, rotation, contrast, and grayscale previews directly to OCR input",
+      "Added an OCR debug panel with raw text, parsed chemistry tokens, match reasoning, and confidence contributions",
+      "Added OCR scanner metrics for scans performed, matches found, correction rate, and most recognized compounds",
+      "Preserved manual correction fields and all scanner deep links into Molecular Visualizer, Reaction Explorer, Synthesis Explorer, Spectroscopy Explorer, Formula Sheet, Practice Generator, Exam Generator, and Curriculum",
+      "Kept uploaded chemistry images local to the browser with no server-side image storage",
+      "Kept OpenRouter configuration, AI routes, auth, middleware, guardrails, and solver calculations unchanged",
+    ],
+  },
+  {
+    version: "5.0.0",
+    date: "Previous",
     status: "released",
     title: "Structure Recognition Upgrade",
     changes: [

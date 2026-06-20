@@ -37,6 +37,10 @@ export interface StructureScanInput {
   /** Retained for older callers; v5 uses functionalGroupHint. */
   structureHint?: string
   fileName?: string
+  ocrCompoundIds?: string[]
+  ocrText?: string
+  ocrQuality?: number
+  ocrFormulaCorrected?: boolean
 }
 
 export interface StructureScanMatch {
@@ -44,6 +48,12 @@ export interface StructureScanMatch {
   confidence: number
   reasons: string[]
   score: number
+  contributions: StructureScoreContribution[]
+}
+
+export interface StructureScoreContribution {
+  label: string
+  points: number
 }
 
 export interface StructureScanResult {
@@ -51,6 +61,8 @@ export interface StructureScanResult {
   bestMatch: StructureScanMatch | null
   matches: StructureScanMatch[]
   message: string
+  isConfident: boolean
+  confidenceThreshold: number
 }
 
 export interface StructureScanHistoryEntry {
@@ -66,6 +78,7 @@ export interface StructureScanHistoryEntry {
   originalName?: string
   originalFormula?: string
   correction?: StructureScanCorrection
+  source?: "ocr" | "manual"
 }
 
 export interface StructureScanCorrection {
@@ -78,6 +91,10 @@ export interface StructureScanCorrection {
 export interface StructureScanStats {
   totalScans: number
   correctedScans: number
+  ocrScansPerformed: number
+  ocrMatchesFound: number
+  ocrCorrectionRate: number
+  mostRecognizedCompounds: Array<{ name: string; count: number }>
   mostScannedCompounds: Array<{ name: string; count: number }>
   mostScannedFunctionalGroups: Array<{ name: string; count: number }>
   recent: StructureScanHistoryEntry[]

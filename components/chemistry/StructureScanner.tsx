@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
+import { recognizeChemistryImage, type ChemistryOCRResult, type OCRProgressUpdate } from "@/lib/ocr/ocr-engine"
 import { scanStructure } from "@/lib/structure-scanner/scanner-engine"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
 import {
@@ -28,10 +30,12 @@ import {
   getStructureScanStats,
   isAllowedStructureImage,
   readStructureScanHistory,
+  recordStructureOCRScan,
   recordStructureScan,
 } from "@/lib/structure-scanner/scanner-utils"
 import type { StructureScanHistoryEntry, StructureScanResult } from "@/lib/structure-scanner/scanner-types"
 import { StructureMatchCard } from "./StructureMatchCard"
+import { OCRDebugPanel } from "./OCRDebugPanel"
 import { StructurePreview } from "./StructurePreview"
 
 const QUICK_HINTS = ["ethanol", "benzene", "aspirin", "acetone", "ethene", "ethanoic acid", "sodium chloride"]
@@ -39,6 +43,7 @@ const QUICK_HINTS = ["ethanol", "benzene", "aspirin", "acetone", "ethene", "etha
 export function StructureScanner() {
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [processedImage, setProcessedImage] = useState<Blob | null>(null)
   const [moleculeName, setMoleculeName] = useState("")
   const [formula, setFormula] = useState("")
   const [functionalGroupHint, setFunctionalGroupHint] = useState("")
@@ -49,9 +54,13 @@ export function StructureScanner() {
   const [scanning, setScanning] = useState(false)
   const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
+  const [ocrResult, setOCRResult] = useState<ChemistryOCRResult | null>(null)
+  const [ocrProgress, setOCRProgress] = useState<OCRProgressUpdate | null>(null)
+  const [ocrError, setOCRError] = useState<string | null>(null)
+  const [ocrMetricsRevision, setOCRMetricsRevision] = useState(0)
 
   const metrics = useMemo(() => getStructureScannerMetrics(), [])
-  const stats = useMemo(() => getStructureScanStats(history), [history])
+  const stats = useMemo(() => getStructureScanStats(history), [history, ocrMetricsRevision])
 
   useEffect(() => {
     setHistory(readStructureScanHistory())
@@ -78,6 +87,10 @@ export function StructureScanner() {
     setFile(selected)
     setPreviewUrl(URL.createObjectURL(selected))
     setResult(null)
+    setProcessedImage(null)
+    setOCRResult(null)
+    setOCRProgress(null)
+    setOCRError(null)
     setCurrentHistoryId(null)
     setFeedbackMessage(null)
   }
@@ -86,7 +99,11 @@ export function StructureScanner() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setFile(null)
     setPreviewUrl(null)
+    setProcessedImage(null)
     setResult(null)
+    setOCRResult(null)
+    setOCRProgress(null)
+    setOCRError(null)
     setCurrentHistoryId(null)
     setFeedbackMessage(null)
   }
@@ -96,9 +113,9 @@ export function StructureScanner() {
     setError(null)
   }
 
-  function runScan() {
+  async function runScan() {
     if (!file) {
-      setError("Upload a structure image before scanning. Live camera input is not enabled in v5.0.")
+      setError("Upload a structure image before scanning. Live camera input is not enabled in v5.1.")
       return
     }
 
@@ -106,23 +123,51 @@ export function StructureScanner() {
     setError(null)
     setCurrentHistoryId(null)
     setFeedbackMessage(null)
+    setOCRError(null)
+    setOCRProgress({ status: "Preparing local OCR", progress: 0 })
 
-    window.setTimeout(() => {
+    let nextOCRResult: ChemistryOCRResult | null = null
+    try {
+      nextOCRResult = await recognizeChemistryImage(processedImage ?? file, setOCRProgress)
+      setOCRResult(nextOCRResult)
+    } catch (ocrFailure) {
+      const message = ocrFailure instanceof Error ? ocrFailure.message : "Local OCR could not start."
+      setOCRError(message)
+      setOCRResult(null)
+    }
+
+    try {
+      const parsed = nextOCRResult?.parsed
       const nextResult = scanStructure({
-        moleculeName,
-        formula,
+        moleculeName: moleculeName.trim() || parsed?.detectedName || undefined,
+        formula: formula.trim() || parsed?.detectedFormula || undefined,
         functionalGroupHint,
-        condensedFormula,
+        condensedFormula: condensedFormula.trim() || parsed?.detectedCondensedFormula || undefined,
         fileName: file?.name,
+        ocrCompoundIds: parsed?.matchedCompoundIds,
+        ocrText: parsed?.cleanedText,
+        ocrQuality: nextOCRResult?.ocrConfidence,
+        ocrFormulaCorrected: parsed?.detectedFormulaWasCorrected,
       })
       setResult(nextResult)
-      if (nextResult.bestMatch) {
-        const nextHistory = recordStructureScan(nextResult.bestMatch)
+      let historyEntryId: string | undefined
+      const ocrMatched = Boolean(
+        nextResult.isConfident &&
+        nextResult.bestMatch &&
+        parsed?.matchedCompoundIds.includes(nextResult.bestMatch.record.id),
+      )
+      if (nextResult.bestMatch && nextResult.isConfident) {
+        const nextHistory = recordStructureScan(nextResult.bestMatch, ocrMatched ? "ocr" : "manual")
         setHistory(nextHistory)
-        setCurrentHistoryId(nextHistory[0]?.id ?? null)
+        historyEntryId = nextHistory[0]?.id
+        setCurrentHistoryId(historyEntryId ?? null)
       }
+      recordStructureOCRScan(ocrMatched ? nextResult.bestMatch : null, ocrMatched ? historyEntryId : undefined)
+      setOCRMetricsRevision((revision) => revision + 1)
+    } finally {
       setScanning(false)
-    }, 250)
+      setOCRProgress(null)
+    }
   }
 
   function saveCorrection() {
@@ -141,21 +186,49 @@ export function StructureScanner() {
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
-          <StructurePreview previewUrl={previewUrl} fileName={file?.name ?? null} onClear={file ? clearFile : undefined} />
+          <StructurePreview
+            previewUrl={previewUrl}
+            fileName={file?.name ?? null}
+            onClear={file ? clearFile : undefined}
+            onProcessedImageChange={setProcessedImage}
+          />
 
           <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <FileSearch className="h-5 w-5" />
-                Optional Text Extraction
+                Local OCR Extraction
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Badge variant="outline" className="rounded-full">Placeholder - no image text is transmitted</Badge>
+              <Badge variant="outline" className="rounded-full">Tesseract.js - browser-side OCR</Badge>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Automated text extraction is not enabled in v5.0. ARSHLAB currently uses the local filename and the manual correction fields below.
+                OCR runs in a browser worker. The first scan may download OCR engine and English language assets, but your chemistry image is not uploaded.
               </p>
-              {file && !moleculeName.trim() && !formula.trim() && !condensedFormula.trim() && (
+              {scanning && ocrProgress && (
+                <div className="space-y-2 rounded-xl border border-border bg-background/80 p-4">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="capitalize">{ocrProgress.status}</span>
+                    <span className="font-mono">{Math.round(ocrProgress.progress * 100)}%</span>
+                  </div>
+                  <Progress value={ocrProgress.progress * 100} />
+                </div>
+              )}
+              {ocrResult && (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <OCRValue label="Detected Formula" value={ocrResult.parsed.detectedFormula ?? ocrResult.parsed.detectedCondensedFormula ?? "None"} />
+                  <OCRValue label="Detected Name" value={ocrResult.parsed.detectedName ?? "None"} />
+                  <OCRValue label="OCR Confidence" value={`${ocrResult.ocrConfidence}%`} />
+                </div>
+              )}
+              {ocrError && (
+                <Alert className="rounded-xl border-amber-500/30 bg-amber-500/10">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Local OCR unavailable</AlertTitle>
+                  <AlertDescription>{ocrError} Manual matching remains available.</AlertDescription>
+                </Alert>
+              )}
+              {file && ocrResult && ocrResult.parsed.tokens.length === 0 && (
                 <Alert className="rounded-xl border-amber-500/30 bg-amber-500/10">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
@@ -165,6 +238,13 @@ export function StructureScanner() {
               )}
             </CardContent>
           </Card>
+
+          <OCRDebugPanel
+            ocrResult={ocrResult}
+            match={result?.bestMatch ?? null}
+            matches={result?.matches ?? []}
+            error={ocrError}
+          />
 
           <Card className="rounded-2xl">
             <CardHeader>
@@ -178,7 +258,7 @@ export function StructureScanner() {
                 <Label htmlFor="structure-image">Structure image</Label>
                 <Input id="structure-image" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleFileChange} />
                 <p className="text-xs text-muted-foreground">
-                  Upload-only workflow. The image remains local and matching uses deterministic database clues.
+                  Upload-only workflow. OCR and preprocessing stay in this browser; the image is never stored by ARSHLAB.
                 </p>
               </div>
 
@@ -237,9 +317,9 @@ export function StructureScanner() {
                 </Alert>
               )}
 
-              <Button type="button" onClick={runScan} disabled={scanning || !file} className="w-full rounded-xl">
+              <Button type="button" onClick={() => void runScan()} disabled={scanning || !file} className="w-full rounded-xl">
                 {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanSearch className="h-4 w-4" />}
-                {scanning ? "Scanning local records..." : "Scan Local Database"}
+                {scanning ? "Running local OCR..." : "Run OCR and Match"}
               </Button>
             </CardContent>
           </Card>
@@ -260,13 +340,16 @@ export function StructureScanner() {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 <Metric label="Local scans" value={stats.totalScans} />
                 <Metric label="Corrected scans" value={stats.correctedScans} />
+                <Metric label="OCR scans" value={stats.ocrScansPerformed} />
+                <Metric label="OCR matches" value={stats.ocrMatchesFound} />
+                <Metric label="OCR correction rate" value={`${stats.ocrCorrectionRate}%`} />
                 <Metric label="Compounds" value={metrics.compounds} />
                 <Metric label="Functional group families" value={metrics.functionalGroups} />
                 <Metric label="Visualizer links" value={metrics.visualizerLinks} />
                 <Metric label="Reaction graph links" value={metrics.reactionGraphLinks} />
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                This upgrade estimates likely structure matches from local chemistry records and user-provided clues. It does not call AI, OCR, or external chemistry APIs.
+                OCR runs locally with Tesseract.js, then deterministic chemistry parsing and the ARSHLAB database produce the match. No OpenRouter or external AI API is used.
               </p>
             </CardContent>
           </Card>
@@ -317,6 +400,22 @@ export function StructureScanner() {
             </Badge>
           </div>
 
+          {!result.isConfident && (
+            <Alert className="rounded-2xl border-amber-500/30 bg-amber-500/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>ARSHLAB could not confidently identify this structure.</AlertTitle>
+              <AlertDescription>
+                <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+                  <li>- Add a formula hint</li>
+                  <li>- Add a name hint</li>
+                  <li>- Add a functional group hint</li>
+                  <li>- Try higher contrast</li>
+                  <li>- Crop closer to the structure</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {result.bestMatch && currentHistoryId && (
             <Card className="rounded-2xl border-dashed">
               <CardContent className="grid gap-4 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
@@ -343,7 +442,7 @@ export function StructureScanner() {
             </Card>
           )}
 
-          {result.bestMatch ? (
+          {result.bestMatch && result.isConfident ? (
             <div className="space-y-4">
               <StructureMatchCard match={result.bestMatch} primary />
               {result.matches.length > 1 && (
@@ -353,6 +452,20 @@ export function StructureScanner() {
                   ))}
                 </div>
               )}
+            </div>
+          ) : result.matches.length > 0 ? (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-lg font-semibold">Top possible matches</h3>
+                <p className="text-sm text-muted-foreground">
+                  These candidates are suggestions only. Add another clue before relying on one.
+                </p>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-3">
+                {result.matches.slice(0, 3).map((match) => (
+                  <StructureMatchCard key={match.record.id} match={match} />
+                ))}
+              </div>
             </div>
           ) : (
             <Card className="rounded-2xl border-dashed">
@@ -378,7 +491,7 @@ export function StructureScanner() {
           <div>
             <h2 className="font-semibold">What this scanner is good for</h2>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Use it as a study bridge: upload a structure, add any clues you recognize, confirm or correct the likely compound, then jump into visualizer views, reaction pathways, spectra, formulas, curriculum topics, and database-only practice.
+              Use it as a study bridge: upload a structure, inspect the OCR tokens, add any clues you recognize, confirm or correct the likely compound, then jump into visualizer views, reaction pathways, spectra, formulas, curriculum topics, and database-only practice.
             </p>
           </div>
         </CardContent>
@@ -387,7 +500,16 @@ export function StructureScanner() {
   )
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function OCRValue({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-xl border border-border bg-background/80 p-3">
+      <p className="text-xs uppercase text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate font-mono text-sm font-semibold" title={value}>{value}</p>
+    </div>
+  )
+}
+
+function Metric({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-xl border border-border bg-background/80 p-3">
       <p className="text-2xl font-bold">{value}</p>

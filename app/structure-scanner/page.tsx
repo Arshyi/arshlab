@@ -26,11 +26,11 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.0.0
+              ARSHLAB v5.1.1
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image, improve its local preview, add any chemistry clues you recognize, and ARSHLAB searches its local database for likely compounds. No live camera, remote image processing, or permanent image storage is enabled in v5.0.
+            Upload a structure image, improve its local preview, run browser-side OCR, and match parsed chemistry tokens against ARSHLAB's local database. No live camera, remote image processing, or permanent image storage is enabled.
           </p>
         </div>
 
@@ -38,7 +38,7 @@ export default function StructureScannerPage() {
           <ScannerFeature
             icon={Database}
             title="Local Chemistry Database"
-            description="Matches are generated from ARSHLAB records. No OpenRouter calls, no paid models, no external chemistry API."
+            description="OCR tokens are matched against ARSHLAB records. No OpenRouter calls, paid models, or external chemistry APIs."
           />
           <ScannerFeature
             icon={ShieldCheck}

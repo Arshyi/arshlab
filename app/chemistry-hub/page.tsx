@@ -280,7 +280,7 @@ export default function ChemistryHubPage() {
           <HubActionCard
             icon={ScanSearch}
             title="Molecular Structure Scanner"
-            description="Upload and preprocess a structure locally, match it with deterministic chemistry hints, save corrections, and open connected learning tools."
+            description="Run browser-local OCR on uploaded structures, inspect parsed chemistry tokens and confidence reasoning, save corrections, and open connected tools."
             href="/structure-scanner"
             action="Open Scanner"
           />

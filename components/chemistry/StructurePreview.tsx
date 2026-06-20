@@ -21,6 +21,7 @@ interface StructurePreviewProps {
   previewUrl: string | null
   fileName: string | null
   onClear?: () => void
+  onProcessedImageChange?: (image: Blob | null) => void
 }
 
 interface PreviewSettings {
@@ -41,13 +42,19 @@ const DEFAULT_SETTINGS: PreviewSettings = {
   grayscale: false,
 }
 
-export function StructurePreview({ previewUrl, fileName, onClear }: StructurePreviewProps) {
+export function StructurePreview({
+  previewUrl,
+  fileName,
+  onClear,
+  onProcessedImageChange,
+}: StructurePreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [settings, setSettings] = useState<PreviewSettings>(DEFAULT_SETTINGS)
 
   useEffect(() => {
     setSettings(DEFAULT_SETTINGS)
-  }, [previewUrl])
+    if (!previewUrl) onProcessedImageChange?.(null)
+  }, [onProcessedImageChange, previewUrl])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -84,13 +91,14 @@ export function StructurePreview({ previewUrl, fileName, onClear }: StructurePre
         image.naturalHeight * scale,
       )
       context.restore()
+      canvas.toBlob((blob) => onProcessedImageChange?.(blob), "image/png")
     }
     image.src = previewUrl
 
     return () => {
       image.onload = null
     }
-  }, [previewUrl, settings])
+  }, [onProcessedImageChange, previewUrl, settings])
 
   function updateSetting<Key extends keyof PreviewSettings>(key: Key, value: PreviewSettings[Key]) {
     setSettings((current) => ({ ...current, [key]: value }))
@@ -214,7 +222,7 @@ export function StructurePreview({ previewUrl, fileName, onClear }: StructurePre
 
         <div className="flex items-start gap-2 border-t border-border bg-background p-4 text-sm text-muted-foreground">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
-          <p>Uploaded images are previewed and adjusted locally in this browser. They are not permanently stored.</p>
+          <p>Images are processed locally in your browser. No chemistry images are uploaded to ARSHLAB servers.</p>
         </div>
       </CardContent>
     </Card>

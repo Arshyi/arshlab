@@ -258,6 +258,7 @@ export function LearningDashboardClient() {
   const firstMissedSolverModuleId = resolveSolverModuleDeepLink(missedSolverConcepts[0]?.subtopic)
   const topScannedCompound = scannerStats.mostScannedCompounds[0]
   const topScannedGroup = scannerStats.mostScannedFunctionalGroups[0]
+  const topOCRCompound = scannerStats.mostRecognizedCompounds[0]
   const topSynthesisCompound = synthesisStats.mostSearchedCompounds[0]
 
   return (
@@ -279,7 +280,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v5.0.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, context-aware deep links, the upgraded Structure Scanner, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
+            ARSHLAB v5.1.1 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, accuracy-hardened browser-local OCR recognition, Synthesis Explorer, and the Reaction Explorer knowledge graph into one adaptive learning view.
           </p>
         </motion.div>
 
@@ -479,15 +480,23 @@ export function LearningDashboardClient() {
                   Structure Scanner
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)_auto] lg:items-center">
-                <div className="grid grid-cols-2 gap-3">
+              <CardContent className="grid gap-4 lg:grid-cols-[420px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
                   <div className="rounded-xl border border-border bg-background/80 p-4">
-                    <p className="text-3xl font-bold">{scannerStats.totalScans}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">total scans</p>
+                    <p className="text-3xl font-bold">{scannerStats.ocrScansPerformed}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">OCR scans</p>
                   </div>
                   <div className="rounded-xl border border-border bg-background/80 p-4">
-                    <p className="text-3xl font-bold">{scannerStats.correctedScans}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">corrected scans</p>
+                    <p className="text-3xl font-bold">{scannerStats.ocrMatchesFound}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">OCR matches</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background/80 p-4">
+                    <p className="text-3xl font-bold">{scannerStats.ocrCorrectionRate}%</p>
+                    <p className="mt-1 text-sm text-muted-foreground">correction rate</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background/80 p-4">
+                    <p className="text-3xl font-bold">{scannerStats.totalScans}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">saved matches</p>
                   </div>
                 </div>
                 <div className="min-w-0">
@@ -502,6 +511,11 @@ export function LearningDashboardClient() {
                       {topScannedGroup && (
                         <Badge variant="secondary" className="rounded-full">
                           {topScannedGroup.name}: {topScannedGroup.count}
+                        </Badge>
+                      )}
+                      {topOCRCompound && (
+                        <Badge className="rounded-full">
+                          OCR: {topOCRCompound.name} ({topOCRCompound.count})
                         </Badge>
                       )}
                       <Badge variant="outline" className="rounded-full">

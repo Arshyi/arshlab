@@ -52,6 +52,8 @@ const completed = [
   "Adaptive Study Mode",
   "Molecular Structure Scanner",
   "Structure Recognition Upgrade",
+  "OCR Structure Recognition Foundation",
+  "OCR Scanner Accuracy Hardening",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -182,14 +184,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Structure Recognition Upgrade
+                OCR Scanner Accuracy Hardening
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: upload-first local structure previews with crop, rotation,
-                contrast, grayscale, correction-aware scan history, confidence explanations,
-                and direct links into ARSHLAB chemistry tools.
+                Now available: chemistry-aware OCR cleanup handles common character confusion,
+                displayed and condensed formulas, aromatic clues, conservative confidence,
+                low-confidence alternatives, and executable parser checks.
               </p>
             </CardContent>
           </Card>
@@ -201,7 +203,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.0.0 - Structure Recognition Upgrade
+          ARSHLAB v5.1.1 - OCR Scanner Accuracy Hardening
         </motion.p>
       </div>
     </div>
