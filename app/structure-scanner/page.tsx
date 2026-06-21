@@ -7,7 +7,7 @@ import { StructureScanner } from "@/components/chemistry/StructureScanner"
 export const metadata: Metadata = {
   title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload or capture a private camera snapshot, then locally reconstruct molecular nodes, bonds, rings, and chemistry matches using deterministic browser-side analysis.",
+    "Upload or capture a private camera snapshot, automatically isolate its chemistry drawing, then reconstruct molecular nodes, bonds, rings, and local database matches.",
 }
 
 export default function StructureScannerPage() {
@@ -26,11 +26,11 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.4.0
+              ARSHLAB v5.4.1
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot, improve its local preview, then combine browser-side OCR and shape detection with deterministic atom, bond-order, ring, aromaticity, formula, and graph-similarity reconstruction. Live frame-by-frame recognition, remote image processing, and permanent image storage are not enabled.
+            Upload a structure image or accept a single camera snapshot, improve its local preview, then automatically isolate the strongest chemistry drawing region before browser-side OCR, ring detection, graph reconstruction, graph-similarity matching, and overlays. Live recognition, remote image processing, and permanent image storage are not enabled.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, ring candidates, and chemistry hints. Always verify inferred atoms and bond orders.
@@ -41,7 +41,7 @@ export default function StructureScannerPage() {
           <ScannerFeature
             icon={Database}
             title="Local Molecular Graph Analysis"
-            description="OCR and visual geometry reconstruct atoms, bond orders, rings, and graph similarity against ARSHLAB records. No OpenRouter calls or external chemistry APIs."
+            description="Automatic isolation feeds a focused crop into OCR and visual geometry reconstruction for atoms, bond orders, rings, and local graph similarity."
           />
           <ScannerFeature
             icon={ShieldCheck}

@@ -60,6 +60,7 @@ const completed = [
   "Visual Overlay Debugger",
   "Camera Capture Mode",
   "Molecular Graph Reconstruction Engine",
+  "Automatic Structure Isolation",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -190,14 +191,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Molecular Graph Reconstruction Engine
+                Automatic Structure Isolation
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: detected strokes, merged endpoints, parallel bonds, and fuzzy rings are reconstructed
-                into a deterministic molecular graph with atom, bond-order, ring, aromaticity, formula, and graph-similarity estimates.
-                Camera capture, OCR, overlays, and matching remain browser-local.
+                Now available: uploaded images and camera snapshots are converted to grayscale, adaptively thresholded,
+                separated into connected stroke regions, and automatically cropped around the strongest chemistry drawing
+                before OCR, ring detection, graph reconstruction, matching, and overlays run locally.
               </p>
             </CardContent>
           </Card>
@@ -209,7 +210,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.4.0 - Molecular Graph Reconstruction Engine
+          ARSHLAB v5.4.1 - Automatic Structure Isolation
         </motion.p>
       </div>
     </div>

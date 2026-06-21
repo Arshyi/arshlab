@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.4.0",
+    version: "5.4.1",
     date: "Current",
+    status: "released",
+    title: "Automatic Structure Isolation",
+    changes: [
+      "Added browser-local grayscale conversion and adaptive thresholding before OCR and visual recognition",
+      "Added connected-component analysis for dark chemistry strokes and nearby drawing-region clustering",
+      "Added deterministic rejection for bezel-like borders, dense background objects, oversized shadows, and empty image regions",
+      "Added automatic highest-density chemistry-region selection with a configurable safety margin",
+      "Connected the isolated crop to OCR, ring detection, graph reconstruction, compound matching, and overlay export",
+      "Added drawingCoverage, chemistryPixelDensity, and isolationConfidence metrics",
+      "Added a Structure Isolation Debug Panel with original-frame boxes, selected region, and final downstream crop",
+      "Added six isolation regressions for handwritten, printed, tablet, wide-margin, cluttered, and angled molecule images",
+      "Preserved upload, camera, privacy, OCR, graph, overlay, and local-only behavior",
+    ],
+  },
+  {
+    version: "5.4.0",
+    date: "Previous",
     status: "released",
     title: "Molecular Graph Reconstruction Engine",
     changes: [

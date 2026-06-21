@@ -24,6 +24,8 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { recognizeChemistryImage, type ChemistryOCRResult, type OCRProgressUpdate } from "@/lib/ocr/ocr-engine"
 import { analyzeStructureImage } from "@/lib/structure-vision/vision-engine"
+import { isolateStructureImage } from "@/lib/structure-vision/structure-isolation"
+import type { StructureIsolationResult } from "@/lib/structure-vision/isolation-types"
 import type { StructureVisionAnalysis } from "@/lib/structure-vision/vision-types"
 import { scanStructure } from "@/lib/structure-scanner/scanner-engine"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
@@ -48,6 +50,7 @@ import { VisionDebugPanel } from "./VisionDebugPanel"
 import { MolecularGraphDebugPanel } from "./MolecularGraphDebugPanel"
 import { VisualOverlayDebugger } from "./VisualOverlayDebugger"
 import { CameraCapture } from "./CameraCapture"
+import { StructureIsolationDebugPanel } from "./StructureIsolationDebugPanel"
 
 type ScannerInputMode = "upload" | "camera"
 
@@ -74,6 +77,8 @@ export function StructureScanner() {
   const [ocrError, setOCRError] = useState<string | null>(null)
   const [visionAnalysis, setVisionAnalysis] = useState<StructureVisionAnalysis | null>(null)
   const [visionError, setVisionError] = useState<string | null>(null)
+  const [isolationResult, setIsolationResult] = useState<StructureIsolationResult | null>(null)
+  const [isolationError, setIsolationError] = useState<string | null>(null)
   const [ocrMetricsRevision, setOCRMetricsRevision] = useState(0)
 
   const metrics = useMemo(() => getStructureScannerMetrics(), [])
@@ -114,6 +119,8 @@ export function StructureScanner() {
     setOCRError(null)
     setVisionAnalysis(null)
     setVisionError(null)
+    setIsolationResult(null)
+    setIsolationError(null)
     setCurrentHistoryId(null)
     setFeedbackMessage(null)
     return true
@@ -131,6 +138,8 @@ export function StructureScanner() {
     setOCRError(null)
     setVisionAnalysis(null)
     setVisionError(null)
+    setIsolationResult(null)
+    setIsolationError(null)
     setCurrentHistoryId(null)
     setFeedbackMessage(null)
   }
@@ -152,11 +161,25 @@ export function StructureScanner() {
     setFeedbackMessage(null)
     setOCRError(null)
     setVisionError(null)
+    setIsolationError(null)
+    setIsolationResult(null)
+    setOCRProgress({ status: "Isolating chemistry drawing", progress: 0 })
+
+    let scanImage: Blob = processedImage ?? file
+    try {
+      const nextIsolationResult = await isolateStructureImage(scanImage)
+      setIsolationResult(nextIsolationResult)
+      scanImage = nextIsolationResult.isolatedBlob
+    } catch (isolationFailure) {
+      const message = isolationFailure instanceof Error ? isolationFailure.message : "Local structure isolation could not start."
+      setIsolationError(message)
+    }
+
     setOCRProgress({ status: "Preparing local OCR", progress: 0 })
 
     let nextOCRResult: ChemistryOCRResult | null = null
     try {
-      nextOCRResult = await recognizeChemistryImage(processedImage ?? file, setOCRProgress)
+      nextOCRResult = await recognizeChemistryImage(scanImage, setOCRProgress)
       setOCRResult(nextOCRResult)
     } catch (ocrFailure) {
       const message = ocrFailure instanceof Error ? ocrFailure.message : "Local OCR could not start."
@@ -166,7 +189,7 @@ export function StructureScanner() {
 
     let nextVisionAnalysis: StructureVisionAnalysis | null = null
     try {
-      nextVisionAnalysis = await analyzeStructureImage(processedImage ?? file, {
+      nextVisionAnalysis = await analyzeStructureImage(scanImage, {
         recognizedText: [
           nextOCRResult?.rawText,
           moleculeName,
@@ -247,6 +270,12 @@ export function StructureScanner() {
             onProcessedImageChange={setProcessedImage}
           />
 
+          <StructureIsolationDebugPanel
+            sourceBlob={processedImage ?? file}
+            result={isolationResult}
+            error={isolationError}
+          />
+
           <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -257,7 +286,7 @@ export function StructureScanner() {
             <CardContent className="space-y-3">
               <Badge variant="outline" className="rounded-full">Tesseract.js - browser-side OCR</Badge>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                OCR runs in a browser worker. The first scan may download OCR engine and English language assets, but your chemistry image is not uploaded.
+                OCR receives only the locally isolated drawing crop. The first scan may download OCR engine and English language assets, but your chemistry image is not uploaded.
               </p>
               {scanning && ocrProgress && (
                 <div className="space-y-2 rounded-xl border border-border bg-background/80 p-4">
@@ -305,7 +334,7 @@ export function StructureScanner() {
           <MolecularGraphDebugPanel analysis={visionAnalysis} />
 
           <VisualOverlayDebugger
-            imageBlob={processedImage ?? file}
+            imageBlob={isolationResult?.isolatedBlob ?? processedImage ?? file}
             analysis={visionAnalysis}
             result={result}
           />
@@ -437,7 +466,7 @@ export function StructureScanner() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Badge variant="outline" className="rounded-full">
-                Scanner mode = OCR + molecular graph reconstruction
+                Scanner mode = isolation + OCR + molecular graph
               </Badge>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 <Metric label="Local scans" value={stats.totalScans} />
@@ -454,7 +483,7 @@ export function StructureScanner() {
                 <Metric label="Reaction graph links" value={metrics.reactionGraphLinks} />
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                OCR, shape detection, graph reconstruction, and chemistry matching run locally in this browser. No OpenRouter or external AI API is used.
+                Structure isolation, OCR, shape detection, graph reconstruction, and chemistry matching run locally in this browser. No OpenRouter or external AI API is used.
               </p>
             </CardContent>
           </Card>

@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "5.4.0",
+  "version": "5.4.1",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "test:ocr": "node scripts/verify-ocr-parser.cjs",
     "test:vision": "node scripts/verify-structure-vision.cjs",
-    "test:graph": "node scripts/verify-molecular-graph.cjs"
+    "test:graph": "node scripts/verify-molecular-graph.cjs",
+    "test:isolation": "node scripts/verify-structure-isolation.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
