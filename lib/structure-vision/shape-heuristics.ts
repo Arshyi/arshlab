@@ -12,6 +12,7 @@ import type {
   VisionPoint,
   VisionRingCandidate,
 } from "./vision-types"
+import { reconstructMolecularGraph } from "../vision/molecular-graph"
 
 const DEGREE_STEP = 5
 
@@ -928,6 +929,14 @@ export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): 
   }
   const simpleChainLength = estimateSimpleChainLength(lineSegments, mask)
   const functionalGroupCues = buildCues(ringCandidates, parallelLinePairs, simpleChainLength, recognizedText)
+  const molecularGraph = reconstructMolecularGraph({
+    graph: graphSummary,
+    lineSegments,
+    parallelBondPairs,
+    ringCandidates,
+    functionalGroupCues,
+    recognizedText,
+  })
   const candidates = buildCandidates(
     functionalGroupCues,
     ringCandidates,
@@ -956,6 +965,7 @@ export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): 
     closedLoops,
     ringCandidates,
     graph: graphSummary,
+    molecularGraph,
     parallelBondPairs,
     parallelLinePairs,
     simpleChainLength,

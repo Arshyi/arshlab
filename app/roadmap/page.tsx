@@ -59,6 +59,7 @@ const completed = [
   "Benzene Ring Calibration",
   "Visual Overlay Debugger",
   "Camera Capture Mode",
+  "Molecular Graph Reconstruction Engine",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -189,14 +190,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Camera Capture Mode
+                Molecular Graph Reconstruction Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: optional snapshot-based camera capture feeds the existing local preprocessing,
-                OCR, shape, fuzzy-ring, confidence, history, and overlay pipeline without live recognition,
-                server uploads, or permanent image storage.
+                Now available: detected strokes, merged endpoints, parallel bonds, and fuzzy rings are reconstructed
+                into a deterministic molecular graph with atom, bond-order, ring, aromaticity, formula, and graph-similarity estimates.
+                Camera capture, OCR, overlays, and matching remain browser-local.
               </p>
             </CardContent>
           </Card>
@@ -208,7 +209,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.3.0 - Camera Capture Mode
+          ARSHLAB v5.4.0 - Molecular Graph Reconstruction Engine
         </motion.p>
       </div>
     </div>

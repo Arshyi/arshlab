@@ -41,7 +41,7 @@ export default function QuestionEnginePage() {
             </div>
           </div>
           <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-            ARSHLAB v5.3.0
+            ARSHLAB v5.4.0
           </Badge>
         </div>
 

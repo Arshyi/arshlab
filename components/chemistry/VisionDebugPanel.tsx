@@ -150,7 +150,7 @@ export function VisionDebugPanel({ analysis, error }: { analysis: StructureVisio
             </section>
 
             <p className="text-xs text-muted-foreground">
-              Visual recognition uses local educational heuristics for lines, rings, and functional-group cues. It is not a full chemical drawing parser yet.
+              These local line, ring, and functional-group heuristics feed the Molecular Graph Reconstruction Engine. Inferred atoms and bonds remain educational estimates.
             </p>
           </CardContent>
         </CollapsibleContent>

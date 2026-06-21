@@ -125,6 +125,7 @@ export interface StructureVisionAnalysis {
   closedLoops: VisionClosedLoop[]
   ringCandidates: VisionRingCandidate[]
   graph: VisionGraphAnalysis
+  molecularGraph: MolecularGraph
   parallelBondPairs: VisionParallelBondPair[]
   parallelLinePairs: number
   simpleChainLength: number
@@ -139,3 +140,4 @@ export interface StructureVisionOptions {
   recognizedText?: string
   maxDimension?: number
 }
+import type { MolecularGraph } from "../vision/molecular-graph"

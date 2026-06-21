@@ -45,6 +45,7 @@ import { StructureMatchCard } from "./StructureMatchCard"
 import { OCRDebugPanel } from "./OCRDebugPanel"
 import { StructurePreview } from "./StructurePreview"
 import { VisionDebugPanel } from "./VisionDebugPanel"
+import { MolecularGraphDebugPanel } from "./MolecularGraphDebugPanel"
 import { VisualOverlayDebugger } from "./VisualOverlayDebugger"
 import { CameraCapture } from "./CameraCapture"
 
@@ -205,7 +206,7 @@ export function StructureScanner() {
       )
       if (nextResult.bestMatch && nextResult.isConfident) {
         const visualMatched = nextResult.bestMatch.contributions.some((contribution) =>
-          contribution.category === "visual" || contribution.category === "ring",
+          contribution.category === "visual" || contribution.category === "ring" || contribution.category === "graph",
         )
         const nextHistory = recordStructureScan(nextResult.bestMatch, {
           source: scanSource,
@@ -300,6 +301,8 @@ export function StructureScanner() {
           />
 
           <VisionDebugPanel analysis={visionAnalysis} error={visionError} />
+
+          <MolecularGraphDebugPanel analysis={visionAnalysis} />
 
           <VisualOverlayDebugger
             imageBlob={processedImage ?? file}
@@ -434,7 +437,7 @@ export function StructureScanner() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Badge variant="outline" className="rounded-full">
-                Scanner mode = OCR + local shape heuristics
+                Scanner mode = OCR + molecular graph reconstruction
               </Badge>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 <Metric label="Local scans" value={stats.totalScans} />
@@ -451,7 +454,7 @@ export function StructureScanner() {
                 <Metric label="Reaction graph links" value={metrics.reactionGraphLinks} />
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                OCR and shape detection run locally, then deterministic chemistry parsing and the ARSHLAB database produce the match. No OpenRouter or external AI API is used.
+                OCR, shape detection, graph reconstruction, and chemistry matching run locally in this browser. No OpenRouter or external AI API is used.
               </p>
             </CardContent>
           </Card>

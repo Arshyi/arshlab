@@ -58,7 +58,7 @@ export interface StructureScanMatch {
 export interface StructureScoreContribution {
   label: string
   points: number
-  category: "ocr" | "manual" | "filename" | "visual" | "ring" | "penalty" | "other"
+  category: "ocr" | "manual" | "filename" | "visual" | "ring" | "graph" | "penalty" | "other"
 }
 
 export interface StructureScanResult {

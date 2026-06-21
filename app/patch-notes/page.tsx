@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.3.0",
+    version: "5.4.0",
     date: "Current",
+    status: "released",
+    title: "Molecular Graph Reconstruction Engine",
+    changes: [
+      "Added a browser-local molecular graph layer with typed atoms, bonds, ring membership, aromatic flags, and confidence values",
+      "Added deterministic single, double, and triple bond inference from merged line segments and parallel bond pairs",
+      "Added closed-cycle reconstruction for 3-7 member rings while retaining fuzzy near-ring candidates",
+      "Added benzene-like, cyclohexane-like, and cyclopentane-like ring classifications",
+      "Added carbon skeleton, atom, bond, ring, bond-order, and molecular-formula estimates",
+      "Added graph similarity as a major compound-matching signal for aromatic, alkene, alkyne, alcohol, and carbonyl structures",
+      "Added an expandable Molecular Graph Debug Panel with node, bond, ring, formula, confidence, and candidate details",
+      "Added deterministic graph regression coverage for benzene, cyclohexane, ethanol, methanal, ethanal, ethanoic acid, acetone, ethene, and ethyne",
+      "Kept reconstruction, OCR, camera capture, overlays, and matching entirely browser-side with no AI or image uploads",
+    ],
+  },
+  {
+    version: "5.3.0",
+    date: "Previous",
     status: "released",
     title: "Camera Capture Mode",
     changes: [

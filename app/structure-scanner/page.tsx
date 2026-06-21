@@ -7,7 +7,7 @@ import { StructureScanner } from "@/components/chemistry/StructureScanner"
 export const metadata: Metadata = {
   title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload or capture a private camera snapshot, then locally analyze a molecular drawing using OCR, shape heuristics, and ARSHLAB's deterministic chemistry database.",
+    "Upload or capture a private camera snapshot, then locally reconstruct molecular nodes, bonds, rings, and chemistry matches using deterministic browser-side analysis.",
 }
 
 export default function StructureScannerPage() {
@@ -26,22 +26,22 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.3.0
+              ARSHLAB v5.4.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot, improve its local preview, then combine browser-side OCR with dark-stroke, line, loop, ring, and functional-group heuristics against ARSHLAB&apos;s local database. Live frame-by-frame recognition, remote image processing, and permanent image storage are not enabled.
+            Upload a structure image or accept a single camera snapshot, improve its local preview, then combine browser-side OCR and shape detection with deterministic atom, bond-order, ring, aromaticity, formula, and graph-similarity reconstruction. Live frame-by-frame recognition, remote image processing, and permanent image storage are not enabled.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Visual recognition uses local educational heuristics for lines, rings, and functional-group cues. It is not a full chemical drawing parser yet.
+            Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, ring candidates, and chemistry hints. Always verify inferred atoms and bond orders.
           </p>
         </div>
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <ScannerFeature
             icon={Database}
-            title="Local Shape And OCR Analysis"
-            description="Visual cues and OCR tokens are matched against ARSHLAB records. No OpenRouter calls, paid models, or external chemistry APIs."
+            title="Local Molecular Graph Analysis"
+            description="OCR and visual geometry reconstruct atoms, bond orders, rings, and graph similarity against ARSHLAB records. No OpenRouter calls or external chemistry APIs."
           />
           <ScannerFeature
             icon={ShieldCheck}

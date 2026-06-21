@@ -1,4 +1,5 @@
 import { STRUCTURE_SCANNER_RECORDS } from "./scanner-database"
+import { scoreMolecularGraphSimilarity } from "../vision/molecular-graph"
 import type {
   StructureScanInput,
   StructureScanMatch,
@@ -119,6 +120,14 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
     visualCandidate.reasons.slice(0, 2).forEach((reason) => reasons.push(`Visual: ${reason}`))
   }
 
+  const graphCandidate = input.visualAnalysis
+    ? scoreMolecularGraphSimilarity(input.visualAnalysis.molecularGraph, record.id)
+    : null
+  if (graphCandidate) {
+    addScore(graphCandidate.score, `Molecular graph similarity: ${graphCandidate.score}/62`, "graph")
+    graphCandidate.reasons.slice(0, 3).forEach((reason) => reasons.push(`Graph: ${reason}`))
+  }
+
   if (formulaQuery && formulaQuery === recordFormula) {
     addScore(
       input.ocrFormulaCorrected ? 45 : 55,
@@ -214,11 +223,11 @@ function confidenceFromMatch(match: StructureScanMatch, nextScore: number): numb
   let confidence = 25 + Math.max(0, match.score) * 0.55 + Math.min(14, margin * 0.15)
   const positive = match.contributions.filter((contribution) => contribution.points > 0)
   const visualScore = positive
-    .filter((contribution) => contribution.category === "visual" || contribution.category === "ring")
+    .filter((contribution) => contribution.category === "visual" || contribution.category === "ring" || contribution.category === "graph")
     .reduce((sum, contribution) => sum + contribution.points, 0)
   const hasStrongEvidence = positive.some((contribution) =>
     /exact formula|corrected formula|condensed formula|exact name|name or alias|ocr token database|strong visual/i.test(contribution.label),
-  ) || visualScore >= 45
+  ) || visualScore >= 45 || positive.some((contribution) => contribution.category === "graph" && contribution.points >= 42)
   const onlyWeakEvidence = visualScore < 45 && positive.every((contribution) =>
     /filename|structure clue|reaction pathway|aromatic|ring|visual heuristic/i.test(contribution.label),
   )

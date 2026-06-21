@@ -27,6 +27,7 @@ export function OCRDebugPanel({
     { id: "filename", label: "Filename score" },
     { id: "visual", label: "Visual shape score" },
     { id: "ring", label: "Ring / aromatic score" },
+    { id: "graph", label: "Molecular graph score" },
     { id: "penalty", label: "Penalties" },
   ].map((category) => ({
     ...category,
