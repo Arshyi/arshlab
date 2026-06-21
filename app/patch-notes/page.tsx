@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.2.3",
+    version: "5.3.0",
     date: "Current",
+    status: "released",
+    title: "Camera Capture Mode",
+    changes: [
+      "Added Upload Image and Camera Capture input modes to the Structure Scanner",
+      "Added optional rear-camera permission, live preview, single-frame capture, retake, accept, and stop controls",
+      "Connected accepted snapshots to the existing preprocessing, OCR, vision, fuzzy-ring, scoring, result, and overlay pipeline",
+      "Added robust unsupported, denied, missing-device, and busy-camera handling",
+      "Added clean media-track shutdown on stop, mode changes, snapshot acceptance, and component unmount",
+      "Added upload, camera, OCR, visual-match, and correction metrics",
+      "Added upload, camera, and manual-correction labels to local scan history",
+      "Updated privacy wording for optional, snapshot-only, browser-local camera processing",
+      "Kept live recognition, server uploads, AI, external APIs, and permanent image storage disabled",
+    ],
+  },
+  {
+    version: "5.2.3",
+    date: "Previous",
     status: "released",
     title: "Visual Overlay Debugger",
     changes: [

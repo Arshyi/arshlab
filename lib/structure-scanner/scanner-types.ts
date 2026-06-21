@@ -1,6 +1,7 @@
 import type { StructureVisionAnalysis } from "../structure-vision/vision-types"
 
 export type StructureScannerDifficulty = "Introductory" | "Intermediate" | "Advanced"
+export type StructureScanSource = "upload" | "camera" | "manual-correction" | "ocr" | "manual"
 
 export interface ScannerRelatedLink {
   id: string
@@ -82,7 +83,9 @@ export interface StructureScanHistoryEntry {
   originalName?: string
   originalFormula?: string
   correction?: StructureScanCorrection
-  source?: "ocr" | "manual"
+  source?: StructureScanSource
+  captureSource?: "upload" | "camera"
+  visualMatched?: boolean
 }
 
 export interface StructureScanCorrection {
@@ -95,6 +98,9 @@ export interface StructureScanCorrection {
 export interface StructureScanStats {
   totalScans: number
   correctedScans: number
+  uploadScans: number
+  cameraScans: number
+  visualMatches: number
   ocrScansPerformed: number
   ocrMatchesFound: number
   ocrCorrectionRate: number

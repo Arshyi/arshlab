@@ -2,6 +2,7 @@ import type {
   StructureScanCorrection,
   StructureScanHistoryEntry,
   StructureScanMatch,
+  StructureScanSource,
   StructureScanStats,
 } from "./scanner-types"
 
@@ -62,8 +63,12 @@ export function writeStructureScanHistory(entries: StructureScanHistoryEntry[]):
 
 export function recordStructureScan(
   match: StructureScanMatch,
-  source: "ocr" | "manual" = "manual",
+  options: {
+    source?: Extract<StructureScanSource, "upload" | "camera">
+    visualMatched?: boolean
+  } = {},
 ): StructureScanHistoryEntry[] {
+  const source = options.source ?? "upload"
   const entry: StructureScanHistoryEntry = {
     id: `${match.record.id}-${Date.now()}`,
     compoundId: match.record.id,
@@ -74,6 +79,8 @@ export function recordStructureScan(
     timestamp: new Date().toISOString(),
     corrected: false,
     source,
+    captureSource: source,
+    visualMatched: options.visualMatched === true,
   }
   const next = [entry, ...readStructureScanHistory()].slice(0, MAX_HISTORY)
   writeStructureScanHistory(next)
@@ -154,6 +161,7 @@ export function correctStructureScan(
         functionalGroupHint: correction.functionalGroupHint?.trim() || undefined,
         condensedFormula: condensedFormula || undefined,
       },
+      source: "manual-correction" as const,
     }
   })
   writeStructureScanHistory(next)
@@ -182,6 +190,13 @@ export function getStructureScanStats(history = readStructureScanHistory()): Str
   return {
     totalScans: history.length,
     correctedScans: history.filter((entry) => entry.corrected).length,
+    uploadScans: history.filter((entry) =>
+      (entry.captureSource ?? (entry.source === "camera" ? "camera" : "upload")) === "upload",
+    ).length,
+    cameraScans: history.filter((entry) =>
+      (entry.captureSource ?? (entry.source === "camera" ? "camera" : "upload")) === "camera",
+    ).length,
+    visualMatches: history.filter((entry) => entry.visualMatched === true).length,
     ocrScansPerformed: ocrMetrics.length,
     ocrMatchesFound: ocrMatches.length,
     ocrCorrectionRate: ocrMatches.length ? Math.round((correctedOCRMatches / ocrMatches.length) * 100) : 0,

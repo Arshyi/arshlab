@@ -3,6 +3,7 @@
 import { type ChangeEvent, useEffect, useMemo, useState } from "react"
 import {
   AlertCircle,
+  Camera,
   CheckCircle2,
   Clock,
   Database,
@@ -35,17 +36,26 @@ import {
   recordStructureOCRScan,
   recordStructureScan,
 } from "@/lib/structure-scanner/scanner-utils"
-import type { StructureScanHistoryEntry, StructureScanResult } from "@/lib/structure-scanner/scanner-types"
+import type {
+  StructureScanHistoryEntry,
+  StructureScanResult,
+  StructureScanSource,
+} from "@/lib/structure-scanner/scanner-types"
 import { StructureMatchCard } from "./StructureMatchCard"
 import { OCRDebugPanel } from "./OCRDebugPanel"
 import { StructurePreview } from "./StructurePreview"
 import { VisionDebugPanel } from "./VisionDebugPanel"
 import { VisualOverlayDebugger } from "./VisualOverlayDebugger"
+import { CameraCapture } from "./CameraCapture"
+
+type ScannerInputMode = "upload" | "camera"
 
 const QUICK_HINTS = ["ethanol", "benzene", "aspirin", "acetone", "ethene", "ethanoic acid", "sodium chloride"]
 
 export function StructureScanner() {
   const [file, setFile] = useState<File | null>(null)
+  const [inputMode, setInputMode] = useState<ScannerInputMode>("upload")
+  const [scanSource, setScanSource] = useState<ScannerInputMode>("upload")
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [processedImage, setProcessedImage] = useState<Blob | null>(null)
   const [moleculeName, setMoleculeName] = useState("")
@@ -83,14 +93,18 @@ export function StructureScanner() {
     setError(null)
 
     if (!selected) return
+    if (!selectImageFile(selected, "upload")) event.target.value = ""
+  }
+
+  function selectImageFile(selected: File, source: ScannerInputMode): boolean {
     if (!isAllowedStructureImage(selected)) {
       setError("Please upload a PNG, JPG, JPEG, or WEBP image.")
-      event.target.value = ""
-      return
+      return false
     }
 
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setFile(selected)
+    setScanSource(source)
     setPreviewUrl(URL.createObjectURL(selected))
     setResult(null)
     setProcessedImage(null)
@@ -101,11 +115,13 @@ export function StructureScanner() {
     setVisionError(null)
     setCurrentHistoryId(null)
     setFeedbackMessage(null)
+    return true
   }
 
   function clearFile() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setFile(null)
+    setScanSource("upload")
     setPreviewUrl(null)
     setProcessedImage(null)
     setResult(null)
@@ -125,7 +141,7 @@ export function StructureScanner() {
 
   async function runScan() {
     if (!file) {
-      setError("Upload a structure image before scanning. Live camera input is not enabled in v5.2.")
+      setError("Upload an image or accept a camera snapshot before scanning.")
       return
     }
 
@@ -188,7 +204,13 @@ export function StructureScanner() {
         parsed?.matchedCompoundIds.includes(nextResult.bestMatch.record.id),
       )
       if (nextResult.bestMatch && nextResult.isConfident) {
-        const nextHistory = recordStructureScan(nextResult.bestMatch, ocrMatched ? "ocr" : "manual")
+        const visualMatched = nextResult.bestMatch.contributions.some((contribution) =>
+          contribution.category === "visual" || contribution.category === "ring",
+        )
+        const nextHistory = recordStructureScan(nextResult.bestMatch, {
+          source: scanSource,
+          visualMatched,
+        })
         setHistory(nextHistory)
         historyEntryId = nextHistory[0]?.id
         setCurrentHistoryId(historyEntryId ?? null)
@@ -289,16 +311,47 @@ export function StructureScanner() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Upload className="h-5 w-5" />
-                Upload and Manual Corrections
+                Image Input and Manual Corrections
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="structure-image">Structure image</Label>
-                <Input id="structure-image" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleFileChange} />
-                <p className="text-xs text-muted-foreground">
-                  Upload-only workflow. OCR and preprocessing stay in this browser; the image is never stored by ARSHLAB.
-                </p>
+              <div className="space-y-4">
+                <div className="inline-flex w-full rounded-xl border border-border bg-secondary/40 p-1 sm:w-auto" role="tablist" aria-label="Structure image input mode">
+                  <Button
+                    type="button"
+                    role="tab"
+                    aria-selected={inputMode === "upload"}
+                    variant={inputMode === "upload" ? "default" : "ghost"}
+                    className="flex-1 rounded-lg sm:flex-none"
+                    onClick={() => setInputMode("upload")}
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload Image
+                  </Button>
+                  <Button
+                    type="button"
+                    role="tab"
+                    aria-selected={inputMode === "camera"}
+                    variant={inputMode === "camera" ? "default" : "ghost"}
+                    className="flex-1 rounded-lg sm:flex-none"
+                    onClick={() => setInputMode("camera")}
+                  >
+                    <Camera className="h-4 w-4" />
+                    Camera Capture
+                  </Button>
+                </div>
+
+                {inputMode === "upload" ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="structure-image">Structure image</Label>
+                    <Input id="structure-image" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleFileChange} />
+                    <p className="text-xs text-muted-foreground">
+                      Upload processing stays in this browser; the image is never stored by ARSHLAB.
+                    </p>
+                  </div>
+                ) : (
+                  <CameraCapture onSnapshotAccepted={(snapshot) => selectImageFile(snapshot, "camera")} />
+                )}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -360,6 +413,13 @@ export function StructureScanner() {
                 {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanSearch className="h-4 w-4" />}
                 {scanning ? "Running local OCR..." : "Run OCR and Match"}
               </Button>
+
+              <Alert className="rounded-xl border-amber-500/30 bg-amber-500/10">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  This is an educational structure scanner. It may misidentify handwritten or blurry structures. Always verify important chemistry answers.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         </div>
@@ -378,9 +438,12 @@ export function StructureScanner() {
               </Badge>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 <Metric label="Local scans" value={stats.totalScans} />
+                <Metric label="Upload scans" value={stats.uploadScans} />
+                <Metric label="Camera scans" value={stats.cameraScans} />
                 <Metric label="Corrected scans" value={stats.correctedScans} />
                 <Metric label="OCR scans" value={stats.ocrScansPerformed} />
                 <Metric label="OCR matches" value={stats.ocrMatchesFound} />
+                <Metric label="Visual matches" value={stats.visualMatches} />
                 <Metric label="OCR correction rate" value={`${stats.ocrCorrectionRate}%`} />
                 <Metric label="Compounds" value={metrics.compounds} />
                 <Metric label="Functional group families" value={metrics.functionalGroups} />
@@ -413,6 +476,7 @@ export function StructureScanner() {
                         </div>
                       </div>
                       <p className="mt-1 font-mono text-sm text-muted-foreground">{entry.formula}</p>
+                      <p className="mt-1 text-xs font-medium text-muted-foreground">{formatScanSource(entry.source)}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{formatStructureScanTimestamp(entry.timestamp)}</p>
                     </div>
                   ))}
@@ -555,4 +619,12 @@ function Metric({ label, value }: { label: string; value: number | string }) {
       <p className="text-sm text-muted-foreground">{label}</p>
     </div>
   )
+}
+
+function formatScanSource(source: StructureScanSource | undefined): string {
+  if (source === "camera") return "Camera scan"
+  if (source === "manual-correction") return "Manual correction"
+  if (source === "upload") return "Upload scan"
+  if (source === "ocr") return "Legacy OCR scan"
+  return "Legacy upload scan"
 }

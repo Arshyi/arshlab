@@ -7,7 +7,7 @@ import { StructureScanner } from "@/components/chemistry/StructureScanner"
 export const metadata: Metadata = {
   title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload and locally analyze a molecular drawing using OCR, shape heuristics, and ARSHLAB's deterministic chemistry database.",
+    "Upload or capture a private camera snapshot, then locally analyze a molecular drawing using OCR, shape heuristics, and ARSHLAB's deterministic chemistry database.",
 }
 
 export default function StructureScannerPage() {
@@ -22,15 +22,15 @@ export default function StructureScannerPage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Molecular Structure Scanner</h1>
-                <p className="text-muted-foreground">Upload-first local recognition workflow</p>
+                <p className="text-muted-foreground">Upload or snapshot-based local recognition workflow</p>
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.2.3
+              ARSHLAB v5.3.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image, improve its local preview, then combine browser-side OCR with dark-stroke, line, loop, ring, and functional-group heuristics against ARSHLAB&apos;s local database. No live camera, remote image processing, or permanent image storage is enabled.
+            Upload a structure image or accept a single camera snapshot, improve its local preview, then combine browser-side OCR with dark-stroke, line, loop, ring, and functional-group heuristics against ARSHLAB&apos;s local database. Live frame-by-frame recognition, remote image processing, and permanent image storage are not enabled.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Visual recognition uses local educational heuristics for lines, rings, and functional-group cues. It is not a full chemical drawing parser yet.
@@ -46,7 +46,7 @@ export default function StructureScannerPage() {
           <ScannerFeature
             icon={ShieldCheck}
             title="Local Image Workspace"
-            description="Crop, rotate, adjust contrast, and use grayscale locally. Uploaded images are never added to scan history."
+            description="Crop, rotate, adjust contrast, and use grayscale locally. Uploads and camera frames are never stored in scan history."
           />
           <ScannerFeature
             icon={Network}

@@ -58,6 +58,7 @@ const completed = [
   "Fuzzy Ring Detection",
   "Benzene Ring Calibration",
   "Visual Overlay Debugger",
+  "Camera Capture Mode",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -188,14 +189,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Visual Overlay Debugger
+                Camera Capture Mode
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: developer overlays draw detected lines, endpoints, graph nodes, graph edges,
-                cycles, near-rings, parallel bonds, aromatic evidence, and selected candidates directly
-                over the locally processed image, with PNG export and regression snapshots.
+                Now available: optional snapshot-based camera capture feeds the existing local preprocessing,
+                OCR, shape, fuzzy-ring, confidence, history, and overlay pipeline without live recognition,
+                server uploads, or permanent image storage.
               </p>
             </CardContent>
           </Card>
@@ -207,7 +208,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.2.3 - Visual Overlay Debugger
+          ARSHLAB v5.3.0 - Camera Capture Mode
         </motion.p>
       </div>
     </div>

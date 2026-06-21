@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "5.2.3",
+  "version": "5.3.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",

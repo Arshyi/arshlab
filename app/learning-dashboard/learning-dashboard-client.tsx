@@ -280,7 +280,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v5.2.3 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, browser-local OCR, calibrated aromatic-ring recognition, and visual graph debugging, plus Synthesis Explorer and the Reaction Explorer knowledge graph.
+            ARSHLAB v5.3.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, browser-local upload and camera snapshots, OCR, aromatic-ring recognition, and visual graph debugging, plus Synthesis Explorer and the Reaction Explorer knowledge graph.
           </p>
         </motion.div>
 
@@ -480,23 +480,27 @@ export function LearningDashboardClient() {
                   Structure Scanner
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 lg:grid-cols-[420px_minmax(0,1fr)_auto] lg:items-center">
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
+              <CardContent className="grid gap-4 lg:grid-cols-[520px_minmax(0,1fr)_auto] lg:items-center">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-border bg-background/80 p-4">
+                    <p className="text-3xl font-bold">{scannerStats.uploadScans}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Upload scans</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background/80 p-4">
+                    <p className="text-3xl font-bold">{scannerStats.cameraScans}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Camera scans</p>
+                  </div>
                   <div className="rounded-xl border border-border bg-background/80 p-4">
                     <p className="text-3xl font-bold">{scannerStats.ocrScansPerformed}</p>
                     <p className="mt-1 text-sm text-muted-foreground">OCR scans</p>
                   </div>
                   <div className="rounded-xl border border-border bg-background/80 p-4">
-                    <p className="text-3xl font-bold">{scannerStats.ocrMatchesFound}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">OCR matches</p>
+                    <p className="text-3xl font-bold">{scannerStats.visualMatches}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Visual matches</p>
                   </div>
                   <div className="rounded-xl border border-border bg-background/80 p-4">
-                    <p className="text-3xl font-bold">{scannerStats.ocrCorrectionRate}%</p>
-                    <p className="mt-1 text-sm text-muted-foreground">correction rate</p>
-                  </div>
-                  <div className="rounded-xl border border-border bg-background/80 p-4">
-                    <p className="text-3xl font-bold">{scannerStats.totalScans}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">saved matches</p>
+                    <p className="text-3xl font-bold">{scannerStats.correctedScans}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Corrected scans</p>
                   </div>
                 </div>
                 <div className="min-w-0">
@@ -521,10 +525,13 @@ export function LearningDashboardClient() {
                       <Badge variant="outline" className="rounded-full">
                         Scanner mode = local chemistry database
                       </Badge>
+                      <Badge variant="outline" className="rounded-full">
+                        OCR correction rate: {scannerStats.ocrCorrectionRate}%
+                      </Badge>
                     </div>
                   ) : (
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Upload a structure image and scan it to start private browser-local history.
+                      Upload or capture a structure image to start private browser-local history.
                     </p>
                   )}
                 </div>

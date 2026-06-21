@@ -31,8 +31,12 @@ const sections = [
     body: "Signed-in users may save XP, daily goal preference, selected curriculum, completed study sessions, completed exams, completed diagnostics, last and best diagnostic accuracy, achievement progress, topic mastery, concept mastery, curriculum unit progress, and mistake analytics derived from practice_progress rows. ARSHLAB uses this data to show adaptive recommendations, recovery sessions, placement summaries, curriculum dashboards, and progress dashboards.",
   },
   {
-    title: "Structure Scanner Images And Camera",
-    body: "The v5.2.3 Structure Scanner supports uploaded images only. Image preprocessing, Tesseract.js OCR, dark-pixel extraction, endpoint graphs, calibrated fuzzy ring heuristics, visual overlays, and optional overlay PNG export run locally in the browser. Images and detected image geometry are not uploaded to ARSHLAB servers, Supabase, OpenRouter, or an external AI API. Images are not permanently stored or included in local scan history. Local history stores only match labels, confidence, functional-group labels, timestamps, and corrections. Live camera access is not enabled in v5.2.3.",
+    title: "Structure Scanner Images",
+    body: "The v5.3.0 Structure Scanner processes uploaded images and accepted camera snapshots locally in the browser. Tesseract.js OCR, dark-pixel extraction, endpoint graphs, calibrated fuzzy ring heuristics, visual overlays, and optional overlay PNG export remain local. Images and detected image geometry are not uploaded to ARSHLAB servers, Supabase, OpenRouter, or an external AI API. Images are not permanently stored or included in local scan history. Local history stores only match labels, source labels, confidence, functional-group labels, timestamps, and corrections.",
+  },
+  {
+    title: "Optional Camera Capture",
+    body: "Camera permission is optional and requested only after the user selects Camera Capture and presses the permission button. The camera is used only to preview and capture a single snapshot; ARSHLAB does not run live frame-by-frame recognition. Camera frames and accepted snapshots are processed locally in the browser, no live video or image is transmitted to ARSHLAB servers, and no snapshot is permanently stored unless the user explicitly exports an overlay PNG to their own device. Camera tracks are stopped when requested, after snapshot acceptance, when switching away, or when leaving the scanner.",
   },
   {
     title: "Curriculum Labels",
