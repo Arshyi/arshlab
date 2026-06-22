@@ -76,6 +76,22 @@ export function StructureIsolationDebugPanel({
               <Metric label="isolationConfidence" value={analysis ? `${analysis.isolationConfidence}%` : "Not run"} />
             </div>
 
+            {result?.variants.length ? (
+              <section className="rounded-xl border border-border p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-semibold">Multi-scale scene variants</h3>
+                  <Badge variant="outline" className="rounded-full">{result.variants.length} local crops</Badge>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {result.variants.map((variant) => (
+                    <Badge key={variant.id} variant={variant.primary ? "default" : "secondary"} className="rounded-full">
+                      Region {variant.candidateId + 1}: {variant.kind}{variant.perspectiveCorrected ? " corrected" : ""}
+                    </Badge>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
             {!analysis ? (
               <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-10 text-center">
                 <ImageOff className="h-7 w-7 text-muted-foreground" />
@@ -149,7 +165,9 @@ export function StructureIsolationDebugPanel({
                   <dl className="mt-3 grid grid-cols-2 gap-2">
                     <dt>Connected components</dt><dd className="text-right font-mono text-foreground">{analysis.components.length}</dd>
                     <dt>Candidate regions</dt><dd className="text-right font-mono text-foreground">{analysis.candidates.length}</dd>
+                    <dt>Region proposals</dt><dd className="text-right font-mono text-foreground">{analysis.regionProposalCount}</dd>
                     <dt>Rejected backgrounds</dt><dd className="text-right font-mono text-foreground">{analysis.components.filter((component) => component.rejected).length}</dd>
+                    <dt>Perspective boundary</dt><dd className="text-right font-mono text-foreground">{analysis.perspectiveBoundary ? `${analysis.perspectiveBoundary.confidence}%` : "None"}</dd>
                     <dt>Adaptive threshold</dt><dd className="text-right font-mono text-foreground">{analysis.adaptiveThresholdMean}</dd>
                     <dt>Grayscale mean</dt><dd className="text-right font-mono text-foreground">{analysis.grayscaleMean}</dd>
                   </dl>
@@ -159,6 +177,15 @@ export function StructureIsolationDebugPanel({
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {analysis.candidates.find((candidate) => candidate.selected)?.reason ?? "No candidate exceeded the confidence threshold, so no automatic crop was forced."}
                   </p>
+                  {analysis.candidates[0] && (
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <span>Bond-like regions</span><span className="text-right font-mono text-foreground">{analysis.candidates[0].lineLikeComponents}</span>
+                      <span>Label-like regions</span><span className="text-right font-mono text-foreground">{analysis.candidates[0].labelLikeComponents}</span>
+                      <span>Ring geometry</span><span className="text-right font-mono text-foreground">{analysis.candidates[0].ringGeometryScore}%</span>
+                      <span>Skin-like pixels</span><span className="text-right font-mono text-foreground">{(analysis.candidates[0].skinLikeRatio * 100).toFixed(1)}%</span>
+                      <span>Background penalty</span><span className="text-right font-mono text-foreground">-{analysis.candidates[0].backgroundPenalty}</span>
+                    </div>
+                  )}
                   {analysis.warnings.length > 0 && (
                     <ul className="mt-3 space-y-1 text-xs text-amber-700 dark:text-amber-300">
                       {analysis.warnings.map((warning) => <li key={warning}>{warning}</li>)}

@@ -450,7 +450,7 @@ export function ChemistryDatabaseClient() {
             <div>
               <h2 className="font-semibold">Future-ready chemistry core</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                The v5.4.3 layer now includes local compounds, spectra, reactions, mechanisms, reaction conditions, lab techniques, solvers, formulas, curriculum roadmaps, context-aware deep links, adaptive study progress, reaction graph links, browser-local structure isolation, atom-centered graph reconstruction, calibrated aromatic-ring scanner hooks, and visual graph debugging, plus synthesis pathway traversal, spectroscopy explorer hooks, layout-polished periodic table hooks, and refined 2D structure hooks for
+                The v5.4.4 layer now includes local compounds, spectra, reactions, mechanisms, reaction conditions, lab techniques, solvers, formulas, curriculum roadmaps, context-aware deep links, adaptive study progress, reaction graph links, structure-first scene isolation, atom-centered graph reconstruction, calibrated aromatic-ring scanner hooks, and visual graph debugging, plus synthesis pathway traversal, spectroscopy explorer hooks, layout-polished periodic table hooks, and refined 2D structure hooks for
                 larger libraries, pathway maps, reaction databases, mechanism trainers, and RAG-assisted tutoring.
               </p>
             </div>

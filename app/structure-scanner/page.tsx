@@ -7,7 +7,7 @@ import { StructureScanner } from "@/components/chemistry/StructureScanner"
 export const metadata: Metadata = {
   title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload or capture a private snapshot, isolate its drawing, then reconstruct atom-centered bonds and rings from positioned chemistry labels entirely in the browser.",
+    "Upload or capture a private snapshot, isolate chemistry regions from scene clutter, then reconstruct atom-centered bonds and rings entirely in the browser.",
 }
 
 export default function StructureScannerPage() {
@@ -26,11 +26,11 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.4.3
+              ARSHLAB v5.4.4
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot, isolate the strongest drawing region, then turn positioned atom labels into graph vertices, snap interrupted bond strokes to their centroids, bridge short glyph gaps, and reconstruct 3-8 member cycles before local matching. Live recognition, remote image processing, and permanent image storage are not enabled.
+            Upload a structure image or accept a single camera snapshot. ARSHLAB proposes chemistry-rich regions, compares grayscale, thresholded, high-contrast, inverted, and perspective-aware crops, then reconstructs atom-centered bonds and 3-8 member cycles before local matching. Live recognition, remote image processing, and permanent image storage are not enabled.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, ring candidates, and chemistry hints. Always verify inferred atoms and bond orders.
@@ -40,8 +40,8 @@ export default function StructureScannerPage() {
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <ScannerFeature
             icon={Database}
-            title="Atom-Centered Molecular Graphs"
-            description="Positioned atom labels anchor snapped bonds, gap bridges, ring cycles, aromatic evidence, and graph-similarity matching while skeletal drawings retain stroke fallback."
+            title="Structure-First Scene Analysis"
+            description="Chemistry-rich crops are ranked ahead of skin-toned regions, bezels, shadows, border edges, and disconnected scene clutter before OCR or graph matching begins."
           />
           <ScannerFeature
             icon={ShieldCheck}

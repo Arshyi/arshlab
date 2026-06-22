@@ -114,6 +114,26 @@ export function MolecularGraphDebugPanel({ analysis }: { analysis: StructureVisi
               </section>
             )}
 
+            {analysis?.sceneVariants?.length ? (
+              <section className="rounded-xl border border-border p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-semibold">Scene variant graph selection</h3>
+                  <Badge variant="outline" className="rounded-full">Strongest graph wins</Badge>
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {analysis.sceneVariants.map((variant) => (
+                    <div key={variant.id} className={cn("rounded-lg border p-3", variant.selected ? "border-teal-500 bg-teal-500/10" : "border-border bg-secondary/30")}>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium capitalize">{variant.kind.replaceAll("-", " ")}</p>
+                        <Badge variant={variant.selected ? "default" : "secondary"} className="rounded-full">{variant.score}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">Region {variant.candidateId + 1} - graph {variant.graphConfidence}% - chemistry {variant.chemistryConfidence}%</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
             <div className="grid gap-5 lg:grid-cols-2">
               <section className="min-w-0 rounded-xl border border-border p-4">
                 <h3 className="flex items-center gap-2 text-sm font-semibold">

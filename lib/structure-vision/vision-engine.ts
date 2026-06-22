@@ -1,5 +1,6 @@
 import { analyzeDarkPixelMask } from "./shape-heuristics"
 import type { DarkPixelMask, StructureVisionAnalysis, StructureVisionOptions } from "./vision-types"
+import type { StructureImageVariant } from "./isolation-types"
 
 function luminance(red: number, green: number, blue: number): number {
   return red * 0.2126 + green * 0.7152 + blue * 0.0722
@@ -76,4 +77,50 @@ export async function analyzeStructureImage(
     confidence: label.confidence,
   }))
   return analyzeDarkPixelMask(createDarkPixelMask(imageData), options.recognizedText, atomLabels)
+}
+
+function sceneAnalysisScore(analysis: StructureVisionAnalysis): number {
+  const graph = analysis.molecularGraph
+  return Math.round(Math.min(100,
+    graph.estimates.confidence * 0.48 +
+    (graph.atomCentered ? 16 : 0) +
+    Math.min(14, graph.bonds.length * 2) +
+    Math.min(12, graph.rings.length * 8) +
+    (graph.aromatic ? 14 : 0) +
+    analysis.visualConfidence * 0.16 -
+    analysis.warnings.length * 3,
+  ))
+}
+
+export async function analyzeStructureSceneVariants(
+  variants: StructureImageVariant[],
+  options: StructureVisionOptions & { primaryCandidateId?: number } = {},
+): Promise<StructureVisionAnalysis> {
+  if (!variants.length) throw new Error("No isolated scene variants were available for graph analysis.")
+  const evaluations: Array<{ variant: StructureImageVariant; analysis: StructureVisionAnalysis; score: number }> = []
+  for (const variant of variants) {
+    const canUsePositionedLabels = variant.candidateId === options.primaryCandidateId && variant.kind !== "perspective"
+    const analysis = await analyzeStructureImage(variant.blob, {
+      ...options,
+      atomLabels: canUsePositionedLabels ? options.atomLabels : [],
+    })
+    evaluations.push({ variant, analysis, score: sceneAnalysisScore(analysis) })
+  }
+  evaluations.sort((left, right) => right.score - left.score || Number(right.variant.primary) - Number(left.variant.primary))
+  const selected = evaluations[0]
+  const sceneVariants = evaluations.map((evaluation) => ({
+    id: evaluation.variant.id,
+    candidateId: evaluation.variant.candidateId,
+    kind: evaluation.variant.kind,
+    score: evaluation.score,
+    graphConfidence: evaluation.analysis.molecularGraph.estimates.confidence,
+    chemistryConfidence: evaluation.analysis.visualConfidence,
+    selected: evaluation.variant.id === selected.variant.id,
+    perspectiveCorrected: evaluation.variant.perspectiveCorrected,
+  }))
+  return {
+    ...selected.analysis,
+    sceneVariants,
+    selectedSceneVariantId: selected.variant.id,
+  }
 }

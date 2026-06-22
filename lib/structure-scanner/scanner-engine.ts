@@ -254,6 +254,11 @@ function confidenceFromMatch(match: StructureScanMatch, nextScore: number): numb
   const visualScore = positive
     .filter((contribution) => contribution.category === "visual" || contribution.category === "ring" || contribution.category === "graph")
     .reduce((sum, contribution) => sum + contribution.points, 0)
+  const graphScore = positive
+    .filter((contribution) => contribution.category === "graph")
+    .reduce((sum, contribution) => sum + contribution.points, 0)
+  const strongGraph = graphScore >= 45
+  const decisiveGraph = graphScore >= 55
   const hasStrongEvidence = positive.some((contribution) =>
     /exact formula|corrected formula|condensed formula|exact name|name or alias|ocr token database|strong visual/i.test(contribution.label),
   ) || visualScore >= 45 || positive.some((contribution) => contribution.category === "graph" && contribution.points >= 42)
@@ -263,7 +268,11 @@ function confidenceFromMatch(match: StructureScanMatch, nextScore: number): numb
 
   if (!hasStrongEvidence) confidence = Math.min(confidence, 54)
   if (onlyWeakEvidence) confidence = Math.min(confidence, 42)
-  if (match.contributions.some((contribution) => contribution.points <= -20)) confidence = Math.min(confidence, 57)
+  // OCR is supporting evidence. A chemically specific graph match must remain usable
+  // when glare or atom glyphs make text recognition weak.
+  if (!strongGraph && match.contributions.some((contribution) => contribution.points <= -20)) {
+    confidence = Math.min(confidence, 57)
+  }
   if (match.contributions.some((contribution) => /corrected/i.test(contribution.label))) confidence = Math.min(confidence, 88)
   const calibratedBenzene = match.record.id === "benzene" && positive.some((contribution) =>
     /near-ring candidate|5-7 member fuzzy ring|aromatic\/double-bond support/i.test(contribution.label),
@@ -272,8 +281,9 @@ function confidenceFromMatch(match: StructureScanMatch, nextScore: number): numb
     const hasIndependentHint = positive.some((contribution) =>
       contribution.category === "ocr" || contribution.category === "manual" || contribution.category === "filename",
     )
-    confidence = Math.min(confidence, hasIndependentHint ? 85 : 68)
+    confidence = Math.min(confidence, hasIndependentHint ? 88 : strongGraph ? 90 : 68)
   }
+  if (strongGraph) confidence = Math.max(confidence, decisiveGraph ? 76 : 70)
   return clamp(Math.round(confidence), 12, 96)
 }
 
@@ -290,8 +300,13 @@ export function scanStructure(input: StructureScanInput): StructureScanResult {
 
   const bestMatch = scoredMatches[0] ?? null
   const isConfident = Boolean(bestMatch && bestMatch.confidence >= CONFIDENCE_THRESHOLD)
+  const graphConfidence = clamp(Math.round(input.visualAnalysis?.molecularGraph.estimates.confidence ?? 0), 0, 100)
+  const ocrConfidence = clamp(Math.round(input.ocrQuality ?? 0), 0, 100)
+  const strongGraphLowOCR = graphConfidence >= 70 && ocrConfidence < 40 && isConfident
   const message = isConfident
-    ? "Deterministic database match generated from local visual cues, OCR tokens, the uploaded filename, and manual chemistry hints."
+    ? strongGraphLowOCR
+      ? "High-confidence molecular graph match. Weak OCR did not suppress the stronger chemistry topology evidence."
+      : "Deterministic database match generated from local visual cues, OCR tokens, the uploaded filename, and manual chemistry hints."
     : input.visualAnalysis?.isUncertain
       ? "Visual structure recognition is uncertain. Add a formula/name hint or crop closer."
       : bestMatch
@@ -305,5 +320,10 @@ export function scanStructure(input: StructureScanInput): StructureScanResult {
     message,
     isConfident,
     confidenceThreshold: CONFIDENCE_THRESHOLD,
+    confidenceBreakdown: {
+      ocr: ocrConfidence,
+      graph: graphConfidence,
+      chemistry: bestMatch?.confidence ?? 0,
+    },
   }
 }

@@ -253,7 +253,14 @@ assert.equal(observedAnalysis.graph.edges.length, 9, "observed graph edge count"
 assert.equal(observedAnalysis.graph.nearRingCandidates.length, 2, "observed near-ring count")
 const observedScan = scanStructure({ moleculeName: "benzene", visualAnalysis: observedAnalysis })
 assert.equal(observedScan.bestMatch?.record.id, "benzene", "combined scan prefers benzene")
-assert.ok(observedScan.bestMatch.confidence >= 70 && observedScan.bestMatch.confidence <= 85, "visual plus hint reaches calibrated confidence")
+assert.ok(observedScan.bestMatch.confidence >= 70 && observedScan.bestMatch.confidence <= 90, "visual plus hint reaches calibrated confidence")
+
+const graphFirstScan = scanStructure({ ocrQuality: 20, visualAnalysis: atomCenteredCameraBenzene })
+assert.equal(graphFirstScan.bestMatch?.record.id, "benzene", "strong graph outranks weak OCR")
+assert.ok(graphFirstScan.bestMatch.confidence >= 70, "strong aromatic graph remains confident with weak OCR")
+assert.ok(graphFirstScan.message.includes("Weak OCR did not suppress"), "graph-first confidence is explained")
+assert.equal(graphFirstScan.confidenceBreakdown.ocr, 20, "OCR confidence remains separate")
+assert.ok(graphFirstScan.confidenceBreakdown.graph >= 70, "graph confidence remains separate")
 
 function overlaySnapshot(analysis) {
   return {

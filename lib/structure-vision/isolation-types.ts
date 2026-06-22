@@ -13,6 +13,31 @@ export interface StructureIsolationComponent {
   touchesBorder: boolean
   rejected: boolean
   rejectionReason?: string
+  corners: PerspectiveQuadrilateral
+}
+
+export interface IsolationPoint {
+  x: number
+  y: number
+}
+
+export interface PerspectiveQuadrilateral {
+  topLeft: IsolationPoint
+  topRight: IsolationPoint
+  bottomRight: IsolationPoint
+  bottomLeft: IsolationPoint
+  confidence: number
+}
+
+export type StructureVariantKind = "original" | "grayscale" | "adaptive-threshold" | "high-contrast" | "inverted" | "perspective"
+
+export interface StructureImageVariant {
+  id: string
+  candidateId: number
+  kind: StructureVariantKind
+  blob: Blob
+  primary: boolean
+  perspectiveCorrected: boolean
 }
 
 export interface StructureIsolationCandidate {
@@ -25,6 +50,13 @@ export interface StructureIsolationCandidate {
   score: number
   selected: boolean
   reason: string
+  lineLikeComponents: number
+  labelLikeComponents: number
+  repeatedGeometryScore: number
+  ringGeometryScore: number
+  skinLikeRatio: number
+  backgroundPenalty: number
+  quadrilateral: PerspectiveQuadrilateral
 }
 
 export interface StructureIsolationAnalysis {
@@ -40,16 +72,21 @@ export interface StructureIsolationAnalysis {
   chemistryPixelDensity: number
   isolationConfidence: number
   usedFullImage: boolean
+  perspectiveBoundary: PerspectiveQuadrilateral | null
+  regionProposalCount: number
   warnings: string[]
 }
 
 export interface StructureIsolationResult {
   isolatedBlob: Blob
   analysis: StructureIsolationAnalysis
+  variants: StructureImageVariant[]
+  primaryVariantId: string
 }
 
 export interface StructureIsolationOptions {
   marginRatio?: number
   maxAnalysisDimension?: number
   minimumConfidence?: number
+  maximumCandidates?: number
 }

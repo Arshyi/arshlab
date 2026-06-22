@@ -28,7 +28,7 @@ export default function ReactionExplorerPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">ARSHLAB v5.4.3</Badge>
+              <Badge variant="secondary">ARSHLAB v5.4.4</Badge>
               <Badge variant="outline">Database mode = no AI usage</Badge>
             </div>
           </div>

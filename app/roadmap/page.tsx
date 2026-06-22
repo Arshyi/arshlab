@@ -63,6 +63,7 @@ const completed = [
   "Automatic Structure Isolation",
   "Chemical Label Recognition",
   "Atom-Centered Graph Reconstruction",
+  "Structure-First Robust Scene Understanding",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -193,14 +194,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Atom-Centered Graph Reconstruction
+                Structure-First Robust Scene Understanding
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: atom-label bounding boxes become graph vertices, interrupted bond strokes snap to atom
-                centroids, short label gaps are bridged, and 3-8 member cycles are reconstructed directly from atom-to-atom
-                connectivity with aromatic double-bond evidence.
+                Now available: the scanner proposes multiple chemistry-rich regions, rejects common scene clutter, compares
+                local contrast and perspective variants, and lets strong atom/bond topology outrank weak OCR while retaining
+                deterministic confidence explanations.
               </p>
             </CardContent>
           </Card>
@@ -212,7 +213,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.4.3 - Atom-Centered Graph Reconstruction
+          ARSHLAB v5.4.4 - Structure-First Robust Scene Understanding
         </motion.p>
       </div>
     </div>

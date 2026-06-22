@@ -73,6 +73,11 @@ export interface StructureScanResult {
   message: string
   isConfident: boolean
   confidenceThreshold: number
+  confidenceBreakdown: {
+    ocr: number
+    graph: number
+    chemistry: number
+  }
 }
 
 export interface StructureScanHistoryEntry {

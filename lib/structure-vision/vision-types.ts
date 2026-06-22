@@ -143,6 +143,19 @@ export interface StructureVisionAnalysis {
   visualConfidence: number
   isUncertain: boolean
   warnings: string[]
+  sceneVariants?: SceneVariantEvaluation[]
+  selectedSceneVariantId?: string
+}
+
+export interface SceneVariantEvaluation {
+  id: string
+  candidateId: number
+  kind: string
+  score: number
+  graphConfidence: number
+  chemistryConfidence: number
+  selected: boolean
+  perspectiveCorrected: boolean
 }
 
 export interface StructureVisionOptions {

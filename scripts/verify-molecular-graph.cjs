@@ -38,7 +38,7 @@ const {
   reconstructMolecularGraph,
 } = require(path.join(outputDirectory, "vision", "molecular-graph.js"))
 
-function atomCenteredFixture({ points, doubleEdges = [], gap = 8, jitter = 0 }) {
+function atomCenteredFixture({ points, doubleEdges = [], partialEdges = [], gap = 8, jitter = 0 }) {
   const lineSegments = []
   const parallelBondPairs = []
   const edgeCount = points.closed ? points.values.length : points.values.length - 1
@@ -49,7 +49,13 @@ function atomCenteredFixture({ points, doubleEdges = [], gap = 8, jitter = 0 }) 
     const direction = { x: (target.x - source.x) / length, y: (target.y - source.y) / length }
     const normal = { x: -direction.y, y: direction.x }
     const start = { x: source.x + direction.x * gap, y: source.y + direction.y * gap }
-    const end = { x: target.x - direction.x * gap, y: target.y - direction.y * gap }
+    let end = { x: target.x - direction.x * gap, y: target.y - direction.y * gap }
+    if (partialEdges.includes(index)) {
+      end = {
+        x: start.x + (end.x - start.x) * 0.28,
+        y: start.y + (end.y - start.y) * 0.28,
+      }
+    }
     const angle = (Math.atan2(target.y - source.y, target.x - source.x) * 180 / Math.PI + 180) % 180
     const firstIndex = lineSegments.length
     lineSegments.push({
@@ -242,6 +248,18 @@ assert.ok(cameraBenzene.rings.length >= 1, "camera benzene cycle candidate")
 assert.equal(cameraBenzene.aromatic, true, "camera benzene aromatic support")
 assert.equal(rankMolecularGraphCandidates(cameraBenzene)[0]?.compoundId, "benzene", "camera benzene top candidate without OCR hints")
 
+const occludedCameraBenzene = atomCenteredFixture({
+  points: labeledHexagon,
+  doubleEdges: [0, 2, 4],
+  partialEdges: [1],
+  gap: 11,
+  jitter: 1,
+})
+assert.equal(occludedCameraBenzene.bonds.length, 6, "partial bond occlusion is bridged")
+assert.ok(occludedCameraBenzene.bonds.some((bond) => bond.gapBridged), "occluded bond records its bridge")
+assert.ok(occludedCameraBenzene.rings.some((ring) => ring.size === 6), "occluded benzene cycle closes")
+assert.equal(rankMolecularGraphCandidates(occludedCameraBenzene)[0]?.compoundId, "benzene", "occluded benzene remains top graph candidate")
+
 const labeledCyclohexane = atomCenteredFixture({ points: labeledHexagon, gap: 9 })
 assert.equal(labeledCyclohexane.rings[0]?.kind, "cyclohexane-like", "labeled cyclohexane saturated ring")
 assert.equal(labeledCyclohexane.aromatic, false, "cyclohexane remains non-aromatic")
@@ -259,6 +277,6 @@ assert.equal(labeledHexane.estimates.carbons, 6, "hexane carbon centroids")
 assert.equal(labeledHexane.bonds.length, 5, "hexane snapped chain edges")
 assert.equal(labeledHexane.rings.length, 0, "hexane does not create a false cycle")
 
-console.log(`Verified ${fixtures.length} molecular graph extraction and similarity fixtures plus 4 atom-centered structures.`)
+console.log(`Verified ${fixtures.length} molecular graph extraction and similarity fixtures plus 5 atom-centered structures.`)
 console.log("Verified single/double/triple bond inference and 3-8 member cycle support.")
 rmSync(outputDirectory, { recursive: true, force: true })

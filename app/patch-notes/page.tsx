@@ -18,8 +18,27 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.4.3",
+    version: "5.4.4",
     date: "Current",
+    status: "released",
+    title: "Structure-First Robust Scene Understanding",
+    changes: [
+      "Added multi-scale chemistry-region proposals that rank bond-like strokes, label-like components, repeated geometry, and ring geometry",
+      "Added deterministic penalties for skin-toned regions, frame-scale borders, dense backgrounds, and tall object-like scene components",
+      "Added original, grayscale, adaptive-threshold, high-contrast, inverted, and perspective-aware local crop variants",
+      "Added graph-first variant selection so each proposed crop is reconstructed independently and the strongest chemistry topology wins",
+      "Added planar quadrilateral estimation and browser-local perspective compensation for screens and photographed pages",
+      "Added conservative local line continuation for glare, glyph gaps, and partially occluded bonds",
+      "Added graph cleanup for border artifacts and disconnected scene components",
+      "Separated OCR, molecular graph, and final chemistry confidence so weak OCR cannot suppress a decisive graph match",
+      "Expanded Structure Isolation and Molecular Graph debug panels with region, variant, scene-penalty, and selection diagnostics",
+      "Added 17 deterministic isolation and clutter stress fixtures covering screens, reflections, skin-toned occlusion, notebooks, cups, glare, perspective, partial crops, and multi-object scenes",
+      "Preserved browser-local processing with no image uploads, external chemistry APIs, or AI calls",
+    ],
+  },
+  {
+    version: "5.4.3",
+    date: "Previous",
     status: "released",
     title: "Atom-Centered Graph Reconstruction",
     changes: [

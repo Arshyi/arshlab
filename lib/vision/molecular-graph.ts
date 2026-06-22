@@ -77,6 +77,8 @@ export interface MolecularGraphInput {
   recognizedText?: string
   atomLabels?: VisionAtomLabel[]
   atomSnapRadius?: number
+  imageWidth?: number
+  imageHeight?: number
 }
 
 export interface MolecularGraphSimilarity {
@@ -285,7 +287,7 @@ function bondBetween(bonds: MolecularGraphBond[], left: number, right: number): 
 function atomCenteredGraph(input: MolecularGraphInput): MolecularGraph | null {
   const labels = input.atomLabels ?? []
   if (labels.length < 2) return null
-  const nodes: MolecularGraphNode[] = labels.map((label, id) => ({
+  let nodes: MolecularGraphNode[] = labels.map((label, id) => ({
     id,
     x: label.centroid.x,
     y: label.centroid.y,
@@ -304,7 +306,7 @@ function atomCenteredGraph(input: MolecularGraphInput): MolecularGraph | null {
   const largestGlyph = Math.max(...labels.map((label) => Math.max(label.bounds.width, label.bounds.height)), 1)
   const snapRadius = input.atomSnapRadius ?? clamp(Math.max(largestGlyph * 1.35, typicalBondLength * 0.34, 8), 8, 34)
   const maximumBondLength = typicalBondLength * 1.62
-  const bonds: MolecularGraphBond[] = []
+  let bonds: MolecularGraphBond[] = []
 
   for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) {
     for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
@@ -359,6 +361,100 @@ function atomCenteredGraph(input: MolecularGraphInput): MolecularGraph | null {
     }
   }
   if (!bonds.length) return null
+
+  const initialDegree = (nodeId: number) => bonds.filter((bond) =>
+    bond.startNodeId === nodeId || bond.endNodeId === nodeId,
+  ).length
+  const continuationPairs: Array<{ left: MolecularGraphNode; right: MolecularGraphNode; distance: number }> = []
+  for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
+      const left = nodes[leftIndex]
+      const right = nodes[rightIndex]
+      const atomDistance = distance(left, right)
+      if (bondBetween(bonds, left.id, right.id) || atomDistance > typicalBondLength * 1.28 || atomDistance < typicalBondLength * 0.62) continue
+      if (initialDegree(left.id) === 0 || initialDegree(right.id) === 0) continue
+      continuationPairs.push({ left, right, distance: atomDistance })
+    }
+  }
+  continuationPairs.sort((left, right) => left.distance - right.distance)
+  for (const candidate of continuationPairs) {
+    const { left, right } = candidate
+    if (bondBetween(bonds, left.id, right.id) || initialDegree(left.id) >= 3 || initialDegree(right.id) >= 3) continue
+    const atomAngle = edgeAngle(left, right)
+    const continuationSegments = input.lineSegments.map((segment, index) => ({ segment, index })).filter(({ segment }) => {
+      if (angleDifference(segment.angle, atomAngle) > 18) return false
+      const ratios = [projection(segment.start, left, right), projection(segment.end, left, right)].sort((a, b) => a - b)
+      const reachesBondSpan = ratios[1] >= 0.08 && ratios[0] <= 0.92
+      return reachesBondSpan && distanceToLine(segment.midpoint, left, right) <= Math.max(7, snapRadius * 1.35)
+    })
+    if (!continuationSegments.length) continue
+    const parallelPairs = input.parallelBondPairs.filter((pair) =>
+      angleDifference(pair.angle, atomAngle) <= 15 &&
+      projection(pair.center, left, right) >= -0.08 &&
+      projection(pair.center, left, right) <= 1.08 &&
+      distanceToLine(pair.center, left, right) <= Math.max(7, snapRadius * 1.2),
+    )
+    const bondOrder: 1 | 2 | 3 = parallelPairs.length >= 2 ? 3 : parallelPairs.length === 1 ? 2 : 1
+    const sourceSegmentIndexes = Array.from(new Set([
+      ...continuationSegments.map(({ index }) => index),
+      ...parallelPairs.flatMap((pair) => [pair.firstSegmentIndex, pair.secondSegmentIndex]),
+    ]))
+    bonds.push({
+      id: bonds.length,
+      startNodeId: left.id,
+      endNodeId: right.id,
+      bondOrder,
+      confidence: Math.round(clamp(48 + Math.min(12, continuationSegments.length * 3) + (bondOrder > 1 ? 6 : 0), 48, 72)),
+      sourceSegmentIndexes,
+      parallelPairCount: parallelPairs.length,
+      gapBridged: true,
+    })
+    left.snappedSegmentIndexes.push(...sourceSegmentIndexes)
+    right.snappedSegmentIndexes.push(...sourceSegmentIndexes)
+  }
+
+  const adjacency = new Map(nodes.map((node) => [node.id, [] as number[]]))
+  bonds.forEach((bond) => {
+    adjacency.get(bond.startNodeId)?.push(bond.endNodeId)
+    adjacency.get(bond.endNodeId)?.push(bond.startNodeId)
+  })
+  const components: number[][] = []
+  const visited = new Set<number>()
+  nodes.forEach((node) => {
+    if (visited.has(node.id)) return
+    const component: number[] = []
+    const queue = [node.id]
+    visited.add(node.id)
+    while (queue.length) {
+      const current = queue.shift()
+      if (current === undefined) continue
+      component.push(current)
+      for (const neighbor of adjacency.get(current) ?? []) {
+        if (visited.has(neighbor)) continue
+        visited.add(neighbor)
+        queue.push(neighbor)
+      }
+    }
+    components.push(component)
+  })
+  components.sort((left, right) => {
+    const edgesIn = (ids: number[]) => bonds.filter((bond) => ids.includes(bond.startNodeId) && ids.includes(bond.endNodeId)).length
+    return edgesIn(right) - edgesIn(left) || right.length - left.length
+  })
+  const primaryIds = new Set(components[0] ?? [])
+  if (components.length > 1 && primaryIds.size >= 2) {
+    const retained = nodes.filter((node) => primaryIds.has(node.id))
+    const idMap = new Map(retained.map((node, index) => [node.id, index]))
+    nodes = retained.map((node, id) => ({ ...node, id }))
+    bonds = bonds
+      .filter((bond) => primaryIds.has(bond.startNodeId) && primaryIds.has(bond.endNodeId))
+      .map((bond, id) => ({
+        ...bond,
+        id,
+        startNodeId: idMap.get(bond.startNodeId) ?? 0,
+        endNodeId: idMap.get(bond.endNodeId) ?? 0,
+      }))
+  }
   nodes.forEach((node) => {
     node.degree = bonds.filter((bond) => bond.startNodeId === node.id || bond.endNodeId === node.id).length
     node.snappedSegmentIndexes = Array.from(new Set(node.snappedSegmentIndexes))
@@ -426,6 +522,84 @@ function atomCenteredGraph(input: MolecularGraphInput): MolecularGraph | null {
   }
 }
 
+function cleanupStrokeInput(input: MolecularGraphInput): MolecularGraphInput {
+  const width = input.imageWidth ?? 0
+  const height = input.imageHeight ?? 0
+  if (!width || !height || input.graph.nodes.length < 2) return input
+  const borderMargin = Math.max(3, Math.min(width, height) * 0.035)
+  const labelRadius = Math.max(8, input.graph.endpointTolerance * 0.8)
+  const allowedNodes = input.graph.nodes.filter((node) => {
+    const nearBorder = node.point.x <= borderMargin || node.point.y <= borderMargin ||
+      node.point.x >= width - borderMargin || node.point.y >= height - borderMargin
+    if (!nearBorder) return true
+    return (input.atomLabels ?? []).some((label) => distance(label.centroid, node.point) <= labelRadius)
+  })
+  const allowedIds = new Set(allowedNodes.map((node) => node.id))
+  const allowedEdges = input.graph.edges.filter((edge) => allowedIds.has(edge.startNodeId) && allowedIds.has(edge.endNodeId))
+  const adjacency = new Map<number, number[]>()
+  allowedNodes.forEach((node) => adjacency.set(node.id, []))
+  allowedEdges.forEach((edge) => {
+    adjacency.get(edge.startNodeId)?.push(edge.endNodeId)
+    adjacency.get(edge.endNodeId)?.push(edge.startNodeId)
+  })
+  const components: number[][] = []
+  const visited = new Set<number>()
+  allowedNodes.forEach((node) => {
+    if (visited.has(node.id)) return
+    const component: number[] = []
+    const queue = [node.id]
+    visited.add(node.id)
+    while (queue.length) {
+      const current = queue.shift()
+      if (current === undefined) continue
+      component.push(current)
+      for (const neighbor of adjacency.get(current) ?? []) {
+        if (visited.has(neighbor)) continue
+        visited.add(neighbor)
+        queue.push(neighbor)
+      }
+    }
+    components.push(component)
+  })
+  components.sort((left, right) => {
+    const leftEdges = allowedEdges.filter((edge) => left.includes(edge.startNodeId) && left.includes(edge.endNodeId)).length
+    const rightEdges = allowedEdges.filter((edge) => right.includes(edge.startNodeId) && right.includes(edge.endNodeId)).length
+    return rightEdges - leftEdges || right.length - left.length
+  })
+  const primaryIds = new Set(components[0] ?? [])
+  const primaryNodes = allowedNodes.filter((node) => primaryIds.has(node.id))
+  if (!primaryNodes.length) return input
+  const idMap = new Map(primaryNodes.map((node, index) => [node.id, index]))
+  const nodes = primaryNodes.map((node, id) => ({ ...node, id }))
+  const edges = allowedEdges
+    .filter((edge) => primaryIds.has(edge.startNodeId) && primaryIds.has(edge.endNodeId))
+    .map((edge, id) => ({
+      ...edge,
+      id,
+      startNodeId: idMap.get(edge.startNodeId) ?? 0,
+      endNodeId: idMap.get(edge.endNodeId) ?? 0,
+    }))
+  const remapRing = (ring: VisionRingCandidate): VisionRingCandidate | null => {
+    if (!ring.nodeIds.every((nodeId) => primaryIds.has(nodeId))) return null
+    return { ...ring, nodeIds: ring.nodeIds.map((nodeId) => idMap.get(nodeId) ?? 0) }
+  }
+  const ringCandidates = input.ringCandidates.map(remapRing).filter((ring): ring is VisionRingCandidate => Boolean(ring))
+  return {
+    ...input,
+    graph: {
+      ...input.graph,
+      nodes,
+      edges,
+      cycleCandidates: input.graph.cycleCandidates.map(remapRing).filter((ring): ring is VisionRingCandidate => Boolean(ring)),
+      nearRingCandidates: input.graph.nearRingCandidates.map(remapRing).filter((ring): ring is VisionRingCandidate => Boolean(ring)),
+      explanation: components.length > 1 || allowedNodes.length !== input.graph.nodes.length
+        ? "Border artifacts and disconnected graph components were removed before molecular reconstruction."
+        : input.graph.explanation,
+    },
+    ringCandidates,
+  }
+}
+
 function estimateFormula(nodes: MolecularGraphNode[], bonds: MolecularGraphBond[], recognizedText: string): string {
   const parsed = parseFormulaCounts(recognizedText)
   if (parsed.size > 0) {
@@ -454,6 +628,7 @@ function estimateFormula(nodes: MolecularGraphNode[], bonds: MolecularGraphBond[
 export function reconstructMolecularGraph(input: MolecularGraphInput): MolecularGraph {
   const centered = atomCenteredGraph(input)
   if (centered) return centered
+  input = cleanupStrokeInput(input)
   const bonds = input.graph.edges.map((edge): MolecularGraphBond => {
     const start = input.graph.nodes[edge.startNodeId]?.point ?? { x: 0, y: 0 }
     const end = input.graph.nodes[edge.endNodeId]?.point ?? { x: 0, y: 0 }

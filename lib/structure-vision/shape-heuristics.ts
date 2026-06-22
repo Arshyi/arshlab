@@ -942,6 +942,8 @@ export function analyzeDarkPixelMask(
     functionalGroupCues,
     recognizedText,
     atomLabels,
+    imageWidth: mask.width,
+    imageHeight: mask.height,
   })
   const atomRingCandidates: VisionRingCandidate[] = molecularGraph.atomCentered
     ? molecularGraph.rings.map((ring) => {

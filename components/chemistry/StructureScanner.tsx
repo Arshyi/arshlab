@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { recognizeChemistryImage, type ChemistryOCRResult, type OCRProgressUpdate } from "@/lib/ocr/ocr-engine"
-import { analyzeStructureImage } from "@/lib/structure-vision/vision-engine"
+import { analyzeStructureImage, analyzeStructureSceneVariants } from "@/lib/structure-vision/vision-engine"
 import { isolateStructureImage } from "@/lib/structure-vision/structure-isolation"
 import type { StructureIsolationResult } from "@/lib/structure-vision/isolation-types"
 import type { StructureVisionAnalysis } from "@/lib/structure-vision/vision-types"
@@ -166,8 +166,9 @@ export function StructureScanner() {
     setOCRProgress({ status: "Isolating chemistry drawing", progress: 0 })
 
     let scanImage: Blob = processedImage ?? file
+    let nextIsolationResult: StructureIsolationResult | null = null
     try {
-      const nextIsolationResult = await isolateStructureImage(scanImage)
+      nextIsolationResult = await isolateStructureImage(scanImage)
       setIsolationResult(nextIsolationResult)
       scanImage = nextIsolationResult.isolatedBlob
     } catch (isolationFailure) {
@@ -189,7 +190,7 @@ export function StructureScanner() {
 
     let nextVisionAnalysis: StructureVisionAnalysis | null = null
     try {
-      nextVisionAnalysis = await analyzeStructureImage(scanImage, {
+      const visionOptions = {
         recognizedText: [
           nextOCRResult?.rawText,
           moleculeName,
@@ -199,7 +200,14 @@ export function StructureScanner() {
           file.name,
         ].filter(Boolean).join(" "),
         atomLabels: nextOCRResult?.atomLabels,
-      })
+      }
+      const selectedCandidateId = nextIsolationResult?.analysis.candidates.find((candidate) => candidate.selected)?.id
+      nextVisionAnalysis = nextIsolationResult?.variants.length
+        ? await analyzeStructureSceneVariants(nextIsolationResult.variants, {
+          ...visionOptions,
+          primaryCandidateId: selectedCandidateId,
+        })
+        : await analyzeStructureImage(scanImage, visionOptions)
       setVisionAnalysis(nextVisionAnalysis)
     } catch (visionFailure) {
       const message = visionFailure instanceof Error ? visionFailure.message : "Local shape detection could not start."
@@ -345,7 +353,10 @@ export function StructureScanner() {
           <MolecularGraphDebugPanel analysis={visionAnalysis} />
 
           <VisualOverlayDebugger
-            imageBlob={isolationResult?.isolatedBlob ?? processedImage ?? file}
+            imageBlob={
+              isolationResult?.variants.find((variant) => variant.id === visionAnalysis?.selectedSceneVariantId)?.blob ??
+              isolationResult?.isolatedBlob ?? processedImage ?? file
+            }
             analysis={visionAnalysis}
             result={result}
           />
@@ -544,6 +555,12 @@ export function StructureScanner() {
             <Badge variant="outline" className="rounded-full">
               {result.matches.length} local matches
             </Badge>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <OCRValue label="OCR Confidence" value={`${result.confidenceBreakdown.ocr}%`} />
+            <OCRValue label="Graph Confidence" value={`${result.confidenceBreakdown.graph}%`} />
+            <OCRValue label="Chemistry Confidence" value={`${result.confidenceBreakdown.chemistry}%`} />
           </div>
 
           {!result.isConfident && (
