@@ -62,6 +62,7 @@ const completed = [
   "Molecular Graph Reconstruction Engine",
   "Automatic Structure Isolation",
   "Chemical Label Recognition",
+  "Atom-Centered Graph Reconstruction",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -192,14 +193,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Chemical Label Recognition
+                Atom-Centered Graph Reconstruction
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: local OCR separates isolated atom symbols, molecule names, molecular formulas,
-                condensed formulas, and rejected noise into explainable scoring channels. Scattered atom labels support
-                the molecular graph without being mistaken for a complete formula.
+                Now available: atom-label bounding boxes become graph vertices, interrupted bond strokes snap to atom
+                centroids, short label gaps are bridged, and 3-8 member cycles are reconstructed directly from atom-to-atom
+                connectivity with aromatic double-bond evidence.
               </p>
             </CardContent>
           </Card>
@@ -211,7 +212,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.4.2 - Chemical Label Recognition
+          ARSHLAB v5.4.3 - Atom-Centered Graph Reconstruction
         </motion.p>
       </div>
     </div>

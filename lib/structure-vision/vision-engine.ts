@@ -63,5 +63,17 @@ export async function analyzeStructureImage(
   context.fillRect(0, 0, width, height)
   context.drawImage(image, 0, 0, width, height)
   const imageData = context.getImageData(0, 0, width, height)
-  return analyzeDarkPixelMask(createDarkPixelMask(imageData), options.recognizedText)
+  const atomLabels = (options.atomLabels ?? []).map((label, id) => ({
+    id,
+    label: label.label,
+    bounds: {
+      x: label.bounds.x * scale,
+      y: label.bounds.y * scale,
+      width: label.bounds.width * scale,
+      height: label.bounds.height * scale,
+    },
+    centroid: { x: label.centroid.x * scale, y: label.centroid.y * scale },
+    confidence: label.confidence,
+  }))
+  return analyzeDarkPixelMask(createDarkPixelMask(imageData), options.recognizedText, atomLabels)
 }

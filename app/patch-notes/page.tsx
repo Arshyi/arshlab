@@ -18,8 +18,26 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.4.2",
+    version: "5.4.3",
     date: "Current",
+    status: "released",
+    title: "Atom-Centered Graph Reconstruction",
+    changes: [
+      "Added bounding-box and centroid extraction for chemistry-aware atom labels",
+      "Added atom-label vertices with element, position, confidence, source, and snapped-stroke metadata",
+      "Added configurable endpoint snapping from interrupted bond strokes to atom centroids",
+      "Added short-gap bridging for handwritten and printed label-to-bond spacing",
+      "Added atom-to-atom bond reconstruction with local parallel-line bond-order inference",
+      "Moved labeled-structure cycle detection onto the atom graph with 3-8 member support",
+      "Added six-member aromatic classification from reconstructed cycles and alternating double-bond evidence",
+      "Expanded Molecular Graph Debug with atom centroids, snapped bonds, gap bridges, cycles, aromatic candidates, and snap radius",
+      "Added printed benzene, camera benzene, cyclohexane, and hexane atom-centered regression fixtures",
+      "Preserved stroke-graph fallback for unlabeled skeletal structures and all local-only privacy guarantees",
+    ],
+  },
+  {
+    version: "5.4.2",
+    date: "Previous",
     status: "released",
     title: "Chemical Label Recognition",
     changes: [

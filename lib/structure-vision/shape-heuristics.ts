@@ -2,6 +2,7 @@ import type {
   DarkPixelMask,
   StructureVisionAnalysis,
   VisionClosedLoop,
+  VisionAtomLabel,
   VisionCompoundCandidate,
   VisionFunctionalGroupCue,
   VisionGraphAnalysis,
@@ -885,7 +886,11 @@ function buildCandidates(
   return candidates.sort((left, right) => right.score - left.score || left.label.localeCompare(right.label)).slice(0, 5)
 }
 
-export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): StructureVisionAnalysis {
+export function analyzeDarkPixelMask(
+  mask: DarkPixelMask,
+  recognizedText = "",
+  atomLabels: VisionAtomLabel[] = [],
+): StructureVisionAnalysis {
   const lineSegments = detectLineSegments(mask)
   const closedLoops = detectClosedLoops(mask)
   const parallelBondPairs = detectParallelBondPairs(lineSegments, mask)
@@ -936,14 +941,89 @@ export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): 
     ringCandidates,
     functionalGroupCues,
     recognizedText,
+    atomLabels,
   })
+  const atomRingCandidates: VisionRingCandidate[] = molecularGraph.atomCentered
+    ? molecularGraph.rings.map((ring) => {
+      const nodes = ring.nodeIds
+        .map((nodeId) => molecularGraph.nodes.find((node) => node.id === nodeId))
+        .filter((node): node is (typeof molecularGraph.nodes)[number] => Boolean(node))
+      const minimumX = Math.min(...nodes.map((node) => node.x))
+      const maximumX = Math.max(...nodes.map((node) => node.x))
+      const minimumY = Math.min(...nodes.map((node) => node.y))
+      const maximumY = Math.max(...nodes.map((node) => node.y))
+      const ringDoubleBonds = molecularGraph.bonds.filter((bond) =>
+        ring.nodeIds.includes(bond.startNodeId) && ring.nodeIds.includes(bond.endNodeId) && bond.bondOrder >= 2,
+      ).length
+      return {
+        center: { x: average(nodes.map((node) => node.x)), y: average(nodes.map((node) => node.y)) },
+        width: maximumX - minimumX,
+        height: maximumY - minimumY,
+        sidesEstimate: ring.size,
+        confidence: ring.confidence,
+        benzeneLike: ring.aromatic && ring.size === 6,
+        nearRing: false,
+        source: "graph-cycle" as const,
+        nodeIds: ring.nodeIds,
+        closureQuality: 100,
+        endpointMergeQuality: Math.round(average(nodes.map((node) => node.confidence))),
+        polygonRegularity: ring.confidence,
+        lineCoverage: 100,
+        doubleBondCue: clamp(Math.round(ringDoubleBonds / Math.max(1, Math.floor(ring.size / 2)) * 100), 0, 100),
+        aromaticCueScore: ring.aromatic ? 95 : 0,
+        reason: `${ring.size}-member cycle reconstructed from snapped atom-label bonds.`,
+        scoreBreakdown: [
+          { label: "Atom-centroid cycle", points: 30, maximum: 30 },
+          { label: "Snapped bond closure", points: 25, maximum: 25 },
+          { label: "Parallel bond support", points: ring.aromatic ? 25 : 0, maximum: 25 },
+        ],
+      }
+    })
+    : []
+  const finalRingCandidates = [...atomRingCandidates, ...ringCandidates]
+    .sort((left, right) => right.confidence - left.confidence)
+  const finalGraphSummary: VisionGraphAnalysis = molecularGraph.atomCentered
+    ? {
+      nodes: molecularGraph.nodes.map((node) => ({
+        id: node.id,
+        point: { x: node.x, y: node.y },
+        endpointCount: node.degree,
+        mergeRadius: node.labelBounds ? Math.max(node.labelBounds.width, node.labelBounds.height) / 2 : 0,
+        mergeQuality: node.confidence,
+      })),
+      edges: molecularGraph.bonds.map((bond) => {
+        const start = molecularGraph.nodes.find((node) => node.id === bond.startNodeId)
+        const end = molecularGraph.nodes.find((node) => node.id === bond.endNodeId)
+        return {
+          id: bond.id,
+          startNodeId: bond.startNodeId,
+          endNodeId: bond.endNodeId,
+          length: start && end ? Math.hypot(end.x - start.x, end.y - start.y) : 0,
+          sourceSegmentIndexes: bond.sourceSegmentIndexes,
+        }
+      }),
+      mergedEndpointCount: molecularGraph.bonds.reduce((sum, bond) => sum + bond.sourceSegmentIndexes.length, 0),
+      endpointTolerance: molecularGraph.snapRadius,
+      averageLineLength: graphSummary.averageLineLength,
+      cycleCandidates: atomRingCandidates,
+      nearRingCandidates: [],
+      bestRingConfidence: atomRingCandidates[0]?.confidence ?? 0,
+      aromaticCueScore: atomRingCandidates.some((ring) => ring.benzeneLike) ? 95 : 0,
+      explanation: atomRingCandidates.length
+        ? `${atomRingCandidates[0].sidesEstimate}-member cycle reconstructed from positioned atom labels and snapped bond strokes.`
+        : "Atom labels were positioned and bonds were snapped, but no 3-8 member cycle closed.",
+    }
+    : graphSummary
+  const finalFunctionalGroupCues = molecularGraph.atomCentered
+    ? buildCues(finalRingCandidates, parallelLinePairs, simpleChainLength, recognizedText)
+    : functionalGroupCues
   const candidates = buildCandidates(
-    functionalGroupCues,
-    ringCandidates,
+    finalFunctionalGroupCues,
+    finalRingCandidates,
     parallelLinePairs,
     simpleChainLength,
     recognizedText,
-    graphSummary.aromaticCueScore,
+    finalGraphSummary.aromaticCueScore,
   )
   const visualConfidence = candidates[0]?.score ?? 0
   const darkPixelRatio = mask.darkPixelCount / Math.max(1, mask.width * mask.height)
@@ -951,7 +1031,7 @@ export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): 
   if (darkPixelRatio < 0.003) warnings.push("Very few dark strokes were detected. Increase contrast or crop closer.")
   if (darkPixelRatio > 0.42) warnings.push("The preview is unusually dark. Reduce contrast or use a cleaner crop.")
   if (!lineSegments.length) warnings.push("No stable bond-like line segments were detected.")
-  if (!ringCandidates.length && graph.edges.length >= 4) {
+  if (!finalRingCandidates.length && finalGraphSummary.edges.length >= 4) {
     warnings.push("Ring-like strokes detected, but closure was weak. Try cropping closer or increasing contrast.")
   }
 
@@ -961,15 +1041,16 @@ export function analyzeDarkPixelMask(mask: DarkPixelMask, recognizedText = ""): 
     darkPixelCount: mask.darkPixelCount,
     darkPixelRatio,
     threshold: mask.threshold,
+    atomLabels,
     lineSegments,
     closedLoops,
-    ringCandidates,
-    graph: graphSummary,
+    ringCandidates: finalRingCandidates,
+    graph: finalGraphSummary,
     molecularGraph,
     parallelBondPairs,
     parallelLinePairs,
     simpleChainLength,
-    functionalGroupCues,
+    functionalGroupCues: finalFunctionalGroupCues,
     candidates,
     visualConfidence,
     isUncertain: visualConfidence < 45,

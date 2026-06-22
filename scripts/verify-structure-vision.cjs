@@ -167,6 +167,24 @@ const alternatingBenzene = analyzeDarkPixelMask(
 assert.ok(alternatingBenzene.parallelLinePairs >= 2, "alternating double-bond cues")
 assert.equal(alternatingBenzene.candidates[0]?.compoundId, "benzene", "alternating benzene candidate")
 
+const atomCenteredCameraBenzene = analyzeDarkPixelMask(
+  polygonMask(hexagonPoints, { gap: 2, doubleEdges: [0, 2, 4] }),
+  "",
+  hexagonPoints.map((point, id) => ({
+    id,
+    label: "C",
+    bounds: { x: point.x - 5, y: point.y - 6, width: 10, height: 12 },
+    centroid: point,
+    confidence: 90,
+  })),
+)
+assert.equal(atomCenteredCameraBenzene.molecularGraph.atomCentered, true, "camera benzene atom-centered mode")
+assert.equal(atomCenteredCameraBenzene.molecularGraph.estimates.carbons, 6, "camera benzene carbon atoms")
+assert.equal(atomCenteredCameraBenzene.molecularGraph.bonds.length, 6, "camera benzene ring edges")
+assert.ok(atomCenteredCameraBenzene.graph.cycleCandidates.length >= 1, "camera benzene promoted cycle candidate")
+assert.ok(atomCenteredCameraBenzene.graph.aromaticCueScore > 0, "camera benzene aromatic evidence")
+assert.equal(atomCenteredCameraBenzene.candidates[0]?.compoundId, "benzene", "camera benzene top visual candidate without hints")
+
 const cyclohexane = analyzeDarkPixelMask(polygonMask(hexagonPoints, { gap: 3 }), "")
 assert.ok(cyclohexane.ringCandidates.some((ring) => ring.sidesEstimate === 6), "cyclohexane ring detected")
 assert.equal(cyclohexane.candidates[0]?.compoundId, "cyclohexane", "saturated ring prefers cyclohexane")

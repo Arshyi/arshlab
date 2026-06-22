@@ -35,10 +35,15 @@ export function MolecularGraphDebugPanel({ analysis }: { analysis: StructureVisi
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="rounded-full">Browser-local reconstruction</Badge>
               <Badge variant="secondary" className="rounded-full">No AI usage</Badge>
+              {graph?.atomCentered && <Badge variant="outline" className="rounded-full">Atom-centered graph</Badge>}
               {graph?.aromatic && <Badge className="rounded-full">Aromatic ring reconstructed</Badge>}
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Metric label="Detected atom labels" value={analysis?.atomLabels.length ?? 0} />
+              <Metric label="Snapped bonds" value={graph?.atomCentered ? graph.bonds.length : 0} />
+              <Metric label="Reconstructed cycles" value={graph?.rings.length ?? 0} />
+              <Metric label="Aromatic candidates" value={graph?.aromaticRingIds.length ?? 0} />
               <Metric label="Estimated atoms" value={graph?.estimates.atoms ?? 0} />
               <Metric label="Estimated carbons" value={graph?.estimates.carbons ?? 0} />
               <Metric label="Estimated bonds" value={graph?.estimates.bonds ?? 0} />
@@ -47,6 +52,7 @@ export function MolecularGraphDebugPanel({ analysis }: { analysis: StructureVisi
               <Metric label="Double bonds" value={graph?.estimates.doubleBonds ?? 0} />
               <Metric label="Triple bonds" value={graph?.estimates.tripleBonds ?? 0} />
               <Metric label="Graph confidence" value={`${graph?.estimates.confidence ?? 0}%`} />
+              <Metric label="Endpoint snap radius" value={graph?.atomCentered ? `${graph.snapRadius}px` : "Fallback"} />
             </div>
 
             <section className="rounded-xl border border-border p-4">
@@ -65,25 +71,70 @@ export function MolecularGraphDebugPanel({ analysis }: { analysis: StructureVisi
               </p>
             </section>
 
+            {analysis && graph?.atomCentered && graph.nodes.length > 0 && (
+              <section className="rounded-xl border border-border p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-semibold">Atom-centered graph map</h3>
+                  <span className="text-xs text-muted-foreground">Centroids, snapped bonds, and bridged glyph gaps</span>
+                </div>
+                <div className="mt-3 overflow-hidden rounded-lg border border-border bg-slate-950 p-2">
+                  <svg
+                    viewBox={`0 0 ${analysis.width} ${analysis.height}`}
+                    role="img"
+                    aria-label="Atom-centered molecular graph reconstruction"
+                    className="block max-h-80 w-full"
+                  >
+                    {graph.bonds.map((bond) => {
+                      const start = graph.nodes.find((node) => node.id === bond.startNodeId)
+                      const end = graph.nodes.find((node) => node.id === bond.endNodeId)
+                      if (!start || !end) return null
+                      return (
+                        <line
+                          key={bond.id}
+                          x1={start.x}
+                          y1={start.y}
+                          x2={end.x}
+                          y2={end.y}
+                          stroke={bond.gapBridged ? "#f59e0b" : bond.bondOrder > 1 ? "#a855f7" : "#38bdf8"}
+                          strokeWidth={Math.max(1.5, bond.bondOrder * 1.25)}
+                          strokeDasharray={bond.gapBridged ? "4 3" : undefined}
+                        />
+                      )
+                    })}
+                    {graph.nodes.map((node) => (
+                      <g key={node.id}>
+                        <circle cx={node.x} cy={node.y} r={Math.max(4, analysis.width * 0.018)} fill="#14b8a6" stroke="#ccfbf1" strokeWidth="1" />
+                        <text x={node.x} y={node.y + 1.8} textAnchor="middle" fill="white" fontSize={Math.max(5, analysis.width * 0.018)} fontWeight="700">
+                          {node.inferredElement}
+                        </text>
+                      </g>
+                    ))}
+                  </svg>
+                </div>
+              </section>
+            )}
+
             <div className="grid gap-5 lg:grid-cols-2">
               <section className="min-w-0 rounded-xl border border-border p-4">
                 <h3 className="flex items-center gap-2 text-sm font-semibold">
                   <GitFork className="h-4 w-4" />
-                  Reconstructed nodes
+                  Atom centroids and reconstructed nodes
                 </h3>
                 {graph?.nodes.length ? (
                   <div className="mt-3 max-h-64 overflow-auto rounded-lg border border-border">
-                    <table className="w-full min-w-[420px] text-left text-xs">
+                    <table className="w-full min-w-[620px] text-left text-xs">
                       <thead className="sticky top-0 bg-secondary">
-                        <tr><th className="p-2">Node</th><th className="p-2">Element</th><th className="p-2">Degree</th><th className="p-2">Coordinates</th><th className="p-2">Confidence</th></tr>
+                        <tr><th className="p-2">Node</th><th className="p-2">Element</th><th className="p-2">Source</th><th className="p-2">Degree</th><th className="p-2">Centroid</th><th className="p-2">Snapped</th><th className="p-2">Confidence</th></tr>
                       </thead>
                       <tbody>
                         {graph.nodes.map((node) => (
                           <tr key={node.id} className="border-t border-border">
                             <td className="p-2 font-mono">{node.id}</td>
                             <td className="p-2 font-semibold">{node.inferredElement}</td>
+                            <td className="p-2">{node.source === "atom-label" ? "Label" : "Stroke"}</td>
                             <td className="p-2">{node.degree}</td>
                             <td className="p-2 font-mono">({node.x.toFixed(1)}, {node.y.toFixed(1)})</td>
+                            <td className="p-2">{node.snappedSegmentIndexes.length}</td>
                             <td className="p-2">{node.confidence}%</td>
                           </tr>
                         ))}
@@ -100,9 +151,9 @@ export function MolecularGraphDebugPanel({ analysis }: { analysis: StructureVisi
                 </h3>
                 {graph?.bonds.length ? (
                   <div className="mt-3 max-h-64 overflow-auto rounded-lg border border-border">
-                    <table className="w-full min-w-[390px] text-left text-xs">
+                    <table className="w-full min-w-[520px] text-left text-xs">
                       <thead className="sticky top-0 bg-secondary">
-                        <tr><th className="p-2">Bond</th><th className="p-2">Nodes</th><th className="p-2">Order</th><th className="p-2">Parallel pairs</th><th className="p-2">Confidence</th></tr>
+                        <tr><th className="p-2">Bond</th><th className="p-2">Atoms</th><th className="p-2">Order</th><th className="p-2">Parallel pairs</th><th className="p-2">Gap bridge</th><th className="p-2">Confidence</th></tr>
                       </thead>
                       <tbody>
                         {graph.bonds.map((bond) => (
@@ -111,6 +162,7 @@ export function MolecularGraphDebugPanel({ analysis }: { analysis: StructureVisi
                             <td className="p-2 font-mono">{bond.startNodeId}-{bond.endNodeId}</td>
                             <td className="p-2 font-semibold">{bond.bondOrder}</td>
                             <td className="p-2">{bond.parallelPairCount}</td>
+                            <td className="p-2">{bond.gapBridged ? "Yes" : "No"}</td>
                             <td className="p-2">{bond.confidence}%</td>
                           </tr>
                         ))}
@@ -139,7 +191,7 @@ export function MolecularGraphDebugPanel({ analysis }: { analysis: StructureVisi
                     </div>
                   ))}
                 </div>
-              ) : <EmptyState text="No 3-7 member molecular ring reconstructed." />}
+              ) : <EmptyState text="No 3-8 member molecular ring reconstructed." />}
             </section>
 
             <section className="rounded-xl border border-border p-4">

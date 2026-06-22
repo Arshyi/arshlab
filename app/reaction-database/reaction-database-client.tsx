@@ -156,7 +156,7 @@ export function ReactionDatabaseClient() {
             </div>
             <div className="flex flex-wrap gap-2 sm:justify-end">
               <Badge variant="secondary" className="w-fit rounded-full px-3 py-1">
-                ARSHLAB v5.4.2
+                ARSHLAB v5.4.3
               </Badge>
               <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
                 Database mode = no AI usage

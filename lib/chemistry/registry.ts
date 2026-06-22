@@ -38,7 +38,7 @@ import { getReactionConditionMetrics } from "@/lib/reaction-conditions/reaction-
 import { getSpectroscopyMetrics } from "@/lib/spectroscopy/spectroscopy-engine"
 import { getLabMetrics } from "@/lib/lab/lab-engine"
 
-export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "5.4.2"
+export const CHEMISTRY_KNOWLEDGE_CORE_VERSION = "5.4.3"
 
 const mechanismMetrics = getMechanismMetrics()
 const solverMetrics = getSolverMetrics()

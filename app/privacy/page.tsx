@@ -32,7 +32,7 @@ const sections = [
   },
   {
     title: "Structure Scanner Images",
-    body: "The v5.4.2 Structure Scanner processes uploaded images and accepted camera snapshots locally in the browser. Automatic structure isolation, Tesseract.js OCR, chemistry-aware atom-label/name/formula classification, rejected-noise analysis, endpoint graphs, molecular graph reconstruction, fuzzy ring heuristics, visual overlays, and optional overlay PNG export remain local. Original images, isolated crops, OCR text, and detected geometry are not uploaded to ARSHLAB servers, Supabase, OpenRouter, or an external AI API. Images are not permanently stored or included in local scan history. Local history stores only match labels, source labels, confidence, functional-group labels, timestamps, and corrections.",
+    body: "The v5.4.3 Structure Scanner processes uploaded images and accepted camera snapshots locally in the browser. Automatic isolation, Tesseract.js OCR, positioned atom-label centroids, endpoint snapping, gap bridging, atom-centered molecular graph reconstruction, fuzzy ring heuristics, overlays, and optional overlay PNG export remain local. Original images, isolated crops, OCR text, atom positions, and graph geometry are not uploaded to ARSHLAB servers, Supabase, OpenRouter, or an external AI API. Images are not permanently stored or included in local scan history. Local history stores only match labels, source labels, confidence, functional-group labels, timestamps, and corrections.",
   },
   {
     title: "Optional Camera Capture",

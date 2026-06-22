@@ -198,6 +198,7 @@ export function StructureScanner() {
           functionalGroupHint,
           file.name,
         ].filter(Boolean).join(" "),
+        atomLabels: nextOCRResult?.atomLabels,
       })
       setVisionAnalysis(nextVisionAnalysis)
     } catch (visionFailure) {

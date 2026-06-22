@@ -1,5 +1,6 @@
 import type {
   VisionFunctionalGroupCue,
+  VisionAtomLabel,
   VisionGraphAnalysis,
   VisionLineSegment,
   VisionParallelBondPair,
@@ -17,6 +18,9 @@ export interface MolecularGraphNode {
   degree: number
   inferredElement: InferredElement
   confidence: number
+  source: "atom-label" | "stroke"
+  labelBounds?: VisionAtomLabel["bounds"]
+  snappedSegmentIndexes: number[]
 }
 
 export interface MolecularGraphBond {
@@ -27,6 +31,7 @@ export interface MolecularGraphBond {
   confidence: number
   sourceSegmentIndexes: number[]
   parallelPairCount: number
+  gapBridged: boolean
 }
 
 export interface MolecularGraphRing {
@@ -59,6 +64,8 @@ export interface MolecularGraph {
   aromaticRingIds: number[]
   estimates: MolecularGraphEstimates
   warnings: string[]
+  atomCentered: boolean
+  snapRadius: number
 }
 
 export interface MolecularGraphInput {
@@ -68,6 +75,8 @@ export interface MolecularGraphInput {
   ringCandidates: VisionRingCandidate[]
   functionalGroupCues: VisionFunctionalGroupCue[]
   recognizedText?: string
+  atomLabels?: VisionAtomLabel[]
+  atomSnapRadius?: number
 }
 
 export interface MolecularGraphSimilarity {
@@ -155,18 +164,41 @@ function findClosedCycles(graph: VisionGraphAnalysis): number[][] {
 
   const found = new Map<string, number[]>()
   const walk = (start: number, current: number, path: number[]) => {
-    if (path.length > 7) return
+    if (path.length > 8) return
     for (const neighbor of adjacency.get(current) ?? []) {
       if (neighbor === start && path.length >= 3) {
         found.set(canonicalCycle(path), path)
         continue
       }
-      if (path.includes(neighbor) || path.length >= 7) continue
+      if (path.includes(neighbor) || path.length >= 8) continue
       walk(start, neighbor, [...path, neighbor])
     }
   }
   graph.nodes.forEach((node) => walk(node.id, node.id, [node.id]))
-  return Array.from(found.values()).filter((cycle) => cycle.length >= 3 && cycle.length <= 7)
+  return Array.from(found.values()).filter((cycle) => cycle.length >= 3 && cycle.length <= 8)
+}
+
+function findMolecularCycles(nodes: MolecularGraphNode[], bonds: MolecularGraphBond[]): number[][] {
+  const adjacency = new Map<number, number[]>()
+  nodes.forEach((node) => adjacency.set(node.id, []))
+  bonds.forEach((bond) => {
+    adjacency.get(bond.startNodeId)?.push(bond.endNodeId)
+    adjacency.get(bond.endNodeId)?.push(bond.startNodeId)
+  })
+  const found = new Map<string, number[]>()
+  const walk = (start: number, current: number, path: number[]) => {
+    if (path.length > 8) return
+    for (const neighbor of adjacency.get(current) ?? []) {
+      if (neighbor === start && path.length >= 3) {
+        found.set(canonicalCycle(path), path)
+        continue
+      }
+      if (path.includes(neighbor) || path.length >= 8) continue
+      walk(start, neighbor, [...path, neighbor])
+    }
+  }
+  nodes.forEach((node) => walk(node.id, node.id, [node.id]))
+  return Array.from(found.values())
 }
 
 function parseFormulaCounts(text: string): Map<InferredElement, number> {
@@ -207,6 +239,8 @@ function assignElements(
     degree: degrees.get(node.id) ?? 0,
     inferredElement: "C",
     confidence: Math.round(clamp(node.mergeQuality * 0.7 + 22, 35, 92)),
+    source: "stroke",
+    snappedSegmentIndexes: [],
   }))
   const terminalNodes = [...nodes].sort((left, right) => left.degree - right.degree || right.x - left.x || left.id - right.id)
   let cursor = 0
@@ -221,6 +255,175 @@ function assignElements(
     cursor += 1
   }
   return nodes
+}
+
+function median(values: number[]): number {
+  if (!values.length) return 0
+  const sorted = [...values].sort((left, right) => left - right)
+  return sorted[Math.floor(sorted.length / 2)]
+}
+
+function projection(point: VisionPoint, start: VisionPoint, end: VisionPoint): number {
+  const dx = end.x - start.x
+  const dy = end.y - start.y
+  return ((point.x - start.x) * dx + (point.y - start.y) * dy) / Math.max(1, dx * dx + dy * dy)
+}
+
+function distanceToLine(point: VisionPoint, start: VisionPoint, end: VisionPoint): number {
+  const ratio = projection(point, start, end)
+  const projected = { x: start.x + (end.x - start.x) * ratio, y: start.y + (end.y - start.y) * ratio }
+  return distance(point, projected)
+}
+
+function bondBetween(bonds: MolecularGraphBond[], left: number, right: number): MolecularGraphBond | undefined {
+  return bonds.find((bond) =>
+    (bond.startNodeId === left && bond.endNodeId === right) ||
+    (bond.startNodeId === right && bond.endNodeId === left),
+  )
+}
+
+function atomCenteredGraph(input: MolecularGraphInput): MolecularGraph | null {
+  const labels = input.atomLabels ?? []
+  if (labels.length < 2) return null
+  const nodes: MolecularGraphNode[] = labels.map((label, id) => ({
+    id,
+    x: label.centroid.x,
+    y: label.centroid.y,
+    degree: 0,
+    inferredElement: label.label,
+    confidence: label.confidence,
+    source: "atom-label",
+    labelBounds: label.bounds,
+    snappedSegmentIndexes: [],
+  }))
+  const nearestDistances = nodes.map((node) => Math.min(
+    ...nodes.filter((candidate) => candidate.id !== node.id).map((candidate) => distance(node, candidate)),
+  )).filter(Number.isFinite)
+  const typicalBondLength = median(nearestDistances)
+  if (!typicalBondLength) return null
+  const largestGlyph = Math.max(...labels.map((label) => Math.max(label.bounds.width, label.bounds.height)), 1)
+  const snapRadius = input.atomSnapRadius ?? clamp(Math.max(largestGlyph * 1.35, typicalBondLength * 0.34, 8), 8, 34)
+  const maximumBondLength = typicalBondLength * 1.62
+  const bonds: MolecularGraphBond[] = []
+
+  for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
+      const left = nodes[leftIndex]
+      const right = nodes[rightIndex]
+      const atomDistance = distance(left, right)
+      if (atomDistance > maximumBondLength || atomDistance < largestGlyph * 0.55) continue
+      const atomAngle = edgeAngle(left, right)
+      const qualifying: Array<{ index: number; direct: boolean }> = []
+      input.lineSegments.forEach((segment, segmentIndex) => {
+        if (angleDifference(segment.angle, atomAngle) > 16) return
+        const forwardStart = distance(segment.start, left)
+        const forwardEnd = distance(segment.end, right)
+        const reverseStart = distance(segment.start, right)
+        const reverseEnd = distance(segment.end, left)
+        const forward = forwardStart + forwardEnd <= reverseStart + reverseEnd
+        const firstDistance = forward ? forwardStart : reverseStart
+        const secondDistance = forward ? forwardEnd : reverseEnd
+        const direct = firstDistance <= snapRadius && secondDistance <= snapRadius
+        const ratios = [projection(segment.start, left, right), projection(segment.end, left, right)].sort((a, b) => a - b)
+        const overlap = Math.max(0, Math.min(1.12, ratios[1]) - Math.max(-0.12, ratios[0]))
+        const collinear = distanceToLine(segment.midpoint, left, right) <= Math.max(6, snapRadius * 1.25)
+        const bridged = overlap >= 0.35 && ratios[1] >= 0.2 && ratios[0] <= 0.8 && collinear
+        if (direct || bridged) qualifying.push({ index: segmentIndex, direct })
+      })
+      if (!qualifying.length) continue
+
+      const parallelPairs = input.parallelBondPairs.filter((pair) => {
+        if (angleDifference(pair.angle, atomAngle) > 14) return false
+        const ratio = projection(pair.center, left, right)
+        return ratio >= -0.08 && ratio <= 1.08 && distanceToLine(pair.center, left, right) <= Math.max(6, snapRadius * 1.1)
+      })
+      const bondOrder: 1 | 2 | 3 = parallelPairs.length >= 2 ? 3 : parallelPairs.length === 1 ? 2 : 1
+      const sourceSegmentIndexes = Array.from(new Set([
+        ...qualifying.map((candidate) => candidate.index),
+        ...parallelPairs.flatMap((pair) => [pair.firstSegmentIndex, pair.secondSegmentIndex]),
+      ]))
+      const gapBridged = !qualifying.some((candidate) => candidate.direct)
+      const averageLabelConfidence = (left.confidence + right.confidence) / 2
+      bonds.push({
+        id: bonds.length,
+        startNodeId: left.id,
+        endNodeId: right.id,
+        bondOrder,
+        confidence: Math.round(clamp(averageLabelConfidence * 0.55 + (gapBridged ? 24 : 34) + (bondOrder > 1 ? 5 : 0), 38, 96)),
+        sourceSegmentIndexes,
+        parallelPairCount: parallelPairs.length,
+        gapBridged,
+      })
+      left.snappedSegmentIndexes.push(...sourceSegmentIndexes)
+      right.snappedSegmentIndexes.push(...sourceSegmentIndexes)
+    }
+  }
+  if (!bonds.length) return null
+  nodes.forEach((node) => {
+    node.degree = bonds.filter((bond) => bond.startNodeId === node.id || bond.endNodeId === node.id).length
+    node.snappedSegmentIndexes = Array.from(new Set(node.snappedSegmentIndexes))
+  })
+
+  const cycles = findMolecularCycles(nodes, bonds)
+  const rings = cycles.map((nodeIds, id): MolecularGraphRing => {
+    const orders = nodeIds.map((nodeId, index) =>
+      bondBetween(bonds, nodeId, nodeIds[(index + 1) % nodeIds.length])?.bondOrder ?? 1,
+    )
+    const doubleCount = orders.filter((order) => order >= 2).length
+    const alternating = nodeIds.length === 6 && doubleCount >= 3 && orders.every((order, index) =>
+      order !== orders[(index + 1) % orders.length],
+    )
+    const aromatic = nodeIds.length === 6 && (
+      alternating || doubleCount >= 3 || input.parallelBondPairs.length >= 3
+    )
+    const kind: MolecularRingKind = aromatic
+      ? "benzene-like"
+      : nodeIds.length === 6
+        ? "cyclohexane-like"
+        : nodeIds.length === 5
+          ? "cyclopentane-like"
+          : "ring"
+    return {
+      id,
+      nodeIds,
+      size: nodeIds.length,
+      confidence: Math.round(clamp(68 + Math.min(18, doubleCount * 5) + (aromatic ? 8 : 0), 0, 96)),
+      aromatic,
+      closed: true,
+      kind,
+    }
+  })
+  const confidence = Math.round(clamp(
+    nodes.reduce((sum, node) => sum + node.confidence, 0) / nodes.length * 0.45 +
+    bonds.reduce((sum, bond) => sum + bond.confidence, 0) / bonds.length * 0.4 +
+    (rings.length ? Math.max(...rings.map((ring) => ring.confidence)) : 45) * 0.15,
+    0,
+    96,
+  ))
+  const carbons = nodes.filter((node) => node.inferredElement === "C").length
+  return {
+    nodes,
+    bonds,
+    rings,
+    aromatic: rings.some((ring) => ring.aromatic),
+    aromaticRingIds: rings.filter((ring) => ring.aromatic).map((ring) => ring.id),
+    estimates: {
+      atoms: nodes.length,
+      carbons,
+      bonds: bonds.length,
+      rings: rings.length,
+      singleBonds: bonds.filter((bond) => bond.bondOrder === 1).length,
+      doubleBonds: bonds.filter((bond) => bond.bondOrder === 2).length,
+      tripleBonds: bonds.filter((bond) => bond.bondOrder === 3).length,
+      estimatedFormula: estimateFormula(nodes, bonds, ""),
+      confidence,
+    },
+    warnings: bonds.some((bond) => bond.gapBridged)
+      ? ["Short label-to-bond gaps were bridged during atom-centered reconstruction."]
+      : [],
+    atomCentered: true,
+    snapRadius: Math.round(snapRadius * 10) / 10,
+  }
 }
 
 function estimateFormula(nodes: MolecularGraphNode[], bonds: MolecularGraphBond[], recognizedText: string): string {
@@ -249,6 +452,8 @@ function estimateFormula(nodes: MolecularGraphNode[], bonds: MolecularGraphBond[
 }
 
 export function reconstructMolecularGraph(input: MolecularGraphInput): MolecularGraph {
+  const centered = atomCenteredGraph(input)
+  if (centered) return centered
   const bonds = input.graph.edges.map((edge): MolecularGraphBond => {
     const start = input.graph.nodes[edge.startNodeId]?.point ?? { x: 0, y: 0 }
     const end = input.graph.nodes[edge.endNodeId]?.point ?? { x: 0, y: 0 }
@@ -272,6 +477,7 @@ export function reconstructMolecularGraph(input: MolecularGraphInput): Molecular
       confidence: Math.round(clamp(averageMerge * 0.55 + (bondOrder > 1 ? 30 : 22), 35, 94)),
       sourceSegmentIndexes: Array.from(new Set(edge.sourceSegmentIndexes)),
       parallelPairCount: pairs.length,
+      gapBridged: false,
     }
   })
 
@@ -281,7 +487,7 @@ export function reconstructMolecularGraph(input: MolecularGraphInput): Molecular
     ringMap.set(canonicalCycle(nodeIds), { nodeIds, confidence: 65, aromatic: false, closed: true })
   })
   input.ringCandidates.forEach((candidate) => {
-    if (candidate.sidesEstimate < 3 || candidate.sidesEstimate > 7) return
+    if (candidate.sidesEstimate < 3 || candidate.sidesEstimate > 8) return
     const nodeIds = candidate.nodeIds.length === candidate.sidesEstimate
       ? candidate.nodeIds
       : detectedCycles.find((cycle) => cycle.length === candidate.sidesEstimate) ?? []
@@ -348,6 +554,8 @@ export function reconstructMolecularGraph(input: MolecularGraphInput): Molecular
       confidence,
     },
     warnings,
+    atomCentered: false,
+    snapRadius: 0,
   }
 }
 

@@ -3,6 +3,14 @@ export interface VisionPoint {
   y: number
 }
 
+export interface VisionAtomLabel {
+  id: number
+  label: "H" | "C" | "N" | "O" | "S" | "P" | "F" | "Cl" | "Br" | "I"
+  bounds: { x: number; y: number; width: number; height: number }
+  centroid: VisionPoint
+  confidence: number
+}
+
 export interface DarkPixelMask {
   width: number
   height: number
@@ -121,6 +129,7 @@ export interface StructureVisionAnalysis {
   darkPixelCount: number
   darkPixelRatio: number
   threshold: number
+  atomLabels: VisionAtomLabel[]
   lineSegments: VisionLineSegment[]
   closedLoops: VisionClosedLoop[]
   ringCandidates: VisionRingCandidate[]
@@ -139,5 +148,11 @@ export interface StructureVisionAnalysis {
 export interface StructureVisionOptions {
   recognizedText?: string
   maxDimension?: number
+  atomLabels?: Array<{
+    label: VisionAtomLabel["label"]
+    bounds: { x: number; y: number; width: number; height: number }
+    centroid: VisionPoint
+    confidence: number
+  }>
 }
 import type { MolecularGraph } from "../vision/molecular-graph"
