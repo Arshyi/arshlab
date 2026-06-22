@@ -44,14 +44,17 @@ export async function recognizeChemistryImage(
     let selectedParsed = parseChemistryText(selectedData.text?.trim() ?? "")
     let attempts = 1
 
-    if (selectedParsed.tokens.length === 0 || selectedData.confidence < 45) {
+    const substantiveTokenCount = selectedParsed.tokens.filter((token) => token.type !== "atom-label").length
+    if (substantiveTokenCount === 0 || selectedParsed.chemistryConfidence < 35 || selectedData.confidence < 45) {
       onProgress?.({ status: "Retrying with dense text layout", progress: 0 })
       await worker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK })
       const fallbackPass = await worker.recognize(image, { rotateAuto: true })
       const fallbackText = fallbackPass.data.text?.trim() ?? ""
       const fallbackParsed = parseChemistryText(fallbackText)
-      const firstRank = selectedParsed.tokens.length * 100 + selectedData.confidence
-      const fallbackRank = fallbackParsed.tokens.length * 100 + fallbackPass.data.confidence
+      const firstSubstantive = selectedParsed.tokens.filter((token) => token.type !== "atom-label").length
+      const fallbackSubstantive = fallbackParsed.tokens.filter((token) => token.type !== "atom-label").length
+      const firstRank = firstSubstantive * 140 + selectedParsed.chemistryConfidence * 2 + selectedData.confidence
+      const fallbackRank = fallbackSubstantive * 140 + fallbackParsed.chemistryConfidence * 2 + fallbackPass.data.confidence
       if (fallbackRank > firstRank) {
         selectedData = fallbackPass.data
         selectedParsed = fallbackParsed

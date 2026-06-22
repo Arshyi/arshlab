@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "5.4.1",
+  "version": "5.4.2",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -10,7 +10,8 @@
     "test:ocr": "node scripts/verify-ocr-parser.cjs",
     "test:vision": "node scripts/verify-structure-vision.cjs",
     "test:graph": "node scripts/verify-molecular-graph.cjs",
-    "test:isolation": "node scripts/verify-structure-isolation.cjs"
+    "test:isolation": "node scripts/verify-structure-isolation.cjs",
+    "test:chemistry-ocr": "node scripts/verify-chemistry-ocr.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

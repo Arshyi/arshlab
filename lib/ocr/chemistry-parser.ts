@@ -1,6 +1,6 @@
 import { STRUCTURE_SCANNER_RECORDS } from "../structure-scanner/scanner-database"
 
-export type OCRChemistryTokenType = "molecular-formula" | "condensed-formula" | "chemical-name"
+export type OCRChemistryTokenType = "atom-label" | "molecular-formula" | "condensed-formula" | "chemical-name"
 export type OCRFormulaMatchKind = "exact-formula" | "condensed-formula" | "composition" | "unmatched"
 
 export interface OCRCorrection {
@@ -26,12 +26,32 @@ export interface OCRChemistryParseResult {
   tokens: OCRChemistryToken[]
   parsedFormulas: string[]
   parsedNames: string[]
+  atomLabels: string[]
+  moleculeNames: string[]
+  condensedFormulas: string[]
+  molecularFormulas: string[]
+  rejectedNoise: OCRRejectedNoise[]
+  chemistryConfidence: number
+  chemistryScores: OCRChemistryScores
   corrections: OCRCorrection[]
   detectedFormula: string | null
   detectedCondensedFormula: string | null
   detectedName: string | null
   detectedFormulaWasCorrected: boolean
   matchedCompoundIds: string[]
+}
+
+export interface OCRRejectedNoise {
+  value: string
+  reason: string
+  penalty: number
+}
+
+export interface OCRChemistryScores {
+  atomLabelScore: number
+  formulaScore: number
+  nameScore: number
+  noisePenalty: number
 }
 
 interface FormulaVariant {
@@ -58,7 +78,10 @@ const COMMON_ELEMENT_SYMBOLS = new Set([
   "K", "Ca", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Br", "Kr", "Ag", "I", "Xe", "Ba", "Pt", "Au", "Hg", "Pb",
 ])
 
+const ATOM_LABEL_SYMBOLS = new Set(["H", "C", "N", "O", "S", "P", "F", "Cl", "Br", "I"])
+
 const KNOWN_CONDENSED_FORMULAS: Record<string, string> = {
+  c6h6: "benzene",
   ch3oh: "methanol",
   ch3ch2oh: "ethanol",
   hcooh: "methanoic-acid",
@@ -254,8 +277,19 @@ function tokenForVariant(variant: FormulaVariant): OCRChemistryToken | null {
   }
 }
 
-function extractFormulaTokens(rawText: string): OCRChemistryToken[] {
+function extractFormulaTokens(rawText: string): {
+  tokens: OCRChemistryToken[]
+  rejectedNoise: OCRRejectedNoise[]
+  cleanupTokens: OCRChemistryToken[]
+} {
+  const rejectedNoise: OCRRejectedNoise[] = []
+  const cleanupTokens: OCRChemistryToken[] = []
   const tokens = rawFormulaCandidates(rawText).flatMap((candidate) => {
+    const normalizedCandidateName = normalizeName(candidate)
+    const isKnownName = STRUCTURE_SCANNER_RECORDS.some((record) =>
+      [record.name, ...record.commonAliases].some((name) => normalizeName(name) === normalizedCandidateName),
+    )
+    if (isKnownName) return []
     const candidateTokens = likelyFormulaVariants(candidate).flatMap((variant) => {
       const token = tokenForVariant(variant)
       return token ? [token] : []
@@ -266,12 +300,19 @@ function extractFormulaTokens(rawText: string): OCRChemistryToken[] {
     if (matched[0]) return [matched[0]]
 
     const base = candidateTokens.find((token) => token.corrections.length === 0) ?? candidateTokens[0]
-    if (base && /^[A-Z][a-z]?$/.test(base.value) && COMMON_ELEMENT_SYMBOLS.has(base.value)) return [base]
-
     const corrected = candidateTokens
       .filter((token) => token.corrections.length > 0)
       .sort((left, right) => right.confidence - left.confidence || left.corrections.length - right.corrections.length)[0]
-    return corrected ? [corrected] : base ? [base] : []
+    const unsupported = corrected ?? base
+    if (unsupported?.corrections.length) cleanupTokens.push(unsupported)
+    rejectedNoise.push({
+      value: candidate,
+      reason: unsupported
+        ? "Formula-like token is not a validated local database compound"
+        : "Token does not form a valid supported chemical formula",
+      penalty: /^(?:BC|BCC|SN5|N2)$/i.test(candidate) ? 14 : 9,
+    })
+    return []
   })
 
   const unique = new Map<string, OCRChemistryToken>()
@@ -283,12 +324,30 @@ function extractFormulaTokens(rawText: string): OCRChemistryToken[] {
     if (!existing || tokenRank > existingRank) unique.set(key, token)
   }
 
-  return Array.from(unique.values()).sort(
+  return {
+    tokens: Array.from(unique.values()).sort(
     (left, right) =>
       Number(right.matchedCompoundIds.length > 0) - Number(left.matchedCompoundIds.length > 0) ||
       right.confidence - left.confidence ||
       left.corrections.length - right.corrections.length,
-  )
+    ),
+    rejectedNoise: Array.from(new Map(rejectedNoise.map((noise) => [noise.value.toLowerCase(), noise])).values()),
+    cleanupTokens,
+  }
+}
+
+function extractAtomLabelTokens(rawText: string): OCRChemistryToken[] {
+  const labels = rawText.match(/\b(?:Cl|Br|H|C|N|O|S|P|F|I)\b/g) ?? []
+  return Array.from(new Set(labels.filter((label) => ATOM_LABEL_SYMBOLS.has(label)))).map((label) => ({
+    type: "atom-label",
+    value: label,
+    sourceValue: label,
+    normalized: label.toLowerCase(),
+    confidence: label.length === 2 ? 88 : 82,
+    matchedCompoundIds: [],
+    matchKind: "unmatched",
+    corrections: [],
+  }))
 }
 
 function extractNameTokens(rawText: string): OCRChemistryToken[] {
@@ -345,9 +404,11 @@ function cleanedTextFromTokens(rawText: string, tokens: OCRChemistryToken[]): st
 
 export function parseChemistryText(rawText: string): OCRChemistryParseResult {
   const normalizedText = replaceSubscripts(rawText).value.replace(/\r\n/g, "\n").trim()
-  const formulaTokens = extractFormulaTokens(normalizedText)
+  const formulaResult = extractFormulaTokens(normalizedText)
+  const formulaTokens = formulaResult.tokens
   const nameTokens = extractNameTokens(normalizedText)
-  const tokens = [...formulaTokens, ...nameTokens]
+  const atomLabelTokens = extractAtomLabelTokens(normalizedText)
+  const tokens = [...formulaTokens, ...nameTokens, ...atomLabelTokens]
   const preferredFormulaTokens = formulaTokens.some((token) => token.matchedCompoundIds.length > 0)
     ? formulaTokens.filter((token) => token.matchedCompoundIds.length > 0)
     : formulaTokens
@@ -355,14 +416,32 @@ export function parseChemistryText(rawText: string): OCRChemistryParseResult {
   const detectedCondensedToken = preferredFormulaTokens.find((token) => token.type === "condensed-formula")
   const detectedToken = detectedFormulaToken ?? detectedCondensedToken
   const detectedName = nameTokens[0]?.value ?? null
+  const atomLabels = atomLabelTokens.map((token) => token.value)
+  const condensedFormulas = formulaTokens.filter((token) => token.type === "condensed-formula").map((token) => token.value)
+  const molecularFormulas = formulaTokens.filter((token) => token.type === "molecular-formula").map((token) => token.value)
+  const formulaScore = Math.round(Math.min(55, (formulaTokens[0]?.confidence ?? 0) * 0.58))
+  const nameScore = Math.round(Math.min(55, (nameTokens[0]?.confidence ?? 0) * 0.57))
+  const atomLabelScore = Math.min(18, atomLabels.length * 4 + Math.min(6, atomLabelTokens.length * 2))
+  const noisePenalty = Math.min(35, formulaResult.rejectedNoise.reduce((sum, noise) => sum + noise.penalty, 0))
+  const chemistryConfidence = Math.round(Math.max(
+    0,
+    Math.min(100, Math.max(formulaScore, nameScore) + Math.min(16, Math.min(formulaScore, nameScore) * 0.3) + atomLabelScore - noisePenalty),
+  ))
 
   return {
     normalizedText,
-    cleanedText: cleanedTextFromTokens(normalizedText, tokens),
+    cleanedText: cleanedTextFromTokens(normalizedText, [...tokens, ...formulaResult.cleanupTokens]),
     tokens,
     parsedFormulas: formulaTokens.map((token) => token.value),
     parsedNames: nameTokens.map((token) => token.value),
-    corrections: uniqueCorrections(tokens),
+    atomLabels,
+    moleculeNames: nameTokens.map((token) => token.value),
+    condensedFormulas,
+    molecularFormulas,
+    rejectedNoise: formulaResult.rejectedNoise,
+    chemistryConfidence,
+    chemistryScores: { atomLabelScore, formulaScore, nameScore, noisePenalty },
+    corrections: uniqueCorrections([...tokens, ...formulaResult.cleanupTokens]),
     detectedFormula: detectedFormulaToken?.value ?? null,
     detectedCondensedFormula: detectedCondensedToken?.value ?? null,
     detectedName,

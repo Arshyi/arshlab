@@ -66,7 +66,13 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
       .join(" "),
   )
 
-  if (!combined && !fileQuery && !input.ocrCompoundIds?.length && !input.visualAnalysis?.candidates.length) return null
+  if (
+    !combined &&
+    !fileQuery &&
+    !input.ocrCompoundIds?.length &&
+    !input.ocrAtomLabels?.length &&
+    !input.visualAnalysis?.candidates.length
+  ) return null
 
   const recordName = normalizeText(record.name)
   const recordFormula = normalizeFormula(record.formula)
@@ -95,11 +101,31 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
   }
 
   const ocrNormalized = normalizeText(input.ocrText)
-  const textEvidenceCategory = (value: string | undefined): StructureScoreContribution["category"] =>
-    value && ocrNormalized.includes(normalizeText(value)) ? "ocr" : "manual"
+  const formulaEvidenceCategory = (value: string | undefined): StructureScoreContribution["category"] =>
+    value && ocrNormalized.replace(/\s/g, "").includes(normalizeText(value).replace(/\s/g, "")) ? "formula" : "manual"
+  const nameEvidenceCategory = (value: string | undefined): StructureScoreContribution["category"] =>
+    value && ocrNormalized.includes(normalizeText(value)) ? "name" : "manual"
 
-  if (input.ocrCompoundIds?.includes(record.id)) {
-    addScore(40, "Parsed OCR token database hit", "ocr")
+  if (input.ocrFormulaCompoundIds?.includes(record.id)) {
+    addScore(24, "Chemistry OCR formula database hit", "formula")
+  }
+  if (input.ocrNameCompoundIds?.includes(record.id)) {
+    addScore(26, "Chemistry OCR molecule-name database hit", "name")
+  }
+  if (
+    !input.ocrFormulaCompoundIds?.length &&
+    !input.ocrNameCompoundIds?.length &&
+    input.ocrCompoundIds?.includes(record.id)
+  ) {
+    addScore(35, "Parsed OCR token database hit", "ocr")
+  }
+
+  if (input.ocrAtomLabels?.length) {
+    const recordElements = new Set(record.formula.match(/[A-Z][a-z]?/g) ?? [])
+    const labels = Array.from(new Set(input.ocrAtomLabels))
+    const matchedLabels = labels.filter((label) => recordElements.has(label))
+    const atomPoints = Math.min(12, matchedLabels.reduce((sum, label) => sum + (label === "C" || label === "H" ? 2 : 5), 0))
+    if (atomPoints > 0) addScore(atomPoints, `Atom-label support: ${matchedLabels.join(", ")}`, "atom-label")
   }
 
   const visualCandidate = input.visualAnalysis?.candidates.find((candidate) => candidate.compoundId === record.id)
@@ -132,17 +158,17 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
     addScore(
       input.ocrFormulaCorrected ? 45 : 55,
       input.ocrFormulaCorrected ? "Corrected formula match" : "Exact formula match",
-      textEvidenceCategory(input.formula),
+      formulaEvidenceCategory(input.formula),
     )
   } else if (formulaQuery && recordFormula.includes(formulaQuery)) {
-    addScore(20, "Partial formula match", textEvidenceCategory(input.formula))
+    addScore(20, "Partial formula match", formulaEvidenceCategory(input.formula))
   }
 
   if (condensedFormulaQuery && condensedCompositionQuery === recordFormulaComposition) {
     addScore(
       input.ocrFormulaCorrected ? 42 : 55,
       input.ocrFormulaCorrected ? "Corrected condensed formula match" : "Condensed formula match",
-      textEvidenceCategory(input.condensedFormula),
+      formulaEvidenceCategory(input.condensedFormula),
     )
   } else if (
     formulaCompositionQuery &&
@@ -152,18 +178,18 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
     addScore(
       input.ocrFormulaCorrected ? 30 : 38,
       input.ocrFormulaCorrected ? "Corrected formula composition match" : "Formula composition match",
-      textEvidenceCategory(input.formula),
+      formulaEvidenceCategory(input.formula),
     )
   }
 
   if (nameQuery && nameQuery === recordName) {
-    addScore(55, "Exact name match", textEvidenceCategory(input.moleculeName))
+    addScore(55, "Exact name match", nameEvidenceCategory(input.moleculeName))
     directNameMatch = true
   } else if (nameQuery && aliases.includes(nameQuery)) {
-    addScore(50, "Name or alias match", textEvidenceCategory(input.moleculeName))
+    addScore(50, "Name or alias match", nameEvidenceCategory(input.moleculeName))
     directNameMatch = true
   } else if (nameQuery && (recordName.includes(nameQuery) || nameQuery.includes(recordName))) {
-    addScore(25, "Name similarity match", textEvidenceCategory(input.moleculeName))
+    addScore(25, "Name similarity match", nameEvidenceCategory(input.moleculeName))
     directNameMatch = true
   }
 
@@ -205,6 +231,9 @@ function scoreRecord(record: StructureScannerRecord, input: StructureScanInput):
     if (input.ocrQuality < 35) addScore(-24, "OCR quality penalty: very low text confidence", "penalty")
     else if (input.ocrQuality < 55) addScore(-14, "OCR quality penalty: low text confidence", "penalty")
     else if (input.ocrQuality < 70) addScore(-6, "OCR quality penalty: moderate text confidence", "penalty")
+  }
+  if (input.ocrNoisePenalty && input.ocrNoisePenalty > 0) {
+    addScore(-Math.min(35, input.ocrNoisePenalty), "Chemistry OCR rejected-noise penalty", "penalty")
   }
 
   if (score <= 0) return null

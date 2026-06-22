@@ -41,8 +41,13 @@ export interface StructureScanInput {
   structureHint?: string
   fileName?: string
   ocrCompoundIds?: string[]
+  ocrFormulaCompoundIds?: string[]
+  ocrNameCompoundIds?: string[]
+  ocrAtomLabels?: string[]
   ocrText?: string
   ocrQuality?: number
+  ocrChemistryConfidence?: number
+  ocrNoisePenalty?: number
   ocrFormulaCorrected?: boolean
   visualAnalysis?: StructureVisionAnalysis
 }
@@ -58,7 +63,7 @@ export interface StructureScanMatch {
 export interface StructureScoreContribution {
   label: string
   points: number
-  category: "ocr" | "manual" | "filename" | "visual" | "ring" | "graph" | "penalty" | "other"
+  category: "ocr" | "atom-label" | "formula" | "name" | "manual" | "filename" | "visual" | "ring" | "graph" | "penalty" | "other"
 }
 
 export interface StructureScanResult {

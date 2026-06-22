@@ -280,7 +280,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v5.4.1 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, browser-local structure isolation, upload and camera snapshots, OCR, molecular graph reconstruction, and visual graph debugging, plus Synthesis Explorer and the Reaction Explorer knowledge graph.
+            ARSHLAB v5.4.2 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, browser-local structure isolation, chemistry-aware label recognition, molecular graph reconstruction, and visual debugging, plus Synthesis Explorer and the Reaction Explorer knowledge graph.
           </p>
         </motion.div>
 

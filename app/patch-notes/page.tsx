@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.4.1",
+    version: "5.4.2",
     date: "Current",
+    status: "released",
+    title: "Chemical Label Recognition",
+    changes: [
+      "Added chemistry-aware recognition for isolated H, C, N, O, S, P, F, Cl, Br, and I atom labels",
+      "Separated atom labels from molecular and condensed formulas so scattered structure labels are not promoted into formulas",
+      "Added dedicated molecule-name recognition backed by local compound names and aliases",
+      "Added dedicated condensed-formula recognition for common organic structures",
+      "Added explicit rejection and heavy scoring penalties for unsupported formula-like OCR noise",
+      "Added separate graph, atom-label, formula, molecule-name, and noise-penalty scoring channels",
+      "Expanded Chemistry OCR Debug with detected labels, names, formulas, rejected tokens, and chemistry confidence",
+      "Added chemistry OCR regressions for labeled benzene, tablet benzene, ethanol, aspirin, propanone, and noisy handwriting",
+      "Preserved browser-local OCR, isolation, graph reconstruction, camera capture, overlays, and privacy behavior",
+    ],
+  },
+  {
+    version: "5.4.1",
+    date: "Previous",
     status: "released",
     title: "Automatic Structure Isolation",
     changes: [

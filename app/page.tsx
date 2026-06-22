@@ -96,7 +96,7 @@ const features = [
   {
     icon: ScanSearch,
     title: "Molecular Structure Scanner",
-    description: "Upload or capture a private snapshot, automatically isolate the chemistry drawing, reconstruct its molecular graph locally, and inspect every diagnostic stage.",
+    description: "Upload or capture a private snapshot, isolate the drawing, recognize atom labels, names and formulas, reconstruct its graph locally, and inspect every diagnostic stage.",
     href: "/structure-scanner",
   },
   {

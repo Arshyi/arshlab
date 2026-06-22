@@ -215,8 +215,17 @@ export function StructureScanner() {
         condensedFormula: condensedFormula.trim() || parsed?.detectedCondensedFormula || undefined,
         fileName: file?.name,
         ocrCompoundIds: parsed?.matchedCompoundIds,
+        ocrFormulaCompoundIds: parsed?.tokens
+          .filter((token) => token.type === "molecular-formula" || token.type === "condensed-formula")
+          .flatMap((token) => token.matchedCompoundIds),
+        ocrNameCompoundIds: parsed?.tokens
+          .filter((token) => token.type === "chemical-name")
+          .flatMap((token) => token.matchedCompoundIds),
+        ocrAtomLabels: parsed?.atomLabels,
         ocrText: parsed?.cleanedText,
         ocrQuality: nextOCRResult?.ocrConfidence,
+        ocrChemistryConfidence: parsed?.chemistryConfidence,
+        ocrNoisePenalty: parsed?.chemistryScores.noisePenalty,
         ocrFormulaCorrected: parsed?.detectedFormulaWasCorrected,
         visualAnalysis: nextVisionAnalysis ?? undefined,
       })
@@ -298,10 +307,11 @@ export function StructureScanner() {
                 </div>
               )}
               {ocrResult && (
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <OCRValue label="Detected Formula" value={ocrResult.parsed.detectedFormula ?? ocrResult.parsed.detectedCondensedFormula ?? "None"} />
                   <OCRValue label="Detected Name" value={ocrResult.parsed.detectedName ?? "None"} />
                   <OCRValue label="OCR Confidence" value={`${ocrResult.ocrConfidence}%`} />
+                  <OCRValue label="Chemistry Confidence" value={`${ocrResult.parsed.chemistryConfidence}%`} />
                 </div>
               )}
               {ocrError && (

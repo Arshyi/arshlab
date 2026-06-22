@@ -280,7 +280,7 @@ export function ChemistrySolverClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v5.4.1</Badge>
+                  <Badge variant="secondary">ARSHLAB v5.4.2</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                   <Badge variant="outline">Deterministic solver</Badge>
                 </div>

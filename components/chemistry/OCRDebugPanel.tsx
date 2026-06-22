@@ -23,6 +23,9 @@ export function OCRDebugPanel({
   const [open, setOpen] = useState(false)
   const scoreCategories = [
     { id: "ocr", label: "OCR score" },
+    { id: "atom-label", label: "Atom-label score" },
+    { id: "formula", label: "Formula score" },
+    { id: "name", label: "Molecule-name score" },
     { id: "manual", label: "Manual hint score" },
     { id: "filename", label: "Filename score" },
     { id: "visual", label: "Visual shape score" },
@@ -45,8 +48,8 @@ export function OCRDebugPanel({
               <FileSearch className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">OCR Debug Panel</span>
-              <span className="block text-sm text-muted-foreground">Cleanup, chemistry tokens, candidate scores, and confidence</span>
+              <span className="block font-semibold">Chemistry OCR Debug</span>
+              <span className="block text-sm text-muted-foreground">Atom labels, molecule names, formulas, rejected noise, and chemistry confidence</span>
             </span>
           </span>
           <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", open && "rotate-180")} />
@@ -59,11 +62,12 @@ export function OCRDebugPanel({
               </div>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <DebugValue label="Detected formula" value={ocrResult?.parsed.detectedFormula ?? "Not detected"} />
               <DebugValue label="Condensed formula" value={ocrResult?.parsed.detectedCondensedFormula ?? "Not detected"} />
               <DebugValue label="Detected name" value={ocrResult?.parsed.detectedName ?? "Not detected"} />
               <DebugValue label="OCR text confidence" value={ocrResult ? `${ocrResult.ocrConfidence}%` : "Not run"} />
+              <DebugValue label="OCR chemistry confidence" value={ocrResult ? `${ocrResult.parsed.chemistryConfidence}%` : "Not run"} />
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
@@ -75,11 +79,13 @@ export function OCRDebugPanel({
               <section className="rounded-xl border border-border p-4">
                 <h3 className="flex items-center gap-2 text-sm font-semibold">
                   <ListChecks className="h-4 w-4" />
-                  Parsed Formulas And Names
+                  Chemistry-aware labels
                 </h3>
                 <div className="mt-3 space-y-3">
-                  <TokenRow label="Formulas" values={ocrResult?.parsed.parsedFormulas ?? []} />
-                  <TokenRow label="Names" values={ocrResult?.parsed.parsedNames ?? []} />
+                  <TokenRow label="Atom labels" values={ocrResult?.parsed.atomLabels ?? []} />
+                  <TokenRow label="Molecule names" values={ocrResult?.parsed.moleculeNames ?? []} />
+                  <TokenRow label="Condensed formulas" values={ocrResult?.parsed.condensedFormulas ?? []} />
+                  <TokenRow label="Molecular formulas" values={ocrResult?.parsed.molecularFormulas ?? []} />
                 </div>
               </section>
 
@@ -102,6 +108,30 @@ export function OCRDebugPanel({
                 )}
               </section>
             </div>
+
+            <section className="rounded-xl border border-border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold">Rejected OCR noise</h3>
+                <Badge variant={ocrResult?.parsed.chemistryScores.noisePenalty ? "destructive" : "secondary"} className="rounded-full">
+                  Penalty -{ocrResult?.parsed.chemistryScores.noisePenalty ?? 0}
+                </Badge>
+              </div>
+              {ocrResult?.parsed.rejectedNoise.length ? (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {ocrResult.parsed.rejectedNoise.map((noise) => (
+                    <div key={noise.value} className="rounded-lg bg-secondary/40 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <code className="font-semibold">{noise.value}</code>
+                        <Badge variant="destructive" className="rounded-full">-{noise.penalty}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">{noise.reason}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">No formula-like OCR noise was promoted into chemistry evidence.</p>
+              )}
+            </section>
 
             <section className="rounded-xl border border-border p-4">
               <h3 className="flex items-center gap-2 text-sm font-semibold">
