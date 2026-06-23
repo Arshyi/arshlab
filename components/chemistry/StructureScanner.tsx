@@ -51,6 +51,7 @@ import { MolecularGraphDebugPanel } from "./MolecularGraphDebugPanel"
 import { VisualOverlayDebugger } from "./VisualOverlayDebugger"
 import { CameraCapture } from "./CameraCapture"
 import { StructureIsolationDebugPanel } from "./StructureIsolationDebugPanel"
+import { EvidenceFusionDebugPanel } from "./EvidenceFusionDebugPanel"
 
 type ScannerInputMode = "upload" | "camera"
 
@@ -237,6 +238,12 @@ export function StructureScanner() {
         ocrNoisePenalty: parsed?.chemistryScores.noisePenalty,
         ocrFormulaCorrected: parsed?.detectedFormulaWasCorrected,
         visualAnalysis: nextVisionAnalysis ?? undefined,
+        manualHints: {
+          moleculeName: moleculeName.trim() || undefined,
+          formula: formula.trim() || undefined,
+          condensedFormula: condensedFormula.trim() || undefined,
+          functionalGroupHint: functionalGroupHint.trim() || undefined,
+        },
       })
       setResult(nextResult)
       let historyEntryId: string | undefined
@@ -351,6 +358,8 @@ export function StructureScanner() {
           <VisionDebugPanel analysis={visionAnalysis} error={visionError} />
 
           <MolecularGraphDebugPanel analysis={visionAnalysis} />
+
+          <EvidenceFusionDebugPanel fusion={result?.evidenceFusion ?? null} />
 
           <VisualOverlayDebugger
             imageBlob={
@@ -557,9 +566,10 @@ export function StructureScanner() {
             </Badge>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <OCRValue label="OCR Confidence" value={`${result.confidenceBreakdown.ocr}%`} />
             <OCRValue label="Graph Confidence" value={`${result.confidenceBreakdown.graph}%`} />
+            <OCRValue label="Ring / Aromatic Confidence" value={`${result.confidenceBreakdown.ring}%`} />
             <OCRValue label="Chemistry Confidence" value={`${result.confidenceBreakdown.chemistry}%`} />
           </div>
 

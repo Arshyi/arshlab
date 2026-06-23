@@ -18,8 +18,26 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.4.4",
+    version: "5.5.0",
     date: "Current",
+    status: "released",
+    title: "Multi-Engine Evidence Fusion",
+    changes: [
+      "Replaced linear scanner ranking with seven independent deterministic evidence engines",
+      "Added separate OCR Formula, Atom Label, Bond Geometry, Ring/Aromatic, Molecular Graph, Functional Group, and Filename/Manual Hint engines",
+      "Added typed candidate confidence, evidence strength, reasoning, and penalty contracts for every engine",
+      "Added deterministic weighted voting, multi-engine agreement bonuses, contradiction penalties, and manual correction overrides",
+      "Prevented noisy or missing OCR from suppressing strong graph and aromatic-ring evidence",
+      "Calibrated benzene versus cyclohexane ranking from ring geometry and aromatic bond support",
+      "Capped OCR-only matches while allowing clean database-valid formulas and names to remain useful",
+      "Added an Evidence Fusion Debug Panel with per-engine candidates, contributions, reasoning, penalties, and voting summary",
+      "Added separate OCR, graph, ring/aromatic, and chemistry fusion confidence indicators",
+      "Added ten evidence-fusion regressions covering clutter, perspective, occlusion, saturated rings, displayed formulas, carbonyls, and invalid OCR noise",
+    ],
+  },
+  {
+    version: "5.4.4",
+    date: "Previous",
     status: "released",
     title: "Structure-First Robust Scene Understanding",
     changes: [

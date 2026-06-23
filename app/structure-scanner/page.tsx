@@ -7,7 +7,7 @@ import { StructureScanner } from "@/components/chemistry/StructureScanner"
 export const metadata: Metadata = {
   title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload or capture a private snapshot, isolate chemistry regions from scene clutter, then reconstruct atom-centered bonds and rings entirely in the browser.",
+    "Upload or capture a private snapshot, then fuse independent local OCR, atom, bond, ring, graph, functional-group, and hint evidence in the browser.",
 }
 
 export default function StructureScannerPage() {
@@ -26,11 +26,11 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.4.4
+              ARSHLAB v5.5.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot. ARSHLAB proposes chemistry-rich regions, compares grayscale, thresholded, high-contrast, inverted, and perspective-aware crops, then reconstructs atom-centered bonds and 3-8 member cycles before local matching. Live recognition, remote image processing, and permanent image storage are not enabled.
+            Upload a structure image or accept a single camera snapshot. ARSHLAB isolates chemistry-rich regions, evaluates local image variants, then asks seven independent recognition engines to vote on database compounds. Strong graph and aromatic evidence can win even when OCR is weak. Live recognition, remote image processing, and permanent image storage are not enabled.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, ring candidates, and chemistry hints. Always verify inferred atoms and bond orders.
@@ -40,8 +40,8 @@ export default function StructureScannerPage() {
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <ScannerFeature
             icon={Database}
-            title="Structure-First Scene Analysis"
-            description="Chemistry-rich crops are ranked ahead of skin-toned regions, bezels, shadows, border edges, and disconnected scene clutter before OCR or graph matching begins."
+            title="Parallel Evidence Fusion"
+            description="OCR, atom labels, bond orders, rings, molecular graphs, functional groups, filenames, and manual corrections remain separate until deterministic voting."
           />
           <ScannerFeature
             icon={ShieldCheck}

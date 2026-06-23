@@ -32,7 +32,7 @@ const sections = [
   },
   {
     title: "Structure Scanner Images",
-    body: "The v5.4.4 Structure Scanner processes uploaded images and accepted camera snapshots locally in the browser. Chemistry-region proposals, grayscale and threshold variants, perspective-aware crops, Tesseract.js OCR, atom-centered molecular graphs, fuzzy ring heuristics, overlays, and optional overlay PNG export remain local. Original images, derived crops, OCR text, atom positions, and graph geometry are not uploaded to ARSHLAB servers, Supabase, OpenRouter, or an external AI API. Images are not permanently stored or included in local scan history. Local history stores only match labels, source labels, confidence, functional-group labels, timestamps, and corrections.",
+    body: "The v5.5.0 Structure Scanner processes uploaded images and accepted camera snapshots locally in the browser. Chemistry-region proposals, image variants, OCR, atom labels, bond geometry, rings, molecular graphs, functional-group clues, evidence fusion, overlays, and optional overlay PNG export remain local. Original images, derived crops, OCR text, atom positions, graph geometry, and engine votes are not uploaded to ARSHLAB servers, Supabase, OpenRouter, or an external AI API. Images are not permanently stored or included in local scan history. Local history stores only match labels, source labels, confidence, functional-group labels, timestamps, and corrections.",
   },
   {
     title: "Optional Camera Capture",

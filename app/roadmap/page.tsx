@@ -64,6 +64,7 @@ const completed = [
   "Chemical Label Recognition",
   "Atom-Centered Graph Reconstruction",
   "Structure-First Robust Scene Understanding",
+  "Multi-Engine Evidence Fusion",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -194,14 +195,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Structure-First Robust Scene Understanding
+                Multi-Engine Evidence Fusion
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: the scanner proposes multiple chemistry-rich regions, rejects common scene clutter, compares
-                local contrast and perspective variants, and lets strong atom/bond topology outrank weak OCR while retaining
-                deterministic confidence explanations.
+                Now available: seven local recognition engines independently evaluate OCR, atom labels, bond geometry, rings,
+                molecular graphs, functional groups, and user hints before deterministic voting selects and explains the final
+                compound ranking.
               </p>
             </CardContent>
           </Card>
@@ -213,7 +214,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.4.4 - Structure-First Robust Scene Understanding
+          ARSHLAB v5.5.0 - Multi-Engine Evidence Fusion
         </motion.p>
       </div>
     </div>

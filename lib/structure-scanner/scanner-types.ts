@@ -1,4 +1,5 @@
 import type { StructureVisionAnalysis } from "../structure-vision/vision-types"
+import type { EvidenceFusionResult } from "./evidence-types"
 
 export type StructureScannerDifficulty = "Introductory" | "Intermediate" | "Advanced"
 export type StructureScanSource = "upload" | "camera" | "manual-correction" | "ocr" | "manual"
@@ -50,6 +51,12 @@ export interface StructureScanInput {
   ocrNoisePenalty?: number
   ocrFormulaCorrected?: boolean
   visualAnalysis?: StructureVisionAnalysis
+  manualHints?: {
+    moleculeName?: string
+    formula?: string
+    condensedFormula?: string
+    functionalGroupHint?: string
+  }
 }
 
 export interface StructureScanMatch {
@@ -76,8 +83,10 @@ export interface StructureScanResult {
   confidenceBreakdown: {
     ocr: number
     graph: number
+    ring: number
     chemistry: number
   }
+  evidenceFusion: EvidenceFusionResult
 }
 
 export interface StructureScanHistoryEntry {
