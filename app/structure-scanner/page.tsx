@@ -26,11 +26,11 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.5.0
+              ARSHLAB v5.6.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot. ARSHLAB isolates chemistry-rich regions, evaluates local image variants, then asks seven independent recognition engines to vote on database compounds. Strong graph and aromatic evidence can win even when OCR is weak. Live recognition, remote image processing, and permanent image storage are not enabled.
+            Upload a structure image or accept a single camera snapshot. ARSHLAB first isolates chemistry-rich regions using bond, ring, density, and bond-length evidence while suppressing device frames and scene edges. Ambiguous images compare multiple local crops before the winning region reaches OCR, graph reconstruction, and evidence fusion.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, ring candidates, and chemistry hints. Always verify inferred atoms and bond orders.
@@ -40,8 +40,8 @@ export default function StructureScannerPage() {
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <ScannerFeature
             icon={Database}
-            title="Parallel Evidence Fusion"
-            description="OCR, atom labels, bond orders, rings, molecular graphs, functional groups, filenames, and manual corrections remain separate until deterministic voting."
+            title="Chemistry-First Isolation"
+            description="Connected components, contours, bond density, ring cues, atom labels, and bond-length consistency identify the molecular drawing before final recognition."
           />
           <ScannerFeature
             icon={ShieldCheck}

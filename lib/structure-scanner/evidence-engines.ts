@@ -41,6 +41,21 @@ function sameComposition(left: string | undefined, right: string): boolean {
   return Array.from(leftCounts).every(([element, count]) => rightCounts.get(element) === count)
 }
 
+function compatibleWithConfidentAtomGraph(record: StructureScannerRecord, input: StructureScanInput): boolean {
+  const graph = input.visualAnalysis?.molecularGraph
+  if (!graph?.atomCentered || graph.nodes.length < 5 || graph.estimates.confidence < 65) return true
+  const expected = formulaCounts(record.formula)
+  const detected = new Map<string, number>()
+  graph.nodes.forEach((node) => detected.set(node.inferredElement, (detected.get(node.inferredElement) ?? 0) + 1))
+  const expectedCarbons = expected.get("C") ?? 0
+  const detectedCarbons = detected.get("C") ?? 0
+  if (expectedCarbons !== detectedCarbons) return false
+  for (const element of ["N", "O", "S", "P", "F", "Cl", "Br", "I"]) {
+    if ((expected.get(element) ?? 0) !== (detected.get(element) ?? 0)) return false
+  }
+  return true
+}
+
 function strengthFor(confidence: number): EvidenceStrength {
   if (confidence >= 75) return "strong"
   if (confidence >= 45) return "moderate"
@@ -182,6 +197,7 @@ function atomLabelEngine(input: StructureScanInput): EvidenceEngineResult {
   }
   const graph = input.visualAnalysis?.molecularGraph
   const output = STRUCTURE_SCANNER_RECORDS.map((record) => {
+    if (!compatibleWithConfidentAtomGraph(record, input)) return null
     const recordCounts = formulaCounts(record.formula)
     const detectedElements = Array.from(counts.keys())
     const matchedElements = detectedElements.filter((element) => recordCounts.has(element))
@@ -222,6 +238,7 @@ function bondGeometryEngine(input: StructureScanInput): EvidenceEngineResult {
   const { singleBonds, doubleBonds, tripleBonds } = graph.estimates
   const output: EvidenceEngineCandidate[] = []
   for (const record of STRUCTURE_SCANNER_RECORDS) {
+    if (!compatibleWithConfidentAtomGraph(record, input)) continue
     const groups = record.functionalGroups.map(normalizeText)
     const reasons: string[] = []
     let confidence = 0
@@ -271,7 +288,9 @@ function ringAromaticEngine(input: StructureScanInput): EvidenceEngineResult {
       `${nearRing ? "Near-ring" : "Six-member ring"} geometry supports benzene`,
       "Aromatic support detected from double-bond or parallel strokes",
     ]))
-    for (const record of STRUCTURE_SCANNER_RECORDS.filter((record) => record.id !== "benzene" && record.functionalGroups.includes("arene"))) {
+    for (const record of STRUCTURE_SCANNER_RECORDS.filter((record) =>
+      record.id !== "benzene" && record.functionalGroups.includes("arene") && compatibleWithConfidentAtomGraph(record, input),
+    )) {
       output.push(candidate(record.id, Math.min(72, ringConfidence * 0.45 + 28), "ring", ["Aromatic ring evidence supports an arene derivative"]))
     }
     output.push(candidate("cyclohexane", 28, "ring", ["A six-member ring is present"], [{ reason: "Aromatic strokes contradict a saturated cyclohexane ring", points: 24 }]))
@@ -326,6 +345,7 @@ function functionalGroupEngine(input: StructureScanInput): EvidenceEngineResult 
   const source = normalizeText(`${input.ocrText ?? ""} ${(input.ocrAtomLabels ?? []).join(" ")}`)
   const output: EvidenceEngineCandidate[] = []
   for (const record of STRUCTURE_SCANNER_RECORDS) {
+    if (!compatibleWithConfidentAtomGraph(record, input)) continue
     const groups = record.functionalGroups.map(normalizeText)
     const matchingCues = cues.filter((cue) => (CUE_GROUPS[cue.kind] ?? []).some((group) => groups.includes(group)))
     let confidence = matchingCues.length ? Math.max(...matchingCues.map((cue) => cue.confidence)) * 0.78 : 0

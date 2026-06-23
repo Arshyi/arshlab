@@ -1,4 +1,5 @@
 import type {
+  IsolationCandidateEvaluation,
   IsolationBoundingBox,
   StructureIsolationAnalysis,
   StructureIsolationCandidate,
@@ -8,6 +9,8 @@ import type {
   PerspectiveQuadrilateral,
   StructureImageVariant,
 } from "./isolation-types"
+import { analyzeDarkPixelMask } from "./shape-heuristics"
+import type { DarkPixelMask } from "./vision-types"
 
 type ImageDataLike = Pick<ImageData, "width" | "height" | "data">
 
@@ -234,6 +237,7 @@ function clusterComponents(
   height: number,
   imageData: ImageDataLike,
   gapScale: number,
+  proposalSource: string,
 ): StructureIsolationCandidate[] {
   const usable = components.filter((component) => !component.rejected)
   const parents = usable.map((_, index) => index)
@@ -342,8 +346,117 @@ function clusterComponents(
       skinLikeRatio,
       backgroundPenalty,
       quadrilateral,
+      proposalSources: [proposalSource, "connected-components", "contour-grouping"],
+      bondSegmentCount: 0,
+      parallelBondPairs: 0,
+      ringCueCount: 0,
+      aromaticCueScore: 0,
+      meanBondLength: 0,
+      bondLengthVariance: 0,
+      bondLengthRegularity: 0,
+      longEdgeCount: 0,
+      rectangularFrameDetected: false,
+      positiveEvidence: [],
+      suppressionReasons: [],
     }
   }).sort((left, right) => right.score - left.score || right.pixelCount - left.pixelCount)
+}
+
+function candidateMask(source: Uint8Array, imageWidth: number, bounds: IsolationBoundingBox): DarkPixelMask {
+  const pixels = new Uint8Array(bounds.width * bounds.height)
+  let darkPixelCount = 0
+  for (let y = 0; y < bounds.height; y += 1) {
+    for (let x = 0; x < bounds.width; x += 1) {
+      const value = source[(bounds.y + y) * imageWidth + bounds.x + x]
+      pixels[y * bounds.width + x] = value
+      darkPixelCount += value
+    }
+  }
+  return { width: bounds.width, height: bounds.height, pixels, darkPixelCount, threshold: 1 }
+}
+
+function variance(values: number[], mean: number): number {
+  if (!values.length) return 0
+  return values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length
+}
+
+function enrichChemistryRegion(
+  candidate: StructureIsolationCandidate,
+  mask: Uint8Array,
+  imageWidth: number,
+  imageHeight: number,
+): StructureIsolationCandidate {
+  const local = analyzeDarkPixelMask(candidateMask(mask, imageWidth, candidate.bounds), "")
+  const lengths = local.lineSegments.map((segment) => segment.length).filter((length) => length >= 3)
+  const meanBondLength = lengths.reduce((sum, length) => sum + length, 0) / Math.max(1, lengths.length)
+  const bondLengthVariance = variance(lengths, meanBondLength)
+  const coefficientOfVariation = Math.sqrt(bondLengthVariance) / Math.max(1, meanBondLength)
+  const bondLengthRegularity = Math.round(clamp(100 - coefficientOfVariation * 115, 0, 100))
+  const regionScale = Math.max(candidate.bounds.width, candidate.bounds.height)
+  const longEdgeCount = lengths.filter((length) => length >= regionScale * 0.72).length
+  const chemistryRings = local.ringCandidates.filter((ring) => ring.sidesEstimate >= 5 && ring.sidesEstimate <= 7)
+  const aromaticCueScore = Math.max(local.graph.aromaticCueScore, ...chemistryRings.map((ring) => ring.aromaticCueScore), 0)
+  const touchesImageBorder = candidate.bounds.x <= 1 || candidate.bounds.y <= 1 ||
+    candidate.bounds.x + candidate.bounds.width >= imageWidth - 1 ||
+    candidate.bounds.y + candidate.bounds.height >= imageHeight - 1
+  const aspect = candidate.bounds.width / Math.max(1, candidate.bounds.height)
+  const largeSceneEdgeRegion = candidate.drawingCoverage >= 0.2 || touchesImageBorder
+  const rectangularFrameDetected = longEdgeCount >= 3 && candidate.drawingCoverage >= 0.25 &&
+    aspect >= 0.5 && aspect <= 2.5 && chemistryRings.length === 0
+  const positiveEvidence: string[] = []
+  if (local.lineSegments.length >= 2) positiveEvidence.push(`${local.lineSegments.length} bond-like segments detected`)
+  if (local.parallelLinePairs > 0) positiveEvidence.push(`${local.parallelLinePairs} parallel bond pair${local.parallelLinePairs === 1 ? "" : "s"}`)
+  if (chemistryRings.length > 0) positiveEvidence.push(`${chemistryRings.length} five-to-seven member ring cue${chemistryRings.length === 1 ? "" : "s"}`)
+  if (aromaticCueScore >= 45) positiveEvidence.push("Aromatic stroke evidence detected")
+  if (bondLengthRegularity >= 62 && lengths.length >= 3) positiveEvidence.push("Bond lengths are chemically regular")
+  if (candidate.labelLikeComponents > 0) positiveEvidence.push(`${candidate.labelLikeComponents} atom-label-sized component${candidate.labelLikeComponents === 1 ? "" : "s"}`)
+
+  const suppressionReasons: string[] = []
+  if (touchesImageBorder) suppressionReasons.push("Touches image border")
+  if (rectangularFrameDetected) suppressionReasons.push("Detected as rectangular device or paper frame")
+  if (longEdgeCount > 0 && largeSceneEdgeRegion) suppressionReasons.push(`${longEdgeCount} extremely long scene edge${longEdgeCount === 1 ? "" : "s"}`)
+  if (candidate.chemistryPixelDensity < 0.012) suppressionReasons.push("Low chemistry stroke density")
+  if (local.lineSegments.length < 2 && chemistryRings.length === 0) suppressionReasons.push("Isolated background clutter with no molecular geometry")
+  if (lengths.length >= 3 && bondLengthRegularity < 35) suppressionReasons.push("Bond-length scale inconsistent with molecular graph")
+
+  const chemistryBoost = Math.min(54,
+    Math.min(16, local.lineSegments.length * 2) +
+    Math.min(10, local.parallelLinePairs * 4) +
+    Math.min(18, chemistryRings.length * 14) +
+    (aromaticCueScore >= 45 ? 8 : 0) +
+    (bondLengthRegularity >= 62 && lengths.length >= 3 ? 8 : 0),
+  )
+  const suppressionPenalty =
+    (touchesImageBorder ? 12 : 0) +
+    (rectangularFrameDetected ? 38 : 0) +
+    (largeSceneEdgeRegion ? Math.min(28, longEdgeCount * 8) : 0) +
+    (candidate.chemistryPixelDensity < 0.012 ? 12 : 0) +
+    (lengths.length >= 3 && bondLengthRegularity < 35 ? 14 : 0) +
+    (local.lineSegments.length < 2 && chemistryRings.length === 0 ? 12 : 0)
+  const score = Math.round(clamp(candidate.score * 0.48 + chemistryBoost - suppressionPenalty, 0, 98))
+  return {
+    ...candidate,
+    score,
+    reason: `${candidate.reason}; chemistry geometry ${chemistryBoost.toFixed(0)}; suppression ${suppressionPenalty}`,
+    proposalSources: Array.from(new Set([
+      ...candidate.proposalSources,
+      "dark-pixel-clustering",
+      ...(local.lineSegments.length ? ["bond-line-density"] : []),
+      ...(chemistryRings.length ? ["ring-geometry"] : []),
+    ])),
+    bondSegmentCount: local.lineSegments.length,
+    parallelBondPairs: local.parallelLinePairs,
+    ringCueCount: chemistryRings.length,
+    aromaticCueScore: Math.round(aromaticCueScore),
+    meanBondLength: Math.round(meanBondLength * 10) / 10,
+    bondLengthVariance: Math.round(bondLengthVariance * 10) / 10,
+    bondLengthRegularity,
+    longEdgeCount,
+    rectangularFrameDetected,
+    positiveEvidence,
+    suppressionReasons,
+    backgroundPenalty: Math.min(100, candidate.backgroundPenalty + suppressionPenalty),
+  }
 }
 
 export function analyzeStructureIsolation(
@@ -356,7 +469,7 @@ export function analyzeStructureIsolation(
   const { mask, thresholdMean } = adaptiveStrokeMask(grayscale, width, height)
   const components = findComponents(mask, width, height)
   const candidatePool = [0.025, 0.045, 0.075, 0.11].flatMap((gapScale) =>
-    clusterComponents(components, width, height, imageData, gapScale),
+    clusterComponents(components, width, height, imageData, gapScale, `component-gap-${gapScale}`),
   ).sort((left, right) => right.score - left.score || right.pixelCount - left.pixelCount)
   const candidates: StructureIsolationCandidate[] = []
   candidatePool.forEach((candidate) => {
@@ -364,12 +477,18 @@ export function analyzeStructureIsolation(
       const intersectionWidth = Math.max(0, Math.min(existing.bounds.x + existing.bounds.width, candidate.bounds.x + candidate.bounds.width) - Math.max(existing.bounds.x, candidate.bounds.x))
       const intersectionHeight = Math.max(0, Math.min(existing.bounds.y + existing.bounds.height, candidate.bounds.y + candidate.bounds.height) - Math.max(existing.bounds.y, candidate.bounds.y))
       const intersection = intersectionWidth * intersectionHeight
-      return intersection / Math.max(1, Math.min(boxArea(existing.bounds), boxArea(candidate.bounds))) >= 0.82
+      const smallerArea = Math.min(boxArea(existing.bounds), boxArea(candidate.bounds))
+      const largerArea = Math.max(boxArea(existing.bounds), boxArea(candidate.bounds))
+      return intersection / Math.max(1, smallerArea) >= 0.82 && smallerArea / Math.max(1, largerArea) >= 0.55
     })
     if (!duplicate) candidates.push({ ...candidate, id: candidates.length })
   })
+  const chemistryCandidates = candidates
+    .map((candidate) => enrichChemistryRegion(candidate, mask, width, height))
+    .sort((left, right) => right.score - left.score || right.ringCueCount - left.ringCueCount || right.pixelCount - left.pixelCount)
+    .map((candidate, id) => ({ ...candidate, id, selected: false }))
   const minimumConfidence = options.minimumConfidence ?? DEFAULT_MINIMUM_CONFIDENCE
-  const selected = candidates.find((candidate) => candidate.score >= minimumConfidence) ?? null
+  const selected = chemistryCandidates.find((candidate) => candidate.score >= minimumConfidence) ?? null
   if (selected) selected.selected = true
   const planarComponent = components
     .filter((component) => {
@@ -392,13 +511,18 @@ export function analyzeStructureIsolation(
   if (!selected) warnings.push("No isolated drawing region was confident enough; the full preview was retained.")
   if (selected && selected.drawingCoverage > 0.75) warnings.push("The selected drawing occupies most of the image; manual cropping may still help.")
   if (selected && selected.chemistryPixelDensity < 0.012) warnings.push("The selected region has sparse strokes; increase contrast if recognition is weak.")
+  const candidateScoreMargin = Math.max(0, (chemistryCandidates[0]?.score ?? 0) - (chemistryCandidates[1]?.score ?? 0))
+  const requiresMultiCropFallback = Boolean(
+    !selected || selected.score < 70 || candidateScoreMargin < 10 || selected.rectangularFrameDetected || selected.suppressionReasons.length >= 2,
+  )
+  if (requiresMultiCropFallback) warnings.push("Isolation confidence is ambiguous; downstream chemistry probes should compare the top candidate crops.")
   return {
     width,
     height,
     grayscaleMean: Math.round(grayscaleMean),
     adaptiveThresholdMean: Math.round(thresholdMean),
     components,
-    candidates,
+    candidates: chemistryCandidates,
     selectedBounds: selected?.bounds ?? null,
     cropBounds,
     drawingCoverage: Math.round((selected?.drawingCoverage ?? 1) * 1000) / 10,
@@ -406,7 +530,10 @@ export function analyzeStructureIsolation(
     isolationConfidence: selected?.score ?? 0,
     usedFullImage: !selected,
     perspectiveBoundary,
-    regionProposalCount: candidates.length,
+    regionProposalCount: chemistryCandidates.length,
+    selectedCandidateId: selected?.id ?? null,
+    candidateScoreMargin,
+    requiresMultiCropFallback,
     warnings,
   }
 }
@@ -539,6 +666,10 @@ export async function isolateStructureImage(
       selected: true, reason: "Full-image fallback", lineLikeComponents: 0, labelLikeComponents: 0,
       repeatedGeometryScore: 0, ringGeometryScore: 0, skinLikeRatio: 0, backgroundPenalty: 0,
       quadrilateral: boundsQuadrilateral({ x: 0, y: 0, width, height }),
+      proposalSources: ["full-image-fallback"], bondSegmentCount: 0, parallelBondPairs: 0,
+      ringCueCount: 0, aromaticCueScore: 0, meanBondLength: 0, bondLengthVariance: 0,
+      bondLengthRegularity: 0, longEdgeCount: 0, rectangularFrameDetected: false,
+      positiveEvidence: [], suppressionReasons: ["No candidate exceeded the isolation threshold"],
     })
   }
   const variants: StructureImageVariant[] = []
@@ -587,5 +718,52 @@ export async function isolateStructureImage(
     analysis,
     variants,
     primaryVariantId: primaryVariant.id,
+    candidateEvaluations: [],
+    multiCropFallbackUsed: false,
+  }
+}
+
+export function selectStructureIsolationCandidate(
+  result: StructureIsolationResult,
+  evaluations: IsolationCandidateEvaluation[],
+): StructureIsolationResult {
+  if (!evaluations.length) return result
+  const ranked = [...evaluations].sort((left, right) =>
+    right.chemistryEvidenceScore - left.chemistryEvidenceScore ||
+    right.graphConfidence - left.graphConfidence ||
+    right.ocrAtomLabelCount - left.ocrAtomLabelCount,
+  )
+  const winner = ranked[0]
+  const candidate = result.analysis.candidates.find((item) => item.id === winner.candidateId)
+  const variant = result.variants.find((item) => item.id === winner.variantId) ??
+    result.variants.find((item) => item.candidateId === winner.candidateId && item.kind === "original")
+  if (!candidate || !variant) return result
+  const candidates = result.analysis.candidates.map((item) => ({
+    ...item,
+    selected: item.id === candidate.id,
+    positiveEvidence: item.id === candidate.id
+      ? Array.from(new Set([...item.positiveEvidence, ...winner.reasoning]))
+      : item.positiveEvidence,
+  }))
+  const isolationConfidence = Math.round(clamp(candidate.score * 0.45 + winner.chemistryEvidenceScore * 0.55, 0, 98))
+  return {
+    ...result,
+    isolatedBlob: variant.blob,
+    primaryVariantId: variant.id,
+    candidateEvaluations: ranked.map((evaluation) => ({ ...evaluation, selected: evaluation.candidateId === winner.candidateId })),
+    multiCropFallbackUsed: true,
+    analysis: {
+      ...result.analysis,
+      candidates,
+      selectedCandidateId: candidate.id,
+      selectedBounds: candidate.bounds,
+      cropBounds: expandBounds(candidate.bounds, result.analysis.width, result.analysis.height, DEFAULT_MARGIN_RATIO),
+      drawingCoverage: Math.round(candidate.drawingCoverage * 1000) / 10,
+      chemistryPixelDensity: Math.round(candidate.chemistryPixelDensity * 1000) / 10,
+      isolationConfidence,
+      usedFullImage: false,
+      requiresMultiCropFallback: false,
+      warnings: result.analysis.warnings.filter((warning) => !warning.startsWith("Isolation confidence is ambiguous")),
+    },
   }
 }

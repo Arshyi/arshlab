@@ -145,6 +145,10 @@ assert.ok(cleanBenzene.confidenceBreakdown.ring >= 75, "clean benzene ring confi
 const cameraBenzene = scanVisual(ringVision({ aromatic: true, graphConfidence: 86, sceneKind: "camera-clutter" }), { ocrQuality: 18, ocrText: "HH NG" })
 assert.equal(cameraBenzene.bestMatch?.record.id, "benzene", "camera benzene with hands and background")
 assert.ok(cameraBenzene.bestMatch.confidence >= 80, "camera benzene remains high confidence")
+assert.ok(
+  !cameraBenzene.matches.slice(0, 3).some((match) => ["ammonia", "aniline", "ethylamine"].includes(match.record.id)),
+  "isolated benzene topology suppresses false amine classifications",
+)
 
 const tabletBenzene = scanVisual(ringVision({ aromatic: true, graphConfidence: 84, sceneKind: "perspective" }), { ocrQuality: 24 })
 assert.equal(tabletBenzene.bestMatch?.record.id, "benzene", "tilted tablet benzene")

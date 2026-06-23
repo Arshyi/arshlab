@@ -57,6 +57,31 @@ export interface StructureIsolationCandidate {
   skinLikeRatio: number
   backgroundPenalty: number
   quadrilateral: PerspectiveQuadrilateral
+  proposalSources: string[]
+  bondSegmentCount: number
+  parallelBondPairs: number
+  ringCueCount: number
+  aromaticCueScore: number
+  meanBondLength: number
+  bondLengthVariance: number
+  bondLengthRegularity: number
+  longEdgeCount: number
+  rectangularFrameDetected: boolean
+  positiveEvidence: string[]
+  suppressionReasons: string[]
+}
+
+export interface IsolationCandidateEvaluation {
+  candidateId: number
+  variantId: string
+  ocrAtomLabelCount: number
+  ocrConfidence: number
+  graphConfidence: number
+  visualConfidence: number
+  ringConfidence: number
+  chemistryEvidenceScore: number
+  selected: boolean
+  reasoning: string[]
 }
 
 export interface StructureIsolationAnalysis {
@@ -74,6 +99,9 @@ export interface StructureIsolationAnalysis {
   usedFullImage: boolean
   perspectiveBoundary: PerspectiveQuadrilateral | null
   regionProposalCount: number
+  selectedCandidateId: number | null
+  candidateScoreMargin: number
+  requiresMultiCropFallback: boolean
   warnings: string[]
 }
 
@@ -82,6 +110,8 @@ export interface StructureIsolationResult {
   analysis: StructureIsolationAnalysis
   variants: StructureImageVariant[]
   primaryVariantId: string
+  candidateEvaluations: IsolationCandidateEvaluation[]
+  multiCropFallbackUsed: boolean
 }
 
 export interface StructureIsolationOptions {

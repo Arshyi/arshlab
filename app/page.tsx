@@ -96,7 +96,7 @@ const features = [
   {
     icon: ScanSearch,
     title: "Molecular Structure Scanner",
-    description: "Upload or capture a private snapshot, then inspect seven local recognition engines and their deterministic evidence-fusion result.",
+    description: "Upload or capture a private snapshot, isolate the chemistry from device frames and clutter, then inspect deterministic graph and evidence-fusion results.",
     href: "/structure-scanner",
   },
   {

@@ -24,8 +24,12 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { recognizeChemistryImage, type ChemistryOCRResult, type OCRProgressUpdate } from "@/lib/ocr/ocr-engine"
 import { analyzeStructureImage, analyzeStructureSceneVariants } from "@/lib/structure-vision/vision-engine"
-import { isolateStructureImage } from "@/lib/structure-vision/structure-isolation"
-import type { StructureIsolationResult } from "@/lib/structure-vision/isolation-types"
+import { isolateStructureImage, selectStructureIsolationCandidate } from "@/lib/structure-vision/structure-isolation"
+import type {
+  IsolationCandidateEvaluation,
+  StructureIsolationCandidate,
+  StructureIsolationResult,
+} from "@/lib/structure-vision/isolation-types"
 import type { StructureVisionAnalysis } from "@/lib/structure-vision/vision-types"
 import { scanStructure } from "@/lib/structure-scanner/scanner-engine"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
@@ -56,6 +60,60 @@ import { EvidenceFusionDebugPanel } from "./EvidenceFusionDebugPanel"
 type ScannerInputMode = "upload" | "camera"
 
 const QUICK_HINTS = ["ethanol", "benzene", "aspirin", "acetone", "ethene", "ethanoic acid", "sodium chloride"]
+
+function clampScore(value: number): number {
+  return Math.round(Math.min(98, Math.max(0, Number.isFinite(value) ? value : 0)))
+}
+
+function buildCandidateEvaluation(
+  candidate: StructureIsolationCandidate,
+  variantId: string,
+  ocr: ChemistryOCRResult | null,
+  vision: StructureVisionAnalysis,
+): IsolationCandidateEvaluation {
+  const ringConfidence = Math.max(
+    vision.graph.bestRingConfidence,
+    ...vision.molecularGraph.rings.map((ring) => ring.confidence),
+    0,
+  )
+  const atomLabelCount = ocr?.atomLabels.length ?? 0
+  const graphConfidence = vision.molecularGraph.estimates.confidence
+  const aromaticBonus = vision.molecularGraph.aromatic || vision.graph.aromaticCueScore >= 50 ? 8 : 0
+  const suppressionPenalty =
+    (candidate.rectangularFrameDetected ? 38 : 0) +
+    (candidate.suppressionReasons.some((reason) => reason.includes("image border")) ? 10 : 0) +
+    (candidate.suppressionReasons.some((reason) => reason.includes("Bond-length scale")) ? 12 : 0)
+  const chemistryEvidenceScore = clampScore(
+    candidate.score * 0.18 +
+    Math.min(18, atomLabelCount * 4) +
+    (ocr?.parsed.chemistryConfidence ?? 0) * 0.08 +
+    graphConfidence * 0.38 +
+    vision.visualConfidence * 0.18 +
+    ringConfidence * 0.18 +
+    aromaticBonus -
+    suppressionPenalty,
+  )
+  const reasoning: string[] = []
+  if (atomLabelCount > 0) reasoning.push(`High atom density: ${atomLabelCount} positioned chemistry labels`)
+  if (vision.lineSegments.length > 0) reasoning.push(`${vision.lineSegments.length} bond segments survived crop isolation`)
+  if (vision.parallelLinePairs > 0) reasoning.push("Parallel bond evidence detected")
+  if (ringConfidence >= 45) reasoning.push(`Ring geometry present at ${Math.round(ringConfidence)}%`)
+  if (vision.graph.aromaticCueScore >= 45) reasoning.push("Aromatic cues survived isolation")
+  if (candidate.bondLengthRegularity >= 60) reasoning.push(`Bond-length regularity ${candidate.bondLengthRegularity}%`)
+  reasoning.push(...candidate.suppressionReasons.map((reason) => `Suppressed: ${reason}`))
+  return {
+    candidateId: candidate.id,
+    variantId,
+    ocrAtomLabelCount: atomLabelCount,
+    ocrConfidence: ocr?.ocrConfidence ?? 0,
+    graphConfidence,
+    visualConfidence: vision.visualConfidence,
+    ringConfidence: Math.round(ringConfidence),
+    chemistryEvidenceScore,
+    selected: false,
+    reasoning,
+  }
+}
 
 export function StructureScanner() {
   const [file, setFile] = useState<File | null>(null)
@@ -170,24 +228,72 @@ export function StructureScanner() {
     let nextIsolationResult: StructureIsolationResult | null = null
     try {
       nextIsolationResult = await isolateStructureImage(scanImage)
-      setIsolationResult(nextIsolationResult)
       scanImage = nextIsolationResult.isolatedBlob
     } catch (isolationFailure) {
       const message = isolationFailure instanceof Error ? isolationFailure.message : "Local structure isolation could not start."
       setIsolationError(message)
     }
 
-    setOCRProgress({ status: "Preparing local OCR", progress: 0 })
-
     let nextOCRResult: ChemistryOCRResult | null = null
-    try {
-      nextOCRResult = await recognizeChemistryImage(scanImage, setOCRProgress)
-      setOCRResult(nextOCRResult)
-    } catch (ocrFailure) {
-      const message = ocrFailure instanceof Error ? ocrFailure.message : "Local OCR could not start."
-      setOCRError(message)
-      setOCRResult(null)
+    let fallbackVision: StructureVisionAnalysis | null = null
+    if (nextIsolationResult?.analysis.requiresMultiCropFallback) {
+      const probes: Array<{
+        evaluation: IsolationCandidateEvaluation
+        ocr: ChemistryOCRResult | null
+        vision: StructureVisionAnalysis
+      }> = []
+      const candidates = nextIsolationResult.analysis.candidates.slice(0, 3)
+      for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index]
+        const variant = nextIsolationResult.variants.find((item) => item.candidateId === candidate.id && item.kind === "original")
+        if (!variant) continue
+        let candidateOCR: ChemistryOCRResult | null = null
+        try {
+          candidateOCR = await recognizeChemistryImage(variant.blob, (progress) => setOCRProgress({
+            status: `Comparing crop ${index + 1}/${candidates.length}: ${progress.status}`,
+            progress: (index + progress.progress) / Math.max(1, candidates.length),
+          }))
+        } catch {
+          candidateOCR = null
+        }
+        const candidateVision = await analyzeStructureImage(variant.blob, {
+          recognizedText: [
+            candidateOCR?.rawText,
+            moleculeName,
+            formula,
+            condensedFormula,
+            functionalGroupHint,
+            file.name,
+          ].filter(Boolean).join(" "),
+          atomLabels: candidateOCR?.atomLabels,
+        })
+        probes.push({
+          evaluation: buildCandidateEvaluation(candidate, variant.id, candidateOCR, candidateVision),
+          ocr: candidateOCR,
+          vision: candidateVision,
+        })
+      }
+      if (probes.length > 0) {
+        nextIsolationResult = selectStructureIsolationCandidate(nextIsolationResult, probes.map((probe) => probe.evaluation))
+        const selectedProbe = probes.find((probe) => probe.evaluation.candidateId === nextIsolationResult?.analysis.selectedCandidateId)
+        nextOCRResult = selectedProbe?.ocr ?? null
+        fallbackVision = selectedProbe?.vision ?? null
+        scanImage = nextIsolationResult.isolatedBlob
+      }
     }
+    setIsolationResult(nextIsolationResult)
+
+    if (!nextOCRResult) {
+      setOCRProgress({ status: "Preparing local OCR", progress: 0 })
+      try {
+        nextOCRResult = await recognizeChemistryImage(scanImage, setOCRProgress)
+      } catch (ocrFailure) {
+        const message = ocrFailure instanceof Error ? ocrFailure.message : "Local OCR could not start."
+        setOCRError(message)
+        nextOCRResult = null
+      }
+    }
+    setOCRResult(nextOCRResult)
 
     let nextVisionAnalysis: StructureVisionAnalysis | null = null
     try {
@@ -202,14 +308,34 @@ export function StructureScanner() {
         ].filter(Boolean).join(" "),
         atomLabels: nextOCRResult?.atomLabels,
       }
-      const selectedCandidateId = nextIsolationResult?.analysis.candidates.find((candidate) => candidate.selected)?.id
-      nextVisionAnalysis = nextIsolationResult?.variants.length
-        ? await analyzeStructureSceneVariants(nextIsolationResult.variants, {
+      const selectedCandidateId = nextIsolationResult?.analysis.selectedCandidateId ??
+        nextIsolationResult?.analysis.candidates.find((candidate) => candidate.selected)?.id
+      const selectedVariants = nextIsolationResult?.variants.filter((variant) => variant.candidateId === selectedCandidateId) ?? []
+      nextVisionAnalysis = selectedVariants.length
+        ? await analyzeStructureSceneVariants(selectedVariants, {
           ...visionOptions,
           primaryCandidateId: selectedCandidateId,
         })
-        : await analyzeStructureImage(scanImage, visionOptions)
+        : fallbackVision ?? await analyzeStructureImage(scanImage, visionOptions)
       setVisionAnalysis(nextVisionAnalysis)
+      if (nextIsolationResult && selectedCandidateId !== undefined) {
+        const selectedCandidate = nextIsolationResult.analysis.candidates.find((candidate) => candidate.id === selectedCandidateId)
+        if (selectedCandidate) {
+          const selectedVariantId = nextVisionAnalysis.selectedSceneVariantId ?? nextIsolationResult.primaryVariantId
+          const finalEvaluation = {
+            ...buildCandidateEvaluation(selectedCandidate, selectedVariantId, nextOCRResult, nextVisionAnalysis),
+            selected: true,
+          }
+          nextIsolationResult = {
+            ...nextIsolationResult,
+            candidateEvaluations: [
+              ...nextIsolationResult.candidateEvaluations.filter((evaluation) => evaluation.candidateId !== selectedCandidateId),
+              finalEvaluation,
+            ],
+          }
+          setIsolationResult(nextIsolationResult)
+        }
+      }
     } catch (visionFailure) {
       const message = visionFailure instanceof Error ? visionFailure.message : "Local shape detection could not start."
       setVisionError(message)

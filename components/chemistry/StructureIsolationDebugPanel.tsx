@@ -62,6 +62,7 @@ export function StructureIsolationDebugPanel({
                   {analysis.usedFullImage ? "Full preview retained" : "Drawing isolated"}
                 </Badge>
               )}
+              {result?.multiCropFallbackUsed && <Badge variant="outline" className="rounded-full">Multi-crop fallback used</Badge>}
             </div>
 
             {error && (
@@ -70,10 +71,11 @@ export function StructureIsolationDebugPanel({
               </div>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Metric label="drawingCoverage" value={analysis ? `${analysis.drawingCoverage}%` : "Not run"} />
               <Metric label="chemistryPixelDensity" value={analysis ? `${analysis.chemistryPixelDensity}%` : "Not run"} />
               <Metric label="isolationConfidence" value={analysis ? `${analysis.isolationConfidence}%` : "Not run"} />
+              <Metric label="candidateScoreMargin" value={analysis ? `${analysis.candidateScoreMargin}` : "Not run"} />
             </div>
 
             {result?.variants.length ? (
@@ -159,7 +161,58 @@ export function StructureIsolationDebugPanel({
             )}
 
             {analysis && (
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="space-y-4">
+                <section className="rounded-xl border border-border p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-semibold">Candidate chemistry regions</h3>
+                    <Badge variant="outline" className="rounded-full">{analysis.candidates.length} scored regions</Badge>
+                  </div>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                    {analysis.candidates.slice(0, 6).map((candidate) => {
+                      const evaluation = result?.candidateEvaluations.find((item) => item.candidateId === candidate.id)
+                      return (
+                        <div key={candidate.id} className={cn(
+                          "rounded-lg border p-3",
+                          candidate.selected ? "border-teal-500/30 bg-teal-500/5" : "border-border bg-secondary/20",
+                        )}>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="font-medium">Region {candidate.id + 1}</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {candidate.selected && <Badge className="rounded-full">Selected</Badge>}
+                              <Badge variant="secondary" className="rounded-full">{candidate.score}% region</Badge>
+                              {evaluation && <Badge variant="outline" className="rounded-full">{evaluation.chemistryEvidenceScore}% chemistry</Badge>}
+                            </div>
+                          </div>
+                          <div className="mt-3 grid grid-cols-2 gap-1.5 text-xs text-muted-foreground">
+                            <span>Bond segments</span><span className="text-right font-mono text-foreground">{candidate.bondSegmentCount}</span>
+                            <span>Parallel pairs</span><span className="text-right font-mono text-foreground">{candidate.parallelBondPairs}</span>
+                            <span>Ring cues</span><span className="text-right font-mono text-foreground">{candidate.ringCueCount}</span>
+                            <span>Bond regularity</span><span className="text-right font-mono text-foreground">{candidate.bondLengthRegularity}%</span>
+                            <span>Mean bond length</span><span className="text-right font-mono text-foreground">{candidate.meanBondLength}px</span>
+                            <span>Length variance</span><span className="text-right font-mono text-foreground">{candidate.bondLengthVariance}</span>
+                            {evaluation && <><span>OCR atom labels</span><span className="text-right font-mono text-foreground">{evaluation.ocrAtomLabelCount}</span></>}
+                            {evaluation && <><span>Graph confidence</span><span className="text-right font-mono text-foreground">{evaluation.graphConfidence}%</span></>}
+                          </div>
+                          {candidate.positiveEvidence.length > 0 && (
+                            <ul className="mt-3 space-y-1 text-xs text-teal-700 dark:text-teal-300">
+                              {candidate.positiveEvidence.map((reason) => <li key={reason}>Accepted: {reason}</li>)}
+                            </ul>
+                          )}
+                          {candidate.suppressionReasons.length > 0 && (
+                            <ul className="mt-3 space-y-1 text-xs text-amber-700 dark:text-amber-300">
+                              {candidate.suppressionReasons.map((reason) => <li key={reason}>Rejected signal: {reason}</li>)}
+                            </ul>
+                          )}
+                          <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+                            Sources: {candidate.proposalSources.join(", ")}
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </section>
+
+                <div className="grid gap-4 lg:grid-cols-2">
                 <section className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
                   <h3 className="font-semibold text-foreground">Isolation details</h3>
                   <dl className="mt-3 grid grid-cols-2 gap-2">
@@ -168,6 +221,7 @@ export function StructureIsolationDebugPanel({
                     <dt>Region proposals</dt><dd className="text-right font-mono text-foreground">{analysis.regionProposalCount}</dd>
                     <dt>Rejected backgrounds</dt><dd className="text-right font-mono text-foreground">{analysis.components.filter((component) => component.rejected).length}</dd>
                     <dt>Perspective boundary</dt><dd className="text-right font-mono text-foreground">{analysis.perspectiveBoundary ? `${analysis.perspectiveBoundary.confidence}%` : "None"}</dd>
+                    <dt>Fallback required</dt><dd className="text-right font-mono text-foreground">{analysis.requiresMultiCropFallback ? "Yes" : "No"}</dd>
                     <dt>Adaptive threshold</dt><dd className="text-right font-mono text-foreground">{analysis.adaptiveThresholdMean}</dd>
                     <dt>Grayscale mean</dt><dd className="text-right font-mono text-foreground">{analysis.grayscaleMean}</dd>
                   </dl>
@@ -192,6 +246,7 @@ export function StructureIsolationDebugPanel({
                     </ul>
                   )}
                 </section>
+                </div>
               </div>
             )}
           </CardContent>

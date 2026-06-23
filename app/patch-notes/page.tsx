@@ -18,8 +18,26 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.5.0",
+    version: "5.6.0",
     date: "Current",
+    status: "released",
+    title: "Structure Isolation Engine",
+    changes: [
+      "Upgraded structure isolation into an authoritative preprocessing stage before OCR and graph reconstruction",
+      "Added multi-source candidate proposals from connected components, dark-pixel clusters, contours, bond density, and ring geometry",
+      "Added per-region bond segments, parallel pairs, ring cues, aromatic evidence, and chemistry-density scoring",
+      "Added mean bond length, bond-length variance, and regularity scoring to distinguish molecules from scene-scale edges",
+      "Added deterministic suppression for image borders, device frames, paper edges, room geometry, desk edges, low-density clutter, and inconsistent line scales",
+      "Preserved nested molecule proposals inside tablet and monitor frames instead of merging them into the bezel",
+      "Added low-confidence multi-crop fallback with independent local OCR and graph probes for up to three candidate regions",
+      "Restricted final graph reconstruction and evidence fusion to variants from the winning chemistry region",
+      "Expanded Structure Isolation Debug with candidate scores, accepted evidence, rejection reasons, atom counts, graph confidence, and fallback status",
+      "Expanded isolation regressions to 20 scenes including low light, lecture slides, multiple candidates, reflections, clutter, perspective, and occlusion",
+    ],
+  },
+  {
+    version: "5.5.0",
+    date: "Previous",
     status: "released",
     title: "Multi-Engine Evidence Fusion",
     changes: [

@@ -65,6 +65,7 @@ const completed = [
   "Atom-Centered Graph Reconstruction",
   "Structure-First Robust Scene Understanding",
   "Multi-Engine Evidence Fusion",
+  "Structure Isolation Engine",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -195,14 +196,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Multi-Engine Evidence Fusion
+                Structure Isolation Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: seven local recognition engines independently evaluate OCR, atom labels, bond geometry, rings,
-                molecular graphs, functional groups, and user hints before deterministic voting selects and explains the final
-                compound ranking.
+                Now available: candidate chemistry regions are scored from local atom, bond, ring, aromatic, density, and
+                bond-length evidence while device frames and scene edges are suppressed. Ambiguous scenes compare multiple
+                crops before the winning region reaches graph reconstruction.
               </p>
             </CardContent>
           </Card>
@@ -214,7 +215,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.5.0 - Multi-Engine Evidence Fusion
+          ARSHLAB v5.6.0 - Structure Isolation Engine
         </motion.p>
       </div>
     </div>

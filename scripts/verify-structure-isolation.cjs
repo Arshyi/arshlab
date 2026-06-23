@@ -29,7 +29,7 @@ if (compile.status !== 0) {
   process.exit(compile.status ?? 1)
 }
 
-const { analyzeStructureIsolation } = require(path.join(outputDirectory, "structure-vision", "structure-isolation.js"))
+const { analyzeStructureIsolation, selectStructureIsolationCandidate } = require(path.join(outputDirectory, "structure-vision", "structure-isolation.js"))
 const { analyzeDarkPixelMask } = require(path.join(outputDirectory, "structure-vision", "shape-heuristics.js"))
 
 function image(width, height, value = 255) {
@@ -184,6 +184,8 @@ fillRectangle(tablet, 34, 28, 292, 204, 248)
 benzene(tablet, 180, 130, 48, { thickness: 3, printed: true })
 const tabletResult = verify("benzene on tablet screen", tablet, { x: 180, y: 130 }, 30)
 assert.ok(tabletResult.components.some((component) => component.rejected), "tablet bezel is rejected")
+assert.equal(tabletResult.candidates.find((candidate) => candidate.selected)?.rectangularFrameDetected, false, "tablet crop excludes rectangular frame")
+assert.ok((tabletResult.candidates.find((candidate) => candidate.selected)?.bondSegmentCount ?? 0) >= 5, "tablet crop retains molecular bonds")
 verifyBenzeneCandidate("benzene on tablet screen", tablet, tabletResult)
 
 const margins = image(520, 380)
@@ -274,7 +276,63 @@ benzene(occluded, 170, 125, 54, { thickness: 3, printed: true })
 fillColorRectangle(occluded, 148, 65, 38, 96, [205, 153, 122])
 verify("benzene with 20-30 percent occlusion", occluded, { x: 170, y: 125 }, 32)
 
-console.log("Verified 17 deterministic structure-isolation and clutter stress regressions.")
+const lowLighting = image(420, 300, 84)
+benzene(lowLighting, 250, 145, 50, { thickness: 3, printed: true })
+const lowLightResult = verify("benzene in low lighting", lowLighting, { x: 250, y: 145 }, 25)
+assert.ok((lowLightResult.candidates.find((candidate) => candidate.selected)?.bondLengthRegularity ?? 0) >= 35, "low-light bond regularity survives")
+
+const multipleRegions = image(520, 330, 242)
+rectangle(multipleRegions, 22, 40, 130, 220, 45, 5)
+hexane(multipleRegions, 40, 150, 18)
+benzene(multipleRegions, 370, 155, 52, { thickness: 3, printed: true })
+const multiRegionResult = analyzeStructureIsolation(multipleRegions)
+assert.ok(multiRegionResult.regionProposalCount >= 2, "multiple candidate boxes retained")
+assert.equal(multiRegionResult.requiresMultiCropFallback, true, "ambiguous candidates request multi-crop fallback")
+const benzeneRegion = multiRegionResult.candidates.find((candidate) =>
+  370 >= candidate.bounds.x && 370 <= candidate.bounds.x + candidate.bounds.width &&
+  155 >= candidate.bounds.y && 155 <= candidate.bounds.y + candidate.bounds.height,
+)
+assert.ok(benzeneRegion, "benzene candidate retained separately from clutter")
+const fallbackResult = selectStructureIsolationCandidate({
+  isolatedBlob: new Blob(["initial"]),
+  analysis: multiRegionResult,
+  variants: multiRegionResult.candidates.map((candidate) => ({
+    id: `candidate-${candidate.id}-original`, candidateId: candidate.id, kind: "original",
+    blob: new Blob([`candidate-${candidate.id}`]), primary: candidate.selected, perspectiveCorrected: false,
+  })),
+  primaryVariantId: "candidate-0-original",
+  candidateEvaluations: [],
+  multiCropFallbackUsed: false,
+}, multiRegionResult.candidates.map((candidate) => ({
+  candidateId: candidate.id,
+  variantId: `candidate-${candidate.id}-original`,
+  ocrAtomLabelCount: candidate.id === benzeneRegion.id ? 6 : 0,
+  ocrConfidence: candidate.id === benzeneRegion.id ? 72 : 10,
+  graphConfidence: candidate.id === benzeneRegion.id ? 90 : 35,
+  visualConfidence: candidate.id === benzeneRegion.id ? 88 : 30,
+  ringConfidence: candidate.id === benzeneRegion.id ? 92 : 20,
+  chemistryEvidenceScore: candidate.id === benzeneRegion.id ? 94 : 38,
+  selected: false,
+  reasoning: candidate.id === benzeneRegion.id ? ["High atom density", "Aromatic ring geometry"] : ["Rectangular clutter"],
+})))
+assert.equal(fallbackResult.analysis.selectedCandidateId, benzeneRegion.id, "multi-crop chemistry probe selects benzene region")
+assert.equal(fallbackResult.multiCropFallbackUsed, true, "fallback selection is recorded")
+
+const lectureSlide = image(560, 360, 35)
+fillRectangle(lectureSlide, 28, 24, 504, 312, 245)
+for (let y = 52; y < 95; y += 16) line(lectureSlide, { x: 58, y }, { x: 260, y }, 2, 95)
+benzene(lectureSlide, 380, 205, 55, { thickness: 3, printed: true })
+const lectureResult = verify("molecule on lecture slide", lectureSlide, { x: 380, y: 205 }, 24)
+assert.ok(lectureResult.candidates.find((candidate) => candidate.selected)?.positiveEvidence.length, "lecture slide crop has positive chemistry evidence")
+
+for (const analysis of [tabletResult, lowLightResult, fallbackResult.analysis, lectureResult]) {
+  const selected = analysis.candidates.find((candidate) => candidate.selected)
+  assert.ok(selected.meanBondLength > 0, "selected crop records mean bond length")
+  assert.ok(selected.bondLengthVariance >= 0, "selected crop records bond variance")
+  assert.ok(selected.proposalSources.length >= 3, "candidate records independent proposal sources")
+}
+
+console.log("Verified 20 deterministic structure-isolation and clutter stress regressions.")
 console.log("Verified benzene remains the top visual candidate in 6 clean, moderate, hard, and extreme scene crops.")
-console.log("Verified multi-region proposals, adaptive thresholding, scene rejection, auto-crop margin, and isolation metrics.")
+console.log("Verified multi-region proposals, border suppression, bond-length regularity, adaptive thresholding, auto-crop margin, and isolation metrics.")
 rmSync(outputDirectory, { recursive: true, force: true })
