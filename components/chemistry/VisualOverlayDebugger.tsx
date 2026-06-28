@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Bug, ChevronDown, Download, ImageOff } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ import {
   VISION_OVERLAY_COLORS,
   type VisionOverlayVisibility,
 } from "@/lib/structure-vision/overlay-renderer"
-import type { StructureVisionAnalysis, VisionRingCandidate } from "@/lib/structure-vision/vision-types"
+import type { StructureVisionAnalysis } from "@/lib/structure-vision/vision-types"
 import type { StructureScanResult } from "@/lib/structure-scanner/scanner-types"
 import { cn } from "@/lib/utils"
 
@@ -29,6 +29,11 @@ const TOGGLES: Array<{ id: keyof VisionOverlayVisibility; label: string; color?:
   { id: "parallelBonds", label: "Parallel bond pairs", color: VISION_OVERLAY_COLORS.parallel },
   { id: "aromaticCues", label: "Aromatic cues", color: VISION_OVERLAY_COLORS.aromatic },
   { id: "functionalGroupCues", label: "Functional-group cues", color: VISION_OVERLAY_COLORS.aromatic },
+  { id: "atomLabelCentroids", label: "Atom-label centroids", color: VISION_OVERLAY_COLORS.aromatic },
+  { id: "snappedEndpoints", label: "Snapped endpoints", color: VISION_OVERLAY_COLORS.endpoints },
+  { id: "bridgedGaps", label: "Bridged gaps", color: VISION_OVERLAY_COLORS.closureBridge },
+  { id: "selectedClosureRing", label: "Selected ring polygon", color: VISION_OVERLAY_COLORS.selected },
+  { id: "rejectedClosureRings", label: "Rejected ring polygons", color: VISION_OVERLAY_COLORS.rejectedRing },
 ]
 
 export function VisualOverlayDebugger({
@@ -84,18 +89,7 @@ export function VisualOverlayDebugger({
     }
   }, [analysis, imageBlob, open, visibility])
 
-  const ringCandidates = useMemo(() => {
-    if (!analysis) return []
-    const candidates = [...analysis.graph.cycleCandidates, ...analysis.graph.nearRingCandidates]
-      .sort((left, right) => right.confidence - left.confidence)
-    const unique: VisionRingCandidate[] = []
-    candidates.forEach((candidate) => {
-      if (!unique.some((existing) => existing.source === candidate.source && existing.nodeIds.join("-") === candidate.nodeIds.join("-"))) {
-        unique.push(candidate)
-      }
-    })
-    return unique.slice(0, 3)
-  }, [analysis])
+  const closureCandidates = analysis?.ringClosure.candidates ?? []
 
   const benzeneVisual = analysis?.candidates.find((candidate) => candidate.compoundId === "benzene")
   const benzeneMatch = result?.matches.find((match) => match.record.id === "benzene")
@@ -202,33 +196,38 @@ export function VisualOverlayDebugger({
 
                 <section className="rounded-xl border border-border p-4">
                   <h3 className="font-semibold">Why this ring was selected</h3>
-                  {ringCandidates.length ? (
+                  {closureCandidates.length ? (
                     <div className="mt-3 grid gap-3 lg:grid-cols-3">
-                      {ringCandidates.map((candidate, index) => (
+                      {closureCandidates.slice(0, 3).map((candidate, index) => (
                         <div key={`${candidate.source}-${candidate.nodeIds.join("-")}-${index}`} className={cn(
                           "rounded-lg border p-3",
-                          index === 0 ? "border-orange-500/40 bg-orange-500/10" : "border-border bg-secondary/30",
+                          candidate.selected ? "border-orange-500/40 bg-orange-500/10" : "border-border bg-secondary/30",
                         )}>
                           <div className="flex items-center justify-between gap-2">
                             <p className="font-semibold">Candidate {String.fromCharCode(65 + index)}</p>
-                            {index === 0 && <Badge className="rounded-full bg-orange-600">Selected</Badge>}
+                            {candidate.selected && <Badge className="rounded-full bg-orange-600">Selected</Badge>}
                           </div>
-                          <p className="mt-2 text-sm">{candidate.sidesEstimate}-member {candidate.nearRing ? "near-ring" : "ring"}</p>
+                          <p className="mt-2 text-sm">{candidate.memberCount}-member {candidate.recovered ? "near-ring" : "ring"}</p>
                           <dl className="mt-2 space-y-1 text-xs text-muted-foreground">
-                            <DiagnosticRow label="Closure" value={`${candidate.closureQuality}%`} />
-                            <DiagnosticRow label="Regularity" value={`${candidate.polygonRegularity}%`} />
+                            <DiagnosticRow label="Closure" value={`${candidate.closureConfidence}%`} />
+                            <DiagnosticRow label="Regularity" value={`${candidate.regularity}%`} />
                             <DiagnosticRow label="Confidence" value={`${candidate.confidence}%`} />
+                            <DiagnosticRow label="Line coverage" value={`${candidate.lineCoverage}%`} />
+                            <DiagnosticRow label="Aromatic support" value={`${candidate.aromaticSupport}%`} />
                           </dl>
-                          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{candidate.reason}</p>
+                          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{candidate.selectedReason}</p>
+                          {candidate.rejectedReasons.length ? (
+                            <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">{candidate.rejectedReasons.join(" ")}</p>
+                          ) : null}
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-2 text-sm text-muted-foreground">No 5-7 member cycle or near-ring survived geometric validation.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">No 5-8 member closure candidate survived geometric validation.</p>
                   )}
-                  {ringCandidates[0] && (
+                  {closureCandidates[0] && (
                     <p className="mt-3 text-sm text-muted-foreground">
-                      Candidate A wins because it has the highest combined closure, endpoint-merge, regularity, line-coverage, and aromatic-support confidence after duplicate rings are removed.
+                      The selected candidate wins by combining closure quality, polygon regularity, bond-line coverage, bridge confidence, and aromatic/double-bond support after open-chain and background safeguards.
                     </p>
                   )}
                 </section>

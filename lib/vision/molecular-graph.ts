@@ -6,6 +6,7 @@ import type {
   VisionParallelBondPair,
   VisionPoint,
   VisionRingCandidate,
+  VisionRingClosureAnalysis,
 } from "../structure-vision/vision-types"
 
 export type InferredElement = "C" | "H" | "O" | "N" | "S" | "P" | "F" | "Cl" | "Br" | "I" | "Unknown"
@@ -79,6 +80,7 @@ export interface MolecularGraphInput {
   atomSnapRadius?: number
   imageWidth?: number
   imageHeight?: number
+  ringClosure?: VisionRingClosureAnalysis
 }
 
 export interface MolecularGraphSimilarity {
@@ -413,6 +415,40 @@ function atomCenteredGraph(input: MolecularGraphInput): MolecularGraph | null {
     right.snappedSegmentIndexes.push(...sourceSegmentIndexes)
   }
 
+  const selectedClosure = input.ringClosure?.candidates.find((candidate) =>
+    candidate.selected &&
+    candidate.source === "atom-centroid" &&
+    candidate.memberCount >= 5 &&
+    candidate.memberCount <= 8 &&
+    candidate.confidence >= 50 &&
+    candidate.lineCoverage >= 58 &&
+    candidate.closureConfidence >= 48,
+  )
+  if (selectedClosure) {
+    selectedClosure.closureGaps.forEach((gap) => {
+      const left = nodes.find((node) => node.id === gap.fromNodeId)
+      const right = nodes.find((node) => node.id === gap.toNodeId)
+      if (!left || !right || bondBetween(bonds, left.id, right.id)) return
+      const ringDoubleBondTarget = selectedClosure.aromaticSupport >= 55 && selectedClosure.memberCount === 6
+      const existingDoubleBonds = bonds.filter((bond) =>
+        selectedClosure.nodeIds.includes(bond.startNodeId) &&
+        selectedClosure.nodeIds.includes(bond.endNodeId) &&
+        bond.bondOrder >= 2,
+      ).length
+      const bondOrder: 1 | 2 = ringDoubleBondTarget && existingDoubleBonds < 3 ? 2 : 1
+      bonds.push({
+        id: bonds.length,
+        startNodeId: left.id,
+        endNodeId: right.id,
+        bondOrder,
+        confidence: Math.round(clamp(gap.confidence * 0.72 + selectedClosure.regularity * 0.18 + selectedClosure.lineCoverage * 0.1, 45, 76)),
+        sourceSegmentIndexes: [],
+        parallelPairCount: bondOrder === 2 ? 1 : 0,
+        gapBridged: true,
+      })
+    })
+  }
+
   const adjacency = new Map(nodes.map((node) => [node.id, [] as number[]]))
   bonds.forEach((bond) => {
     adjacency.get(bond.startNodeId)?.push(bond.endNodeId)
@@ -461,7 +497,12 @@ function atomCenteredGraph(input: MolecularGraphInput): MolecularGraph | null {
   })
 
   const cycles = findMolecularCycles(nodes, bonds)
-  const rings = cycles.map((nodeIds, id): MolecularGraphRing => {
+  const ringCycleMap = new Map<string, { nodeIds: number[]; inferred: boolean }>()
+  cycles.forEach((nodeIds) => ringCycleMap.set(canonicalCycle(nodeIds), { nodeIds, inferred: false }))
+  if (selectedClosure && selectedClosure.recovered && selectedClosure.confidence >= 55) {
+    ringCycleMap.set(canonicalCycle(selectedClosure.nodeIds), { nodeIds: selectedClosure.nodeIds, inferred: true })
+  }
+  const rings = Array.from(ringCycleMap.values()).map(({ nodeIds, inferred }, id): MolecularGraphRing => {
     const orders = nodeIds.map((nodeId, index) =>
       bondBetween(bonds, nodeId, nodeIds[(index + 1) % nodeIds.length])?.bondOrder ?? 1,
     )
@@ -469,8 +510,9 @@ function atomCenteredGraph(input: MolecularGraphInput): MolecularGraph | null {
     const alternating = nodeIds.length === 6 && doubleCount >= 3 && orders.every((order, index) =>
       order !== orders[(index + 1) % orders.length],
     )
+    const closureSupport = selectedClosure && canonicalCycle(selectedClosure.nodeIds) === canonicalCycle(nodeIds)
     const aromatic = nodeIds.length === 6 && (
-      alternating || doubleCount >= 3 || input.parallelBondPairs.length >= 3
+      alternating || doubleCount >= 3 || (closureSupport && selectedClosure.aromaticSupport >= 55)
     )
     const kind: MolecularRingKind = aromatic
       ? "benzene-like"
@@ -483,9 +525,13 @@ function atomCenteredGraph(input: MolecularGraphInput): MolecularGraph | null {
       id,
       nodeIds,
       size: nodeIds.length,
-      confidence: Math.round(clamp(68 + Math.min(18, doubleCount * 5) + (aromatic ? 8 : 0), 0, 96)),
+      confidence: Math.round(clamp(
+        68 + Math.min(18, doubleCount * 5) + (aromatic ? 8 : 0) + (closureSupport ? selectedClosure.confidence * 0.12 : 0),
+        0,
+        96,
+      )),
       aromatic,
-      closed: true,
+      closed: !inferred,
       kind,
     }
   })
@@ -674,6 +720,21 @@ export function reconstructMolecularGraph(input: MolecularGraphInput): Molecular
       confidence: Math.max(existing?.confidence ?? 0, candidate.confidence),
       aromatic: Boolean(existing?.aromatic || candidate.benzeneLike || candidate.aromaticCueScore >= 50),
       closed: Boolean(existing?.closed || !candidate.nearRing),
+    })
+  })
+  input.ringClosure?.candidates.forEach((candidate) => {
+    if (!candidate.selected || candidate.memberCount < 5 || candidate.memberCount > 8 || candidate.confidence < 50) return
+    const nodeIds = candidate.nodeIds.every((nodeId) => input.graph.nodes.some((node) => node.id === nodeId))
+      ? candidate.nodeIds
+      : []
+    if (!nodeIds.length) return
+    const key = canonicalCycle(nodeIds)
+    const existing = ringMap.get(key)
+    ringMap.set(key, {
+      nodeIds,
+      confidence: Math.max(existing?.confidence ?? 0, candidate.confidence),
+      aromatic: Boolean(existing?.aromatic || (candidate.memberCount === 6 && candidate.aromaticSupport >= 55)),
+      closed: Boolean(existing?.closed || candidate.closed),
     })
   })
 

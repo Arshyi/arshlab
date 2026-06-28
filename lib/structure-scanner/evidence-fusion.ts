@@ -11,6 +11,7 @@ const ENGINE_WEIGHTS: Record<EvidenceEngineId, number> = {
   "ocr-formula": 0.62,
   "atom-label": 0.48,
   "bond-geometry": 0.72,
+  "ring-closure": 1.08,
   "ring-aromatic": 1.05,
   "molecular-graph": 1.15,
   "functional-group": 0.7,
@@ -38,9 +39,13 @@ function confidenceFromVotes(votes: FusedEngineVote[], penalties: EvidencePenalt
 
   const strongManual = votes.some((vote) => vote.engineId === "filename-manual" && vote.evidenceType === "manual" && vote.confidence >= 88)
   const strongGraph = votes.some((vote) => vote.engineId === "molecular-graph" && vote.strength === "strong")
+  const strongClosure = votes.some((vote) => vote.engineId === "ring-closure" && vote.strength === "strong")
   const strongRing = votes.some((vote) => vote.engineId === "ring-aromatic" && vote.strength === "strong")
   if (strongManual) confidence = Math.max(confidence, 94)
-  if (strongGraph && strongRing) confidence = Math.max(confidence, 84)
+  if (strongGraph && strongRing && strongClosure) confidence = Math.max(confidence, 88)
+  else if (strongGraph && strongClosure) confidence = Math.max(confidence, 85)
+  else if (strongRing && strongClosure) confidence = Math.max(confidence, 82)
+  else if (strongGraph && strongRing) confidence = Math.max(confidence, 84)
   else if (strongGraph) confidence = Math.max(confidence, 74)
 
   if (votes.length === 1) {
@@ -48,6 +53,7 @@ function confidenceFromVotes(votes: FusedEngineVote[], penalties: EvidencePenalt
     if (only.engineId === "ocr-formula") confidence = Math.min(confidence, 64)
     if (only.engineId === "atom-label") confidence = Math.min(confidence, 48)
     if (only.engineId === "functional-group") confidence = Math.min(confidence, 58)
+    if (only.engineId === "ring-closure") confidence = Math.min(confidence, 74)
     if (only.engineId === "filename-manual" && only.evidenceType === "filename") confidence = Math.min(confidence, 42)
     if (only.engineId === "molecular-graph") confidence = Math.min(confidence, 78)
   }
@@ -89,9 +95,12 @@ export function fuseStructureEvidence(engines: EvidenceEngineResult[]): Evidence
     let score = votes.reduce((sum, vote) => sum + vote.weightedContribution, 0)
     score += Math.min(10, Math.max(0, votes.length - 1) * 2.5)
     const strongGraph = votes.some((vote) => vote.engineId === "molecular-graph" && vote.strength === "strong")
+    const strongClosure = votes.some((vote) => vote.engineId === "ring-closure" && vote.strength === "strong")
     const strongRing = votes.some((vote) => vote.engineId === "ring-aromatic" && vote.strength === "strong")
     const strongManual = votes.some((vote) => vote.engineId === "filename-manual" && vote.evidenceType === "manual" && vote.confidence >= 88)
-    if (strongGraph && strongRing) score += 12
+    if (strongGraph && strongRing && strongClosure) score += 18
+    else if ((strongGraph && strongClosure) || (strongRing && strongClosure)) score += 14
+    else if (strongGraph && strongRing) score += 12
     if (strongManual) score += 24
     if (manualWinner && manualWinner.compoundId !== compoundId) score -= 28
     const strongestVote = [...votes].sort((left, right) => right.weightedContribution - left.weightedContribution)[0]

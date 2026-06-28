@@ -17,6 +17,11 @@ export interface VisionOverlayVisibility {
   parallelBonds: boolean
   aromaticCues: boolean
   functionalGroupCues: boolean
+  snappedEndpoints: boolean
+  bridgedGaps: boolean
+  selectedClosureRing: boolean
+  rejectedClosureRings: boolean
+  atomLabelCentroids: boolean
 }
 
 export const DEFAULT_VISION_OVERLAYS: VisionOverlayVisibility = {
@@ -31,6 +36,11 @@ export const DEFAULT_VISION_OVERLAYS: VisionOverlayVisibility = {
   parallelBonds: true,
   aromaticCues: true,
   functionalGroupCues: false,
+  snappedEndpoints: false,
+  bridgedGaps: true,
+  selectedClosureRing: true,
+  rejectedClosureRings: false,
+  atomLabelCentroids: true,
 }
 
 export const VISION_OVERLAY_COLORS = {
@@ -41,6 +51,8 @@ export const VISION_OVERLAY_COLORS = {
   selected: "#f97316",
   parallel: "#a855f7",
   aromatic: "#22d3ee",
+  closureBridge: "#f59e0b",
+  rejectedRing: "#fbbf24",
   lineSegments: "#94a3b8",
   labels: "#ffffff",
 } as const
@@ -50,6 +62,20 @@ interface OverlayRenderOptions {
   analysis: StructureVisionAnalysis
   visibility: VisionOverlayVisibility
   image?: CanvasImageSource | null
+}
+
+function drawPoint(
+  context: CanvasRenderingContext2D,
+  point: VisionPoint,
+  color: string,
+  scaleX: number,
+  scaleY: number,
+  radius: number,
+) {
+  context.beginPath()
+  context.arc(point.x * scaleX, point.y * scaleY, radius * Math.max(scaleX, scaleY), 0, Math.PI * 2)
+  context.fillStyle = color
+  context.fill()
 }
 
 function drawLabel(
@@ -130,6 +156,30 @@ function drawRing(
   context.restore()
 }
 
+function drawClosurePolygon(
+  context: CanvasRenderingContext2D,
+  points: VisionPoint[],
+  color: string,
+  scaleX: number,
+  scaleY: number,
+  dashed: boolean,
+  width: number,
+) {
+  if (points.length < 3) return
+  context.save()
+  context.strokeStyle = color
+  context.fillStyle = `${color}1f`
+  context.lineWidth = width * Math.max(scaleX, scaleY)
+  context.setLineDash(dashed ? [5 * scaleX, 4 * scaleX] : [])
+  context.beginPath()
+  context.moveTo(points[0].x * scaleX, points[0].y * scaleY)
+  points.slice(1).forEach((point) => context.lineTo(point.x * scaleX, point.y * scaleY))
+  context.closePath()
+  context.fill()
+  context.stroke()
+  context.restore()
+}
+
 export function renderVisionOverlay({ context, analysis, visibility, image }: OverlayRenderOptions) {
   const canvas = context.canvas
   const scaleX = canvas.width / analysis.width
@@ -201,6 +251,31 @@ export function renderVisionOverlay({ context, analysis, visibility, image }: Ov
     })
   }
 
+  if (visibility.atomLabelCentroids) {
+    analysis.atomLabels.forEach((label) => {
+      drawPoint(context, label.centroid, VISION_OVERLAY_COLORS.aromatic, scaleX, scaleY, 2.1)
+      drawLabel(context, `${label.label}${label.id}`, label.centroid.x * scaleX + 4 * scale, label.centroid.y * scaleY - 4 * scale, scale)
+    })
+  }
+
+  if (visibility.snappedEndpoints) {
+    analysis.ringClosure.snapEvents.filter((event) => event.accepted).forEach((event) => {
+      const segment = analysis.lineSegments[event.segmentIndex]
+      const node = analysis.ringClosure.candidates.flatMap((candidate) => candidate.points)[event.nodeId]
+      const endpoint = segment?.[event.endpoint]
+      const atomPoint = analysis.atomLabels.find((label) => label.id === event.atomLabelId)?.centroid ?? node
+      if (!endpoint || !atomPoint) return
+      drawSegment(context, {
+        start: endpoint,
+        end: atomPoint,
+        midpoint: { x: (endpoint.x + atomPoint.x) / 2, y: (endpoint.y + atomPoint.y) / 2 },
+        length: event.distance,
+        angle: 0,
+        strength: 1,
+      }, VISION_OVERLAY_COLORS.endpoints, scaleX, scaleY, 0.9)
+    })
+  }
+
   if (visibility.endpoints) {
     context.fillStyle = VISION_OVERLAY_COLORS.endpoints
     analysis.lineSegments.forEach((segment, index) => {
@@ -234,6 +309,47 @@ export function renderVisionOverlay({ context, analysis, visibility, image }: Ov
   }
 
   const selectedRing = analysis.ringCandidates[0]
+  const selectedClosure = analysis.ringClosure.candidates.find((candidate) => candidate.selected)
+  if (visibility.rejectedClosureRings) {
+    analysis.ringClosure.candidates.filter((candidate) => !candidate.selected).slice(0, 5).forEach((candidate, index) => {
+      drawClosurePolygon(context, candidate.points, VISION_OVERLAY_COLORS.rejectedRing, scaleX, scaleY, true, 1.15)
+      drawLabel(context, `R${index + 1} ${candidate.memberCount}m ${candidate.confidence}%`, candidate.center.x * scaleX, candidate.center.y * scaleY, scale)
+    })
+  }
+
+  if (visibility.bridgedGaps) {
+    analysis.ringClosure.candidates.flatMap((candidate) => candidate.closureGaps).forEach((gap, index) => {
+      const candidate = analysis.ringClosure.candidates.find((item) =>
+        item.nodeIds.includes(gap.fromNodeId) && item.nodeIds.includes(gap.toNodeId),
+      )
+      const fromIndex = candidate?.nodeIds.indexOf(gap.fromNodeId) ?? -1
+      const toIndex = candidate?.nodeIds.indexOf(gap.toNodeId) ?? -1
+      const from = fromIndex >= 0 ? candidate?.points[fromIndex] : undefined
+      const to = toIndex >= 0 ? candidate?.points[toIndex] : undefined
+      if (!from || !to) return
+      drawSegment(context, {
+        start: from,
+        end: to,
+        midpoint: { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 },
+        length: gap.gapLength,
+        angle: 0,
+        strength: 1,
+      }, VISION_OVERLAY_COLORS.closureBridge, scaleX, scaleY, 2)
+      drawLabel(context, `B${index + 1} ${gap.confidence}%`, ((from.x + to.x) / 2) * scaleX, ((from.y + to.y) / 2) * scaleY, scale)
+    })
+  }
+
+  if (visibility.selectedClosureRing && selectedClosure) {
+    drawClosurePolygon(context, selectedClosure.points, VISION_OVERLAY_COLORS.selected, scaleX, scaleY, false, 3)
+    drawLabel(
+      context,
+      `Ring closure ${selectedClosure.memberCount}m ${selectedClosure.confidence}%`,
+      selectedClosure.center.x * scaleX,
+      (selectedClosure.center.y + selectedClosure.height * 0.72) * scaleY,
+      scale,
+    )
+  }
+
   if (visibility.aromaticCues && selectedRing && (analysis.graph.aromaticCueScore > 0 || selectedRing.benzeneLike)) {
     drawRing(context, analysis, selectedRing, VISION_OVERLAY_COLORS.aromatic, scaleX, scaleY, true, 2.3)
     drawLabel(

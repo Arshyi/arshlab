@@ -14,6 +14,7 @@ import type {
   VisionRingCandidate,
 } from "./vision-types"
 import { reconstructMolecularGraph } from "../vision/molecular-graph"
+import { analyzeRingClosure, ringClosureCandidateToVisionRing } from "./ring-closure"
 
 const DEGREE_STEP = 5
 
@@ -905,7 +906,18 @@ export function analyzeDarkPixelMask(
     aromaticCueScore: aromaticText ? 100 : 0,
   }))
   const graph = detectGraphRings(buildSegmentGraph(mask, lineSegments), parallelLinePairs, recognizedText)
+  const ringClosure = analyzeRingClosure({
+    graph,
+    lineSegments,
+    parallelBondPairs,
+    atomLabels,
+    recognizedText,
+    imageWidth: mask.width,
+    imageHeight: mask.height,
+  })
+  const closureRings = ringClosure.candidates.map(ringClosureCandidateToVisionRing)
   const rawRingCandidates = [
+    ...closureRings,
     ...graph.cycleCandidates,
     ...graph.nearRingCandidates,
     ...pixelRings,
@@ -939,6 +951,7 @@ export function analyzeDarkPixelMask(
     lineSegments,
     parallelBondPairs,
     ringCandidates,
+    ringClosure,
     functionalGroupCues,
     recognizedText,
     atomLabels,
@@ -1047,6 +1060,7 @@ export function analyzeDarkPixelMask(
     lineSegments,
     closedLoops,
     ringCandidates: finalRingCandidates,
+    ringClosure,
     graph: finalGraphSummary,
     molecularGraph,
     parallelBondPairs,

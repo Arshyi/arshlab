@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.6.0",
+    version: "5.7.0",
     date: "Current",
+    status: "released",
+    title: "Ring Closure Engine",
+    changes: [
+      "Added a deterministic Ring Closure Engine before final evidence fusion for cyclic and near-cyclic drawings",
+      "Added atom-label endpoint snapping and short gap bridging so interrupted C/H/O/N glyphs can still form molecular rings",
+      "Added 5-, 6-, 7-, and 8-member true-cycle and one-missing-edge near-cycle recovery",
+      "Added ring-closure candidate metrics for member count, closure confidence, polygon regularity, line coverage, aromatic support, and rejection reasons",
+      "Added ring-closure as an independent Evidence Fusion engine vote with benzene versus cyclohexane safeguards",
+      "Calibrated aromatic support so benzene outranks open-chain alkene candidates only when ring geometry and double-bond evidence agree",
+      "Added heteroatom safeguards for pyridine-like rings so N-containing rings do not overmatch benzene",
+      "Expanded Vision Debug and Visual Overlay Debugger with snapped endpoints, bridged gaps, selected/rejected polygons, and atom-label centroids",
+      "Added deterministic ring-closure regressions for clean benzene, camera glare, tablet borders, missing edges, clutter, cyclohexane, cyclohexene, ethene, propene, pyridine, and fused-ring preparation",
+    ],
+  },
+  {
+    version: "5.6.0",
+    date: "Previous",
     status: "released",
     title: "Structure Isolation Engine",
     changes: [

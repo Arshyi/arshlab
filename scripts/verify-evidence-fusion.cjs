@@ -188,11 +188,11 @@ const noisy = scanStructure({
 assert.equal(noisy.bestMatch, null, "invalid OCR-only tokens produce no candidate")
 assert.equal(noisy.evidenceFusion.engines.find((engine) => engine.id === "ocr-formula").candidates.length, 0, "noise does not dominate OCR engine")
 
-assert.equal(cleanBenzene.evidenceFusion.engines.length, 7, "all seven evidence engines report")
+assert.equal(cleanBenzene.evidenceFusion.engines.length, 8, "all eight evidence engines report")
 assert.ok(cleanBenzene.evidenceFusion.whyWinnerBeatRunnerUp.includes("engine"), "winner versus runner-up is explained")
 assert.ok(cleanBenzene.evidenceFusion.strongestEvidence.length > 0, "strongest evidence is reported")
 assert.ok(cleanBenzene.evidenceFusion.weakestEvidence.length > 0, "weakest evidence is reported")
 
 console.log("Verified 10 multi-engine fusion regressions across aromatic rings, saturated rings, formulas, carbonyls, clutter, perspective, occlusion, and OCR noise.")
-console.log("Verified seven independent engine reports, OCR-only confidence caps, topology priority, and winner-versus-runner-up explanations.")
+console.log("Verified eight independent engine reports, OCR-only confidence caps, topology priority, and winner-versus-runner-up explanations.")
 rmSync(outputDirectory, { recursive: true, force: true })

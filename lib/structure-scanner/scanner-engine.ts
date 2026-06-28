@@ -20,6 +20,7 @@ function contributionCategory(vote: FusedEngineVote): StructureScoreContribution
   const categories: Partial<Record<EvidenceEngineId, StructureScoreContribution["category"]>> = {
     "atom-label": "atom-label",
     "bond-geometry": "visual",
+    "ring-closure": "ring",
     "ring-aromatic": "ring",
     "molecular-graph": "graph",
     "functional-group": "visual",
@@ -74,7 +75,10 @@ export function scanStructure(input: StructureScanInput): StructureScanResult {
   const isConfident = Boolean(bestMatch && bestMatch.confidence >= CONFIDENCE_THRESHOLD)
   const ocrConfidence = engineCandidateConfidence(evidenceFusion, "ocr-formula", winnerId) || Math.round(input.ocrQuality ?? 0)
   const graphConfidence = engineCandidateConfidence(evidenceFusion, "molecular-graph", winnerId)
-  const ringConfidence = engineCandidateConfidence(evidenceFusion, "ring-aromatic", winnerId)
+  const ringConfidence = Math.max(
+    engineCandidateConfidence(evidenceFusion, "ring-aromatic", winnerId),
+    engineCandidateConfidence(evidenceFusion, "ring-closure", winnerId),
+  )
   const strongTopologyLowOCR = isConfident && graphConfidence >= 70 && ringConfidence >= 70 && ocrConfidence < 40
   const message = isConfident
     ? strongTopologyLowOCR

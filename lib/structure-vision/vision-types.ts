@@ -53,7 +53,7 @@ export interface VisionRingCandidate {
   confidence: number
   benzeneLike: boolean
   nearRing: boolean
-  source: "pixel-loop" | "graph-cycle" | "graph-near-cycle"
+  source: "pixel-loop" | "graph-cycle" | "graph-near-cycle" | "ring-closure"
   nodeIds: number[]
   closureQuality: number
   endpointMergeQuality: number
@@ -63,6 +63,9 @@ export interface VisionRingCandidate {
   aromaticCueScore: number
   reason: string
   scoreBreakdown: VisionScoreBreakdown[]
+  selectedReason?: string
+  rejectedReasons?: string[]
+  closureGapCount?: number
 }
 
 export interface VisionGraphNode {
@@ -100,6 +103,60 @@ export interface VisionGraphAnalysis {
   explanation: string
 }
 
+export interface VisionRingClosureSnapEvent {
+  segmentIndex: number
+  endpoint: "start" | "end"
+  nodeId: number
+  atomLabelId?: number
+  distance: number
+  accepted: boolean
+  reason: string
+}
+
+export interface VisionRingClosureBridgeEvent {
+  fromNodeId: number
+  toNodeId: number
+  gapLength: number
+  confidence: number
+  accepted: boolean
+  reason: string
+}
+
+export interface VisionRingClosureCandidate {
+  id: number
+  memberCount: number
+  nodeIds: number[]
+  points: VisionPoint[]
+  center: VisionPoint
+  width: number
+  height: number
+  closed: boolean
+  recovered: boolean
+  selected: boolean
+  confidence: number
+  closureConfidence: number
+  regularity: number
+  lineCoverage: number
+  aromaticSupport: number
+  doubleBondCount: number
+  closureGaps: VisionRingClosureBridgeEvent[]
+  source: "atom-centroid" | "endpoint-graph" | "hybrid"
+  selectedReason: string
+  rejectedReasons: string[]
+  scoreBreakdown: VisionScoreBreakdown[]
+}
+
+export interface VisionRingClosureAnalysis {
+  candidates: VisionRingClosureCandidate[]
+  selectedCandidateId: number | null
+  detectedRingSizes: number[]
+  snapEvents: VisionRingClosureSnapEvent[]
+  bridgeEvents: VisionRingClosureBridgeEvent[]
+  aromaticSupportScore: number
+  ringVoteContribution: number
+  explanation: string
+}
+
 export type VisionFunctionalGroupCueKind =
   | "aromatic"
   | "carbonyl"
@@ -133,6 +190,7 @@ export interface StructureVisionAnalysis {
   lineSegments: VisionLineSegment[]
   closedLoops: VisionClosedLoop[]
   ringCandidates: VisionRingCandidate[]
+  ringClosure: VisionRingClosureAnalysis
   graph: VisionGraphAnalysis
   molecularGraph: MolecularGraph
   parallelBondPairs: VisionParallelBondPair[]

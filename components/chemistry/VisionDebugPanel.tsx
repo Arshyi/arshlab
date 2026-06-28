@@ -42,6 +42,8 @@ export function VisionDebugPanel({ analysis, error }: { analysis: StructureVisio
               <Metric label="Pixel closed loops" value={analysis?.closedLoops.length ?? 0} />
               <Metric label="Cycle candidates" value={analysis?.graph.cycleCandidates.length ?? 0} />
               <Metric label="Near-ring candidates" value={analysis?.graph.nearRingCandidates.length ?? 0} />
+              <Metric label="Closure candidates" value={analysis?.ringClosure.candidates.length ?? 0} />
+              <Metric label="Closure bridges" value={analysis?.ringClosure.bridgeEvents.length ?? 0} />
               <Metric label="Parallel line pairs" value={analysis?.parallelLinePairs ?? 0} />
             </div>
 
@@ -115,6 +117,70 @@ export function VisionDebugPanel({ analysis, error }: { analysis: StructureVisio
                   <RingValue label="Regularity" value={`${analysis.ringCandidates[0].polygonRegularity}%`} />
                   <RingValue label="Line coverage" value={`${analysis.ringCandidates[0].lineCoverage}%`} />
                 </div>
+              )}
+            </section>
+
+            <section className="rounded-xl border border-border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold">Ring Closure Engine</h3>
+                <Badge variant="outline" className="rounded-full">
+                  Vote +{analysis?.ringClosure.ringVoteContribution ?? 0}
+                </Badge>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {analysis?.ringClosure.explanation ?? "Run the scanner to test recovered ring closure."}
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <RingValue label="Detected sizes" value={analysis?.ringClosure.detectedRingSizes.join(", ") || "None"} />
+                <RingValue label="Snap events" value={`${analysis?.ringClosure.snapEvents.length ?? 0}`} />
+                <RingValue label="Bridge events" value={`${analysis?.ringClosure.bridgeEvents.length ?? 0}`} />
+                <RingValue label="Aromatic support" value={`${analysis?.ringClosure.aromaticSupportScore ?? 0}%`} />
+              </div>
+              {analysis?.ringClosure.candidates.length ? (
+                <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                  {analysis.ringClosure.candidates.slice(0, 4).map((candidate) => (
+                    <div
+                      key={candidate.id}
+                      className={cn(
+                        "rounded-lg border p-3",
+                        candidate.selected ? "border-orange-500/40 bg-orange-500/10" : "border-border bg-secondary/30",
+                      )}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-semibold">
+                          {candidate.memberCount}-member {candidate.recovered ? "recovered near-ring" : "ring"}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {candidate.selected && <Badge className="rounded-full bg-orange-600">Selected</Badge>}
+                          <Badge variant="secondary" className="rounded-full">{candidate.confidence}%</Badge>
+                        </div>
+                      </div>
+                      <div className="mt-2 grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
+                        <span>Closure {candidate.closureConfidence}%</span>
+                        <span>Regularity {candidate.regularity}%</span>
+                        <span>Line coverage {candidate.lineCoverage}%</span>
+                        <span>Aromatic {candidate.aromaticSupport}%</span>
+                      </div>
+                      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{candidate.selectedReason}</p>
+                      {candidate.rejectedReasons.length ? (
+                        <ul className="mt-2 space-y-1 text-xs text-amber-700 dark:text-amber-300">
+                          {candidate.rejectedReasons.map((reason) => <li key={reason}>Rejected signal: {reason}</li>)}
+                        </ul>
+                      ) : null}
+                      {candidate.closureGaps.length ? (
+                        <ul className="mt-2 space-y-1 text-xs text-teal-700 dark:text-teal-300">
+                          {candidate.closureGaps.map((gap) => (
+                            <li key={`${gap.fromNodeId}-${gap.toNodeId}-${gap.gapLength}`}>
+                              Bridge {gap.fromNodeId}-{gap.toNodeId}: {gap.gapLength}px, {gap.confidence}% - {gap.reason}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">No 5-8 member recovered ring candidate survived closure validation.</p>
               )}
             </section>
 

@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "5.6.0",
+  "version": "5.7.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -12,7 +12,8 @@
     "test:graph": "node scripts/verify-molecular-graph.cjs",
     "test:isolation": "node scripts/verify-structure-isolation.cjs",
     "test:chemistry-ocr": "node scripts/verify-chemistry-ocr.cjs",
-    "test:fusion": "node scripts/verify-evidence-fusion.cjs"
+    "test:fusion": "node scripts/verify-evidence-fusion.cjs",
+    "test:ring-closure": "node scripts/verify-ring-closure.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

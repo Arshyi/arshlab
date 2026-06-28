@@ -54,10 +54,10 @@
     "selectedRingMembers": 5,
     "selectedRingConfidence": 76,
     "parallelPairs": 2,
-    "aromaticCueScore": 44,
+    "aromaticCueScore": 83,
     "functionalCues": ["aromatic", "double-bond"],
     "topCandidate": "benzene",
-    "topVisualScore": 35
+    "topVisualScore": 50
   },
   "incompleteBenzene": {
     "lines": 28,

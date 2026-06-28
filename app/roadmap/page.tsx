@@ -66,6 +66,7 @@ const completed = [
   "Structure-First Robust Scene Understanding",
   "Multi-Engine Evidence Fusion",
   "Structure Isolation Engine",
+  "Ring Closure Engine",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -196,14 +197,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Structure Isolation Engine
+                Ring Closure Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: candidate chemistry regions are scored from local atom, bond, ring, aromatic, density, and
-                bond-length evidence while device frames and scene edges are suppressed. Ambiguous scenes compare multiple
-                crops before the winning region reaches graph reconstruction.
+                Now available: cyclic drawings gain a dedicated local ring-closure pass. Atom-label centroids, snapped
+                bond endpoints, bridgeable gaps, polygon regularity, line coverage, and aromatic support are scored before
+                final evidence fusion so benzene and other rings remain readable even when one edge is imperfect.
               </p>
             </CardContent>
           </Card>
@@ -215,7 +216,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.6.0 - Structure Isolation Engine
+          ARSHLAB v5.7.0 - Ring Closure Engine
         </motion.p>
       </div>
     </div>
