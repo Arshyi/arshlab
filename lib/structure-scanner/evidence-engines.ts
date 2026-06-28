@@ -459,6 +459,47 @@ function molecularGraphEngine(input: StructureScanInput): EvidenceEngineResult {
   )
 }
 
+function globalGraphOptimizerEngine(input: StructureScanInput): EvidenceEngineResult {
+  const optimization = input.visualAnalysis?.globalGraphOptimization
+  const selected = optimization?.selectedHypothesis
+  if (!optimization || !selected) {
+    return engine(
+      "global-graph-optimizer",
+      "Global Graph Optimizer",
+      "Scores multiple whole-molecule graph hypotheses before database lookup.",
+      [],
+      ["No optimized molecular graph hypothesis was available."],
+    )
+  }
+  const output = STRUCTURE_SCANNER_RECORDS.map((record) => {
+    const similarity = scoreMolecularGraphSimilarity(selected.graph, record.id)
+    if (!similarity || similarity.score <= 0) return null
+    const penalties: EvidencePenalty[] = []
+    if (record.id === "benzene" && selected.graph.rings.some((ring) => ring.size === 6 && !ring.aromatic)) {
+      penalties.push({ reason: "The selected optimized graph is a saturated six-member ring, not an aromatic one.", points: 24 })
+    }
+    if (record.id === "cyclohexane" && selected.graph.rings.some((ring) => ring.size === 6 && ring.aromatic)) {
+      penalties.push({ reason: "The selected optimized graph has aromatic support, which contradicts cyclohexane.", points: 24 })
+    }
+    const confidence = clamp(selected.score * 0.68 + similarity.confidence * 0.35 + Math.min(8, optimization.acceptedMoves.length * 2), 0, 98)
+    return candidate(record.id, confidence, "graph", [
+      `Selected optimized graph scored ${selected.score}%`,
+      ...similarity.reasons,
+      selected.operations.length ? `Accepted moves: ${selected.operations.slice(-3).join(", ")}` : "Base hypothesis already satisfied global constraints",
+    ], penalties)
+  }).filter((item): item is EvidenceEngineCandidate => Boolean(item))
+  return engine(
+    "global-graph-optimizer",
+    "Global Graph Optimizer",
+    "Generates graph hypotheses, applies legal score-improving moves, and votes from the selected canonical graph.",
+    output,
+    [
+      optimization.explanation,
+      `Candidates: ${optimization.candidateGraphCount}; accepted moves: ${optimization.acceptedMoves.length}; canonical hash ${optimization.canonicalHash?.slice(0, 18) ?? "none"}.`,
+    ],
+  )
+}
+
 const CUE_GROUPS: Record<string, string[]> = {
   aromatic: ["arene", "aromatic"],
   carbonyl: ["carbonyl", "aldehyde", "ketone", "ester", "amide", "acid anhydride"],
@@ -558,6 +599,7 @@ export function runStructureEvidenceEngines(input: StructureScanInput): Evidence
     bondGeometryEngine(input),
     ringClosureEngine(input),
     ringAromaticEngine(input),
+    globalGraphOptimizerEngine(input),
     molecularGraphEngine(input),
     functionalGroupEngine(input),
     filenameManualEngine(input),

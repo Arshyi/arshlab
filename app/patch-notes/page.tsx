@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.9.0",
+    version: "6.0.0",
     date: "Current",
+    status: "released",
+    title: "Global Molecular Graph Optimizer",
+    changes: [
+      "Added a deterministic Candidate Graph Generator that builds multiple molecular graph hypotheses from the same local image evidence",
+      "Added a Global Molecular Graph Optimizer that accepts only legal graph moves that improve whole-molecule score",
+      "Added whole-molecule scoring across visual confidence, bond-length consistency, bond-angle consistency, valence satisfaction, ring closure quality, aromatic stability, functional-group consistency, database similarity, simplicity, connectivity, and artifact penalties",
+      "Added a Bond Angle Engine for sp, sp2, and sp3 geometry support plus impossible-geometry penalties",
+      "Added ring-template fitting for 5-, 6-, 7-, and 8-member ring candidates with RMS error and confidence metrics",
+      "Added canonical molecular graph generation with stable atom ordering, bond ordering, and deterministic graph hashes for future SMILES/InChI-style work",
+      "Added a Global Graph Optimizer Debug Panel with candidate counts, selected hypothesis, runner-ups, accepted/rejected moves, score breakdown, angle statistics, ring-template statistics, and convergence graph",
+      "Added the optimizer as an independent Evidence Fusion engine vote while preserving all existing OCR, isolation, ring-closure, validation, and local-only scanner safeguards",
+      "Added deterministic optimizer and bond-angle regression tests for benzene, cyclohexane safeguards, long-edge pruning, aromatic triple correction, database ranking, and geometry scoring",
+    ],
+  },
+  {
+    version: "5.9.0",
+    date: "Previous",
     status: "released",
     title: "Perspective-Normalized Structure Extraction",
     changes: [

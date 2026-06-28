@@ -207,6 +207,30 @@ export function VisualOverlayDebugger({
                   </section>
                 )}
 
+                {analysis.globalGraphOptimization.selectedHypothesis && (
+                  <section className="rounded-xl border border-indigo-500/25 bg-indigo-500/5 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 className="font-semibold">Optimizer overlay layers</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Candidate graph comparisons are summarized here; full move and score details render in the Global Graph Optimizer panel.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="rounded-full">
+                        {analysis.globalGraphOptimization.finalOptimizationScore}% optimized
+                      </Badge>
+                    </div>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <PerspectiveLayerPill color="#818cf8" label="Candidate graph #1" value={analysis.globalGraphOptimization.selectedHypothesis.label} />
+                      <PerspectiveLayerPill color="#a78bfa" label="Candidate graph #2" value={analysis.globalGraphOptimization.runnerUpHypotheses[0]?.label ?? "none"} />
+                      <PerspectiveLayerPill color="#c4b5fd" label="Candidate graph #3" value={analysis.globalGraphOptimization.runnerUpHypotheses[1]?.label ?? "none"} />
+                      <PerspectiveLayerPill color="#10b981" label="Final optimized graph" value={`${analysis.globalGraphOptimization.selectedHypothesis.graph.bonds.length} bonds`} />
+                      <PerspectiveLayerPill color="#f97316" label="Removed/added/order moves" value={`${analysis.globalGraphOptimization.acceptedMoves.length}`} />
+                      <PerspectiveLayerPill color="#facc15" label="Ring template overlay" value={`${analysis.globalGraphOptimization.selectedHypothesis.ringTemplateFits.length}`} />
+                    </div>
+                  </section>
+                )}
+
                 <section>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>

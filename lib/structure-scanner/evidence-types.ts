@@ -4,6 +4,7 @@ export type EvidenceEngineId =
   | "bond-geometry"
   | "ring-closure"
   | "ring-aromatic"
+  | "global-graph-optimizer"
   | "molecular-graph"
   | "functional-group"
   | "filename-manual"

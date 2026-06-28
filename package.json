@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "5.9.0",
+  "version": "6.0.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -15,7 +15,9 @@
     "test:fusion": "node scripts/verify-evidence-fusion.cjs",
     "test:ring-closure": "node scripts/verify-ring-closure.cjs",
     "test:chemical-graph-validator": "node scripts/verify-chemical-graph-validator.cjs",
-    "test:perspective-normalizer": "node scripts/verify-perspective-normalizer.cjs"
+    "test:perspective-normalizer": "node scripts/verify-perspective-normalizer.cjs",
+    "test:bond-angle-engine": "node scripts/verify-bond-angle-engine.cjs",
+    "test:global-graph-optimizer": "node scripts/verify-global-graph-optimizer.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

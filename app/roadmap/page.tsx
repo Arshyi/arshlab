@@ -69,6 +69,7 @@ const completed = [
   "Ring Closure Engine",
   "Chemical Graph Validation and Edge Pruning",
   "Perspective-Normalized Structure Extraction",
+  "Global Molecular Graph Optimizer",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -199,15 +200,15 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Perspective-Normalized Structure Extraction
+                Global Molecular Graph Optimizer
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: camera and upload scenes are first searched for the most likely chemistry canvas, then
-                perspective-corrected into a flat local crop before OCR, graph reconstruction, ring closure, validation,
-                and evidence fusion. Cluttered tablet, paper, and whiteboard captures keep the structure in focus while
-                desks, bezels, arms, glare, and background lines stay out of the molecular graph.
+                Now available: the Structure Scanner generates multiple plausible molecular graph hypotheses, scores
+                them as whole molecules, applies only score-improving graph moves, and passes the selected canonical
+                graph into chemical validation and evidence fusion. Benzene-like rings, saturated rings, long clutter
+                edges, and unsupported bond orders are now resolved through global optimization instead of a single pass.
               </p>
             </CardContent>
           </Card>
@@ -219,7 +220,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.9.0 - Perspective-Normalized Structure Extraction
+          ARSHLAB v6.0.0 - Global Molecular Graph Optimizer
         </motion.p>
       </div>
     </div>

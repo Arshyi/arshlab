@@ -15,6 +15,8 @@ import type {
 } from "./vision-types"
 import { reconstructMolecularGraph } from "../vision/molecular-graph"
 import { validateChemicalGraph } from "./chemical-graph-validator"
+import { generateCandidateGraphs } from "./candidate-graph-generator"
+import { optimizeMolecularGraphHypotheses } from "./global-graph-optimizer"
 import { analyzeRingClosure, ringClosureCandidateToVisionRing } from "./ring-closure"
 
 const DEGREE_STEP = 5
@@ -947,24 +949,58 @@ export function analyzeDarkPixelMask(
   }
   const simpleChainLength = estimateSimpleChainLength(lineSegments, mask)
   const functionalGroupCues = buildCues(ringCandidates, parallelLinePairs, simpleChainLength, recognizedText)
+  const carbonylDominant = functionalGroupCues.some((cue) => cue.kind === "carbonyl") &&
+    !functionalGroupCues.some((cue) => cue.kind === "aromatic")
+  const weakCarbonylRing = (memberCount: number, confidence: number, aromaticSupport: number) =>
+    carbonylDominant && memberCount === 5 && confidence < 78 && aromaticSupport < 80
+  const validationRingClosure = carbonylDominant
+    ? {
+      ...ringClosure,
+      candidates: ringClosure.candidates.filter((candidate) =>
+        !weakCarbonylRing(candidate.memberCount, candidate.confidence, candidate.aromaticSupport),
+      ),
+      selectedCandidateId: ringClosure.candidates.some((candidate) =>
+        candidate.id === ringClosure.selectedCandidateId &&
+        !weakCarbonylRing(candidate.memberCount, candidate.confidence, candidate.aromaticSupport),
+      )
+        ? ringClosure.selectedCandidateId
+        : null,
+      explanation: `${ringClosure.explanation} Weak five-member closure candidates were withheld because carbonyl evidence dominated this drawing.`,
+    }
+    : ringClosure
+  const validationRingCandidates = carbonylDominant
+    ? ringCandidates.filter((candidate) =>
+      !(candidate.sidesEstimate === 5 && candidate.confidence < 78 && candidate.aromaticCueScore < 90),
+    )
+    : ringCandidates
   const rawMolecularGraph = reconstructMolecularGraph({
     graph: graphSummary,
     lineSegments,
     parallelBondPairs,
-    ringCandidates,
-    ringClosure,
+    ringCandidates: validationRingCandidates,
+    ringClosure: validationRingClosure,
     functionalGroupCues,
     recognizedText,
     atomLabels,
     imageWidth: mask.width,
     imageHeight: mask.height,
   })
-  const chemicalGraphValidation = validateChemicalGraph({
-    graph: rawMolecularGraph,
+  const candidateGraphHypotheses = generateCandidateGraphs({
+    baseGraph: rawMolecularGraph,
     lineSegments,
     parallelBondPairs,
-    ringClosure,
-    ringCandidates,
+    ringClosure: validationRingClosure,
+    ringCandidates: validationRingCandidates,
+    recognizedText,
+  })
+  const globalGraphOptimization = optimizeMolecularGraphHypotheses(candidateGraphHypotheses)
+  const optimizedMolecularGraph = globalGraphOptimization.selectedHypothesis?.graph ?? rawMolecularGraph
+  const chemicalGraphValidation = validateChemicalGraph({
+    graph: optimizedMolecularGraph,
+    lineSegments,
+    parallelBondPairs,
+    ringClosure: validationRingClosure,
+    ringCandidates: validationRingCandidates,
     recognizedText,
   })
   const molecularGraph = chemicalGraphValidation.validatedGraph
@@ -1009,15 +1045,15 @@ export function analyzeDarkPixelMask(
     : []
   const validatedRingKeys = new Set([
     ...molecularRingCandidates.filter((ring) => ring.nodeIds.length).map((ring) => canonicalCycle(ring.nodeIds)),
-    ...ringClosure.candidates
+    ...validationRingClosure.candidates
       .filter((candidate) => candidate.selected && candidate.confidence >= 50)
       .map((candidate) => canonicalCycle(candidate.nodeIds)),
   ])
-  const supportedRawRingCandidates = ringCandidates.filter((candidate) => {
+  const supportedRawRingCandidates = validationRingCandidates.filter((candidate) => {
     if (!candidate.nodeIds.length) return candidate.source === "pixel-loop" && candidate.confidence >= 62
     return validatedRingKeys.has(canonicalCycle(candidate.nodeIds))
   })
-  const selectedClosureRingCandidates = ringClosure.candidates
+  const selectedClosureRingCandidates = validationRingClosure.candidates
     .filter((candidate) => candidate.selected && candidate.memberCount >= 5 && candidate.memberCount <= 8)
     .map(ringClosureCandidateToVisionRing)
   const finalRingCandidates: VisionRingCandidate[] = []
@@ -1098,9 +1134,10 @@ export function analyzeDarkPixelMask(
     lineSegments,
     closedLoops,
     ringCandidates: finalRingCandidates,
-    ringClosure,
+    ringClosure: validationRingClosure,
     graph: finalGraphSummary,
     molecularGraph,
+    globalGraphOptimization,
     chemicalGraphValidation,
     parallelBondPairs,
     parallelLinePairs,

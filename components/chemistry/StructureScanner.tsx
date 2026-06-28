@@ -53,6 +53,7 @@ import { OCRDebugPanel } from "./OCRDebugPanel"
 import { StructurePreview } from "./StructurePreview"
 import { VisionDebugPanel } from "./VisionDebugPanel"
 import { MolecularGraphDebugPanel } from "./MolecularGraphDebugPanel"
+import { GlobalGraphOptimizerDebugPanel } from "./GlobalGraphOptimizerDebugPanel"
 import { ChemicalGraphValidatorDebugPanel } from "./ChemicalGraphValidatorDebugPanel"
 import { VisualOverlayDebugger } from "./VisualOverlayDebugger"
 import { CameraCapture } from "./CameraCapture"
@@ -520,6 +521,8 @@ export function StructureScanner() {
           <VisionDebugPanel analysis={visionAnalysis} error={visionError} />
 
           <MolecularGraphDebugPanel analysis={visionAnalysis} />
+
+          <GlobalGraphOptimizerDebugPanel analysis={visionAnalysis} />
 
           <ChemicalGraphValidatorDebugPanel analysis={visionAnalysis} />
 

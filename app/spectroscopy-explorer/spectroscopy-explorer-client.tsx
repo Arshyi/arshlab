@@ -101,7 +101,7 @@ export function SpectroscopyExplorerClient() {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">ARSHLAB v5.9.0</Badge>
+                  <Badge variant="secondary">ARSHLAB v6.0.0</Badge>
                   <Badge variant="outline">Database mode = no AI usage</Badge>
                 </div>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Spectroscopy Explorer</h1>

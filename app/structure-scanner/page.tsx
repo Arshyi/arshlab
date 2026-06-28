@@ -7,7 +7,7 @@ import { StructureScanner } from "@/components/chemistry/StructureScanner"
 export const metadata: Metadata = {
   title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload or capture a private snapshot, normalize the chemistry canvas locally, then fuse OCR, atom, bond, ring, graph, functional-group, and hint evidence in the browser.",
+    "Upload or capture a private snapshot, normalize the chemistry canvas locally, optimize molecular graph hypotheses, then fuse local chemistry evidence in the browser.",
 }
 
 export default function StructureScannerPage() {
@@ -26,22 +26,22 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.9.0
+              ARSHLAB v6.0.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot. ARSHLAB first finds the most likely paper, tablet, whiteboard, or screenshot canvas, deskews it into a flat high-contrast local crop, then isolates chemistry-rich regions while suppressing device frames, glare, hands, and scene edges. The scanner then runs ring-closure recovery, chemical graph validation, and evidence fusion on the normalized structure crop.
+            Upload a structure image or accept a single camera snapshot. ARSHLAB first finds the most likely paper, tablet, whiteboard, or screenshot canvas, deskews it into a flat high-contrast local crop, then isolates chemistry-rich regions while suppressing device frames, glare, hands, and scene edges. The scanner now generates multiple molecular graph hypotheses, optimizes them with whole-molecule chemistry constraints, and passes the best canonical graph into validation and evidence fusion.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, ring-closure candidates, chemical valence checks, and chemistry hints. Always verify inferred atoms and bond orders.
+            Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, candidate graph search, bond-angle scoring, ring-template fitting, chemical valence checks, and chemistry hints. Always verify inferred atoms and bond orders.
           </p>
         </div>
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <ScannerFeature
             icon={Database}
-            title="Perspective-Normalized Canvas"
-            description="Tilted paper, tablet, whiteboard, and screenshot regions are selected, deskewed, and scored before OCR or graph reconstruction."
+            title="Global Graph Optimizer"
+            description="Multiple plausible atom/bond graphs are generated, scored as whole molecules, optimized, canonicalized, and then validated."
           />
           <ScannerFeature
             icon={ShieldCheck}

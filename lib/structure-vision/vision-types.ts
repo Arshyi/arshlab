@@ -1,4 +1,5 @@
 import type { ChemicalGraphValidationResult } from "./chemical-graph-validator"
+import type { GlobalGraphOptimizationResult } from "./global-graph-optimizer"
 import type { MolecularGraph } from "../vision/molecular-graph"
 
 export interface VisionPoint {
@@ -196,6 +197,7 @@ export interface StructureVisionAnalysis {
   ringClosure: VisionRingClosureAnalysis
   graph: VisionGraphAnalysis
   molecularGraph: MolecularGraph
+  globalGraphOptimization: GlobalGraphOptimizationResult
   chemicalGraphValidation: ChemicalGraphValidationResult
   parallelBondPairs: VisionParallelBondPair[]
   parallelLinePairs: number
