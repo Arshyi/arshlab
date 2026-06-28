@@ -34,6 +34,11 @@ const TOGGLES: Array<{ id: keyof VisionOverlayVisibility; label: string; color?:
   { id: "bridgedGaps", label: "Bridged gaps", color: VISION_OVERLAY_COLORS.closureBridge },
   { id: "selectedClosureRing", label: "Selected ring polygon", color: VISION_OVERLAY_COLORS.selected },
   { id: "rejectedClosureRings", label: "Rejected ring polygons", color: VISION_OVERLAY_COLORS.rejectedRing },
+  { id: "rejectedValidatedBonds", label: "Raw rejected bonds", color: VISION_OVERLAY_COLORS.rejectedBond },
+  { id: "acceptedValidatedBonds", label: "Accepted validated bonds", color: VISION_OVERLAY_COLORS.acceptedBond },
+  { id: "valenceViolations", label: "Valence violations", color: VISION_OVERLAY_COLORS.valence },
+  { id: "bondOrderCorrections", label: "Bond-order corrections", color: VISION_OVERLAY_COLORS.correction },
+  { id: "validatedRingCandidate", label: "Final validated ring candidate", color: VISION_OVERLAY_COLORS.validatedRing },
 ]
 
 export function VisualOverlayDebugger({

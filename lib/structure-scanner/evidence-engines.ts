@@ -122,9 +122,13 @@ function ringClosureAgreement(input: StructureScanInput): {
   aromaticSupport: number
 } {
   const closure = input.visualAnalysis?.ringClosure
+  const validation = input.visualAnalysis?.chemicalGraphValidation
+  const graphRing = input.visualAnalysis?.molecularGraph.rings.find((ring) => ring.size === 6)
   const selected = closure?.candidates.find((candidate) => candidate.selected)
-  const heteroAtomInSelectedRing = Boolean(selected?.source === "atom-centroid" && selected.nodeIds.some((nodeId) => {
-    const label = input.visualAnalysis?.atomLabels[nodeId]?.label
+  const selectedNodeIds = validation?.selectedValidatedRing?.nodeIds ?? graphRing?.nodeIds ?? selected?.nodeIds ?? []
+  const heteroAtomInSelectedRing = Boolean(selectedNodeIds.some((nodeId) => {
+    const graphNode = input.visualAnalysis?.molecularGraph.nodes.find((node) => node.id === nodeId)
+    const label = graphNode?.inferredElement ?? input.visualAnalysis?.atomLabels[nodeId]?.label
     return Boolean(label && label !== "C" && label !== "H")
   }))
   const aromaticSupport = Math.max(0, ...(closure?.candidates ?? []).map((candidate) =>
@@ -134,13 +138,13 @@ function ringClosureAgreement(input: StructureScanInput): {
     candidate.doubleBondCount >= 2
       ? candidate.aromaticSupport
       : 0,
-  ))
-  const aromaticAgreement = aromaticSupport >= 52
-  const selectedSixRing = selected?.memberCount === 6
+  ), validation?.selectedValidatedRing?.aromatic ? 88 : 0, graphRing?.aromatic ? 82 : 0)
+  const aromaticAgreement = aromaticSupport >= 52 || Boolean(validation?.selectedValidatedRing?.aromatic || graphRing?.aromatic)
+  const selectedSixRing = selected?.memberCount === 6 || validation?.selectedValidatedRing?.size === 6 || graphRing?.size === 6
   return {
     selectedSixRing,
     aromaticAgreement,
-    saturatedSixRingOnly: Boolean(selectedSixRing && !aromaticAgreement && (selected?.doubleBondCount ?? 0) < 2),
+    saturatedSixRingOnly: Boolean(selectedSixRing && !aromaticAgreement && (selected?.doubleBondCount ?? 0) < 2 && !validation?.selectedValidatedRing?.aromatic),
     heteroAtomInSelectedRing,
     aromaticSupport,
   }

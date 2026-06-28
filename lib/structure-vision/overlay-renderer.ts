@@ -22,6 +22,11 @@ export interface VisionOverlayVisibility {
   selectedClosureRing: boolean
   rejectedClosureRings: boolean
   atomLabelCentroids: boolean
+  rejectedValidatedBonds: boolean
+  acceptedValidatedBonds: boolean
+  valenceViolations: boolean
+  bondOrderCorrections: boolean
+  validatedRingCandidate: boolean
 }
 
 export const DEFAULT_VISION_OVERLAYS: VisionOverlayVisibility = {
@@ -41,6 +46,11 @@ export const DEFAULT_VISION_OVERLAYS: VisionOverlayVisibility = {
   selectedClosureRing: true,
   rejectedClosureRings: false,
   atomLabelCentroids: true,
+  rejectedValidatedBonds: true,
+  acceptedValidatedBonds: false,
+  valenceViolations: true,
+  bondOrderCorrections: true,
+  validatedRingCandidate: true,
 }
 
 export const VISION_OVERLAY_COLORS = {
@@ -54,6 +64,11 @@ export const VISION_OVERLAY_COLORS = {
   closureBridge: "#f59e0b",
   rejectedRing: "#fbbf24",
   lineSegments: "#94a3b8",
+  rejectedBond: "#ef4444",
+  acceptedBond: "#10b981",
+  valence: "#fb7185",
+  correction: "#f97316",
+  validatedRing: "#34d399",
   labels: "#ffffff",
 } as const
 
@@ -224,6 +239,78 @@ export function renderVisionOverlay({ context, analysis, visibility, image }: Ov
         scale,
       )
     })
+  }
+
+  if (visibility.acceptedValidatedBonds) {
+    analysis.chemicalGraphValidation.acceptedBonds.forEach((bond) => {
+      drawSegment(context, {
+        start: bond.start,
+        end: bond.end,
+        midpoint: { x: (bond.start.x + bond.end.x) / 2, y: (bond.start.y + bond.end.y) / 2 },
+        length: bond.length,
+        angle: 0,
+        strength: bond.confidence,
+      }, VISION_OVERLAY_COLORS.acceptedBond, scaleX, scaleY, 1.8)
+      drawLabel(context, `V${bond.id} o${bond.bondOrder}`, ((bond.start.x + bond.end.x) / 2) * scaleX, ((bond.start.y + bond.end.y) / 2) * scaleY, scale)
+    })
+  }
+
+  if (visibility.rejectedValidatedBonds) {
+    analysis.chemicalGraphValidation.rejectedBonds.forEach((bond) => {
+      drawSegment(context, {
+        start: bond.start,
+        end: bond.end,
+        midpoint: { x: (bond.start.x + bond.end.x) / 2, y: (bond.start.y + bond.end.y) / 2 },
+        length: bond.length,
+        angle: 0,
+        strength: 1,
+      }, VISION_OVERLAY_COLORS.rejectedBond, scaleX, scaleY, 2.2)
+      drawLabel(context, `X${bond.id} ${bond.kind}`, ((bond.start.x + bond.end.x) / 2) * scaleX, ((bond.start.y + bond.end.y) / 2) * scaleY, scale)
+    })
+  }
+
+  if (visibility.bondOrderCorrections) {
+    analysis.chemicalGraphValidation.correctedBondOrders.forEach((correction) => {
+      drawSegment(context, {
+        start: correction.start,
+        end: correction.end,
+        midpoint: { x: (correction.start.x + correction.end.x) / 2, y: (correction.start.y + correction.end.y) / 2 },
+        length: Math.hypot(correction.end.x - correction.start.x, correction.end.y - correction.start.y),
+        angle: 0,
+        strength: 1,
+      }, VISION_OVERLAY_COLORS.correction, scaleX, scaleY, 2.6)
+      drawLabel(
+        context,
+        `${correction.fromOrder}->${correction.toOrder}`,
+        ((correction.start.x + correction.end.x) / 2) * scaleX,
+        ((correction.start.y + correction.end.y) / 2) * scaleY,
+        scale,
+      )
+    })
+  }
+
+  if (visibility.valenceViolations) {
+    analysis.chemicalGraphValidation.valenceSummaries.filter((summary) => !summary.valid || summary.fixes.length).forEach((summary) => {
+      const node = analysis.molecularGraph.nodes.find((candidate) => candidate.id === summary.nodeId)
+      if (!node) return
+      drawPoint(context, { x: node.x, y: node.y }, VISION_OVERLAY_COLORS.valence, scaleX, scaleY, 3.2)
+      drawLabel(context, `${summary.element} ${summary.observedValence}/${summary.maxValence}`, node.x * scaleX + 5 * scale, node.y * scaleY + 5 * scale, scale)
+    })
+  }
+
+  if (visibility.validatedRingCandidate && analysis.chemicalGraphValidation.selectedValidatedRing) {
+    const points = analysis.chemicalGraphValidation.selectedValidatedRing.nodeIds
+      .map((nodeId) => analysis.molecularGraph.nodes.find((node) => node.id === nodeId))
+      .filter((node): node is (typeof analysis.molecularGraph.nodes)[number] => Boolean(node))
+      .map((node) => ({ x: node.x, y: node.y }))
+    if (points.length >= 3) {
+      drawClosurePolygon(context, points, VISION_OVERLAY_COLORS.validatedRing, scaleX, scaleY, false, 3.2)
+      const center = {
+        x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
+        y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
+      }
+      drawLabel(context, `Validated ${analysis.chemicalGraphValidation.selectedValidatedRing.size}m`, center.x * scaleX, center.y * scaleY, scale)
+    }
   }
 
   if (visibility.cycles) {

@@ -67,6 +67,7 @@ const completed = [
   "Multi-Engine Evidence Fusion",
   "Structure Isolation Engine",
   "Ring Closure Engine",
+  "Chemical Graph Validation and Edge Pruning",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -197,14 +198,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Ring Closure Engine
+                Chemical Graph Validation
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: cyclic drawings gain a dedicated local ring-closure pass. Atom-label centroids, snapped
-                bond endpoints, bridgeable gaps, polygon regularity, line coverage, and aromatic support are scored before
-                final evidence fusion so benzene and other rings remain readable even when one edge is imperfect.
+                Now available: reconstructed scanner graphs gain a deterministic chemistry validation pass. Long false
+                bonds, high-crossing diagonals, unsupported triple bonds, and impossible valence patterns are pruned before
+                evidence fusion so cluttered camera captures keep the most chemically plausible graph.
               </p>
             </CardContent>
           </Card>
@@ -216,7 +217,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v5.7.0 - Ring Closure Engine
+          ARSHLAB v5.8.0 - Chemical Graph Validation and Edge Pruning
         </motion.p>
       </div>
     </div>

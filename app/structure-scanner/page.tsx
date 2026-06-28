@@ -26,22 +26,22 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v5.7.0
+              ARSHLAB v5.8.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot. ARSHLAB first isolates chemistry-rich regions using bond, ring, density, and bond-length evidence while suppressing device frames and scene edges. The scanner then runs local ring-closure recovery to snap atom labels, bridge small bond gaps, and recover cyclic structures before graph reconstruction and evidence fusion.
+            Upload a structure image or accept a single camera snapshot. ARSHLAB first isolates chemistry-rich regions using bond, ring, density, and bond-length evidence while suppressing device frames and scene edges. The scanner then runs local ring-closure recovery and chemical graph validation to prune long/crossing false bonds, correct unsupported triples, enforce basic valence, and recover cyclic structures before evidence fusion.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, ring-closure candidates, and chemistry hints. Always verify inferred atoms and bond orders.
+            Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, ring-closure candidates, chemical valence checks, and chemistry hints. Always verify inferred atoms and bond orders.
           </p>
         </div>
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <ScannerFeature
             icon={Database}
-            title="Ring Closure Recovery"
-            description="Atom-label centroids, snapped endpoints, bridged gaps, and aromatic-support checks help recover benzene and cyclic structures from imperfect drawings."
+            title="Chemical Graph Validation"
+            description="Long diagonals, crossing artifacts, impossible valence, and unsupported triple bonds are pruned before final compound ranking."
           />
           <ScannerFeature
             icon={ShieldCheck}

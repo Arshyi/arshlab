@@ -510,7 +510,7 @@ function atomCenteredGraph(input: MolecularGraphInput): MolecularGraph | null {
     const alternating = nodeIds.length === 6 && doubleCount >= 3 && orders.every((order, index) =>
       order !== orders[(index + 1) % orders.length],
     )
-    const closureSupport = selectedClosure && canonicalCycle(selectedClosure.nodeIds) === canonicalCycle(nodeIds)
+    const closureSupport = Boolean(selectedClosure && canonicalCycle(selectedClosure.nodeIds) === canonicalCycle(nodeIds))
     const aromatic = nodeIds.length === 6 && (
       alternating || doubleCount >= 3 || (closureSupport && selectedClosure.aromaticSupport >= 55)
     )

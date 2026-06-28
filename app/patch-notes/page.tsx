@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.7.0",
+    version: "5.8.0",
     date: "Current",
+    status: "released",
+    title: "Chemical Graph Validation and Edge Pruning",
+    changes: [
+      "Added a deterministic Chemical Graph Validator between molecular graph reconstruction and final scanner evidence fusion",
+      "Added long-bond and high-crossing edge pruning to suppress tablet borders, hand/background diagonals, and scene artifacts",
+      "Added basic valence enforcement for H, C, N, O, halogens, and common atom labels by pruning weakest/longest incident bonds",
+      "Added false triple-bond correction so crowded parallel strokes do not overmatch ethyne, alkynes, or nitriles",
+      "Preserved aromatic evidence when a validated six-member ring has reliable local double-bond/ring-closure support",
+      "Added a Chemical Graph Validator Debug Panel with raw/accepted/pruned bond counts, valence fixes, bond-order corrections, and plausibility explanations",
+      "Expanded the Visual Overlay Debugger with rejected bonds, accepted validated bonds, valence issues, bond-order corrections, and final validated ring polygons",
+      "Added deterministic validator regressions for benzene, clutter/tablet borders, cyclohexane, cyclohexene, ethene, real triples, false triples, long diagonals, and valence cleanup",
+    ],
+  },
+  {
+    version: "5.7.0",
+    date: "Previous",
     status: "released",
     title: "Ring Closure Engine",
     changes: [

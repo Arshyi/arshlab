@@ -1,3 +1,6 @@
+import type { ChemicalGraphValidationResult } from "./chemical-graph-validator"
+import type { MolecularGraph } from "../vision/molecular-graph"
+
 export interface VisionPoint {
   x: number
   y: number
@@ -193,6 +196,7 @@ export interface StructureVisionAnalysis {
   ringClosure: VisionRingClosureAnalysis
   graph: VisionGraphAnalysis
   molecularGraph: MolecularGraph
+  chemicalGraphValidation: ChemicalGraphValidationResult
   parallelBondPairs: VisionParallelBondPair[]
   parallelLinePairs: number
   simpleChainLength: number
@@ -226,4 +230,3 @@ export interface StructureVisionOptions {
     confidence: number
   }>
 }
-import type { MolecularGraph } from "../vision/molecular-graph"

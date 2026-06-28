@@ -14,6 +14,7 @@ import type {
   VisionRingCandidate,
 } from "./vision-types"
 import { reconstructMolecularGraph } from "../vision/molecular-graph"
+import { validateChemicalGraph } from "./chemical-graph-validator"
 import { analyzeRingClosure, ringClosureCandidateToVisionRing } from "./ring-closure"
 
 const DEGREE_STEP = 5
@@ -946,7 +947,7 @@ export function analyzeDarkPixelMask(
   }
   const simpleChainLength = estimateSimpleChainLength(lineSegments, mask)
   const functionalGroupCues = buildCues(ringCandidates, parallelLinePairs, simpleChainLength, recognizedText)
-  const molecularGraph = reconstructMolecularGraph({
+  const rawMolecularGraph = reconstructMolecularGraph({
     graph: graphSummary,
     lineSegments,
     parallelBondPairs,
@@ -958,11 +959,22 @@ export function analyzeDarkPixelMask(
     imageWidth: mask.width,
     imageHeight: mask.height,
   })
-  const atomRingCandidates: VisionRingCandidate[] = molecularGraph.atomCentered
-    ? molecularGraph.rings.map((ring) => {
+  const chemicalGraphValidation = validateChemicalGraph({
+    graph: rawMolecularGraph,
+    lineSegments,
+    parallelBondPairs,
+    ringClosure,
+    ringCandidates,
+    recognizedText,
+  })
+  const molecularGraph = chemicalGraphValidation.validatedGraph
+  const molecularRingCandidates: VisionRingCandidate[] = molecularGraph.rings.length
+    ? molecularGraph.rings.flatMap((ring) => {
+      if (ring.size < 5 || ring.size > 8) return []
       const nodes = ring.nodeIds
         .map((nodeId) => molecularGraph.nodes.find((node) => node.id === nodeId))
         .filter((node): node is (typeof molecularGraph.nodes)[number] => Boolean(node))
+      if (!nodes.length) return []
       const minimumX = Math.min(...nodes.map((node) => node.x))
       const maximumX = Math.max(...nodes.map((node) => node.x))
       const minimumY = Math.min(...nodes.map((node) => node.y))
@@ -970,7 +982,7 @@ export function analyzeDarkPixelMask(
       const ringDoubleBonds = molecularGraph.bonds.filter((bond) =>
         ring.nodeIds.includes(bond.startNodeId) && ring.nodeIds.includes(bond.endNodeId) && bond.bondOrder >= 2,
       ).length
-      return {
+      return [{
         center: { x: average(nodes.map((node) => node.x)), y: average(nodes.map((node) => node.y)) },
         width: maximumX - minimumX,
         height: maximumY - minimumY,
@@ -986,18 +998,41 @@ export function analyzeDarkPixelMask(
         lineCoverage: 100,
         doubleBondCue: clamp(Math.round(ringDoubleBonds / Math.max(1, Math.floor(ring.size / 2)) * 100), 0, 100),
         aromaticCueScore: ring.aromatic ? 95 : 0,
-        reason: `${ring.size}-member cycle reconstructed from snapped atom-label bonds.`,
+        reason: `${ring.size}-member cycle reconstructed from chemically validated ${molecularGraph.atomCentered ? "atom-label" : "stroke"} bonds.`,
         scoreBreakdown: [
-          { label: "Atom-centroid cycle", points: 30, maximum: 30 },
-          { label: "Snapped bond closure", points: 25, maximum: 25 },
+          { label: molecularGraph.atomCentered ? "Atom-centroid cycle" : "Validated graph cycle", points: 30, maximum: 30 },
+          { label: "Pruned bond closure", points: 25, maximum: 25 },
           { label: "Parallel bond support", points: ring.aromatic ? 25 : 0, maximum: 25 },
         ],
-      }
+      }]
     })
     : []
-  const finalRingCandidates = [...atomRingCandidates, ...ringCandidates]
+  const validatedRingKeys = new Set([
+    ...molecularRingCandidates.filter((ring) => ring.nodeIds.length).map((ring) => canonicalCycle(ring.nodeIds)),
+    ...ringClosure.candidates
+      .filter((candidate) => candidate.selected && candidate.confidence >= 50)
+      .map((candidate) => canonicalCycle(candidate.nodeIds)),
+  ])
+  const supportedRawRingCandidates = ringCandidates.filter((candidate) => {
+    if (!candidate.nodeIds.length) return candidate.source === "pixel-loop" && candidate.confidence >= 62
+    return validatedRingKeys.has(canonicalCycle(candidate.nodeIds))
+  })
+  const selectedClosureRingCandidates = ringClosure.candidates
+    .filter((candidate) => candidate.selected && candidate.memberCount >= 5 && candidate.memberCount <= 8)
+    .map(ringClosureCandidateToVisionRing)
+  const finalRingCandidates: VisionRingCandidate[] = []
+  ;[...molecularRingCandidates, ...selectedClosureRingCandidates, ...supportedRawRingCandidates]
     .sort((left, right) => right.confidence - left.confidence)
-  const finalGraphSummary: VisionGraphAnalysis = molecularGraph.atomCentered
+    .forEach((candidate) => {
+      const duplicate = finalRingCandidates.some((existing) =>
+        existing.sidesEstimate === candidate.sidesEstimate &&
+        candidate.nodeIds.length > 0 &&
+        existing.nodeIds.length > 0 &&
+        canonicalCycle(existing.nodeIds) === canonicalCycle(candidate.nodeIds),
+      )
+      if (!duplicate) finalRingCandidates.push(candidate)
+    })
+  const finalGraphSummary: VisionGraphAnalysis = molecularGraph.nodes.length
     ? {
       nodes: molecularGraph.nodes.map((node) => ({
         id: node.id,
@@ -1018,18 +1053,21 @@ export function analyzeDarkPixelMask(
         }
       }),
       mergedEndpointCount: molecularGraph.bonds.reduce((sum, bond) => sum + bond.sourceSegmentIndexes.length, 0),
-      endpointTolerance: molecularGraph.snapRadius,
+      endpointTolerance: molecularGraph.snapRadius || graphSummary.endpointTolerance,
       averageLineLength: graphSummary.averageLineLength,
-      cycleCandidates: atomRingCandidates,
-      nearRingCandidates: [],
-      bestRingConfidence: atomRingCandidates[0]?.confidence ?? 0,
-      aromaticCueScore: atomRingCandidates.some((ring) => ring.benzeneLike) ? 95 : 0,
-      explanation: atomRingCandidates.length
-        ? `${atomRingCandidates[0].sidesEstimate}-member cycle reconstructed from positioned atom labels and snapped bond strokes.`
-        : "Atom labels were positioned and bonds were snapped, but no 3-8 member cycle closed.",
+      cycleCandidates: finalRingCandidates.filter((ring) => !ring.nearRing),
+      nearRingCandidates: finalRingCandidates.filter((ring) => ring.nearRing),
+      bestRingConfidence: finalRingCandidates[0]?.confidence ?? graphSummary.bestRingConfidence,
+      aromaticCueScore: Math.max(
+        graphSummary.aromaticCueScore,
+        finalRingCandidates.some((ring) => ring.benzeneLike) ? 95 : 0,
+      ),
+      explanation: finalRingCandidates.length
+        ? `${finalRingCandidates[0].sidesEstimate}-member cycle reconstructed after chemical graph validation and edge pruning.`
+        : "Chemical graph validation pruned implausible edges; no 3-8 member cycle closed.",
     }
     : graphSummary
-  const finalFunctionalGroupCues = molecularGraph.atomCentered
+  const finalFunctionalGroupCues = molecularGraph.atomCentered || molecularGraph.rings.length > 0
     ? buildCues(finalRingCandidates, parallelLinePairs, simpleChainLength, recognizedText)
     : functionalGroupCues
   const candidates = buildCandidates(
@@ -1063,6 +1101,7 @@ export function analyzeDarkPixelMask(
     ringClosure,
     graph: finalGraphSummary,
     molecularGraph,
+    chemicalGraphValidation,
     parallelBondPairs,
     parallelLinePairs,
     simpleChainLength,

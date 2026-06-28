@@ -32,7 +32,7 @@ const sections = [
   },
   {
     title: "Structure Scanner Images",
-    body: "The v5.7.0 Structure Scanner processes uploaded images and accepted camera snapshots locally in the browser. Candidate-region generation, border suppression, bond-length scoring, multi-crop fallback, image variants, OCR, ring-closure recovery, molecular graphs, evidence fusion, overlays, and optional overlay PNG export remain local. Original images, rejected crops, selected crops, OCR text, atom positions, ring polygons, bridge events, graph geometry, and engine votes are not uploaded to ARSHLAB servers, Supabase, OpenRouter, or an external AI API. Images are not permanently stored or included in local scan history. Local history stores only match labels, source labels, confidence, functional-group labels, timestamps, and corrections.",
+    body: "The v5.8.0 Structure Scanner processes uploaded images and accepted camera snapshots locally in the browser. Candidate-region generation, border suppression, bond-length scoring, multi-crop fallback, image variants, OCR, ring-closure recovery, chemical graph validation, edge pruning, valence diagnostics, molecular graphs, evidence fusion, overlays, and optional overlay PNG export remain local. Original images, rejected crops, selected crops, OCR text, atom positions, ring polygons, bridge events, graph geometry, rejected-bond diagnostics, and engine votes are not uploaded to ARSHLAB servers, Supabase, OpenRouter, or an external AI API. Images are not permanently stored or included in local scan history. Local history stores only match labels, source labels, confidence, functional-group labels, timestamps, and corrections.",
   },
   {
     title: "Optional Camera Capture",

@@ -280,7 +280,7 @@ export default function ChemistryHubPage() {
           <HubActionCard
             icon={ScanSearch}
             title="Molecular Structure Scanner"
-            description="Upload or capture a local structure snapshot, isolate chemistry from borders and clutter, recover cyclic structures with ring closure, then inspect graph and evidence-fusion votes."
+            description="Upload or capture a local structure snapshot, isolate chemistry from borders and clutter, prune impossible graph edges, recover rings, then inspect evidence-fusion votes."
             href="/structure-scanner"
             action="Open Scanner"
           />
