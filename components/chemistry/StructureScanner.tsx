@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { recognizeChemistryImage, type ChemistryOCRResult, type OCRProgressUpdate } from "@/lib/ocr/ocr-engine"
 import { analyzeStructureImage, analyzeStructureSceneVariants } from "@/lib/structure-vision/vision-engine"
+import { normalizePerspectiveImage, type PerspectiveNormalizationResult } from "@/lib/structure-vision/perspective-normalizer"
 import { isolateStructureImage, selectStructureIsolationCandidate } from "@/lib/structure-vision/structure-isolation"
 import type {
   IsolationCandidateEvaluation,
@@ -57,6 +58,7 @@ import { VisualOverlayDebugger } from "./VisualOverlayDebugger"
 import { CameraCapture } from "./CameraCapture"
 import { StructureIsolationDebugPanel } from "./StructureIsolationDebugPanel"
 import { EvidenceFusionDebugPanel } from "./EvidenceFusionDebugPanel"
+import { PerspectiveNormalizationDebugPanel } from "./PerspectiveNormalizationDebugPanel"
 
 type ScannerInputMode = "upload" | "camera"
 
@@ -137,6 +139,8 @@ export function StructureScanner() {
   const [ocrError, setOCRError] = useState<string | null>(null)
   const [visionAnalysis, setVisionAnalysis] = useState<StructureVisionAnalysis | null>(null)
   const [visionError, setVisionError] = useState<string | null>(null)
+  const [perspectiveResult, setPerspectiveResult] = useState<PerspectiveNormalizationResult | null>(null)
+  const [perspectiveError, setPerspectiveError] = useState<string | null>(null)
   const [isolationResult, setIsolationResult] = useState<StructureIsolationResult | null>(null)
   const [isolationError, setIsolationError] = useState<string | null>(null)
   const [ocrMetricsRevision, setOCRMetricsRevision] = useState(0)
@@ -179,6 +183,8 @@ export function StructureScanner() {
     setOCRError(null)
     setVisionAnalysis(null)
     setVisionError(null)
+    setPerspectiveResult(null)
+    setPerspectiveError(null)
     setIsolationResult(null)
     setIsolationError(null)
     setCurrentHistoryId(null)
@@ -198,6 +204,8 @@ export function StructureScanner() {
     setOCRError(null)
     setVisionAnalysis(null)
     setVisionError(null)
+    setPerspectiveResult(null)
+    setPerspectiveError(null)
     setIsolationResult(null)
     setIsolationError(null)
     setCurrentHistoryId(null)
@@ -223,9 +231,26 @@ export function StructureScanner() {
     setVisionError(null)
     setIsolationError(null)
     setIsolationResult(null)
+    setPerspectiveError(null)
+    setPerspectiveResult(null)
     setOCRProgress({ status: "Isolating chemistry drawing", progress: 0 })
 
     let scanImage: Blob = processedImage ?? file
+    let nextPerspectiveResult: PerspectiveNormalizationResult | null = null
+    try {
+      setOCRProgress({ status: "Normalizing perspective", progress: 0 })
+      nextPerspectiveResult = await normalizePerspectiveImage(scanImage)
+      setPerspectiveResult(nextPerspectiveResult)
+      if (!nextPerspectiveResult.analysis.usedFallback && nextPerspectiveResult.selectedVariantId) {
+        scanImage = nextPerspectiveResult.normalizedBlob
+      }
+    } catch (perspectiveFailure) {
+      const message = perspectiveFailure instanceof Error ? perspectiveFailure.message : "Local perspective normalization could not start."
+      setPerspectiveError(message)
+      nextPerspectiveResult = null
+    }
+
+    setOCRProgress({ status: "Isolating chemistry drawing", progress: 0 })
     let nextIsolationResult: StructureIsolationResult | null = null
     try {
       nextIsolationResult = await isolateStructureImage(scanImage)
@@ -422,8 +447,18 @@ export function StructureScanner() {
             onProcessedImageChange={setProcessedImage}
           />
 
-          <StructureIsolationDebugPanel
+          <PerspectiveNormalizationDebugPanel
             sourceBlob={processedImage ?? file}
+            result={perspectiveResult}
+            error={perspectiveError}
+          />
+
+          <StructureIsolationDebugPanel
+            sourceBlob={
+              perspectiveResult && !perspectiveResult.analysis.usedFallback
+                ? perspectiveResult.normalizedBlob
+                : processedImage ?? file
+            }
             result={isolationResult}
             error={isolationError}
           />
@@ -497,6 +532,7 @@ export function StructureScanner() {
             }
             analysis={visionAnalysis}
             result={result}
+            perspectiveResult={perspectiveResult}
           />
 
           <Card className="rounded-2xl">

@@ -13,6 +13,7 @@ import {
   VISION_OVERLAY_COLORS,
   type VisionOverlayVisibility,
 } from "@/lib/structure-vision/overlay-renderer"
+import type { PerspectiveNormalizationResult } from "@/lib/structure-vision/perspective-normalizer"
 import type { StructureVisionAnalysis } from "@/lib/structure-vision/vision-types"
 import type { StructureScanResult } from "@/lib/structure-scanner/scanner-types"
 import { cn } from "@/lib/utils"
@@ -45,10 +46,12 @@ export function VisualOverlayDebugger({
   imageBlob,
   analysis,
   result,
+  perspectiveResult,
 }: {
   imageBlob: Blob | null
   analysis: StructureVisionAnalysis | null
   result: StructureScanResult | null
+  perspectiveResult?: PerspectiveNormalizationResult | null
 }) {
   const [open, setOpen] = useState(false)
   const [visibility, setVisibility] = useState<VisionOverlayVisibility>(DEFAULT_VISION_OVERLAYS)
@@ -143,7 +146,7 @@ export function VisualOverlayDebugger({
                 Visual Overlay Debugger
                 <Badge variant="outline" className="rounded-full border-cyan-500/30">Developer Vision Tools</Badge>
               </span>
-              <span className="block text-sm text-muted-foreground">Inspect image-to-graph conversion and candidate selection</span>
+              <span className="block text-sm text-muted-foreground">Inspect perspective normalization, image-to-graph conversion, and candidate selection</span>
             </span>
           </span>
           <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", open && "rotate-180")} />
@@ -161,6 +164,49 @@ export function VisualOverlayDebugger({
               </div>
             ) : (
               <>
+                {perspectiveResult && (
+                  <section className="rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 className="font-semibold">Perspective-normalization layers</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Source-scene overlays render in the Perspective Normalization Debug Panel above before this graph canvas is built.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="rounded-full">
+                        {perspectiveResult.analysis.usedFallback ? "Fallback isolation" : `${perspectiveResult.analysis.confidence}% canvas confidence`}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <PerspectiveLayerPill
+                        color="#22d3ee"
+                        label="Detected screen/paper quadrilateral"
+                        value={perspectiveResult.analysis.selectedQuadrilateral ? "selected" : "not found"}
+                      />
+                      <PerspectiveLayerPill
+                        color="#f97316"
+                        label="Selected normalized crop"
+                        value={perspectiveResult.selectedVariantId ? perspectiveResult.selectedVariantId.replace("perspective-", "") : "fallback image"}
+                      />
+                      <PerspectiveLayerPill
+                        color="#f59e0b"
+                        label="Rejected rectangles"
+                        value={`${perspectiveResult.analysis.rejectedRegions.length}`}
+                      />
+                      <PerspectiveLayerPill
+                        color="#fef3c7"
+                        label="Glare/highlight mask"
+                        value={`${perspectiveResult.analysis.glareMaskCoverage}%`}
+                      />
+                      <PerspectiveLayerPill
+                        color="#10b981"
+                        label="Structure-region mask"
+                        value={`${perspectiveResult.analysis.structureMaskCoverage}%`}
+                      />
+                    </div>
+                  </section>
+                )}
+
                 <section>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -278,6 +324,18 @@ function DiagnosticRow({ label, value, strong = false }: { label: string; value:
     <div className={cn("flex items-center justify-between gap-3", strong && "font-semibold text-foreground")}>
       <span>{label}</span>
       <span>{value}</span>
+    </div>
+  )
+}
+
+function PerspectiveLayerPill({ color, label, value }: { color: string; label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/70 p-3 text-sm">
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: color }} />
+        <span className="truncate">{label}</span>
+      </span>
+      <span className="shrink-0 text-xs font-medium text-muted-foreground">{value}</span>
     </div>
   )
 }

@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "5.8.0",
+    version: "5.9.0",
     date: "Current",
+    status: "released",
+    title: "Perspective-Normalized Structure Extraction",
+    changes: [
+      "Added a deterministic Perspective Normalizer before OCR, isolation, graph reconstruction, ring closure, validation, and evidence fusion",
+      "Detects likely tablet, paper, whiteboard, and screenshot chemistry canvases from bright rectangular regions, stroke density, atom-label cues, bond-like transitions, and clutter rejection",
+      "Deskews selected canvas regions into normalized local crops with grayscale, high-contrast, thresholded, glare-reduced, and inverted variants",
+      "Added conservative safeguards so plaid/clothing lines, room edges, desk clutter, and tablet borders do not become molecular bonds",
+      "Added a Perspective Normalization Debug Panel with selected quadrilateral overlays, rejected regions, variant scores, normalized previews, glare masks, and structure-region metrics",
+      "Routes the best normalized crop into the existing local OCR, structure isolation, molecular graph, ring-closure, chemical validation, and evidence-fusion pipeline",
+      "Preserved fallback behavior: if no confident paper/screen/whiteboard region is found, ARSHLAB uses the existing structure-isolation pipeline",
+      "Added deterministic perspective-normalizer regressions for clean screenshots, tilted tablet captures, hands/arms, glare, dark bezels, partial crops, ethanol, methanal, paper photos, clutter-only scenes, and plaid background safeguards",
+    ],
+  },
+  {
+    version: "5.8.0",
+    date: "Previous",
     status: "released",
     title: "Chemical Graph Validation and Edge Pruning",
     changes: [
