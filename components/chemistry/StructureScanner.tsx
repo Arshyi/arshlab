@@ -24,6 +24,8 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { recognizeChemistryImage, type ChemistryOCRResult, type OCRProgressUpdate } from "@/lib/ocr/ocr-engine"
 import { analyzeStructureImage, analyzeStructureSceneVariants } from "@/lib/structure-vision/vision-engine"
+import { understandStructureScene } from "@/lib/structure-vision/scene-understanding"
+import type { SceneUnderstandingResult } from "@/lib/structure-vision/scene-graph"
 import { normalizePerspectiveImage, type PerspectiveNormalizationResult } from "@/lib/structure-vision/perspective-normalizer"
 import { isolateStructureImage, selectStructureIsolationCandidate } from "@/lib/structure-vision/structure-isolation"
 import type {
@@ -62,6 +64,7 @@ import { CameraCapture } from "./CameraCapture"
 import { StructureIsolationDebugPanel } from "./StructureIsolationDebugPanel"
 import { EvidenceFusionDebugPanel } from "./EvidenceFusionDebugPanel"
 import { PerspectiveNormalizationDebugPanel } from "./PerspectiveNormalizationDebugPanel"
+import { SceneUnderstandingDebugPanel } from "./SceneUnderstandingDebugPanel"
 
 type ScannerInputMode = "upload" | "camera"
 
@@ -142,6 +145,8 @@ export function StructureScanner() {
   const [ocrError, setOCRError] = useState<string | null>(null)
   const [visionAnalysis, setVisionAnalysis] = useState<StructureVisionAnalysis | null>(null)
   const [visionError, setVisionError] = useState<string | null>(null)
+  const [sceneResult, setSceneResult] = useState<SceneUnderstandingResult | null>(null)
+  const [sceneError, setSceneError] = useState<string | null>(null)
   const [perspectiveResult, setPerspectiveResult] = useState<PerspectiveNormalizationResult | null>(null)
   const [perspectiveError, setPerspectiveError] = useState<string | null>(null)
   const [isolationResult, setIsolationResult] = useState<StructureIsolationResult | null>(null)
@@ -186,6 +191,8 @@ export function StructureScanner() {
     setOCRError(null)
     setVisionAnalysis(null)
     setVisionError(null)
+    setSceneResult(null)
+    setSceneError(null)
     setPerspectiveResult(null)
     setPerspectiveError(null)
     setIsolationResult(null)
@@ -207,6 +214,8 @@ export function StructureScanner() {
     setOCRError(null)
     setVisionAnalysis(null)
     setVisionError(null)
+    setSceneResult(null)
+    setSceneError(null)
     setPerspectiveResult(null)
     setPerspectiveError(null)
     setIsolationResult(null)
@@ -236,9 +245,22 @@ export function StructureScanner() {
     setIsolationResult(null)
     setPerspectiveError(null)
     setPerspectiveResult(null)
-    setOCRProgress({ status: "Isolating chemistry drawing", progress: 0 })
+    setSceneError(null)
+    setSceneResult(null)
+    setOCRProgress({ status: "Understanding chemistry scene", progress: 0 })
 
     let scanImage: Blob = processedImage ?? file
+    try {
+      const nextSceneResult = await understandStructureScene(scanImage)
+      setSceneResult(nextSceneResult)
+      if (nextSceneResult.usedSceneCrop && nextSceneResult.selectedMoleculeBlob) {
+        scanImage = nextSceneResult.selectedMoleculeBlob
+      }
+    } catch (sceneFailure) {
+      const message = sceneFailure instanceof Error ? sceneFailure.message : "Local scene understanding could not start."
+      setSceneError(message)
+    }
+
     let nextPerspectiveResult: PerspectiveNormalizationResult | null = null
     try {
       setOCRProgress({ status: "Normalizing perspective", progress: 0 })
@@ -450,8 +472,14 @@ export function StructureScanner() {
             onProcessedImageChange={setProcessedImage}
           />
 
-          <PerspectiveNormalizationDebugPanel
+          <SceneUnderstandingDebugPanel
             sourceBlob={processedImage ?? file}
+            result={sceneResult}
+            error={sceneError}
+          />
+
+          <PerspectiveNormalizationDebugPanel
+            sourceBlob={sceneResult?.selectedMoleculeBlob ?? processedImage ?? file}
             result={perspectiveResult}
             error={perspectiveError}
           />
@@ -460,7 +488,7 @@ export function StructureScanner() {
             sourceBlob={
               perspectiveResult && !perspectiveResult.analysis.usedFallback
                 ? perspectiveResult.normalizedBlob
-                : processedImage ?? file
+                : sceneResult?.selectedMoleculeBlob ?? processedImage ?? file
             }
             result={isolationResult}
             error={isolationError}
@@ -671,7 +699,7 @@ export function StructureScanner() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Badge variant="outline" className="rounded-full">
-                Scanner mode = isolation + OCR + molecular graph
+                Scanner mode = scene understanding + isolation + OCR + molecular graph
               </Badge>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 <Metric label="Local scans" value={stats.totalScans} />

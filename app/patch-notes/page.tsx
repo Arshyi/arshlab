@@ -18,8 +18,26 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "6.2.0",
+    version: "6.3.0",
     date: "Current",
+    status: "released",
+    title: "Scene Understanding and Molecule Segmentation Engine",
+    changes: [
+      "Added a deterministic Scene Understanding Engine before perspective normalization",
+      "Added a SceneGraph model for molecule regions, multiple-molecule regions, reaction arrows, reaction conditions, chemical text, borders, reflections, human-object masks, noise, and background",
+      "Added molecule segmentation so the scanner can crop the strongest molecule region before OCR, isolation, graph reconstruction, validation, consensus solving, and evidence fusion",
+      "Added a deterministic reaction-arrow detector for horizontal, vertical, equilibrium-style, and curved mechanism-arrow-like strokes",
+      "Separated reaction arrows and chemical text from molecular line structures so arrows and conditions do not become bonds",
+      "Added low-contrast page/slide ruling suppression for notebook pages, textbook captures, PowerPoint slides, and browser screenshots",
+      "Added deterministic reflection/glare and skin-like human-object masks for local suppression before graph reconstruction",
+      "Added confidence isolation for scene understanding, segmentation, graph, chemistry, OCR, and overall scanner confidence",
+      "Added a Scene Understanding Debug Panel with semantic overlays, selected molecule crop, detected regions, reaction layouts, scene graph metrics, and warnings",
+      "Added deterministic scene-understanding regressions for single molecules, multiple molecules, reaction schemes, text-heavy pages, notebook pages, tablet/page/slide borders, reflections, and fingers/hands",
+    ],
+  },
+  {
+    version: "6.2.0",
+    date: "Previous",
     status: "released",
     title: "Consensus Graph Solver",
     changes: [

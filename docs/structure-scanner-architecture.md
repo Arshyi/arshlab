@@ -1,6 +1,6 @@
 # ARSHLAB Structure Scanner Architecture
 
-## v6.2.0 Consensus Graph Solver
+## v6.3.0 Scene Understanding and Molecule Segmentation Engine
 
 The Structure Scanner remains fully deterministic, browser-side, local-only, and database-first.
 It does not call OpenRouter, LLMs, cloud OCR, Supabase functions, or external chemistry APIs.
@@ -9,6 +9,7 @@ It does not call OpenRouter, LLMs, cloud OCR, Supabase functions, or external ch
 
 ```text
 Image
+-> Scene Understanding and Molecule Segmentation
 -> Perspective Normalizer
 -> Structure Isolation
 -> OCR / Chemistry OCR
@@ -22,6 +23,12 @@ Image
 -> Evidence Fusion
 -> Local compound database lookup
 ```
+
+## Scene Understanding Design
+
+The scene layer runs before perspective normalization. It builds a deterministic `SceneGraph` from connected stroke regions, low-contrast page ruling suppression, reaction-arrow detection, semantic text/condition grouping, reflection masks, human-object masks, and border suppression. Later scanner stages operate on the selected molecule crop instead of assuming that every dark pixel in the original image belongs to one molecule.
+
+Scene regions can represent molecule regions, multiple-molecule regions, reaction arrows, curved mechanism-arrow-like strokes, reaction conditions, chemical text, atom labels, charges, page/tablet/phone borders, reflections, hands/fingers, shadows, watermarks, noise, and background. The debug output reports separate confidence for scene understanding, segmentation, graph, chemistry, OCR, and overall scanner confidence.
 
 ## Shape Reconstruction Design
 
@@ -55,15 +62,19 @@ The selected graph exposes calibrated visual, graph, chemical, database, OCR, an
 ## Key Files
 
 - `lib/structure-vision/candidate-graph-generator.ts`
+- `lib/structure-vision/scene-understanding.ts`
+- `lib/structure-vision/scene-graph.ts`
+- `lib/structure-vision/reaction-arrow-detector.ts`
 - `lib/structure-vision/global-shape-reconstruction.ts`
 - `lib/structure-vision/global-graph-optimizer.ts`
 - `lib/structure-vision/consensus-graph-solver.ts`
 - `lib/structure-vision/bond-angle-engine.ts`
 - `lib/structure-vision/canonical-molecular-graph.ts`
 - `components/chemistry/GlobalShapeReconstructionDebugPanel.tsx`
+- `components/chemistry/SceneUnderstandingDebugPanel.tsx`
 - `components/chemistry/GlobalGraphOptimizerDebugPanel.tsx`
 - `components/chemistry/ConsensusGraphSolverDebugPanel.tsx`
 
 ## Safety
 
-All image processing, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, canonical graph hashes, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, and repair histories are not uploaded to ARSHLAB servers or stored permanently.
+All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, canonical graph hashes, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, scene graphs, semantic region boxes, and repair histories are not uploaded to ARSHLAB servers or stored permanently.

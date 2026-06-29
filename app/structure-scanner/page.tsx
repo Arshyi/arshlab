@@ -7,7 +7,7 @@ import { StructureScanner } from "@/components/chemistry/StructureScanner"
 export const metadata: Metadata = {
   title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload or capture a private snapshot, normalize the chemistry canvas locally, reconstruct the intended skeleton, solve molecular graph consensus, then fuse local chemistry evidence in the browser.",
+    "Upload or capture a private snapshot, parse the chemistry scene locally, segment molecule regions, reconstruct the intended skeleton, solve molecular graph consensus, then fuse local chemistry evidence in the browser.",
 }
 
 export default function StructureScannerPage() {
@@ -26,22 +26,22 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v6.2.0
+              ARSHLAB v6.3.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot. ARSHLAB first finds the most likely paper, tablet, whiteboard, or screenshot canvas, deskews it into a flat high-contrast local crop, then isolates chemistry-rich regions while suppressing device frames, glare, hands, and scene edges. The scanner reconstructs fragmented bond strokes into a cleaner intended skeleton before generating molecular graph hypotheses, optimizing them with whole-molecule chemistry constraints, validating chemical legality, and selecting a final consensus graph before evidence fusion.
+            Upload a structure image or accept a single camera snapshot. ARSHLAB first parses the whole chemistry scene, separating molecule regions, reaction arrows, conditions, chemical text, borders, reflections, and human-object clutter. The selected molecule crop then flows through perspective normalization, structure isolation, OCR, graph reconstruction, chemical validation, consensus graph solving, and evidence fusion.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, candidate graph search, bond-angle scoring, ring-template fitting, chemical valence checks, legal graph repairs, consensus scoring, and chemistry hints. Always verify inferred atoms and bond orders.
+            Molecular reconstruction is an educational estimate built from local scene segmentation, line geometry, endpoint graphs, candidate graph search, bond-angle scoring, ring-template fitting, chemical valence checks, legal graph repairs, consensus scoring, and chemistry hints. Always verify inferred atoms and bond orders.
           </p>
         </div>
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <ScannerFeature
             icon={Database}
-            title="Consensus Graph Solver"
-            description="Raw, optimized, validated, and repaired graph hypotheses are deduplicated, scored, and calibrated before final matching."
+            title="Scene Understanding"
+            description="Molecule regions, reaction arrows, conditions, text, borders, reflections, and human-object clutter are separated before graph reconstruction."
           />
           <ScannerFeature
             icon={ShieldCheck}
