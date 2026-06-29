@@ -36,7 +36,8 @@ import type {
 import type { StructureVisionAnalysis } from "@/lib/structure-vision/vision-types"
 import { scanStructure } from "@/lib/structure-scanner/scanner-engine"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
-import { analyzeChemistryIntelligence } from "@/lib/chemistry-intelligence/intelligence-engine"
+import { analyzeChemistryIntelligence, INTELLIGENCE_COMPOUND_RECORDS } from "@/lib/chemistry-intelligence/intelligence-engine"
+import { generateCandidateEliminationReport } from "@/lib/chemistry-intelligence/graph-matcher"
 import {
   formatStructureScanTimestamp,
   correctStructureScan,
@@ -67,6 +68,7 @@ import { EvidenceFusionDebugPanel } from "./EvidenceFusionDebugPanel"
 import { PerspectiveNormalizationDebugPanel } from "./PerspectiveNormalizationDebugPanel"
 import { SceneUnderstandingDebugPanel } from "./SceneUnderstandingDebugPanel"
 import { ChemistryIntelligencePanel } from "./ChemistryIntelligencePanel"
+import { ChemicalContradictionReport } from "./ChemicalContradictionReport"
 
 type ScannerInputMode = "upload" | "camera"
 
@@ -168,6 +170,11 @@ export function StructureScanner() {
       graphConfidence: result.confidenceBreakdown.graph || graph.estimates.confidence,
     })
   }, [ocrResult, result, visionAnalysis])
+  const contradictionReport = useMemo(() => {
+    const graph = visionAnalysis?.consensusGraphSolver.selectedGraph ?? visionAnalysis?.molecularGraph
+    if (!graph || !result?.bestMatch) return null
+    return generateCandidateEliminationReport(graph, INTELLIGENCE_COMPOUND_RECORDS, result.bestMatch.record.id)
+  }, [result, visionAnalysis])
 
   useEffect(() => {
     setHistory(readStructureScanHistory())
@@ -833,6 +840,7 @@ export function StructureScanner() {
           {result.bestMatch && result.isConfident ? (
             <div className="space-y-4">
               <StructureMatchCard match={result.bestMatch} primary />
+              <ChemicalContradictionReport report={contradictionReport} />
               <ChemistryIntelligencePanel intelligence={chemistryIntelligence} />
               {result.matches.length > 1 && (
                 <div className="grid gap-4 lg:grid-cols-2">
@@ -855,6 +863,7 @@ export function StructureScanner() {
                   <StructureMatchCard key={match.record.id} match={match} />
                 ))}
               </div>
+              <ChemicalContradictionReport report={contradictionReport} />
             </div>
           ) : (
             <Card className="rounded-2xl border-dashed">

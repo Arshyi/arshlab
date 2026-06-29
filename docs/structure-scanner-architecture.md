@@ -1,6 +1,6 @@
 # ARSHLAB Structure Scanner Architecture
 
-## v7.1.0 Reference Compound Graph Library
+## v7.2.0 Chemical Contradiction and Candidate Elimination Engine
 
 The Structure Scanner remains fully deterministic, browser-side, local-only, and database-first.
 It does not call OpenRouter, LLMs, cloud OCR, Supabase functions, or external chemistry APIs.
@@ -22,6 +22,9 @@ Image
 -> Ring Closure evidence
 -> Evidence Fusion
 -> Canonical Molecular Graph
+-> Candidate Generation
+-> Chemical Contradiction Engine
+-> Remaining Candidates
 -> Chemistry Intelligence Engine
 -> ARSHLAB Knowledge Graph
 -> User Interface
@@ -40,6 +43,14 @@ Confidence is split into vision confidence, graph confidence, chemistry confiden
 The v7.1 layer expands the known canonical graph library from a small proof-of-concept set to 100+ undergraduate structures. Coverage includes hydrocarbons, alkenes, alkynes, alcohols, aldehydes, ketones, carboxylic acids, esters, amides, amines, haloalkanes, benzene derivatives, heterocycles, amino acids, sugars, common solvents, and common lab reagents.
 
 Each seeded compound provides a canonical heavy-atom molecular graph plus standardized local annotations: formula, family, functional groups, polarity estimate, physical-state estimate, curriculum topic, formula sheet mapping, practice/exam topic, mechanism links, reaction hooks, spectroscopy hook, and safety notes where useful. The graph matcher can therefore identify more structures before the UI asks the rest of ARSHLAB what is known about them.
+
+## Chemical Contradiction Design
+
+The v7.2 layer changes candidate ranking from positive-evidence-only scoring to chemistry-first elimination. Every reference candidate exposes deterministic identity requirements derived from its canonical graph and local metadata: carbon count, heteroatom counts, ring count, ring size, aromaticity, double-bond count, triple-bond count, branch count, terminal OH count, carbonyl count, amine/nitrogen count, halogen count, connected components, allowed functional groups, and forbidden functional groups.
+
+Hard contradictions eliminate a candidate before database ranking. For example, benzene fails against an ethanol-like graph because oxygen is present, carbon count is wrong, no aromatic six-member ring exists, and the functional-group topology is incompatible. Soft contradictions are retained as score penalties and debug context when they are informative but not identity-breaking.
+
+Chemistry Intelligence only receives candidates that survived the contradiction report. The scanner UI shows the Chemical Contradiction Report so students can see which alternatives were rejected and why.
 
 ## Scene Understanding Design
 
@@ -85,6 +96,11 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 - `lib/chemistry-intelligence/intelligence-engine.ts`
 - `lib/chemistry-intelligence/graph-matcher.ts`
 - `lib/chemistry-intelligence/reference-library.ts`
+- `lib/chemistry-intelligence/contradiction-engine.ts`
+- `lib/chemistry-intelligence/candidate-eliminator.ts`
+- `lib/chemistry-intelligence/identity-validator.ts`
+- `lib/chemistry-intelligence/chemical-requirements.ts`
+- `lib/chemistry-intelligence/elimination-report.ts`
 - `lib/chemistry-intelligence/functional-group-engine.ts`
 - `lib/chemistry-intelligence/chemistry-intelligence-graph.ts`
 - `lib/chemistry-intelligence/types.ts`
@@ -101,9 +117,11 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 - `components/chemistry/SceneUnderstandingDebugPanel.tsx`
 - `components/chemistry/GlobalGraphOptimizerDebugPanel.tsx`
 - `components/chemistry/ConsensusGraphSolverDebugPanel.tsx`
+- `components/chemistry/ChemicalContradictionReport.tsx`
 - `components/chemistry/ChemistryIntelligencePanel.tsx`
+- `scripts/verify-contradiction-engine.cjs`
 - `scripts/verify-chemistry-intelligence.cjs`
 
 ## Safety
 
-All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, canonical graph hashes, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, scene graphs, semantic region boxes, repair histories, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.
+All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, canonical graph hashes, contradiction reports, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, scene graphs, semantic region boxes, repair histories, contradiction traces, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.

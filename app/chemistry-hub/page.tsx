@@ -280,7 +280,7 @@ export default function ChemistryHubPage() {
             <HubActionCard
               icon={ScanSearch}
               title="Molecular Structure Scanner"
-              description="Upload or capture a local structure snapshot, reconstruct the graph, then inspect identity, functional groups, scaffolds, properties, spectra, reactions, and study links from the expanded reference graph library."
+              description="Upload or capture a local structure snapshot, reconstruct the graph, reject chemically impossible identities, then inspect functional groups, scaffolds, properties, spectra, reactions, and study links."
               href="/structure-scanner"
               action="Open Scanner"
             />

@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "7.1.0",
+    version: "7.2.0",
     date: "Current",
+    status: "released",
+    title: "Chemical Contradiction and Candidate Elimination Engine",
+    changes: [
+      "Added a deterministic Chemical Contradiction Engine before final chemistry intelligence ranking",
+      "Added identity requirements for reference candidates, including atom counts, heteroatom counts, ring counts, ring sizes, aromaticity, bond orders, branches, terminal OH, carbonyls, amines, halogens, connected components, and forbidden functional groups",
+      "Added hard contradiction handling so impossible candidates are eliminated before database ranking",
+      "Added soft contradiction handling for weaker structural mismatches that reduce confidence without immediate rejection",
+      "Updated canonical graph matching so only chemically surviving candidates are ranked",
+      "Added a Chemical Contradiction Report panel to scanner results with generated candidates, eliminated candidates, hard contradictions, soft contradictions, requirements checked, and rejected alternatives",
+      "Added contradiction-engine regression tests for benzene, cyclohexane, ethanol, acetone, ethanoic acid, aniline, phenol, cyclohexene, and nitrobenzene substitutions",
+    ],
+  },
+  {
+    version: "7.1.0",
+    date: "Previous",
     status: "released",
     title: "Reference Compound Graph Library",
     changes: [

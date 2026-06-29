@@ -2,6 +2,8 @@ import { canonicalizeMolecularGraph, molecularGraphHash } from "../structure-vis
 import type { MolecularGraph, MolecularGraphBond, MolecularGraphNode, MolecularGraphRing } from "../vision/molecular-graph"
 import type { GraphMatchResult, IntelligenceCompoundRecord } from "./types"
 import { buildExpandedReferenceGraphs } from "./reference-library"
+import { runChemicalContradictionEngine } from "./contradiction-engine"
+import type { CandidateEliminationReport } from "./elimination-report"
 
 type ElementSymbol = MolecularGraphNode["inferredElement"]
 
@@ -353,12 +355,18 @@ export function matchCanonicalGraph(
 ): GraphMatchResult[] {
   const canonicalId = canonicalGraphId(graph)
   const recordMap = new Map(records.map((record) => [record.id, record]))
-  const matches = REFERENCE_MOLECULAR_GRAPHS.map((reference) => {
+  const eliminationReport = generateCandidateEliminationReport(graph, records, preferredCompoundId)
+  const candidateStatus = new Map(eliminationReport.candidates.map((candidate) => [candidate.compoundId, candidate]))
+  const passedIds = new Set(eliminationReport.candidates.filter((candidate) => candidate.status === "passed").map((candidate) => candidate.compoundId))
+  const matches = REFERENCE_MOLECULAR_GRAPHS
+    .filter((reference) => passedIds.has(reference.compoundId))
+    .map((reference) => {
     const referenceCanonicalId = canonicalGraphId(reference.graph)
     const exact = canonicalId === referenceCanonicalId
     const feature = featureSimilarity(graph, reference.graph, recordMap.get(reference.compoundId))
     const preferredBonus = preferredCompoundId === reference.compoundId ? 8 : 0
     const confidence = exact ? 100 : Math.round(clamp(feature.score + graph.estimates.confidence * 0.16 + preferredBonus, 0, 96))
+    const elimination = candidateStatus.get(reference.compoundId)
     return {
       compoundId: reference.compoundId,
       confidence,
@@ -366,22 +374,41 @@ export function matchCanonicalGraph(
       canonicalId,
       referenceCanonicalId,
       reasons: exact
-        ? ["Graph isomorphism matched atom connectivity independent of rotation, mirroring, or numbering."]
-        : feature.reasons,
+        ? [
+          "Graph isomorphism matched atom connectivity independent of rotation, mirroring, or numbering.",
+          elimination ? `Chemical requirements passed (${elimination.satisfied}/${elimination.requirementsEvaluated}).` : "Chemical requirements passed.",
+        ]
+        : [
+          ...feature.reasons,
+          elimination ? `Chemical requirements passed (${elimination.satisfied}/${elimination.requirementsEvaluated}).` : "Chemical requirements passed.",
+        ],
     }
   })
     .filter((match) => match.exact || match.confidence >= 38)
     .sort((left, right) => right.confidence - left.confidence || Number(right.exact) - Number(left.exact) || left.compoundId.localeCompare(right.compoundId))
 
-  if (preferredCompoundId && !matches.some((item) => item.compoundId === preferredCompoundId)) {
+  if (preferredCompoundId && passedIds.has(preferredCompoundId) && !matches.some((item) => item.compoundId === preferredCompoundId)) {
     matches.push({
       compoundId: preferredCompoundId,
       confidence: 52,
       exact: false,
       canonicalId,
       referenceCanonicalId: "database-record-fallback",
-      reasons: ["Existing scanner evidence selected this database record; intelligence engine kept it as a deterministic fallback."],
+      reasons: ["Existing scanner evidence selected this database record, and chemical contradiction checks did not reject it."],
     })
   }
   return matches.slice(0, 8)
+}
+
+export function generateCandidateEliminationReport(
+  graph: MolecularGraph,
+  records: IntelligenceCompoundRecord[],
+  preferredCompoundId?: string,
+): CandidateEliminationReport {
+  return runChemicalContradictionEngine({
+    graph,
+    references: REFERENCE_MOLECULAR_GRAPHS,
+    records,
+    preferredCompoundId,
+  })
 }
