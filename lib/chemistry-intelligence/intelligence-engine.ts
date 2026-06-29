@@ -6,6 +6,7 @@ import type { MolecularGraph } from "../vision/molecular-graph"
 import { buildChemistryIntelligenceGraph } from "./chemistry-intelligence-graph"
 import { classifyFamilies, classifyFunctionalGroups, classifyScaffolds } from "./functional-group-engine"
 import { REFERENCE_MOLECULAR_GRAPHS, canonicalGraphId, matchCanonicalGraph } from "./graph-matcher"
+import { REFERENCE_LIBRARY_COMPOUND_RECORDS, getReferenceLibraryMetrics } from "./reference-library"
 import type {
   ChemicalPropertySummary,
   ChemistryIntelligenceInput,
@@ -159,10 +160,19 @@ const EXTRA_INTELLIGENCE_RECORDS: IntelligenceCompoundRecord[] = [
   },
 ]
 
-export const INTELLIGENCE_COMPOUND_RECORDS: IntelligenceCompoundRecord[] = [
+function dedupeRecords(records: IntelligenceCompoundRecord[]): IntelligenceCompoundRecord[] {
+  const byId = new Map<string, IntelligenceCompoundRecord>()
+  records.forEach((record) => {
+    if (!byId.has(record.id)) byId.set(record.id, record)
+  })
+  return Array.from(byId.values())
+}
+
+export const INTELLIGENCE_COMPOUND_RECORDS: IntelligenceCompoundRecord[] = dedupeRecords([
   ...STRUCTURE_SCANNER_RECORDS.map(toRecord),
   ...EXTRA_INTELLIGENCE_RECORDS,
-]
+  ...REFERENCE_LIBRARY_COMPOUND_RECORDS,
+])
 
 function getRecord(id: string | undefined): IntelligenceCompoundRecord | undefined {
   if (!id) return undefined
@@ -317,6 +327,11 @@ function resourceLinks(record: IntelligenceCompoundRecord): IntelligenceLink[] {
       reason: "Use this molecule as a synthesis starting point.",
     },
     {
+      label: "Expected Spectra",
+      href: spectroscopyExplorerHref({ compound: record.id }),
+      reason: "Open deterministic spectroscopy expectations for this compound or functional family.",
+    },
+    {
       label: "Practice This",
       href: `/practice-generator?topic=${encodeURIComponent(record.practiceTopic ?? "Functional Group Identification")}&source=database`,
       reason: "Generate deterministic practice linked to the recognized chemistry.",
@@ -453,10 +468,13 @@ export function analyzeChemistryIntelligence(input: ChemistryIntelligenceInput):
 }
 
 export function getChemistryIntelligenceMetrics() {
+  const libraryMetrics = getReferenceLibraryMetrics()
   return {
     compoundRecords: INTELLIGENCE_COMPOUND_RECORDS.length,
     referenceGraphs: REFERENCE_MOLECULAR_GRAPHS.length,
+    referenceLibraryCompounds: libraryMetrics.compounds,
     functionalGroupFamilies: 17,
+    functionalGroupAnnotations: libraryMetrics.functionalGroupAnnotations,
     scaffoldRules: 12,
     linkedModules: 9,
   }

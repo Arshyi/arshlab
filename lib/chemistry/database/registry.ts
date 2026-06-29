@@ -25,7 +25,7 @@ import { ALL_LEWIS_STRUCTURES } from "./lewis/templates"
 import { QUESTION_TOPICS } from "./questions/topics"
 import { EDUCATION_HUB_SECTIONS } from "./education/hub"
 
-export const DATABASE_VERSION = "7.0.0"
+export const DATABASE_VERSION = "7.1.0"
 
 export function getDatabaseMeta(): DatabaseMeta {
   const mechanismMetrics = getMechanismMetrics()
@@ -88,7 +88,9 @@ export function getDatabaseMeta(): DatabaseMeta {
       labEquipmentItems: labMetrics.equipmentItems,
       chemistryIntelligenceCompounds: chemistryIntelligenceMetrics.compoundRecords,
       chemistryIntelligenceReferenceGraphs: chemistryIntelligenceMetrics.referenceGraphs,
+      chemistryIntelligenceReferenceLibraryCompounds: chemistryIntelligenceMetrics.referenceLibraryCompounds,
       chemistryIntelligenceFunctionalFamilies: chemistryIntelligenceMetrics.functionalGroupFamilies,
+      chemistryIntelligenceFunctionalGroupAnnotations: chemistryIntelligenceMetrics.functionalGroupAnnotations,
       chemistryIntelligenceScaffoldRules: chemistryIntelligenceMetrics.scaffoldRules,
       chemistryIntelligenceLinkedModules: chemistryIntelligenceMetrics.linkedModules,
       vseprPresets: VSEPR_PRESETS.length,

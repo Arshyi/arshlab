@@ -1,6 +1,6 @@
 # ARSHLAB Structure Scanner Architecture
 
-## v7.0.0 Chemistry Intelligence Engine
+## v7.1.0 Reference Compound Graph Library
 
 The Structure Scanner remains fully deterministic, browser-side, local-only, and database-first.
 It does not call OpenRouter, LLMs, cloud OCR, Supabase functions, or external chemistry APIs.
@@ -34,6 +34,12 @@ The v7 layer starts after the scanner selects a consensus molecular graph. It tr
 The intelligence object includes identity, graph matches, hierarchical functional groups, scaffold recognition, compound-family classification, chemical property summaries, spectroscopy links, known reactions, mechanism families, curriculum links, learning resources, safety notes, confidence channels, and an explainable "why ARSHLAB recognized this" trace.
 
 Confidence is split into vision confidence, graph confidence, chemistry confidence, knowledge confidence, and overall confidence. OCR and image evidence can support a result, but the v7 interpretation is driven by the selected canonical graph plus local chemistry databases.
+
+## Reference Graph Library
+
+The v7.1 layer expands the known canonical graph library from a small proof-of-concept set to 100+ undergraduate structures. Coverage includes hydrocarbons, alkenes, alkynes, alcohols, aldehydes, ketones, carboxylic acids, esters, amides, amines, haloalkanes, benzene derivatives, heterocycles, amino acids, sugars, common solvents, and common lab reagents.
+
+Each seeded compound provides a canonical heavy-atom molecular graph plus standardized local annotations: formula, family, functional groups, polarity estimate, physical-state estimate, curriculum topic, formula sheet mapping, practice/exam topic, mechanism links, reaction hooks, spectroscopy hook, and safety notes where useful. The graph matcher can therefore identify more structures before the UI asks the rest of ARSHLAB what is known about them.
 
 ## Scene Understanding Design
 
@@ -78,6 +84,7 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 
 - `lib/chemistry-intelligence/intelligence-engine.ts`
 - `lib/chemistry-intelligence/graph-matcher.ts`
+- `lib/chemistry-intelligence/reference-library.ts`
 - `lib/chemistry-intelligence/functional-group-engine.ts`
 - `lib/chemistry-intelligence/chemistry-intelligence-graph.ts`
 - `lib/chemistry-intelligence/types.ts`

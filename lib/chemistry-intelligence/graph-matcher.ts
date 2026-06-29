@@ -1,10 +1,11 @@
 import { canonicalizeMolecularGraph, molecularGraphHash } from "../structure-vision/canonical-molecular-graph"
 import type { MolecularGraph, MolecularGraphBond, MolecularGraphNode, MolecularGraphRing } from "../vision/molecular-graph"
 import type { GraphMatchResult, IntelligenceCompoundRecord } from "./types"
+import { buildExpandedReferenceGraphs } from "./reference-library"
 
 type ElementSymbol = MolecularGraphNode["inferredElement"]
 
-interface ReferenceGraph {
+export interface ReferenceGraph {
   compoundId: string
   graph: MolecularGraph
 }
@@ -148,7 +149,7 @@ const cyclohexaneRing: Array<[number, number, 1]> = [
   [5, 0, 1],
 ]
 
-export const REFERENCE_MOLECULAR_GRAPHS: ReferenceGraph[] = [
+const CORE_REFERENCE_MOLECULAR_GRAPHS: ReferenceGraph[] = [
   createReferenceGraph("benzene", ["C", "C", "C", "C", "C", "C"], benzeneRing, [{ nodeIds: [0, 1, 2, 3, 4, 5], aromatic: true }], "C6H6"),
   createReferenceGraph("phenol", ["C", "C", "C", "C", "C", "C", "O"], [...benzeneRing, [0, 6, 1]], [{ nodeIds: [0, 1, 2, 3, 4, 5], aromatic: true }], "C6H6O"),
   createReferenceGraph("aniline", ["C", "C", "C", "C", "C", "C", "N"], [...benzeneRing, [0, 6, 1]], [{ nodeIds: [0, 1, 2, 3, 4, 5], aromatic: true }], "C6H7N"),
@@ -190,6 +191,19 @@ export const REFERENCE_MOLECULAR_GRAPHS: ReferenceGraph[] = [
     { nodeIds: [4, 6, 7, 8, 5], aromatic: true },
   ], "C8H10N4O2"),
 ]
+
+function dedupeReferenceGraphs(graphs: ReferenceGraph[]): ReferenceGraph[] {
+  const byId = new Map<string, ReferenceGraph>()
+  graphs.forEach((graph) => {
+    if (!byId.has(graph.compoundId)) byId.set(graph.compoundId, graph)
+  })
+  return Array.from(byId.values())
+}
+
+export const REFERENCE_MOLECULAR_GRAPHS: ReferenceGraph[] = dedupeReferenceGraphs([
+  ...CORE_REFERENCE_MOLECULAR_GRAPHS,
+  ...buildExpandedReferenceGraphs(createReferenceGraph),
+])
 
 function adjacencySignature(graph: MolecularGraph, order: number[]): string {
   const indexByNodeId = new Map(order.map((nodeId, index) => [nodeId, index]))

@@ -26,14 +26,14 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v7.0.0
+              ARSHLAB v7.1.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
             Upload a structure image or accept a single camera snapshot. ARSHLAB first reconstructs the molecule locally, then treats the selected canonical graph as chemistry knowledge: identity, functional groups, scaffold, properties, spectroscopy, reactions, mechanisms, curriculum links, and explainable confidence.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Molecular reconstruction and chemistry intelligence are educational estimates built from local scene segmentation, graph consensus, canonical graph matching, functional-group rules, scaffold rules, and database records. Always verify inferred atoms, bond orders, and chemical conclusions.
+            Molecular reconstruction and chemistry intelligence are educational estimates built from local scene segmentation, graph consensus, canonical graph matching, a 100+ compound reference graph library, functional-group rules, scaffold rules, and database records. Always verify inferred atoms, bond orders, and chemical conclusions.
           </p>
         </div>
 
@@ -46,7 +46,7 @@ export default function StructureScannerPage() {
           <ScannerFeature
             icon={Brain}
             title="Chemistry Intelligence"
-            description="The selected molecular graph is matched to local compound records, functional groups, scaffolds, properties, spectroscopy, reactions, and learning resources."
+            description="The selected molecular graph is matched against an expanded local reference graph library, functional groups, scaffolds, properties, spectroscopy, reactions, and learning resources."
           />
           <ScannerFeature
             icon={ShieldCheck}

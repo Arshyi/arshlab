@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "7.0.0",
+    version: "7.1.0",
     date: "Current",
+    status: "released",
+    title: "Reference Compound Graph Library",
+    changes: [
+      "Added a deterministic reference compound graph library for Chemistry Intelligence",
+      "Seeded 100+ undergraduate canonical molecular graph records across hydrocarbons, alcohols, carbonyls, acids, esters, amides, amines, haloalkanes, aromatics, heterocycles, amino acids, sugars, and lab reagents",
+      "Added standardized compound metadata with functional-group annotations, scaffold/family annotations, curriculum mappings, formula sheet mappings, spectroscopy hooks, reaction hooks, mechanism hooks, and safety notes where available",
+      "Expanded canonical graph matching coverage for benzene derivatives, primary/secondary/tertiary alcohols, aldehydes, ketones, carboxylic acids, esters, amides, amines, aryl halides, heterocycles, amino acids, and common solvents/reagents",
+      "Added graph matcher checks for 100+ graph coverage, positional benzene derivative distinctions, and expanded compound identity matching",
+      "Expanded functional-group, property, knowledge graph, and scanner-intelligence regression checks for new reference compounds",
+    ],
+  },
+  {
+    version: "7.0.0",
+    date: "Previous",
     status: "released",
     title: "Chemistry Intelligence Engine",
     changes: [

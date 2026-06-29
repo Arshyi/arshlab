@@ -96,7 +96,7 @@ const features = [
     {
       icon: ScanSearch,
       title: "Molecular Structure Scanner",
-      description: "Upload or capture a private snapshot, reconstruct the molecular graph, then get deterministic chemistry intelligence, explanations, spectra, reactions, and study links.",
+      description: "Upload or capture a private snapshot, reconstruct the molecular graph, then match it against an expanded local reference library for chemistry intelligence and study links.",
       href: "/structure-scanner",
     },
   {
