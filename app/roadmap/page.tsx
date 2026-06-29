@@ -71,6 +71,7 @@ const completed = [
   "Perspective-Normalized Structure Extraction",
   "Global Molecular Graph Optimizer",
   "Global Shape Reconstruction Engine",
+  "Consensus Graph Solver",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -201,15 +202,15 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Global Shape Reconstruction Engine
+                Consensus Graph Solver
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: the Structure Scanner repairs the intended molecular skeleton before graph generation.
-                Fragmented bond strokes are clustered, small supported gaps are bridged, chemically plausible corners
-                are inferred, and 3- to 8-member polygon hypotheses are scored before the graph optimizer and evidence
-                fusion stages run.
+                Now available: the Structure Scanner compares raw, candidate, optimized, validated, and repaired
+                molecular graphs in one deterministic consensus pass. Canonical graph hashes remove duplicates,
+                legal repairs are tested only when they improve chemistry score, and the winning graph contributes
+                an explainable high-priority vote to evidence fusion.
               </p>
             </CardContent>
           </Card>
@@ -221,7 +222,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v6.1.0 - Global Shape Reconstruction Engine
+          ARSHLAB v6.2.0 - Consensus Graph Solver
         </motion.p>
       </div>
     </div>

@@ -22,6 +22,9 @@ function contributionCategory(vote: FusedEngineVote): StructureScoreContribution
     "bond-geometry": "visual",
     "ring-closure": "ring",
     "ring-aromatic": "ring",
+    "global-shape": "visual",
+    "global-graph-optimizer": "graph",
+    "consensus-graph": "graph",
     "molecular-graph": "graph",
     "functional-group": "visual",
   }
@@ -74,7 +77,11 @@ export function scanStructure(input: StructureScanInput): StructureScanResult {
   const winnerId = bestMatch?.record.id
   const isConfident = Boolean(bestMatch && bestMatch.confidence >= CONFIDENCE_THRESHOLD)
   const ocrConfidence = engineCandidateConfidence(evidenceFusion, "ocr-formula", winnerId) || Math.round(input.ocrQuality ?? 0)
-  const graphConfidence = engineCandidateConfidence(evidenceFusion, "molecular-graph", winnerId)
+  const graphConfidence = Math.max(
+    engineCandidateConfidence(evidenceFusion, "molecular-graph", winnerId),
+    engineCandidateConfidence(evidenceFusion, "global-graph-optimizer", winnerId),
+    engineCandidateConfidence(evidenceFusion, "consensus-graph", winnerId),
+  )
   const ringConfidence = Math.max(
     engineCandidateConfidence(evidenceFusion, "ring-aromatic", winnerId),
     engineCandidateConfidence(evidenceFusion, "ring-closure", winnerId),

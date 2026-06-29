@@ -261,7 +261,11 @@ assert.ok(observedScan.bestMatch.confidence >= 90 && observedScan.bestMatch.conf
 const graphFirstScan = scanStructure({ ocrQuality: 20, visualAnalysis: atomCenteredCameraBenzene })
 assert.equal(graphFirstScan.bestMatch?.record.id, "benzene", "strong graph outranks weak OCR")
 assert.ok(graphFirstScan.bestMatch.confidence >= 70, "strong aromatic graph remains confident with weak OCR")
-assert.ok(graphFirstScan.message.includes("independent engine votes"), "graph-first confidence is explained")
+assert.ok(
+  graphFirstScan.message.includes("Weak OCR did not suppress") ||
+  graphFirstScan.message.includes("independent engine votes"),
+  "graph-first confidence is explained",
+)
 assert.equal(graphFirstScan.confidenceBreakdown.ocr, 20, "OCR confidence remains separate")
 assert.ok(graphFirstScan.confidenceBreakdown.ring >= 70, "ring confidence remains separate")
 assert.ok(graphFirstScan.confidenceBreakdown.chemistry >= 70, "chemistry fusion confidence remains separate")

@@ -96,7 +96,7 @@ const features = [
     {
       icon: ScanSearch,
       title: "Molecular Structure Scanner",
-      description: "Upload or capture a private snapshot, deskew the chemistry canvas, reconstruct fragmented structure strokes, optimize graph hypotheses, then inspect evidence-fusion results.",
+      description: "Upload or capture a private snapshot, deskew the chemistry canvas, reconstruct structure strokes, solve graph consensus, then inspect evidence-fusion results.",
       href: "/structure-scanner",
     },
   {

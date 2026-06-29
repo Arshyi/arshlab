@@ -15,6 +15,7 @@ const ENGINE_WEIGHTS: Record<EvidenceEngineId, number> = {
   "ring-aromatic": 1.05,
   "global-shape": 1.12,
   "global-graph-optimizer": 1.22,
+  "consensus-graph": 1.34,
   "molecular-graph": 1.15,
   "functional-group": 0.7,
   "filename-manual": 1,
@@ -40,7 +41,7 @@ function confidenceFromVotes(votes: FusedEngineVote[], penalties: EvidencePenalt
   confidence -= Math.min(18, penalties.reduce((sum, penalty) => sum + penalty.points, 0) * 0.18)
 
   const strongManual = votes.some((vote) => vote.engineId === "filename-manual" && vote.evidenceType === "manual" && vote.confidence >= 88)
-  const strongGraph = votes.some((vote) => (vote.engineId === "molecular-graph" || vote.engineId === "global-graph-optimizer") && vote.strength === "strong")
+  const strongGraph = votes.some((vote) => (vote.engineId === "molecular-graph" || vote.engineId === "global-graph-optimizer" || vote.engineId === "consensus-graph") && vote.strength === "strong")
   const strongClosure = votes.some((vote) => (vote.engineId === "ring-closure" || vote.engineId === "global-shape") && vote.strength === "strong")
   const strongRing = votes.some((vote) => vote.engineId === "ring-aromatic" && vote.strength === "strong")
   if (strongManual) confidence = Math.max(confidence, 94)
@@ -57,7 +58,7 @@ function confidenceFromVotes(votes: FusedEngineVote[], penalties: EvidencePenalt
     if (only.engineId === "functional-group") confidence = Math.min(confidence, 58)
     if (only.engineId === "ring-closure" || only.engineId === "global-shape") confidence = Math.min(confidence, 76)
     if (only.engineId === "filename-manual" && only.evidenceType === "filename") confidence = Math.min(confidence, 42)
-    if (only.engineId === "molecular-graph" || only.engineId === "global-graph-optimizer") confidence = Math.min(confidence, 82)
+    if (only.engineId === "molecular-graph" || only.engineId === "global-graph-optimizer" || only.engineId === "consensus-graph") confidence = Math.min(confidence, 84)
   }
   return Math.round(clamp(confidence, 8, 97))
 }
@@ -96,7 +97,7 @@ export function fuseStructureEvidence(engines: EvidenceEngineResult[]): Evidence
     }
     let score = votes.reduce((sum, vote) => sum + vote.weightedContribution, 0)
     score += Math.min(10, Math.max(0, votes.length - 1) * 2.5)
-    const strongGraph = votes.some((vote) => (vote.engineId === "molecular-graph" || vote.engineId === "global-graph-optimizer") && vote.strength === "strong")
+    const strongGraph = votes.some((vote) => (vote.engineId === "molecular-graph" || vote.engineId === "global-graph-optimizer" || vote.engineId === "consensus-graph") && vote.strength === "strong")
     const strongClosure = votes.some((vote) => (vote.engineId === "ring-closure" || vote.engineId === "global-shape") && vote.strength === "strong")
     const strongRing = votes.some((vote) => vote.engineId === "ring-aromatic" && vote.strength === "strong")
     const strongManual = votes.some((vote) => vote.engineId === "filename-manual" && vote.evidenceType === "manual" && vote.confidence >= 88)

@@ -1,6 +1,6 @@
 # ARSHLAB Structure Scanner Architecture
 
-## v6.1.0 Global Shape Reconstruction Engine
+## v6.2.0 Consensus Graph Solver
 
 The Structure Scanner remains fully deterministic, browser-side, local-only, and database-first.
 It does not call OpenRouter, LLMs, cloud OCR, Supabase functions, or external chemistry APIs.
@@ -17,6 +17,7 @@ Image
 -> Candidate Graph Generator
 -> Global Molecular Graph Optimizer
 -> Chemical Graph Validator
+-> Consensus Graph Solver
 -> Ring Closure evidence
 -> Evidence Fusion
 -> Local compound database lookup
@@ -41,16 +42,28 @@ This separation lets future modules reuse the same search pattern for:
 - Spectroscopy simulation
 - Crystal or pathway graph reasoning
 
+## Consensus Graph Solver Design
+
+The consensus layer collects every graph hypothesis created by the scanner: the raw reconstructed graph, candidate graph generator outputs, global optimizer winner and runner-ups, the chemically validated graph, and legal repair variants. It canonicalizes and hashes each graph so duplicate hypotheses are merged instead of counted twice.
+
+Each surviving graph is scored across independent evidence channels: perspective/isolation support, stroke continuity, atom-label support, ring and polygon evidence, bond-angle geometry, valence legality, database similarity, optimizer agreement, validator agreement, OCR support, and source consensus. OCR is supportive but intentionally low-weight, so a noisy token cannot destroy a strong molecular topology.
+
+The repair pass is deterministic and legal-only. It can remove long inconsistent edges, downgrade unsupported multiple bonds, recover a short selected ring-closure gap, or test aromatic six-ring promotion when double-bond evidence exists. A repair is accepted only if it improves the total consensus score.
+
+The selected graph exposes calibrated visual, graph, chemical, database, OCR, and overall confidence values, plus a graph history, repair history, runner-ups, and ring conflict explanations for debugging.
+
 ## Key Files
 
 - `lib/structure-vision/candidate-graph-generator.ts`
 - `lib/structure-vision/global-shape-reconstruction.ts`
 - `lib/structure-vision/global-graph-optimizer.ts`
+- `lib/structure-vision/consensus-graph-solver.ts`
 - `lib/structure-vision/bond-angle-engine.ts`
 - `lib/structure-vision/canonical-molecular-graph.ts`
 - `components/chemistry/GlobalShapeReconstructionDebugPanel.tsx`
 - `components/chemistry/GlobalGraphOptimizerDebugPanel.tsx`
+- `components/chemistry/ConsensusGraphSolverDebugPanel.tsx`
 
 ## Safety
 
-All image processing, shape reconstruction, graph hypotheses, optimizer moves, canonical graph hashes, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, and graph hypotheses are not uploaded to ARSHLAB servers or stored permanently.
+All image processing, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, canonical graph hashes, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, and repair histories are not uploaded to ARSHLAB servers or stored permanently.

@@ -568,6 +568,62 @@ function globalGraphOptimizerEngine(input: StructureScanInput): EvidenceEngineRe
   )
 }
 
+function consensusGraphEngine(input: StructureScanInput): EvidenceEngineResult {
+  const consensus = input.visualAnalysis?.consensusGraphSolver
+  const selected = consensus?.selectedHypothesis
+  if (!consensus || !selected) {
+    return engine(
+      "consensus-graph",
+      "Consensus Graph Solver",
+      "Combines raw, candidate, optimized, validated, and repaired graph hypotheses before final fusion.",
+      [],
+      ["No consensus graph hypothesis was available."],
+    )
+  }
+  const output = STRUCTURE_SCANNER_RECORDS.map((record) => {
+    const similarity = scoreMolecularGraphSimilarity(selected.graph, record.id)
+    if (!similarity || similarity.score <= 0) return null
+    const penalties: EvidencePenalty[] = []
+    if (record.id === "benzene" && selected.graph.rings.some((ring) => ring.size === 6 && !ring.aromatic)) {
+      penalties.push({ reason: "Consensus selected a saturated six-member ring, so benzene is demoted.", points: 26 })
+    }
+    if (record.id === "cyclohexane" && selected.graph.rings.some((ring) => ring.size === 6 && ring.aromatic)) {
+      penalties.push({ reason: "Consensus selected aromatic double-bond support, so saturated cyclohexane is demoted.", points: 26 })
+    }
+    const channelSummary = selected.scoreChannels
+      .slice()
+      .sort((left, right) => right.contribution - left.contribution)
+      .slice(0, 3)
+      .map((channel) => `${channel.label} ${channel.score}%`)
+    const confidence = clamp(
+      consensus.finalConsensusScore * 0.54 +
+      selected.calibratedConfidence * 0.28 +
+      similarity.confidence * 0.26 +
+      Math.min(8, selected.sourceLabels.length * 1.5),
+      0,
+      98,
+    )
+    return candidate(record.id, confidence, "consensus", [
+      `Consensus graph score ${consensus.finalConsensusScore}% across ${consensus.hypothesisCount} canonical hypotheses`,
+      ...similarity.reasons,
+      channelSummary.length ? `Strongest channels: ${channelSummary.join(", ")}` : "Consensus channels were evaluated",
+      selected.repairHistory.some((move) => move.accepted)
+        ? `Accepted repairs: ${selected.repairHistory.filter((move) => move.accepted).map((move) => move.label).slice(-2).join(", ")}`
+        : "No score-improving repair was needed",
+    ], penalties)
+  }).filter((item): item is EvidenceEngineCandidate => Boolean(item))
+  return engine(
+    "consensus-graph",
+    "Consensus Graph Solver",
+    "Votes from the final deterministic graph consensus after repair, calibration, and ring conflict resolution.",
+    output,
+    [
+      consensus.explanation,
+      `Duplicates removed: ${consensus.duplicateGraphsRemoved}; repair moves: ${consensus.repairIterations.filter((move) => move.accepted).length}; confidence ${consensus.confidenceCalibration.overall}%.`,
+    ],
+  )
+}
+
 const CUE_GROUPS: Record<string, string[]> = {
   aromatic: ["arene", "aromatic"],
   carbonyl: ["carbonyl", "aldehyde", "ketone", "ester", "amide", "acid anhydride"],
@@ -669,6 +725,7 @@ export function runStructureEvidenceEngines(input: StructureScanInput): Evidence
     ringAromaticEngine(input),
     globalShapeReconstructionEngine(input),
     globalGraphOptimizerEngine(input),
+    consensusGraphEngine(input),
     molecularGraphEngine(input),
     functionalGroupEngine(input),
     filenameManualEngine(input),

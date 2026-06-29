@@ -18,8 +18,26 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "6.1.0",
+    version: "6.2.0",
     date: "Current",
+    status: "released",
+    title: "Consensus Graph Solver",
+    changes: [
+      "Added a deterministic Consensus Graph Solver after global graph optimization and chemical validation",
+      "Builds a shared canonical hypothesis pool from raw graphs, candidate graphs, optimized graphs, validated graphs, and legal repair variants",
+      "Deduplicates molecular graphs with canonical hashes before scoring",
+      "Scores each hypothesis across perspective/isolation support, stroke continuity, atom labels, ring evidence, bond-angle geometry, valence legality, database similarity, optimizer agreement, validator agreement, OCR support, and source consensus",
+      "Added legal repair passes for long-edge removal, unsupported multiple-bond downgrades, missing ring-closure recovery, and aromatic six-ring promotion",
+      "Added calibrated visual, graph, chemical, database, OCR, and overall confidence values",
+      "Added ring conflict resolution so benzene outranks cyclohexane only when ring geometry and aromatic/double-bond evidence agree",
+      "Added a Consensus Graph Solver Debug Panel with hypothesis counts, duplicate removal, score channels, repair history, runner-ups, conflict resolutions, and graph history",
+      "Added Consensus Graph Solver as an independent Evidence Fusion vote so strong topology can survive weak or noisy OCR",
+      "Added deterministic consensus regressions for benzene, cyclohexane, partial benzene, cyclohexene, heteroatom aromatic rings, noisy OCR, duplicate graphs, and fused-ring readiness",
+    ],
+  },
+  {
+    version: "6.1.0",
+    date: "Previous",
     status: "released",
     title: "Global Shape Reconstruction Engine",
     changes: [

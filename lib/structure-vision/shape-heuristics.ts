@@ -15,6 +15,7 @@ import type {
 } from "./vision-types"
 import { reconstructMolecularGraph } from "../vision/molecular-graph"
 import { validateChemicalGraph } from "./chemical-graph-validator"
+import { solveConsensusGraph } from "./consensus-graph-solver"
 import { generateCandidateGraphs } from "./candidate-graph-generator"
 import { optimizeMolecularGraphHypotheses } from "./global-graph-optimizer"
 import { reconstructGlobalShape } from "./global-shape-reconstruction"
@@ -1048,7 +1049,19 @@ export function analyzeDarkPixelMask(
     ringCandidates: validationRingCandidates,
     recognizedText,
   })
-  const molecularGraph = chemicalGraphValidation.validatedGraph
+  const consensusGraphSolver = solveConsensusGraph({
+    rawGraph: rawMolecularGraph,
+    candidateGraphHypotheses,
+    globalGraphOptimization,
+    chemicalGraphValidation,
+    ringClosure: validationRingClosure,
+    ringCandidates: validationRingCandidates,
+    globalShapeReconstruction,
+    lineSegments,
+    parallelBondPairs,
+    recognizedText,
+  })
+  const molecularGraph = consensusGraphSolver.selectedGraph
   const molecularRingCandidates: VisionRingCandidate[] = molecularGraph.rings.length
     ? molecularGraph.rings.flatMap((ring) => {
       if (ring.size < 5 || ring.size > 8) return []
@@ -1184,6 +1197,7 @@ export function analyzeDarkPixelMask(
     graph: finalGraphSummary,
     molecularGraph,
     globalGraphOptimization,
+    consensusGraphSolver,
     chemicalGraphValidation,
     parallelBondPairs,
     parallelLinePairs,
