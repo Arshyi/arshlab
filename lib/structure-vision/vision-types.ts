@@ -1,4 +1,5 @@
 import type { ChemicalGraphValidationResult } from "./chemical-graph-validator"
+import type { GlobalShapeReconstructionResult } from "./global-shape-reconstruction"
 import type { GlobalGraphOptimizationResult } from "./global-graph-optimizer"
 import type { MolecularGraph } from "../vision/molecular-graph"
 
@@ -57,7 +58,7 @@ export interface VisionRingCandidate {
   confidence: number
   benzeneLike: boolean
   nearRing: boolean
-  source: "pixel-loop" | "graph-cycle" | "graph-near-cycle" | "ring-closure"
+  source: "pixel-loop" | "graph-cycle" | "graph-near-cycle" | "ring-closure" | "global-shape"
   nodeIds: number[]
   closureQuality: number
   endpointMergeQuality: number
@@ -192,6 +193,7 @@ export interface StructureVisionAnalysis {
   threshold: number
   atomLabels: VisionAtomLabel[]
   lineSegments: VisionLineSegment[]
+  globalShapeReconstruction: GlobalShapeReconstructionResult
   closedLoops: VisionClosedLoop[]
   ringCandidates: VisionRingCandidate[]
   ringClosure: VisionRingClosureAnalysis

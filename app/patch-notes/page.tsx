@@ -18,8 +18,26 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "6.0.0",
+    version: "6.1.0",
     date: "Current",
+    status: "released",
+    title: "Global Shape Reconstruction Engine",
+    changes: [
+      "Added a deterministic Global Shape Reconstruction Engine before molecular graph construction",
+      "Added segment clustering so fragmented bond strokes are merged into continuous reconstructed strokes",
+      "Added safeguarded gap bridging with confidence that decreases as gaps grow",
+      "Added corner inference for chemically plausible near-intersections between reconstructed strokes",
+      "Added 3- to 8-member polygon hypotheses with closure error, edge consistency, angle consistency, symmetry, and fit metrics",
+      "Added regular polygon fitting for triangles, squares, pentagons, hexagons, heptagons, and octagons without forcing acceptance",
+      "Added tablet/paper border rejection, crossing safeguards, symmetry scoring, and no-distance-only edge hallucination rules",
+      "Added a Global Shape Reconstruction Debug Panel plus overlay layers for original fragments, merged strokes, accepted edges, rejected bridges, candidate polygons, and predicted vertices",
+      "Added Global Shape Reconstruction as an independent Evidence Fusion vote so strong recovered ring geometry can support scanner matches",
+      "Added deterministic global-shape regressions for benzene, rotated/perspective rings, missing edges, fragmented bonds, scan gaps, tablet borders, clutter, cyclohexane, cyclopentane, and acyclic chains",
+    ],
+  },
+  {
+    version: "6.0.0",
+    date: "Previous",
     status: "released",
     title: "Global Molecular Graph Optimizer",
     changes: [

@@ -93,12 +93,12 @@ const features = [
     description: "Browse ARSHLAB's local chemistry knowledge core for compounds, ions, functional groups, and reaction templates.",
     href: "/chemistry-database",
   },
-  {
-    icon: ScanSearch,
-    title: "Molecular Structure Scanner",
-    description: "Upload or capture a private snapshot, deskew the chemistry canvas, generate graph hypotheses, optimize the best molecular graph, then inspect evidence-fusion results.",
-    href: "/structure-scanner",
-  },
+    {
+      icon: ScanSearch,
+      title: "Molecular Structure Scanner",
+      description: "Upload or capture a private snapshot, deskew the chemistry canvas, reconstruct fragmented structure strokes, optimize graph hypotheses, then inspect evidence-fusion results.",
+      href: "/structure-scanner",
+    },
   {
     icon: ClipboardList,
     title: "Lab Explorer",

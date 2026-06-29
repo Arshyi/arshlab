@@ -7,7 +7,7 @@ import { StructureScanner } from "@/components/chemistry/StructureScanner"
 export const metadata: Metadata = {
   title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload or capture a private snapshot, normalize the chemistry canvas locally, optimize molecular graph hypotheses, then fuse local chemistry evidence in the browser.",
+    "Upload or capture a private snapshot, normalize the chemistry canvas locally, reconstruct the intended skeleton, optimize molecular graph hypotheses, then fuse local chemistry evidence in the browser.",
 }
 
 export default function StructureScannerPage() {
@@ -26,11 +26,11 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v6.0.0
+              ARSHLAB v6.1.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot. ARSHLAB first finds the most likely paper, tablet, whiteboard, or screenshot canvas, deskews it into a flat high-contrast local crop, then isolates chemistry-rich regions while suppressing device frames, glare, hands, and scene edges. The scanner now generates multiple molecular graph hypotheses, optimizes them with whole-molecule chemistry constraints, and passes the best canonical graph into validation and evidence fusion.
+            Upload a structure image or accept a single camera snapshot. ARSHLAB first finds the most likely paper, tablet, whiteboard, or screenshot canvas, deskews it into a flat high-contrast local crop, then isolates chemistry-rich regions while suppressing device frames, glare, hands, and scene edges. The scanner reconstructs fragmented bond strokes into a cleaner intended skeleton before generating molecular graph hypotheses, optimizing them with whole-molecule chemistry constraints, and passing the best canonical graph into validation and evidence fusion.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Molecular reconstruction is an educational estimate built from local line geometry, endpoint graphs, candidate graph search, bond-angle scoring, ring-template fitting, chemical valence checks, and chemistry hints. Always verify inferred atoms and bond orders.
@@ -40,8 +40,8 @@ export default function StructureScannerPage() {
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <ScannerFeature
             icon={Database}
-            title="Global Graph Optimizer"
-            description="Multiple plausible atom/bond graphs are generated, scored as whole molecules, optimized, canonicalized, and then validated."
+            title="Shape Reconstruction"
+            description="Fragmented line pieces are clustered, small supported gaps are bridged, and polygon hypotheses are scored before graph generation."
           />
           <ScannerFeature
             icon={ShieldCheck}

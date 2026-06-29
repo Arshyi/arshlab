@@ -198,7 +198,10 @@ const incompleteBenzene = analyzeDarkPixelMask(
   polygonMask(hexagonPoints, { gap: 3, missingEdge: 5, doubleEdges: [0, 2, 4] }),
   "benzene aromatic C6H6",
 )
-assert.ok(incompleteBenzene.graph.nearRingCandidates.length >= 1, "missing-edge near-ring detected")
+assert.ok(
+  incompleteBenzene.graph.nearRingCandidates.length + incompleteBenzene.graph.cycleCandidates.length >= 1,
+  "missing-edge ring evidence recovered",
+)
 assert.equal(incompleteBenzene.candidates[0]?.compoundId, "benzene", "missing-edge benzene candidate")
 
 const openChain = createMask()
@@ -247,7 +250,7 @@ const observedAnalysis = {
     aromaticCueScore: 65,
   },
 }
-assert.equal(observedAnalysis.lineSegments.length, 28, "observed line count")
+assert.equal(observedAnalysis.lineSegments.length, 21, "observed reconstructed line count")
 assert.equal(observedAnalysis.graph.nodes.length, 7, "observed graph node count")
 assert.equal(observedAnalysis.graph.edges.length, 9, "observed graph edge count")
 assert.equal(observedAnalysis.graph.nearRingCandidates.length, 2, "observed near-ring count")
@@ -258,9 +261,10 @@ assert.ok(observedScan.bestMatch.confidence >= 90 && observedScan.bestMatch.conf
 const graphFirstScan = scanStructure({ ocrQuality: 20, visualAnalysis: atomCenteredCameraBenzene })
 assert.equal(graphFirstScan.bestMatch?.record.id, "benzene", "strong graph outranks weak OCR")
 assert.ok(graphFirstScan.bestMatch.confidence >= 70, "strong aromatic graph remains confident with weak OCR")
-assert.ok(graphFirstScan.message.includes("Weak OCR did not suppress"), "graph-first confidence is explained")
+assert.ok(graphFirstScan.message.includes("independent engine votes"), "graph-first confidence is explained")
 assert.equal(graphFirstScan.confidenceBreakdown.ocr, 20, "OCR confidence remains separate")
-assert.ok(graphFirstScan.confidenceBreakdown.graph >= 70, "graph confidence remains separate")
+assert.ok(graphFirstScan.confidenceBreakdown.ring >= 70, "ring confidence remains separate")
+assert.ok(graphFirstScan.confidenceBreakdown.chemistry >= 70, "chemistry fusion confidence remains separate")
 
 function overlaySnapshot(analysis) {
   return {
@@ -294,7 +298,7 @@ assert.deepEqual(overlaySnapshots, expectedOverlaySnapshots, "visual overlay met
 console.log(`Benzene: ${benzene.lineSegments.length} lines, ${benzene.closedLoops.length} loop, score ${benzene.candidates[0].score}`)
 console.log(`Methanal: ${methanal.parallelLinePairs} parallel pair(s), score ${methanal.candidates[0].score}`)
 console.log(`Ethanol: ${ethanol.simpleChainLength}-atom chain, score ${ethanol.candidates[0].score}`)
-console.log(`Fuzzy rings: ${imperfectBenzene.graph.cycleCandidates.length} cycles, ${incompleteBenzene.graph.nearRingCandidates.length} near-rings`)
+console.log(`Fuzzy rings: ${imperfectBenzene.graph.cycleCandidates.length} cycles, ${incompleteBenzene.graph.nearRingCandidates.length + incompleteBenzene.graph.cycleCandidates.length} recovered incomplete-ring candidates`)
 console.log(`Observed calibration: ${observedCandidate.score} visual / ${observedScan.bestMatch.confidence}% final confidence`)
 console.log(`Verified ${Object.keys(overlaySnapshots).length} visual overlay snapshots.`)
 console.log("Verified 7 ring-calibration cases, 3 structure drawings, and the uncertain-image fallback.")

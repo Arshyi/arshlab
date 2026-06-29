@@ -316,16 +316,28 @@ function ringClosureEngine(input: StructureScanInput): EvidenceEngineResult {
   }
 
   const output: EvidenceEngineCandidate[] = []
+  const hasHeteroAtomLabel = input.visualAnalysis?.atomLabels.some((label) => !["C", "H"].includes(label.label)) ?? false
+  const visualAromaticRing = input.visualAnalysis?.ringCandidates.find((candidate) =>
+    candidate.sidesEstimate === 6 &&
+    candidate.benzeneLike &&
+    candidate.doubleBondCue >= 55 &&
+    !hasHeteroAtomLabel &&
+    !candidate.nodeIds.some((nodeId) => {
+      const node = input.visualAnalysis?.molecularGraph.nodes.find((item) => item.id === nodeId)
+      return node && node.inferredElement !== "C"
+    }),
+  )
   const globalAromaticSupport = Math.max(
     selected.aromaticSupport,
     ringClosureAgreement(input).aromaticSupport,
     input.visualAnalysis?.graph.aromaticCueScore ?? 0,
-    input.visualAnalysis?.ringCandidates.find((candidate) => candidate.benzeneLike && candidate.doubleBondCue >= 55)?.aromaticCueScore ?? 0,
+    visualAromaticRing?.aromaticCueScore ?? 0,
+    visualAromaticRing?.doubleBondCue ?? 0,
     input.visualAnalysis?.molecularGraph.aromatic ? 82 : 0,
   )
   const aromatic = selected.memberCount === 6 &&
     globalAromaticSupport >= 55 &&
-    (selected.doubleBondCount >= 2 || ringClosureAgreement(input).aromaticAgreement || (input.visualAnalysis?.molecularGraph.estimates.doubleBonds ?? 0) >= 2 || Boolean(input.visualAnalysis?.molecularGraph.aromatic))
+    (selected.doubleBondCount >= 2 || ringClosureAgreement(input).aromaticAgreement || (input.visualAnalysis?.molecularGraph.estimates.doubleBonds ?? 0) >= 2 || Boolean(input.visualAnalysis?.molecularGraph.aromatic) || Boolean(visualAromaticRing))
   const nearRing = selected.recovered || selected.closureGaps.length > 0
   const heteroAtomInRing = ringClosureAgreement(input).heteroAtomInSelectedRing
   const closureReason = `${selected.memberCount}-member ${nearRing ? "recovered near-ring" : "closed ring"}: closure ${selected.closureConfidence}%, regularity ${selected.regularity}%, line coverage ${selected.lineCoverage}%.`
@@ -380,6 +392,7 @@ function ringAromaticEngine(input: StructureScanInput): EvidenceEngineResult {
   const visualRing = analysis ? [...analysis.ringCandidates].sort((left, right) => right.confidence - left.confidence)[0] : undefined
   const closureRing = analysis?.ringClosure?.candidates.find((candidate) => candidate.selected)
   const closureAgreement = ringClosureAgreement(input)
+  const hasHeteroAtomLabel = analysis?.atomLabels.some((label) => !["C", "H"].includes(label.label)) ?? false
   const size = graphRing?.size ?? visualRing?.sidesEstimate ?? 0
   const ringConfidence = graphRing?.confidence ?? visualRing?.confidence ?? 0
   if (size < 5 || size > 7) {
@@ -389,13 +402,14 @@ function ringAromaticEngine(input: StructureScanInput): EvidenceEngineResult {
     closureRing?.doubleBondCount ?? 0,
     closureAgreement.aromaticAgreement ? 2 : 0,
     analysis?.molecularGraph.estimates.doubleBonds ?? 0,
+    (visualRing?.benzeneLike && visualRing.doubleBondCue >= 55) ? 2 : 0,
   )
   const aromaticSupport = Boolean(
-    (graphRing?.aromatic && !closureAgreement.saturatedSixRingOnly && !closureAgreement.heteroAtomInSelectedRing) ||
-    (closureAgreement.selectedSixRing && closureAgreement.aromaticAgreement && !closureAgreement.heteroAtomInSelectedRing) ||
-    (visualRing?.benzeneLike && ringLocalDoubleBondSupport >= 2 && !closureAgreement.heteroAtomInSelectedRing) ||
-    ((analysis?.graph.aromaticCueScore ?? 0) >= 50 && ringLocalDoubleBondSupport >= 2 && !closureAgreement.heteroAtomInSelectedRing) ||
-    ((analysis?.molecularGraph.estimates.doubleBonds ?? 0) >= 2 && !closureAgreement.heteroAtomInSelectedRing),
+    (graphRing?.aromatic && !closureAgreement.saturatedSixRingOnly && !closureAgreement.heteroAtomInSelectedRing && !hasHeteroAtomLabel) ||
+    (closureAgreement.selectedSixRing && closureAgreement.aromaticAgreement && !closureAgreement.heteroAtomInSelectedRing && !hasHeteroAtomLabel) ||
+    (visualRing?.benzeneLike && ringLocalDoubleBondSupport >= 2 && !closureAgreement.heteroAtomInSelectedRing && !hasHeteroAtomLabel) ||
+    ((analysis?.graph.aromaticCueScore ?? 0) >= 50 && ringLocalDoubleBondSupport >= 2 && !closureAgreement.heteroAtomInSelectedRing && !hasHeteroAtomLabel) ||
+    ((analysis?.molecularGraph.estimates.doubleBonds ?? 0) >= 2 && !closureAgreement.heteroAtomInSelectedRing && !hasHeteroAtomLabel),
   )
   const nearRing = Boolean(visualRing?.nearRing || !graphRing?.closed)
   const output: EvidenceEngineCandidate[] = []
@@ -425,6 +439,60 @@ function ringAromaticEngine(input: StructureScanInput): EvidenceEngineResult {
     "Separates saturated six-member rings from aromatic and fuzzy near-ring evidence.",
     output,
     [`Best ring: ${size} members at ${Math.round(ringConfidence)}%; aromatic support ${aromaticSupport ? "present" : "absent"}.`],
+  )
+}
+
+function globalShapeReconstructionEngine(input: StructureScanInput): EvidenceEngineResult {
+  const shape = input.visualAnalysis?.globalShapeReconstruction
+  if (!shape || !shape.acceptedPolygon) {
+    return engine(
+      "global-shape",
+      "Global Shape Reconstruction",
+      "Repairs fragmented strokes and votes from accepted polygon geometry before molecular graph generation.",
+      [],
+      [shape?.explanation ?? "No global shape reconstruction result was available."],
+    )
+  }
+  const polygon = shape.acceptedPolygon
+  const output: EvidenceEngineCandidate[] = []
+  const hasHeteroAtomLabel = input.visualAnalysis?.atomLabels.some((label) => !["C", "H"].includes(label.label)) ?? false
+  const geometryConfidence = clamp(
+    shape.shapeConfidence * 0.32 +
+    shape.polygonConfidence * 0.34 +
+    shape.symmetryScore * 0.18 +
+    shape.closureScore * 0.16,
+    0,
+    96,
+  )
+  const aromaticSupport = (input.visualAnalysis?.parallelLinePairs ?? 0) >= 2 ||
+    (input.visualAnalysis?.graph.aromaticCueScore ?? 0) >= 55
+  if (polygon.sides === 6 && aromaticSupport && !hasHeteroAtomLabel) {
+    output.push(candidate("benzene", Math.min(94, geometryConfidence + 12), "shape", [
+      "Closed six-member shape reconstructed before graph generation",
+      "Parallel/double-bond evidence supports an aromatic interpretation",
+      `${shape.symmetryScore}% symmetry and ${shape.closureScore}% closure`,
+    ]))
+    output.push(candidate("cyclohexane", Math.min(48, geometryConfidence * 0.52), "shape", [
+      "Six-member shape exists, but aromatic strokes argue against saturation",
+    ], [{ reason: "Aromatic/double-bond support contradicts a saturated ring.", points: 18 }]))
+  } else if (polygon.sides === 6) {
+    output.push(candidate("cyclohexane", Math.min(90, geometryConfidence + 8), "shape", [
+      "Closed six-member shape reconstructed without aromatic double-bond support",
+      `${shape.symmetryScore}% symmetry and ${shape.closureScore}% closure`,
+    ]))
+    output.push(candidate("benzene", Math.min(44, geometryConfidence * 0.5), "shape", [
+      "Six-member geometry alone is compatible with benzene",
+    ], [{ reason: "No reliable aromatic/double-bond support was present.", points: 20 }]))
+  }
+  return engine(
+    "global-shape",
+    "Global Shape Reconstruction",
+    "Votes from the accepted repaired stroke polygon before atom/bond graph generation.",
+    output,
+    [
+      shape.explanation,
+      `Shape ${shape.shapeConfidence}%, polygon ${shape.polygonConfidence}%, closure ${shape.closureScore}%, symmetry ${shape.symmetryScore}%.`,
+    ],
   )
 }
 
@@ -599,6 +667,7 @@ export function runStructureEvidenceEngines(input: StructureScanInput): Evidence
     bondGeometryEngine(input),
     ringClosureEngine(input),
     ringAromaticEngine(input),
+    globalShapeReconstructionEngine(input),
     globalGraphOptimizerEngine(input),
     molecularGraphEngine(input),
     functionalGroupEngine(input),

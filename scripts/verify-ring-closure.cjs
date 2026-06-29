@@ -148,7 +148,8 @@ assert.equal(tabletBenzene.result.bestMatch?.record.id, "benzene", "tablet-borde
 
 const missingEdgeBenzene = scan(ringMask({ doubleEdges: [0, 2, 4], missingEdge: 5 }), "", atomLabels(hexagon))
 const recovered = missingEdgeBenzene.analysis.ringClosure.candidates.find((candidate) => candidate.selected)
-assert.ok(recovered?.recovered || recovered?.closureGaps.length, "missing-edge benzene recovers a closure gap")
+const shapeRecoveredGap = (missingEdgeBenzene.analysis.globalShapeReconstruction.acceptedPolygon?.missingEdges.length ?? 0) > 0
+assert.ok(recovered?.recovered || recovered?.closureGaps.length || shapeRecoveredGap, "missing-edge benzene recovers or pre-fills a closure gap")
 assert.equal(missingEdgeBenzene.result.bestMatch?.record.id, "benzene", "missing-edge benzene ranks benzene")
 
 const handClutterBenzene = scan(ringMask({ doubleEdges: [0, 2, 4], missingEdge: 5, clutter: true, border: true }), "", atomLabels(hexagon))

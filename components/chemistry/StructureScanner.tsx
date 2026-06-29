@@ -52,6 +52,7 @@ import { StructureMatchCard } from "./StructureMatchCard"
 import { OCRDebugPanel } from "./OCRDebugPanel"
 import { StructurePreview } from "./StructurePreview"
 import { VisionDebugPanel } from "./VisionDebugPanel"
+import { GlobalShapeReconstructionDebugPanel } from "./GlobalShapeReconstructionDebugPanel"
 import { MolecularGraphDebugPanel } from "./MolecularGraphDebugPanel"
 import { GlobalGraphOptimizerDebugPanel } from "./GlobalGraphOptimizerDebugPanel"
 import { ChemicalGraphValidatorDebugPanel } from "./ChemicalGraphValidatorDebugPanel"
@@ -517,6 +518,8 @@ export function StructureScanner() {
             matches={result?.matches ?? []}
             error={ocrError}
           />
+
+          <GlobalShapeReconstructionDebugPanel analysis={visionAnalysis} />
 
           <VisionDebugPanel analysis={visionAnalysis} error={visionError} />
 

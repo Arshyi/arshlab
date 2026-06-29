@@ -13,6 +13,7 @@ const ENGINE_WEIGHTS: Record<EvidenceEngineId, number> = {
   "bond-geometry": 0.72,
   "ring-closure": 1.08,
   "ring-aromatic": 1.05,
+  "global-shape": 1.12,
   "global-graph-optimizer": 1.22,
   "molecular-graph": 1.15,
   "functional-group": 0.7,
@@ -40,7 +41,7 @@ function confidenceFromVotes(votes: FusedEngineVote[], penalties: EvidencePenalt
 
   const strongManual = votes.some((vote) => vote.engineId === "filename-manual" && vote.evidenceType === "manual" && vote.confidence >= 88)
   const strongGraph = votes.some((vote) => (vote.engineId === "molecular-graph" || vote.engineId === "global-graph-optimizer") && vote.strength === "strong")
-  const strongClosure = votes.some((vote) => vote.engineId === "ring-closure" && vote.strength === "strong")
+  const strongClosure = votes.some((vote) => (vote.engineId === "ring-closure" || vote.engineId === "global-shape") && vote.strength === "strong")
   const strongRing = votes.some((vote) => vote.engineId === "ring-aromatic" && vote.strength === "strong")
   if (strongManual) confidence = Math.max(confidence, 94)
   if (strongGraph && strongRing && strongClosure) confidence = Math.max(confidence, 88)
@@ -54,7 +55,7 @@ function confidenceFromVotes(votes: FusedEngineVote[], penalties: EvidencePenalt
     if (only.engineId === "ocr-formula") confidence = Math.min(confidence, 64)
     if (only.engineId === "atom-label") confidence = Math.min(confidence, 48)
     if (only.engineId === "functional-group") confidence = Math.min(confidence, 58)
-    if (only.engineId === "ring-closure") confidence = Math.min(confidence, 74)
+    if (only.engineId === "ring-closure" || only.engineId === "global-shape") confidence = Math.min(confidence, 76)
     if (only.engineId === "filename-manual" && only.evidenceType === "filename") confidence = Math.min(confidence, 42)
     if (only.engineId === "molecular-graph" || only.engineId === "global-graph-optimizer") confidence = Math.min(confidence, 82)
   }
@@ -96,7 +97,7 @@ export function fuseStructureEvidence(engines: EvidenceEngineResult[]): Evidence
     let score = votes.reduce((sum, vote) => sum + vote.weightedContribution, 0)
     score += Math.min(10, Math.max(0, votes.length - 1) * 2.5)
     const strongGraph = votes.some((vote) => (vote.engineId === "molecular-graph" || vote.engineId === "global-graph-optimizer") && vote.strength === "strong")
-    const strongClosure = votes.some((vote) => vote.engineId === "ring-closure" && vote.strength === "strong")
+    const strongClosure = votes.some((vote) => (vote.engineId === "ring-closure" || vote.engineId === "global-shape") && vote.strength === "strong")
     const strongRing = votes.some((vote) => vote.engineId === "ring-aromatic" && vote.strength === "strong")
     const strongManual = votes.some((vote) => vote.engineId === "filename-manual" && vote.evidenceType === "manual" && vote.confidence >= 88)
     if (strongGraph && strongRing && strongClosure) score += 18

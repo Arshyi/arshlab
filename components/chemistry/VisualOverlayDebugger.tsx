@@ -20,6 +20,12 @@ import { cn } from "@/lib/utils"
 
 const TOGGLES: Array<{ id: keyof VisionOverlayVisibility; label: string; color?: string }> = [
   { id: "rawImage", label: "Raw image" },
+  { id: "originalShapeSegments", label: "Original shape fragments", color: VISION_OVERLAY_COLORS.shapeOriginal },
+  { id: "mergedShapeStrokes", label: "Merged reconstructed strokes", color: VISION_OVERLAY_COLORS.shapeMerged },
+  { id: "acceptedShapeEdges", label: "Accepted inferred shape edges", color: VISION_OVERLAY_COLORS.shapeAccepted },
+  { id: "shapePolygons", label: "Shape polygon hypotheses", color: VISION_OVERLAY_COLORS.shapePolygon },
+  { id: "rejectedShapeBridges", label: "Rejected shape bridges", color: VISION_OVERLAY_COLORS.shapeRejected },
+  { id: "predictedShapeVertices", label: "Predicted shape vertices", color: VISION_OVERLAY_COLORS.shapeVertex },
   { id: "lineSegments", label: "Detected line segments", color: VISION_OVERLAY_COLORS.lineSegments },
   { id: "endpoints", label: "Endpoints", color: VISION_OVERLAY_COLORS.endpoints },
   { id: "graphNodes", label: "Merged graph nodes", color: VISION_OVERLAY_COLORS.nodes },
@@ -227,6 +233,30 @@ export function VisualOverlayDebugger({
                       <PerspectiveLayerPill color="#10b981" label="Final optimized graph" value={`${analysis.globalGraphOptimization.selectedHypothesis.graph.bonds.length} bonds`} />
                       <PerspectiveLayerPill color="#f97316" label="Removed/added/order moves" value={`${analysis.globalGraphOptimization.acceptedMoves.length}`} />
                       <PerspectiveLayerPill color="#facc15" label="Ring template overlay" value={`${analysis.globalGraphOptimization.selectedHypothesis.ringTemplateFits.length}`} />
+                    </div>
+                  </section>
+                )}
+
+                {analysis.globalShapeReconstruction && (
+                  <section className="rounded-xl border border-purple-500/25 bg-purple-500/5 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 className="font-semibold">Shape reconstruction layers</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Original fragments are repaired into merged strokes and polygon-supported inferred edges before graph generation.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="rounded-full">
+                        {analysis.globalShapeReconstruction.shapeConfidence}% shape
+                      </Badge>
+                    </div>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <PerspectiveLayerPill color={VISION_OVERLAY_COLORS.shapeOriginal} label="Original fragments" value={`${analysis.globalShapeReconstruction.originalSegments.length}`} />
+                      <PerspectiveLayerPill color={VISION_OVERLAY_COLORS.shapeMerged} label="Merged strokes" value={`${analysis.globalShapeReconstruction.mergedStrokes.length}`} />
+                      <PerspectiveLayerPill color={VISION_OVERLAY_COLORS.shapeAccepted} label="Accepted inferred edges" value={`${analysis.globalShapeReconstruction.acceptedPolygon?.edges.length ?? 0}`} />
+                      <PerspectiveLayerPill color={VISION_OVERLAY_COLORS.shapePolygon} label="Polygon hypotheses" value={`${analysis.globalShapeReconstruction.polygonHypotheses.length}`} />
+                      <PerspectiveLayerPill color={VISION_OVERLAY_COLORS.shapeRejected} label="Rejected bridges" value={`${analysis.globalShapeReconstruction.bridgedGaps.filter((bridge) => !bridge.accepted).length}`} />
+                      <PerspectiveLayerPill color={VISION_OVERLAY_COLORS.shapeVertex} label="Predicted vertices" value={`${analysis.globalShapeReconstruction.predictedCorners.length}`} />
                     </div>
                   </section>
                 )}

@@ -277,13 +277,13 @@ export default function ChemistryHubPage() {
             href="/chemistry-solver"
             action="Open Solver"
           />
-          <HubActionCard
-            icon={ScanSearch}
-            title="Molecular Structure Scanner"
-            description="Upload or capture a local structure snapshot, perspective-normalize the paper/screen canvas, optimize molecular graph hypotheses, then inspect evidence-fusion votes."
-            href="/structure-scanner"
-            action="Open Scanner"
-          />
+            <HubActionCard
+              icon={ScanSearch}
+              title="Molecular Structure Scanner"
+              description="Upload or capture a local structure snapshot, perspective-normalize the paper/screen canvas, reconstruct fragmented bond strokes, optimize molecular graph hypotheses, then inspect evidence-fusion votes."
+              href="/structure-scanner"
+              action="Open Scanner"
+            />
           <HubActionCard
             icon={ClipboardList}
             title="Lab Explorer"

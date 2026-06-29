@@ -259,7 +259,7 @@ export function CurriculumClient() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">ARSHLAB v6.0.0</Badge>
+              <Badge variant="secondary">ARSHLAB v6.1.0</Badge>
               <Badge variant="outline">Database mode = no AI usage</Badge>
             </div>
           </div>
@@ -296,7 +296,7 @@ export function CurriculumClient() {
           <CardContent className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge>v6.0.0 Curriculum Roadmaps</Badge>
+                <Badge>v6.1.0 Curriculum Roadmaps</Badge>
                 <Badge variant="secondary">{selectedRoadmap.topics.length} topics</Badge>
               </div>
               <h2 className="text-2xl font-bold">{selectedRoadmap.title}</h2>
@@ -486,7 +486,7 @@ export function CurriculumClient() {
           <CardContent className="grid gap-5 p-5 lg:grid-cols-[1fr_320px]">
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge>v6.0.0</Badge>
+                <Badge>v6.1.0</Badge>
                 <Badge variant="secondary">{summary.curriculum.level}</Badge>
               </div>
               <h2 className="text-2xl font-bold">{summary.curriculum.name}</h2>

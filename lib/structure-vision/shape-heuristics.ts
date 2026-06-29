@@ -17,6 +17,7 @@ import { reconstructMolecularGraph } from "../vision/molecular-graph"
 import { validateChemicalGraph } from "./chemical-graph-validator"
 import { generateCandidateGraphs } from "./candidate-graph-generator"
 import { optimizeMolecularGraphHypotheses } from "./global-graph-optimizer"
+import { reconstructGlobalShape } from "./global-shape-reconstruction"
 import { analyzeRingClosure, ringClosureCandidateToVisionRing } from "./ring-closure"
 
 const DEGREE_STEP = 5
@@ -895,20 +896,63 @@ export function analyzeDarkPixelMask(
   recognizedText = "",
   atomLabels: VisionAtomLabel[] = [],
 ): StructureVisionAnalysis {
-  const lineSegments = detectLineSegments(mask)
+  const originalLineSegments = detectLineSegments(mask)
   const closedLoops = detectClosedLoops(mask)
+  const globalShapeReconstruction = reconstructGlobalShape({
+    lineSegments: originalLineSegments,
+    closedLoops,
+    imageWidth: mask.width,
+    imageHeight: mask.height,
+  })
+  const lineSegments = globalShapeReconstruction.reconstructedSegments.length
+    ? globalShapeReconstruction.reconstructedSegments
+    : originalLineSegments
   const parallelBondPairs = detectParallelBondPairs(lineSegments, mask)
   const parallelLinePairs = parallelBondPairs.length
   const aromaticText = /benzene|aromatic|c6h6|phenyl|hexagon|ring/.test(
     recognizedText.toLowerCase().replace(/[^a-z0-9]/g, ""),
   )
-  const pixelRings = detectRingCandidates(mask, closedLoops, lineSegments).map((ring) => ({
-    ...ring,
-    benzeneLike: ring.sidesEstimate === 6 && (parallelLinePairs >= 2 || aromaticText),
-    doubleBondCue: clamp(Math.round((parallelLinePairs / 3) * 100), 0, 100),
-    aromaticCueScore: aromaticText ? 100 : 0,
-  }))
-  const graph = detectGraphRings(buildSegmentGraph(mask, lineSegments), parallelLinePairs, recognizedText)
+    const pixelRings = detectRingCandidates(mask, closedLoops, lineSegments).map((ring) => ({
+      ...ring,
+      benzeneLike: ring.sidesEstimate === 6 && (parallelLinePairs >= 2 || aromaticText),
+      doubleBondCue: clamp(Math.round((parallelLinePairs / 3) * 100), 0, 100),
+      aromaticCueScore: aromaticText ? 100 : 0,
+    }))
+  const shapePolygon = globalShapeReconstruction.acceptedPolygon
+  const shapeRingCandidates: VisionRingCandidate[] = shapePolygon
+    ? (() => {
+      const minimumX = Math.min(...shapePolygon.vertices.map((point) => point.x))
+      const maximumX = Math.max(...shapePolygon.vertices.map((point) => point.x))
+      const minimumY = Math.min(...shapePolygon.vertices.map((point) => point.y))
+      const maximumY = Math.max(...shapePolygon.vertices.map((point) => point.y))
+      const lineCoverage = clamp(Math.round((1 - shapePolygon.missingEdges.length / Math.max(1, shapePolygon.sides)) * 100), 0, 100)
+      const aromaticSupport = shapePolygon.sides === 6 && (parallelLinePairs >= 2 || aromaticText)
+      return [{
+        center: shapePolygon.fit.center,
+        width: maximumX - minimumX,
+        height: maximumY - minimumY,
+        sidesEstimate: shapePolygon.sides,
+        confidence: shapePolygon.confidence,
+        benzeneLike: aromaticSupport,
+        nearRing: shapePolygon.missingEdges.length > 0,
+        source: "global-shape" as const,
+        nodeIds: [],
+        closureQuality: globalShapeReconstruction.closureScore,
+        endpointMergeQuality: Math.max(globalShapeReconstruction.bridgeConfidence, globalShapeReconstruction.cornerConfidence),
+        polygonRegularity: Math.round((shapePolygon.angleConsistency + shapePolygon.edgeLengthConsistency + shapePolygon.symmetryScore) / 3),
+        lineCoverage,
+        doubleBondCue: clamp(Math.round((parallelLinePairs / 3) * 100), 0, 100),
+        aromaticCueScore: aromaticSupport ? Math.max(55, aromaticText ? 100 : 68) : 0,
+        reason: `Global shape reconstruction accepted a ${shapePolygon.sides}-member polygon before graph construction.`,
+        scoreBreakdown: [
+          { label: "Shape confidence", points: globalShapeReconstruction.shapeConfidence, maximum: 100 },
+          { label: "Polygon confidence", points: globalShapeReconstruction.polygonConfidence, maximum: 100 },
+          { label: "Line coverage", points: lineCoverage, maximum: 100 },
+        ],
+      }]
+    })()
+    : []
+    const graph = detectGraphRings(buildSegmentGraph(mask, lineSegments), parallelLinePairs, recognizedText)
   const ringClosure = analyzeRingClosure({
     graph,
     lineSegments,
@@ -919,11 +963,12 @@ export function analyzeDarkPixelMask(
     imageHeight: mask.height,
   })
   const closureRings = ringClosure.candidates.map(ringClosureCandidateToVisionRing)
-  const rawRingCandidates = [
-    ...closureRings,
-    ...graph.cycleCandidates,
-    ...graph.nearRingCandidates,
-    ...pixelRings,
+    const rawRingCandidates = [
+      ...closureRings,
+      ...shapeRingCandidates,
+      ...graph.cycleCandidates,
+      ...graph.nearRingCandidates,
+      ...pixelRings,
   ].sort((left, right) => right.confidence - left.confidence)
   const ringCandidates: VisionRingCandidate[] = []
   rawRingCandidates.forEach((candidate) => {
@@ -1050,7 +1095,7 @@ export function analyzeDarkPixelMask(
       .map((candidate) => canonicalCycle(candidate.nodeIds)),
   ])
   const supportedRawRingCandidates = validationRingCandidates.filter((candidate) => {
-    if (!candidate.nodeIds.length) return candidate.source === "pixel-loop" && candidate.confidence >= 62
+    if (!candidate.nodeIds.length) return (candidate.source === "pixel-loop" || candidate.source === "global-shape") && candidate.confidence >= 52
     return validatedRingKeys.has(canonicalCycle(candidate.nodeIds))
   })
   const selectedClosureRingCandidates = validationRingClosure.candidates
@@ -1132,6 +1177,7 @@ export function analyzeDarkPixelMask(
     threshold: mask.threshold,
     atomLabels,
     lineSegments,
+    globalShapeReconstruction,
     closedLoops,
     ringCandidates: finalRingCandidates,
     ringClosure: validationRingClosure,

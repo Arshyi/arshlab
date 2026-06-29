@@ -8,6 +8,12 @@ import type {
 export interface VisionOverlayVisibility {
   rawImage: boolean
   lineSegments: boolean
+  originalShapeSegments: boolean
+  mergedShapeStrokes: boolean
+  acceptedShapeEdges: boolean
+  shapePolygons: boolean
+  rejectedShapeBridges: boolean
+  predictedShapeVertices: boolean
   endpoints: boolean
   graphNodes: boolean
   graphEdges: boolean
@@ -32,6 +38,12 @@ export interface VisionOverlayVisibility {
 export const DEFAULT_VISION_OVERLAYS: VisionOverlayVisibility = {
   rawImage: true,
   lineSegments: true,
+  originalShapeSegments: false,
+  mergedShapeStrokes: true,
+  acceptedShapeEdges: true,
+  shapePolygons: true,
+  rejectedShapeBridges: false,
+  predictedShapeVertices: true,
   endpoints: false,
   graphNodes: true,
   graphEdges: true,
@@ -64,6 +76,12 @@ export const VISION_OVERLAY_COLORS = {
   closureBridge: "#f59e0b",
   rejectedRing: "#fbbf24",
   lineSegments: "#94a3b8",
+  shapeOriginal: "#9ca3af",
+  shapeMerged: "#3b82f6",
+  shapeAccepted: "#22c55e",
+  shapeRejected: "#ef4444",
+  shapeVertex: "#a855f7",
+  shapePolygon: "#facc15",
   rejectedBond: "#ef4444",
   acceptedBond: "#10b981",
   valence: "#fb7185",
@@ -209,6 +227,51 @@ export function renderVisionOverlay({ context, analysis, visibility, image }: Ov
     context.globalAlpha = 0.82
     context.drawImage(image, 0, 0, canvas.width, canvas.height)
     context.restore()
+  }
+
+  if (visibility.originalShapeSegments) {
+    analysis.globalShapeReconstruction.originalSegments.forEach((segment) => {
+      drawSegment(context, segment, VISION_OVERLAY_COLORS.shapeOriginal, scaleX, scaleY, 0.65)
+    })
+  }
+
+  if (visibility.mergedShapeStrokes) {
+    analysis.globalShapeReconstruction.mergedStrokes.forEach((stroke) => {
+      drawSegment(context, stroke, VISION_OVERLAY_COLORS.shapeMerged, scaleX, scaleY, 1.35)
+    })
+  }
+
+  if (visibility.acceptedShapeEdges && analysis.globalShapeReconstruction.acceptedPolygon) {
+    analysis.globalShapeReconstruction.acceptedPolygon.edges.forEach((segment) => {
+      drawSegment(context, segment, VISION_OVERLAY_COLORS.shapeAccepted, scaleX, scaleY, 1.6)
+    })
+  }
+
+  if (visibility.rejectedShapeBridges) {
+    analysis.globalShapeReconstruction.bridgedGaps.filter((bridge) => !bridge.accepted).forEach((bridge) => {
+      drawSegment(context, bridge.segment, VISION_OVERLAY_COLORS.shapeRejected, scaleX, scaleY, 1.25)
+    })
+  }
+
+  if (visibility.predictedShapeVertices) {
+    analysis.globalShapeReconstruction.predictedCorners.forEach((corner) => {
+      drawPoint(context, corner.point, VISION_OVERLAY_COLORS.shapeVertex, scaleX, scaleY, 2.8)
+      drawLabel(context, `C${corner.id}`, corner.point.x * scaleX, corner.point.y * scaleY, scale)
+    })
+  }
+
+  if (visibility.shapePolygons) {
+    analysis.globalShapeReconstruction.polygonHypotheses.slice(0, 5).forEach((polygon) => {
+      drawClosurePolygon(
+        context,
+        polygon.vertices,
+        polygon.accepted ? VISION_OVERLAY_COLORS.shapeAccepted : VISION_OVERLAY_COLORS.shapePolygon,
+        scaleX,
+        scaleY,
+        !polygon.accepted,
+        polygon.accepted ? 1.7 : 0.9,
+      )
+    })
   }
 
   if (visibility.lineSegments) {
