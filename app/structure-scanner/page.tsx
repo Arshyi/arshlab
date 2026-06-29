@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Database, ImageUp, Network, ShieldCheck } from "lucide-react"
+import { Brain, Database, ImageUp, Network, ShieldCheck } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { StructureScanner } from "@/components/chemistry/StructureScanner"
@@ -7,7 +7,7 @@ import { StructureScanner } from "@/components/chemistry/StructureScanner"
 export const metadata: Metadata = {
   title: "Structure Recognition Scanner | ARSHLAB",
   description:
-    "Upload or capture a private snapshot, parse the chemistry scene locally, segment molecule regions, reconstruct the intended skeleton, solve molecular graph consensus, then fuse local chemistry evidence in the browser.",
+    "Upload or capture a private snapshot, reconstruct the molecule locally, then turn the selected canonical graph into deterministic chemistry intelligence in the browser.",
 }
 
 export default function StructureScannerPage() {
@@ -26,22 +26,27 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v6.3.0
+              ARSHLAB v7.0.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot. ARSHLAB first parses the whole chemistry scene, separating molecule regions, reaction arrows, conditions, chemical text, borders, reflections, and human-object clutter. The selected molecule crop then flows through perspective normalization, structure isolation, OCR, graph reconstruction, chemical validation, consensus graph solving, and evidence fusion.
+            Upload a structure image or accept a single camera snapshot. ARSHLAB first reconstructs the molecule locally, then treats the selected canonical graph as chemistry knowledge: identity, functional groups, scaffold, properties, spectroscopy, reactions, mechanisms, curriculum links, and explainable confidence.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Molecular reconstruction is an educational estimate built from local scene segmentation, line geometry, endpoint graphs, candidate graph search, bond-angle scoring, ring-template fitting, chemical valence checks, legal graph repairs, consensus scoring, and chemistry hints. Always verify inferred atoms and bond orders.
+            Molecular reconstruction and chemistry intelligence are educational estimates built from local scene segmentation, graph consensus, canonical graph matching, functional-group rules, scaffold rules, and database records. Always verify inferred atoms, bond orders, and chemical conclusions.
           </p>
         </div>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-3">
+        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <ScannerFeature
             icon={Database}
             title="Scene Understanding"
             description="Molecule regions, reaction arrows, conditions, text, borders, reflections, and human-object clutter are separated before graph reconstruction."
+          />
+          <ScannerFeature
+            icon={Brain}
+            title="Chemistry Intelligence"
+            description="The selected molecular graph is matched to local compound records, functional groups, scaffolds, properties, spectroscopy, reactions, and learning resources."
           />
           <ScannerFeature
             icon={ShieldCheck}

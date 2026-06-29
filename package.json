@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "6.3.0",
+  "version": "7.0.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -20,7 +20,12 @@
     "test:global-graph-optimizer": "node scripts/verify-global-graph-optimizer.cjs",
     "test:global-shape-reconstruction": "node scripts/verify-global-shape-reconstruction.cjs",
     "test:consensus": "node scripts/verify-consensus-graph-solver.cjs",
-    "test:scene-understanding": "node scripts/verify-scene-understanding.cjs"
+    "test:scene-understanding": "node scripts/verify-scene-understanding.cjs",
+    "test:chemistry-intelligence": "node scripts/verify-chemistry-intelligence.cjs chemistry-intelligence",
+    "test:graph-matcher": "node scripts/verify-chemistry-intelligence.cjs graph-matcher",
+    "test:functional-groups": "node scripts/verify-chemistry-intelligence.cjs functional-groups",
+    "test:properties": "node scripts/verify-chemistry-intelligence.cjs properties",
+    "test:knowledge-graph": "node scripts/verify-chemistry-intelligence.cjs knowledge-graph"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

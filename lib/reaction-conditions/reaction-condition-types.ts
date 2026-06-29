@@ -1,4 +1,4 @@
-import type { ReactionDifficulty } from "@/lib/chemistry/reaction-types"
+import type { ReactionDifficulty } from "../chemistry/reaction-types"
 
 export interface ReactionConditionRecord {
   reactionId: string

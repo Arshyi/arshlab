@@ -1,6 +1,6 @@
 # ARSHLAB Structure Scanner Architecture
 
-## v6.3.0 Scene Understanding and Molecule Segmentation Engine
+## v7.0.0 Chemistry Intelligence Engine
 
 The Structure Scanner remains fully deterministic, browser-side, local-only, and database-first.
 It does not call OpenRouter, LLMs, cloud OCR, Supabase functions, or external chemistry APIs.
@@ -21,8 +21,19 @@ Image
 -> Consensus Graph Solver
 -> Ring Closure evidence
 -> Evidence Fusion
--> Local compound database lookup
+-> Canonical Molecular Graph
+-> Chemistry Intelligence Engine
+-> ARSHLAB Knowledge Graph
+-> User Interface
 ```
+
+## Chemistry Intelligence Design
+
+The v7 layer starts after the scanner selects a consensus molecular graph. It treats that graph as the input to a chemistry knowledge engine rather than as the end of the recognition workflow. The engine canonicalizes graph topology, matches equivalent rotated, mirrored, or renumbered molecular graphs, then builds a compound intelligence object from local deterministic records.
+
+The intelligence object includes identity, graph matches, hierarchical functional groups, scaffold recognition, compound-family classification, chemical property summaries, spectroscopy links, known reactions, mechanism families, curriculum links, learning resources, safety notes, confidence channels, and an explainable "why ARSHLAB recognized this" trace.
+
+Confidence is split into vision confidence, graph confidence, chemistry confidence, knowledge confidence, and overall confidence. OCR and image evidence can support a result, but the v7 interpretation is driven by the selected canonical graph plus local chemistry databases.
 
 ## Scene Understanding Design
 
@@ -59,8 +70,17 @@ The repair pass is deterministic and legal-only. It can remove long inconsistent
 
 The selected graph exposes calibrated visual, graph, chemical, database, OCR, and overall confidence values, plus a graph history, repair history, runner-ups, and ring conflict explanations for debugging.
 
+## Knowledge Graph Design
+
+The chemistry intelligence graph connects a recognized compound to functional groups, scaffolds, reactions, mechanisms, spectroscopy, curriculum topics, lab skills, practice, exams, synthesis, and molecule visualization. These links are deterministic deep links into existing ARSHLAB modules, so a scanner result can become a study pathway without making an AI request.
+
 ## Key Files
 
+- `lib/chemistry-intelligence/intelligence-engine.ts`
+- `lib/chemistry-intelligence/graph-matcher.ts`
+- `lib/chemistry-intelligence/functional-group-engine.ts`
+- `lib/chemistry-intelligence/chemistry-intelligence-graph.ts`
+- `lib/chemistry-intelligence/types.ts`
 - `lib/structure-vision/candidate-graph-generator.ts`
 - `lib/structure-vision/scene-understanding.ts`
 - `lib/structure-vision/scene-graph.ts`
@@ -74,7 +94,9 @@ The selected graph exposes calibrated visual, graph, chemical, database, OCR, an
 - `components/chemistry/SceneUnderstandingDebugPanel.tsx`
 - `components/chemistry/GlobalGraphOptimizerDebugPanel.tsx`
 - `components/chemistry/ConsensusGraphSolverDebugPanel.tsx`
+- `components/chemistry/ChemistryIntelligencePanel.tsx`
+- `scripts/verify-chemistry-intelligence.cjs`
 
 ## Safety
 
-All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, canonical graph hashes, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, scene graphs, semantic region boxes, and repair histories are not uploaded to ARSHLAB servers or stored permanently.
+All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, canonical graph hashes, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, scene graphs, semantic region boxes, repair histories, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.

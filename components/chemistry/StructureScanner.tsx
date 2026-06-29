@@ -36,6 +36,7 @@ import type {
 import type { StructureVisionAnalysis } from "@/lib/structure-vision/vision-types"
 import { scanStructure } from "@/lib/structure-scanner/scanner-engine"
 import { getStructureScannerMetrics } from "@/lib/structure-scanner/scanner-database"
+import { analyzeChemistryIntelligence } from "@/lib/chemistry-intelligence/intelligence-engine"
 import {
   formatStructureScanTimestamp,
   correctStructureScan,
@@ -65,6 +66,7 @@ import { StructureIsolationDebugPanel } from "./StructureIsolationDebugPanel"
 import { EvidenceFusionDebugPanel } from "./EvidenceFusionDebugPanel"
 import { PerspectiveNormalizationDebugPanel } from "./PerspectiveNormalizationDebugPanel"
 import { SceneUnderstandingDebugPanel } from "./SceneUnderstandingDebugPanel"
+import { ChemistryIntelligencePanel } from "./ChemistryIntelligencePanel"
 
 type ScannerInputMode = "upload" | "camera"
 
@@ -155,6 +157,17 @@ export function StructureScanner() {
 
   const metrics = useMemo(() => getStructureScannerMetrics(), [])
   const stats = useMemo(() => getStructureScanStats(history), [history, ocrMetricsRevision])
+  const chemistryIntelligence = useMemo(() => {
+    const graph = visionAnalysis?.consensusGraphSolver.selectedGraph ?? visionAnalysis?.molecularGraph
+    if (!graph || !result?.bestMatch) return null
+    return analyzeChemistryIntelligence({
+      graph,
+      preferredCompoundId: result.bestMatch.record.id,
+      recognizedText: ocrResult?.parsed.cleanedText,
+      visionConfidence: visionAnalysis?.visualConfidence,
+      graphConfidence: result.confidenceBreakdown.graph || graph.estimates.confidence,
+    })
+  }, [ocrResult, result, visionAnalysis])
 
   useEffect(() => {
     setHistory(readStructureScanHistory())
@@ -820,6 +833,7 @@ export function StructureScanner() {
           {result.bestMatch && result.isConfident ? (
             <div className="space-y-4">
               <StructureMatchCard match={result.bestMatch} primary />
+              <ChemistryIntelligencePanel intelligence={chemistryIntelligence} />
               {result.matches.length > 1 && (
                 <div className="grid gap-4 lg:grid-cols-2">
                   {result.matches.slice(1).map((match) => (

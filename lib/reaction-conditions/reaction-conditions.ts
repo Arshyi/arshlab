@@ -1,5 +1,5 @@
-import { REACTION_RECORDS } from "@/lib/chemistry/reactions"
-import type { ReactionRecord } from "@/lib/chemistry/reaction-types"
+import { REACTION_RECORDS } from "../chemistry/reactions"
+import type { ReactionRecord } from "../chemistry/reaction-types"
 import type { ReactionConditionMetrics, ReactionConditionRecord } from "./reaction-condition-types"
 
 function condition(input: ReactionConditionRecord): ReactionConditionRecord {

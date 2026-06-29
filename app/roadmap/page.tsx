@@ -73,6 +73,7 @@ const completed = [
   "Global Shape Reconstruction Engine",
   "Consensus Graph Solver",
   "Scene Understanding and Molecule Segmentation Engine",
+  "Chemistry Intelligence Engine",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -203,15 +204,15 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Scene Understanding and Molecule Segmentation Engine
+                Chemistry Intelligence Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: the Structure Scanner parses the whole scene before trying to identify a molecule.
-                It separates molecule regions, reaction arrows, reaction conditions, chemical text, borders,
-                reflections, and human-object clutter, then sends the selected molecule crop into the existing
-                perspective, isolation, graph, validation, consensus, and evidence-fusion pipeline.
+                Now available: recognized molecule graphs become chemistry knowledge objects. ARSHLAB can
+                match canonical graphs, classify functional groups and scaffolds, estimate local properties,
+                explain why a molecule was recognized, and connect scanner results to spectroscopy, reactions,
+                mechanisms, curriculum, formula sheet entries, practice, exams, synthesis, and visualization.
               </p>
             </CardContent>
           </Card>
@@ -223,7 +224,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v6.3.0 - Scene Understanding and Molecule Segmentation Engine
+          ARSHLAB v7.0.0 - Chemistry Intelligence Engine
         </motion.p>
       </div>
     </div>

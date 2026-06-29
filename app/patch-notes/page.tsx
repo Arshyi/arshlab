@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "6.3.0",
+    version: "7.0.0",
     date: "Current",
+    status: "released",
+    title: "Chemistry Intelligence Engine",
+    changes: [
+      "Added a deterministic Chemistry Intelligence Engine after consensus molecular graph solving",
+      "Added canonical graph matching so rotated, mirrored, and renumbered equivalent molecule graphs resolve to stable identities",
+      "Added hierarchical functional-group classification, including primary alcohols, phenols, ketones, aldehydes, carboxylic acids, esters, amides, amines, arenes, and related families",
+      "Added scaffold and compound-family recognition for common organic structures such as benzene, cyclohexane, pyridine, naphthalene, amino acids, esters, and carbonyl compounds",
+      "Added local chemical property summaries with formula, molar mass, charge, aromaticity, ring count, atom count, bond count, polarity, hydrogen-bonding, solubility, and physical-state estimates",
+      "Connected recognized molecules to spectroscopy, reactions, mechanisms, curriculum topics, formula sheet entries, practice, exams, synthesis, and molecular visualization",
+      "Added a Chemistry Intelligence Panel to scanner results with separate vision, graph, chemistry, knowledge, and overall confidence",
+      "Added deterministic Explain Why reasoning so users can see the graph, functional-group, scaffold, and database evidence behind a match",
+      "Added chemistry intelligence regression tests for graph matching, functional groups, properties, knowledge graph links, and core compound records",
+    ],
+  },
+  {
+    version: "6.3.0",
+    date: "Previous",
     status: "released",
     title: "Scene Understanding and Molecule Segmentation Engine",
     changes: [
