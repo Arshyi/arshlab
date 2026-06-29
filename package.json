@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "7.2.0",
+  "version": "7.3.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -20,6 +20,11 @@
     "test:global-graph-optimizer": "node scripts/verify-global-graph-optimizer.cjs",
     "test:global-shape-reconstruction": "node scripts/verify-global-shape-reconstruction.cjs",
     "test:consensus": "node scripts/verify-consensus-graph-solver.cjs",
+    "test:edge-validator": "node scripts/verify-graph-validation.cjs edge-validator",
+    "test:bridge-validator": "node scripts/verify-graph-validation.cjs bridge-validator",
+    "test:cycle-validator": "node scripts/verify-graph-validation.cjs cycle-validator",
+    "test:graph-validator": "node scripts/verify-graph-validation.cjs graph-validator",
+    "test:topology": "node scripts/verify-graph-validation.cjs topology",
     "test:scene-understanding": "node scripts/verify-scene-understanding.cjs",
     "test:chemistry-intelligence": "node scripts/verify-chemistry-intelligence.cjs chemistry-intelligence",
     "test:graph-matcher": "node scripts/verify-chemistry-intelligence.cjs graph-matcher",

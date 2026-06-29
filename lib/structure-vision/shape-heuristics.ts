@@ -20,6 +20,7 @@ import { generateCandidateGraphs } from "./candidate-graph-generator"
 import { optimizeMolecularGraphHypotheses } from "./global-graph-optimizer"
 import { reconstructGlobalShape } from "./global-shape-reconstruction"
 import { analyzeRingClosure, ringClosureCandidateToVisionRing } from "./ring-closure"
+import { validateGraphTopology } from "./graph-validator"
 
 const DEGREE_STEP = 5
 
@@ -1062,18 +1063,20 @@ export function analyzeDarkPixelMask(
     recognizedText,
   })
   const molecularGraph = consensusGraphSolver.selectedGraph
-  const molecularRingCandidates: VisionRingCandidate[] = molecularGraph.rings.length
-    ? molecularGraph.rings.flatMap((ring) => {
+  const graphValidation = validateGraphTopology(molecularGraph)
+  const graphForFinalSummary = graphValidation.selectedGraph ?? molecularGraph
+  const molecularRingCandidates: VisionRingCandidate[] = graphForFinalSummary.rings.length
+    ? graphForFinalSummary.rings.flatMap((ring) => {
       if (ring.size < 5 || ring.size > 8) return []
       const nodes = ring.nodeIds
-        .map((nodeId) => molecularGraph.nodes.find((node) => node.id === nodeId))
-        .filter((node): node is (typeof molecularGraph.nodes)[number] => Boolean(node))
+        .map((nodeId) => graphForFinalSummary.nodes.find((node) => node.id === nodeId))
+        .filter((node): node is (typeof graphForFinalSummary.nodes)[number] => Boolean(node))
       if (!nodes.length) return []
       const minimumX = Math.min(...nodes.map((node) => node.x))
       const maximumX = Math.max(...nodes.map((node) => node.x))
       const minimumY = Math.min(...nodes.map((node) => node.y))
       const maximumY = Math.max(...nodes.map((node) => node.y))
-      const ringDoubleBonds = molecularGraph.bonds.filter((bond) =>
+      const ringDoubleBonds = graphForFinalSummary.bonds.filter((bond) =>
         ring.nodeIds.includes(bond.startNodeId) && ring.nodeIds.includes(bond.endNodeId) && bond.bondOrder >= 2,
       ).length
       return [{
@@ -1092,9 +1095,9 @@ export function analyzeDarkPixelMask(
         lineCoverage: 100,
         doubleBondCue: clamp(Math.round(ringDoubleBonds / Math.max(1, Math.floor(ring.size / 2)) * 100), 0, 100),
         aromaticCueScore: ring.aromatic ? 95 : 0,
-        reason: `${ring.size}-member cycle reconstructed from chemically validated ${molecularGraph.atomCentered ? "atom-label" : "stroke"} bonds.`,
+        reason: `${ring.size}-member cycle reconstructed from graph-validated ${graphForFinalSummary.atomCentered ? "atom-label" : "stroke"} bonds.`,
         scoreBreakdown: [
-          { label: molecularGraph.atomCentered ? "Atom-centroid cycle" : "Validated graph cycle", points: 30, maximum: 30 },
+          { label: graphForFinalSummary.atomCentered ? "Atom-centroid cycle" : "Validated graph cycle", points: 30, maximum: 30 },
           { label: "Pruned bond closure", points: 25, maximum: 25 },
           { label: "Parallel bond support", points: ring.aromatic ? 25 : 0, maximum: 25 },
         ],
@@ -1126,18 +1129,18 @@ export function analyzeDarkPixelMask(
       )
       if (!duplicate) finalRingCandidates.push(candidate)
     })
-  const finalGraphSummary: VisionGraphAnalysis = molecularGraph.nodes.length
+  const finalGraphSummary: VisionGraphAnalysis = graphForFinalSummary.nodes.length
     ? {
-      nodes: molecularGraph.nodes.map((node) => ({
+      nodes: graphForFinalSummary.nodes.map((node) => ({
         id: node.id,
         point: { x: node.x, y: node.y },
         endpointCount: node.degree,
         mergeRadius: node.labelBounds ? Math.max(node.labelBounds.width, node.labelBounds.height) / 2 : 0,
         mergeQuality: node.confidence,
       })),
-      edges: molecularGraph.bonds.map((bond) => {
-        const start = molecularGraph.nodes.find((node) => node.id === bond.startNodeId)
-        const end = molecularGraph.nodes.find((node) => node.id === bond.endNodeId)
+      edges: graphForFinalSummary.bonds.map((bond) => {
+        const start = graphForFinalSummary.nodes.find((node) => node.id === bond.startNodeId)
+        const end = graphForFinalSummary.nodes.find((node) => node.id === bond.endNodeId)
         return {
           id: bond.id,
           startNodeId: bond.startNodeId,
@@ -1146,8 +1149,8 @@ export function analyzeDarkPixelMask(
           sourceSegmentIndexes: bond.sourceSegmentIndexes,
         }
       }),
-      mergedEndpointCount: molecularGraph.bonds.reduce((sum, bond) => sum + bond.sourceSegmentIndexes.length, 0),
-      endpointTolerance: molecularGraph.snapRadius || graphSummary.endpointTolerance,
+      mergedEndpointCount: graphForFinalSummary.bonds.reduce((sum, bond) => sum + bond.sourceSegmentIndexes.length, 0),
+      endpointTolerance: graphForFinalSummary.snapRadius || graphSummary.endpointTolerance,
       averageLineLength: graphSummary.averageLineLength,
       cycleCandidates: finalRingCandidates.filter((ring) => !ring.nearRing),
       nearRingCandidates: finalRingCandidates.filter((ring) => ring.nearRing),
@@ -1157,11 +1160,11 @@ export function analyzeDarkPixelMask(
         finalRingCandidates.some((ring) => ring.benzeneLike) ? 95 : 0,
       ),
       explanation: finalRingCandidates.length
-        ? `${finalRingCandidates[0].sidesEstimate}-member cycle reconstructed after chemical graph validation and edge pruning.`
-        : "Chemical graph validation pruned implausible edges; no 3-8 member cycle closed.",
+        ? `${finalRingCandidates[0].sidesEstimate}-member cycle reconstructed after graph validation and topology reconstruction.`
+        : "Graph validation pruned implausible edges; no 3-8 member cycle closed.",
     }
     : graphSummary
-  const finalFunctionalGroupCues = molecularGraph.atomCentered || molecularGraph.rings.length > 0
+  const finalFunctionalGroupCues = graphForFinalSummary.atomCentered || graphForFinalSummary.rings.length > 0
     ? buildCues(finalRingCandidates, parallelLinePairs, simpleChainLength, recognizedText)
     : functionalGroupCues
   const candidates = buildCandidates(
@@ -1196,6 +1199,7 @@ export function analyzeDarkPixelMask(
     ringClosure: validationRingClosure,
     graph: finalGraphSummary,
     molecularGraph,
+    graphValidation,
     globalGraphOptimization,
     consensusGraphSolver,
     chemicalGraphValidation,

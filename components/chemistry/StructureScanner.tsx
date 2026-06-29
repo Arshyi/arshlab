@@ -61,6 +61,7 @@ import { MolecularGraphDebugPanel } from "./MolecularGraphDebugPanel"
 import { GlobalGraphOptimizerDebugPanel } from "./GlobalGraphOptimizerDebugPanel"
 import { ConsensusGraphSolverDebugPanel } from "./ConsensusGraphSolverDebugPanel"
 import { ChemicalGraphValidatorDebugPanel } from "./ChemicalGraphValidatorDebugPanel"
+import { GraphValidationPanel } from "./GraphValidationPanel"
 import { VisualOverlayDebugger } from "./VisualOverlayDebugger"
 import { CameraCapture } from "./CameraCapture"
 import { StructureIsolationDebugPanel } from "./StructureIsolationDebugPanel"
@@ -159,8 +160,13 @@ export function StructureScanner() {
 
   const metrics = useMemo(() => getStructureScannerMetrics(), [])
   const stats = useMemo(() => getStructureScanStats(history), [history, ocrMetricsRevision])
+  const graphValidation = visionAnalysis?.graphValidation ?? null
+  const graphValidationAllowsChemistry = graphValidation ? graphValidation.candidateGateOpen : true
   const chemistryIntelligence = useMemo(() => {
-    const graph = visionAnalysis?.consensusGraphSolver.selectedGraph ?? visionAnalysis?.molecularGraph
+    if (visionAnalysis?.graphValidation && !visionAnalysis.graphValidation.candidateGateOpen) return null
+    const graph = visionAnalysis?.graphValidation.selectedGraph ??
+      visionAnalysis?.consensusGraphSolver.selectedGraph ??
+      visionAnalysis?.molecularGraph
     if (!graph || !result?.bestMatch) return null
     return analyzeChemistryIntelligence({
       graph,
@@ -171,7 +177,10 @@ export function StructureScanner() {
     })
   }, [ocrResult, result, visionAnalysis])
   const contradictionReport = useMemo(() => {
-    const graph = visionAnalysis?.consensusGraphSolver.selectedGraph ?? visionAnalysis?.molecularGraph
+    if (visionAnalysis?.graphValidation && !visionAnalysis.graphValidation.candidateGateOpen) return null
+    const graph = visionAnalysis?.graphValidation.selectedGraph ??
+      visionAnalysis?.consensusGraphSolver.selectedGraph ??
+      visionAnalysis?.molecularGraph
     if (!graph || !result?.bestMatch) return null
     return generateCandidateEliminationReport(graph, INTELLIGENCE_COMPOUND_RECORDS, result.bestMatch.record.id)
   }, [result, visionAnalysis])
@@ -415,6 +424,12 @@ export function StructureScanner() {
 
     try {
       const parsed = nextOCRResult?.parsed
+      const validatedVisualAnalysis = nextVisionAnalysis?.graphValidation.candidateGateOpen
+        ? {
+          ...nextVisionAnalysis,
+          molecularGraph: nextVisionAnalysis.graphValidation.selectedGraph ?? nextVisionAnalysis.molecularGraph,
+        }
+        : undefined
       const nextResult = scanStructure({
         moleculeName: moleculeName.trim() || parsed?.detectedName || undefined,
         formula: formula.trim() || parsed?.detectedFormula || undefined,
@@ -434,7 +449,7 @@ export function StructureScanner() {
         ocrChemistryConfidence: parsed?.chemistryConfidence,
         ocrNoisePenalty: parsed?.chemistryScores.noisePenalty,
         ocrFormulaCorrected: parsed?.detectedFormulaWasCorrected,
-        visualAnalysis: nextVisionAnalysis ?? undefined,
+        visualAnalysis: validatedVisualAnalysis,
         manualHints: {
           moleculeName: moleculeName.trim() || undefined,
           formula: formula.trim() || undefined,
@@ -579,6 +594,8 @@ export function StructureScanner() {
           <ConsensusGraphSolverDebugPanel analysis={visionAnalysis} />
 
           <ChemicalGraphValidatorDebugPanel analysis={visionAnalysis} />
+
+          <GraphValidationPanel analysis={visionAnalysis} />
 
           <EvidenceFusionDebugPanel fusion={result?.evidenceFusion ?? null} />
 
@@ -794,6 +811,16 @@ export function StructureScanner() {
             <OCRValue label="Ring / Aromatic Confidence" value={`${result.confidenceBreakdown.ring}%`} />
             <OCRValue label="Chemistry Confidence" value={`${result.confidenceBreakdown.chemistry}%`} />
           </div>
+
+          {graphValidation && !graphValidationAllowsChemistry ? (
+            <Alert className="rounded-2xl border-red-500/30 bg-red-500/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Graph reconstruction unreliable</AlertTitle>
+              <AlertDescription>
+                Chemistry interpretation from the visual graph was intentionally skipped. Add a formula/name hint or use a cleaner crop before relying on this scan.
+              </AlertDescription>
+            </Alert>
+          ) : null}
 
           {!result.isConfident && (
             <Alert className="rounded-2xl border-amber-500/30 bg-amber-500/10">

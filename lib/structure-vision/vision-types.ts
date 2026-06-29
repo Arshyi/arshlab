@@ -2,6 +2,7 @@ import type { ChemicalGraphValidationResult } from "./chemical-graph-validator"
 import type { GlobalShapeReconstructionResult } from "./global-shape-reconstruction"
 import type { GlobalGraphOptimizationResult } from "./global-graph-optimizer"
 import type { ConsensusGraphSolverResult } from "./consensus-graph-solver"
+import type { GraphValidationResult } from "./graph-validator"
 import type { MolecularGraph } from "../vision/molecular-graph"
 
 export interface VisionPoint {
@@ -200,6 +201,7 @@ export interface StructureVisionAnalysis {
   ringClosure: VisionRingClosureAnalysis
   graph: VisionGraphAnalysis
   molecularGraph: MolecularGraph
+  graphValidation: GraphValidationResult
   globalGraphOptimization: GlobalGraphOptimizationResult
   consensusGraphSolver: ConsensusGraphSolverResult
   chemicalGraphValidation: ChemicalGraphValidationResult

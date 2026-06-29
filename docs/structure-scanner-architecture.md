@@ -1,6 +1,6 @@
 # ARSHLAB Structure Scanner Architecture
 
-## v7.2.0 Chemical Contradiction and Candidate Elimination Engine
+## v7.3.0 Graph Validation and Topology Reconstruction Engine
 
 The Structure Scanner remains fully deterministic, browser-side, local-only, and database-first.
 It does not call OpenRouter, LLMs, cloud OCR, Supabase functions, or external chemistry APIs.
@@ -19,6 +19,8 @@ Image
 -> Global Molecular Graph Optimizer
 -> Chemical Graph Validator
 -> Consensus Graph Solver
+-> Graph Validation Engine
+-> Topology Reconstruction
 -> Ring Closure evidence
 -> Evidence Fusion
 -> Canonical Molecular Graph
@@ -32,7 +34,7 @@ Image
 
 ## Chemistry Intelligence Design
 
-The v7 layer starts after the scanner selects a consensus molecular graph. It treats that graph as the input to a chemistry knowledge engine rather than as the end of the recognition workflow. The engine canonicalizes graph topology, matches equivalent rotated, mirrored, or renumbered molecular graphs, then builds a compound intelligence object from local deterministic records.
+The v7 layer starts after the scanner selects and validates a consensus molecular graph. It treats that graph as the input to a chemistry knowledge engine rather than as the end of the recognition workflow. The engine canonicalizes graph topology, matches equivalent rotated, mirrored, or renumbered molecular graphs, then builds a compound intelligence object from local deterministic records.
 
 The intelligence object includes identity, graph matches, hierarchical functional groups, scaffold recognition, compound-family classification, chemical property summaries, spectroscopy links, known reactions, mechanism families, curriculum links, learning resources, safety notes, confidence channels, and an explainable "why ARSHLAB recognized this" trace.
 
@@ -51,6 +53,18 @@ The v7.2 layer changes candidate ranking from positive-evidence-only scoring to 
 Hard contradictions eliminate a candidate before database ranking. For example, benzene fails against an ethanol-like graph because oxygen is present, carbon count is wrong, no aromatic six-member ring exists, and the functional-group topology is incompatible. Soft contradictions are retained as score penalties and debug context when they are informative but not identity-breaking.
 
 Chemistry Intelligence only receives candidates that survived the contradiction report. The scanner UI shows the Chemical Contradiction Report so students can see which alternatives were rejected and why.
+
+## Graph Validation Design
+
+The v7.3 layer moves chemistry reasoning behind a deterministic graph-validation gate. ARSHLAB first treats the scanner output as a primitive graph, then validates the graph like a small CAD kernel before any visual chemistry evidence is allowed to influence a result.
+
+Every reconstructed edge is scored as accepted, weak, recovered, or rejected. The validator rejects duplicate bonds, crossing bonds, edge loops, extreme endpoint distances, compressed branch geometry, and over-valent atoms. Recovered bridge edges are separately classified as guaranteed, likely, possible, or unsafe, and unsafe bridges are withheld from selected topology variants.
+
+Rings now pass through a cycle gate before aromatic reasoning. A candidate ring must be backed by a true graph cycle, unique nodes, plausible internal angles, consistent bond lengths, non-crossing edges, and connected-component consistency. Rejected cycles do not continue toward aromatic, arene, or benzene candidates.
+
+The graph sanity pass produces a deterministic structural fingerprint before chemistry begins: connected components, node count, edge count, cycle count, branch count, terminal atoms, average degree, maximum path length, average bond length, and a candidate topology label such as "open chain alcohol/ether-like topology" or "aromatic ring topology." This lets ARSHLAB reject impossible interpretations before touching the chemistry database.
+
+The topology reconstructor compares named graph variants: no repairs, rejected-edge pruning, safe bridges only, conservative topology, and bridge-free topology. Each receives a topology score, chemical-legality score, and visual-agreement score. Chemistry interpretation from the visual graph is allowed only when Graph Validation passed or passed with warnings. If validation fails, the scanner says graph reconstruction is unreliable and intentionally skips chemistry interpretation from that graph.
 
 ## Scene Understanding Design
 
@@ -111,17 +125,25 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 - `lib/structure-vision/global-shape-reconstruction.ts`
 - `lib/structure-vision/global-graph-optimizer.ts`
 - `lib/structure-vision/consensus-graph-solver.ts`
+- `lib/structure-vision/graph-validator.ts`
+- `lib/structure-vision/edge-validator.ts`
+- `lib/structure-vision/bridge-validator.ts`
+- `lib/structure-vision/cycle-validator.ts`
+- `lib/structure-vision/graph-sanity.ts`
+- `lib/structure-vision/topology-reconstructor.ts`
 - `lib/structure-vision/bond-angle-engine.ts`
 - `lib/structure-vision/canonical-molecular-graph.ts`
 - `components/chemistry/GlobalShapeReconstructionDebugPanel.tsx`
 - `components/chemistry/SceneUnderstandingDebugPanel.tsx`
 - `components/chemistry/GlobalGraphOptimizerDebugPanel.tsx`
 - `components/chemistry/ConsensusGraphSolverDebugPanel.tsx`
+- `components/chemistry/GraphValidationPanel.tsx`
 - `components/chemistry/ChemicalContradictionReport.tsx`
 - `components/chemistry/ChemistryIntelligencePanel.tsx`
 - `scripts/verify-contradiction-engine.cjs`
+- `scripts/verify-graph-validation.cjs`
 - `scripts/verify-chemistry-intelligence.cjs`
 
 ## Safety
 
-All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, canonical graph hashes, contradiction reports, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, scene graphs, semantic region boxes, repair histories, contradiction traces, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.
+All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, graph validation decisions, topology variants, graph fingerprints, canonical graph hashes, contradiction reports, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, graph validation traces, scene graphs, semantic region boxes, repair histories, contradiction traces, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.

@@ -2,9 +2,9 @@
   "handDrawnBenzene": {
     "lines": 21,
     "endpoints": 42,
-    "graphNodes": 9,
+    "graphNodes": 6,
     "graphEdges": 6,
-    "cycles": 2,
+    "cycles": 1,
     "nearRings": 0,
     "selectedRingMembers": 6,
     "selectedRingConfidence": 92,
@@ -47,17 +47,17 @@
   "pentagonalRing": {
     "lines": 14,
     "endpoints": 28,
-    "graphNodes": 6,
-    "graphEdges": 6,
-    "cycles": 2,
+    "graphNodes": 5,
+    "graphEdges": 4,
+    "cycles": 1,
     "nearRings": 0,
     "selectedRingMembers": 5,
-    "selectedRingConfidence": 72,
+    "selectedRingConfidence": 70,
     "parallelPairs": 0,
     "aromaticCueScore": 0,
     "functionalCues": [],
     "topCandidate": "benzene",
-    "topVisualScore": 50
+    "topVisualScore": 35
   },
   "incompleteBenzene": {
     "lines": 21,

@@ -76,6 +76,7 @@ const completed = [
   "Chemistry Intelligence Engine",
   "Reference Compound Graph Library",
   "Chemical Contradiction and Candidate Elimination Engine",
+  "Graph Validation and Topology Reconstruction Engine",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -206,15 +207,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Chemical Contradiction and Candidate Elimination Engine
+                Graph Validation and Topology Reconstruction Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: candidate identities must survive deterministic chemistry requirements before
-                ranking. ARSHLAB checks atom counts, heteroatoms, rings, aromaticity, bond orders,
-                functional-group contradictions, and connected components so impossible structures are
-                rejected before chemistry intelligence expands them.
+                Now available: visual chemistry interpretation only runs after the primitive molecular graph
+                passes deterministic edge, bridge, cycle, component, sanity, and topology checks. If the graph
+                is unreliable, ARSHLAB shows the reason and skips molecule interpretation instead of guessing.
               </p>
             </CardContent>
           </Card>
@@ -226,7 +226,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v7.2.0 - Chemical Contradiction and Candidate Elimination Engine
+          ARSHLAB v7.3.0 - Graph Validation and Topology Reconstruction Engine
         </motion.p>
       </div>
     </div>

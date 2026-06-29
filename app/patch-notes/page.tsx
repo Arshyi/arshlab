@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "7.2.0",
+    version: "7.3.0",
     date: "Current",
+    status: "released",
+    title: "Graph Validation and Topology Reconstruction Engine",
+    changes: [
+      "Added a deterministic Graph Validation Engine before chemistry interpretation",
+      "Added conservative edge validation with accepted, weak, recovered, and rejected edge decisions",
+      "Added bridge validation with guaranteed, likely, possible, and unsafe bridge classifications",
+      "Added cycle validation so rings require unique graph cycles, plausible angles, consistent bond lengths, and no crossing edges before aromatic reasoning",
+      "Added graph sanity checks for duplicate nodes, crossing bonds, floating atoms, graph islands, edge loops, disconnected aromatic systems, and valence violations",
+      "Added topology reconstruction variants with topology score, chemical legality, and visual agreement before selecting a final graph",
+      "Added a Graph Validation debug panel with edge decisions, cycle decisions, structural fingerprint, topology variants, and candidate gate state",
+      "Added candidate gating so visual chemistry interpretation is intentionally skipped when graph validation fails",
+      "Added graph-validator, edge-validator, bridge-validator, cycle-validator, and topology regression commands",
+    ],
+  },
+  {
+    version: "7.2.0",
+    date: "Previous",
     status: "released",
     title: "Chemical Contradiction and Candidate Elimination Engine",
     changes: [
