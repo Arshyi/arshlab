@@ -82,6 +82,7 @@ const completed = [
   "Vision Reconstruction Pipeline",
   "Interactive Molecular Orbital & Hybridization Learning Engine",
   "Conjugation, Resonance and Delocalization Learning Engine",
+  "Scanner-to-Learning Bridge and Interactive Learning Polish",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -212,14 +213,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Conjugation, Resonance and Delocalization Learning Engine
+                Scanner-to-Learning Bridge
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: ARSHLAB teaches conjugation with deterministic SVG graphs,
-                p-orbital tracing, principal pathway detection, pi electron counting,
-                resonance arrows, Huckel aromaticity, UV-Vis color reasoning, and practice mode.
+                Now available: scanner results can open deterministic teach-me-why lessons for
+                molecular orbitals, hybridization, sigma/pi bonding, lone pairs, conjugation,
+                resonance, and aromaticity without changing recognition engines.
               </p>
             </CardContent>
           </Card>
@@ -231,7 +232,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v8.4.0 - Conjugation, Resonance and Delocalization Learning Engine
+          ARSHLAB v8.5.0 - Scanner-to-Learning Bridge and Interactive Learning Polish
         </motion.p>
       </div>
     </div>

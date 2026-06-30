@@ -48,6 +48,8 @@ Image
 -> Chemistry Intelligence Engine
 -> ARSHLAB Knowledge Graph
 -> User Interface
+-> Scanner-to-Learning Bridge
+-> Interactive Learning Lessons
 ```
 
 ## Molecular Compiler Design
@@ -85,6 +87,14 @@ The v7/v8 intelligence layer starts after the scanner compiles and optimizes a v
 The intelligence object includes identity, graph matches, hierarchical functional groups, scaffold recognition, compound-family classification, chemical property summaries, spectroscopy links, known reactions, mechanism families, curriculum links, learning resources, safety notes, confidence channels, and an explainable "why ARSHLAB recognized this" trace.
 
 Confidence is split into vision confidence, graph confidence, chemistry confidence, knowledge confidence, and overall confidence. OCR and image evidence can support a result, but the v7 interpretation is driven by the selected canonical graph plus local chemistry databases.
+
+## Scanner-to-Learning Bridge
+
+The v8.5 layer starts after scanner recognition and chemistry intelligence have already produced a selected compound. It is a UI and routing bridge, not a recognition engine. It reads the detected compound id, formula, functional groups, aromaticity flag, ring count, and deterministic intelligence summaries, then recommends a local lesson in `/interactive-learning`.
+
+The bridge maps aromatic compounds such as benzene to conjugation and Huckel aromaticity, alcohols such as ethanol to hybridization and lone-pair lessons, alkenes/alkynes/carbonyls to sigma/pi bonding lessons, and supported diatomic molecules such as O2 and N2 to the molecular-orbital builder. These decisions are deterministic link-generation rules. They do not modify OCR, graph validation, the molecular compiler, evidence fusion, chemistry intelligence, database records, authentication, Supabase, middleware, or AI routes.
+
+The bridge also provides reusable explanation cards for sigma bonds, pi electrons, aromaticity, HOMO/LUMO reactivity, and sp/sp2/sp3 hybridization. The cards are short educational summaries that link into existing interactive SVG lessons rather than generated AI text.
 
 ## Reference Graph Library
 

@@ -7,6 +7,21 @@ export const metadata: Metadata = {
     "Programmatic SVG molecular orbital diagrams, electron filling animations, HOMO/LUMO exploration, hybridization, sigma/pi overlap, lone pairs, and orbital quiz mode.",
 }
 
-export default function InteractiveLearningPage() {
-  return <InteractiveLearningClient />
+interface InteractiveLearningPageProps {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value
+}
+
+export default async function InteractiveLearningPage({ searchParams }: InteractiveLearningPageProps) {
+  const params = await searchParams
+  return (
+    <InteractiveLearningClient
+      initialTopic={firstParam(params?.topic)}
+      initialCompound={firstParam(params?.compound)}
+      initialMolecule={firstParam(params?.molecule)}
+    />
+  )
 }

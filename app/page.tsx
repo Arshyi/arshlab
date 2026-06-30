@@ -189,6 +189,12 @@ const features = [
     href: "/interactive-learning/conjugation",
   },
   {
+    icon: ScanSearch,
+    title: "Scanner-to-Learning Bridge",
+    description: "Move from a detected compound to deterministic teach-me-why lessons for orbitals, hybridization, sigma/pi bonding, lone pairs, and aromaticity.",
+    href: "/structure-scanner",
+  },
+  {
     icon: Layers,
     title: "Functional Groups",
     description: "Explore all 9 IB HL functional groups with properties, naming rules, and spectroscopy hints.",

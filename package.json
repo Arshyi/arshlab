@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "8.4.0",
+  "version": "8.5.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -69,7 +69,10 @@
     "test:delocalization": "node scripts/verify-conjugation-learning.cjs delocalization",
     "test:principal-conjugated-path": "node scripts/verify-conjugation-learning.cjs principal-conjugated-path",
     "test:curved-arrows": "node scripts/verify-conjugation-learning.cjs curved-arrows",
-    "test:uvvis-learning": "node scripts/verify-conjugation-learning.cjs uvvis-learning"
+    "test:uvvis-learning": "node scripts/verify-conjugation-learning.cjs uvvis-learning",
+    "test:scanner-learning-bridge": "node scripts/verify-scanner-learning-bridge.cjs scanner-learning-bridge",
+    "test:interactive-learning-routing": "node scripts/verify-scanner-learning-bridge.cjs interactive-learning-routing",
+    "test:lesson-links": "node scripts/verify-scanner-learning-bridge.cjs lesson-links"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

@@ -73,6 +73,7 @@ import { PerspectiveNormalizationDebugPanel } from "./PerspectiveNormalizationDe
 import { SceneUnderstandingDebugPanel } from "./SceneUnderstandingDebugPanel"
 import { ChemistryIntelligencePanel } from "./ChemistryIntelligencePanel"
 import { ChemicalContradictionReport } from "./ChemicalContradictionReport"
+import { ScannerLearningBridge } from "./ScannerLearningBridge"
 
 type ScannerInputMode = "upload" | "camera"
 
@@ -895,6 +896,7 @@ export function StructureScanner() {
           {result.bestMatch && result.isConfident ? (
             <div className="space-y-4">
               <StructureMatchCard match={result.bestMatch} primary />
+              <ScannerLearningBridge match={result.bestMatch} intelligence={chemistryIntelligence} />
               <ChemicalContradictionReport report={contradictionReport} />
               <ChemistryIntelligencePanel intelligence={chemistryIntelligence} />
               {result.matches.length > 1 && (
@@ -918,6 +920,9 @@ export function StructureScanner() {
                   <StructureMatchCard key={match.record.id} match={match} />
                 ))}
               </div>
+              {result.matches[0] && (
+                <ScannerLearningBridge match={result.matches[0]} intelligence={chemistryIntelligence} />
+              )}
               <ChemicalContradictionReport report={contradictionReport} />
             </div>
           ) : (

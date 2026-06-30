@@ -39,13 +39,38 @@ import {
   type SvgOrbitalPrimitive,
   type ViewerOrientation,
 } from "@/lib/interactive-learning"
+import { getInteractiveExampleId, interactiveLearningHref } from "@/lib/interactive-learning/learning-bridge"
 
 const species = listMolecularOrbitalSpecies()
 const examples = listInteractiveExamples()
 const quizQuestions = listOrbitalQuizQuestions()
 const hybridModes: HybridizationMode[] = ["sp", "sp2", "sp3", "sp3d", "sp3d2"]
 
-export function InteractiveLearningClient() {
+interface InteractiveLearningClientProps {
+  initialTopic?: string
+  initialCompound?: string
+  initialMolecule?: string
+}
+
+function topicToTab(topic: string | undefined): string {
+  if (topic === "hybridization" || topic === "lone-pairs") return "hybrid"
+  if (topic === "sigma-pi") return "overlap"
+  if (topic === "examples") return "examples"
+  if (topic === "quiz") return "quiz"
+  return "mo"
+}
+
+function normalizeSpecies(value: string | undefined): DiatomicSpeciesId {
+  const match = species.find((item) => item.id.toLowerCase() === (value ?? "").toLowerCase())
+  return (match?.id ?? "O2") as DiatomicSpeciesId
+}
+
+export function InteractiveLearningClient({
+  initialTopic,
+  initialCompound,
+  initialMolecule,
+}: InteractiveLearningClientProps) {
+  const [activeTab, setActiveTab] = useState(topicToTab(initialTopic))
   const [speciesId, setSpeciesId] = useState<DiatomicSpeciesId>("O2")
   const [visibleStep, setVisibleStep] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -65,6 +90,14 @@ export function InteractiveLearningClient() {
   const quiz = quizQuestions[quizIndex] ?? quizQuestions[0]
   const quizResult = quizAnswer ? checkOrbitalQuizAnswer(quiz.id, quizAnswer) : null
   const visibleSteps = mo.fillingSteps.slice(0, visibleStep)
+
+  useEffect(() => {
+    setActiveTab(topicToTab(initialTopic))
+    if (initialMolecule) setSpeciesId(normalizeSpecies(initialMolecule))
+    if (initialCompound) setExampleId(getInteractiveExampleId({ id: initialCompound, name: initialCompound }))
+    if (initialTopic === "sigma-pi") setOverlapMode("pi")
+    if (initialTopic === "hybridization" || initialTopic === "lone-pairs") setHybridMode("sp3")
+  }, [initialCompound, initialMolecule, initialTopic])
 
   useEffect(() => {
     setVisibleStep(0)
@@ -104,7 +137,7 @@ export function InteractiveLearningClient() {
         <section className="mb-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <Badge className="rounded-full">ARSHLAB v8.3.0</Badge>
+              <Badge className="rounded-full">ARSHLAB v8.5.0</Badge>
               <Badge variant="outline" className="rounded-full">SVG / Canvas math</Badge>
               <Badge variant="outline" className="rounded-full">No AI usage</Badge>
             </div>
@@ -134,7 +167,34 @@ export function InteractiveLearningClient() {
           </Card>
         </section>
 
-        <Tabs defaultValue="mo" className="gap-6">
+        <section className="mb-8 grid gap-4 lg:grid-cols-3">
+          <LessonCard
+            title="Molecular Orbitals, HOMO/LUMO, Bond Order"
+            difficulty="Intermediate"
+            time="9 min"
+            href={interactiveLearningHref({ topic: "mo", molecule: speciesId })}
+            outcomes={["Fill MO diagrams", "Calculate bond order", "Explain magnetism"]}
+            description="Animate electrons into molecular orbitals, highlight HOMO/LUMO, and watch bond order update live."
+          />
+          <LessonCard
+            title="Hybridization, Sigma/Pi Bonds, Lone Pairs"
+            difficulty="Introductory"
+            time="8 min"
+            href={interactiveLearningHref({ topic: "hybridization", compound: exampleId })}
+            outcomes={["Place lone pairs", "Separate sigma and pi bonds", "Compare sp, sp2, sp3"]}
+            description="Mix s and p orbitals, rotate sigma/pi overlap, and connect orbital shape to molecular geometry."
+          />
+          <LessonCard
+            title="Conjugation, Resonance, Huckel Aromaticity"
+            difficulty="Intermediate"
+            time="10 min"
+            href="/interactive-learning/conjugation?compound=benzene&focus=aromaticity"
+            outcomes={["Trace p orbitals", "Count delocalized electrons", "Apply Huckel's rule"]}
+            description="Move from local bonding into delocalized electrons, resonance forms, and color from HOMO-LUMO gaps."
+          />
+        </section>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-6">
           <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl p-1 md:grid-cols-5">
             <TabsTrigger value="mo">MO Builder</TabsTrigger>
             <TabsTrigger value="hybrid">Hybridization</TabsTrigger>
@@ -654,5 +714,47 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="text-2xl font-bold font-mono">{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
     </div>
+  )
+}
+
+function LessonCard({
+  title,
+  difficulty,
+  time,
+  href,
+  outcomes,
+  description,
+}: {
+  title: string
+  difficulty: string
+  time: string
+  href: string
+  outcomes: string[]
+  description: string
+}) {
+  return (
+    <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+      <CardContent className="flex h-full flex-col gap-4 p-5">
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary" className="rounded-full">{difficulty}</Badge>
+          <Badge variant="outline" className="rounded-full">{time}</Badge>
+        </div>
+        <div>
+          <h2 className="font-semibold">{title}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {outcomes.map((outcome) => (
+            <Badge key={outcome} variant="outline" className="rounded-full">{outcome}</Badge>
+          ))}
+        </div>
+        <Button asChild className="mt-auto rounded-xl">
+          <Link href={href}>
+            Start lesson
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
   )
 }

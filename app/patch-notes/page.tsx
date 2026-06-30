@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "8.4.0",
+    version: "8.5.0",
     date: "Current",
+    status: "released",
+    title: "Scanner-to-Learning Bridge and Interactive Learning Polish",
+    changes: [
+      "Polished /interactive-learning into a module hub with lesson cards, difficulty labels, time estimates, outcomes, and start-lesson actions",
+      "Added context-aware lesson URLs for MO, hybridization, sigma/pi, lone-pair, and conjugation lessons",
+      "Added a scanner result panel that turns detected compounds into deterministic teach-me-why lessons",
+      "Added scanner-to-learning routing for benzene/aromatics, ethanol/alcohols, alkenes/alkynes/carbonyls, and O2/N2 molecular orbital examples",
+      "Added reusable explanation cards for sigma bonds, pi electrons, aromaticity, HOMO/LUMO, and hybridization",
+      "Added regression commands for scanner learning bridge logic, interactive learning routing, and lesson-link generation",
+    ],
+  },
+  {
+    version: "8.4.0",
+    date: "Previous",
     status: "released",
     title: "Conjugation, Resonance and Delocalization Learning Engine",
     changes: [

@@ -308,6 +308,13 @@ export default function ChemistryHubPage() {
             action="Open Visualizer"
           />
           <HubActionCard
+            icon={GraduationCap}
+            title="Scanner-to-Learning Bridge"
+            description="Scan a structure, then jump into deterministic teach-me-why lessons for orbitals, hybridization, sigma/pi bonds, lone pairs, conjugation, and aromaticity."
+            href="/structure-scanner"
+            action="Scan and Learn"
+          />
+          <HubActionCard
             icon={Network}
             title="Reaction Explorer"
             description="Explore a deterministic chemistry graph connecting compounds, functional groups, reactions, mechanisms, formulas, solvers, and practice."

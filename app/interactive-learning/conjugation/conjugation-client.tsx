@@ -32,11 +32,29 @@ import {
   type ConjugationAnalysis,
   type ConjugationSvgPrimitive,
 } from "@/lib/interactive-learning/conjugation"
+import { getConjugationExampleId } from "@/lib/interactive-learning/learning-bridge"
 
 const molecules = listRealMoleculeLibrary()
 const practice = listPracticeQuestions()
 
-export function ConjugationLearningClient() {
+interface ConjugationLearningClientProps {
+  initialCompound?: string
+  initialFocus?: string
+}
+
+function focusToTab(focus: string | undefined): string {
+  if (focus === "resonance") return "resonance"
+  if (focus === "aromaticity" || focus === "electron-counter") return "aromaticity"
+  if (focus === "uvvis") return "uvvis"
+  if (focus === "practice") return "practice"
+  return "detector"
+}
+
+export function ConjugationLearningClient({
+  initialCompound,
+  initialFocus,
+}: ConjugationLearningClientProps) {
+  const [activeTab, setActiveTab] = useState(focusToTab(initialFocus))
   const [moleculeId, setMoleculeId] = useState("benzene")
   const [algorithmStep, setAlgorithmStep] = useState(0)
   const [algorithmPlaying, setAlgorithmPlaying] = useState(false)
@@ -55,6 +73,13 @@ export function ConjugationLearningClient() {
   const energy = useMemo(() => buildEnergyDiagram(colorLength), [colorLength])
   const currentPractice = getPracticeQuestion(practiceIndex)
   const correctPractice = practiceAnswer && practiceAnswer === currentPractice.correctAnswer
+
+  useEffect(() => {
+    setActiveTab(focusToTab(initialFocus))
+    if (initialCompound) {
+      setMoleculeId(getConjugationExampleId({ id: initialCompound, name: initialCompound }))
+    }
+  }, [initialCompound, initialFocus])
 
   useEffect(() => {
     setAlgorithmStep(0)
@@ -88,7 +113,7 @@ export function ConjugationLearningClient() {
         <section className="mb-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <Badge className="rounded-full">ARSHLAB v8.4.0</Badge>
+              <Badge className="rounded-full">ARSHLAB v8.5.0</Badge>
               <Badge variant="outline" className="rounded-full">SVG / Canvas math</Badge>
               <Badge variant="outline" className="rounded-full">No AI usage</Badge>
               <Badge variant="outline" className="rounded-full">Why mode included</Badge>
@@ -123,7 +148,7 @@ export function ConjugationLearningClient() {
           </Card>
         </section>
 
-        <Tabs defaultValue="detector" className="gap-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-6">
           <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl p-1 md:grid-cols-7">
             <TabsTrigger value="detector">Detector</TabsTrigger>
             <TabsTrigger value="algorithm">Algorithm</TabsTrigger>
