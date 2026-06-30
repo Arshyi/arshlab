@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "8.2.0",
+  "version": "8.3.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -50,7 +50,16 @@
     "test:functional-groups": "node scripts/verify-chemistry-intelligence.cjs functional-groups",
     "test:properties": "node scripts/verify-chemistry-intelligence.cjs properties",
     "test:knowledge-graph": "node scripts/verify-chemistry-intelligence.cjs knowledge-graph",
-    "test:contradiction-engine": "node scripts/verify-contradiction-engine.cjs"
+    "test:contradiction-engine": "node scripts/verify-contradiction-engine.cjs",
+    "test:mo-builder": "node scripts/verify-interactive-learning.cjs mo-builder",
+    "test:hybridization": "node scripts/verify-interactive-learning.cjs hybridization",
+    "test:lumo-homo": "node scripts/verify-interactive-learning.cjs lumo-homo",
+    "test:sigma-pi": "node scripts/verify-interactive-learning.cjs sigma-pi",
+    "test:lone-pairs": "node scripts/verify-interactive-learning.cjs lone-pairs",
+    "test:bond-order": "node scripts/verify-interactive-learning.cjs bond-order",
+    "test:orbital-renderer": "node scripts/verify-interactive-learning.cjs orbital-renderer",
+    "test:orbital-animation": "node scripts/verify-interactive-learning.cjs orbital-animation",
+    "test:interactive-learning": "node scripts/verify-interactive-learning.cjs interactive-learning"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

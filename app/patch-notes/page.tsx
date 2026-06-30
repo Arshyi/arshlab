@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "8.2.0",
+    version: "8.3.0",
     date: "Current",
+    status: "released",
+    title: "Interactive Molecular Orbital & Hybridization Learning Engine",
+    changes: [
+      "Added a new /interactive-learning route for programmatic molecular orbital and hybridization visualizations",
+      "Added a deterministic MO diagram renderer for H2, He2, Li2, Be2, B2, C2, N2, O2, F2, Ne2, O2+, O2-, B2+, N2+, NO, and CO",
+      "Added electron filling animation controls for play, pause, step forward, step backward, reset, and speed",
+      "Added live HOMO/LUMO highlighting, bond order calculation, bonding/antibonding electron counts, and magnetism explanations",
+      "Added hybridization, energy-level, sigma/pi overlap, orbital rotation, lone-pair, pi-bond, examples-library, and quiz-mode learning panels",
+      "Added deterministic regression commands for MO building, hybridization, HOMO/LUMO, sigma/pi, lone pairs, bond order, orbital rendering, orbital animation, and interactive learning coverage",
+    ],
+  },
+  {
+    version: "8.2.0",
+    date: "Previous",
     status: "released",
     title: "Vision Reconstruction Pipeline",
     changes: [

@@ -177,6 +177,12 @@ const features = [
     href: "/hybridization-builder",
   },
   {
+    icon: Orbit,
+    title: "Interactive Molecular Orbital Learning",
+    description: "Animate molecular orbital filling, HOMO/LUMO, bond order, magnetism, hybridization, sigma/pi overlap, lone pairs, and orbital quiz mode.",
+    href: "/interactive-learning",
+  },
+  {
     icon: Layers,
     title: "Functional Groups",
     description: "Explore all 9 IB HL functional groups with properties, naming rules, and spectroscopy hints.",

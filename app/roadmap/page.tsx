@@ -80,6 +80,7 @@ const completed = [
   "Molecular Compiler Architecture",
   "Molecular Compiler Optimization Pipeline",
   "Vision Reconstruction Pipeline",
+  "Interactive Molecular Orbital & Hybridization Learning Engine",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -210,14 +211,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Vision Reconstruction Pipeline
+                Interactive Molecular Orbital & Hybridization Learning Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: ARSHLAB reconstructs cleaner primitive molecular graphs from image strokes before graph
-                validation, using deterministic stroke segmentation, endpoint clustering, atom-center estimation,
-                bond association, broken-stroke repair, crossing rejection, and primitive confidence scoring.
+                Now available: ARSHLAB renders molecular orbital diagrams, electron filling animation,
+                HOMO/LUMO highlighting, bond order, magnetism, hybridization, sigma/pi overlap,
+                lone pairs, and orbital quiz prompts as deterministic SVG learning tools.
               </p>
             </CardContent>
           </Card>
@@ -229,7 +230,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v8.2.0 - Vision Reconstruction Pipeline
+          ARSHLAB v8.3.0 - Interactive Molecular Orbital & Hybridization Learning Engine
         </motion.p>
       </div>
     </div>

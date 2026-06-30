@@ -40,6 +40,7 @@ const LAB_LINKS = [
   { href: "/electron-configurations", label: "Electron Configuration Builder" },
   { href: "/bonding-explorer", label: "Bonding Explorer" },
   { href: "/hybridization-builder", label: "Hybridization Builder" },
+  { href: "/interactive-learning", label: "Interactive Learning" },
   { href: "/orbital-viewer", label: "Orbital Viewer" },
   { href: "/spectroscopy-explorer", label: "Spectroscopy Explorer" },
   { href: "/spectroscopy", label: "Spectroscopy Reference" },
@@ -519,6 +520,29 @@ export default function ChemistryHubPage() {
               className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
             >
               Open Builder
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl mb-8 border-teal-500/20 bg-teal-500/5">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <Orbit className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Interactive Molecular Orbital Learning</h2>
+                <p className="text-sm text-muted-foreground">
+                  Animate molecular orbital filling, HOMO/LUMO, bond order, magnetism, hybridization,
+                  sigma/pi overlap, lone pairs, and orbital quiz prompts with SVG math diagrams.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/interactive-learning"
+              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Open Learning Engine
             </Link>
           </CardContent>
         </Card>
