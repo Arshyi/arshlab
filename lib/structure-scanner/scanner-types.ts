@@ -1,5 +1,6 @@
 import type { StructureVisionAnalysis } from "../structure-vision/vision-types"
 import type { EvidenceFusionResult } from "./evidence-types"
+import type { CompilerIR } from "../molecular-compiler/compiler-types"
 
 export type StructureScannerDifficulty = "Introductory" | "Intermediate" | "Advanced"
 export type StructureScanSource = "upload" | "camera" | "manual-correction" | "ocr" | "manual"
@@ -51,6 +52,7 @@ export interface StructureScanInput {
   ocrNoisePenalty?: number
   ocrFormulaCorrected?: boolean
   visualAnalysis?: StructureVisionAnalysis
+  compilerIR?: CompilerIR
   manualHints?: {
     moleculeName?: string
     formula?: string

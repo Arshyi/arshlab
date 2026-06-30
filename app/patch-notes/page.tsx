@@ -18,8 +18,24 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "7.3.0",
+    version: "8.0.0",
     date: "Current",
+    status: "released",
+    title: "Molecular Compiler Architecture",
+    changes: [
+      "Added a deterministic Molecular Compiler subsystem for structure recognition",
+      "Added Visual Tokenizer, Primitive Builder, Chemical AST, Semantic Validator, Canonicalizer, Compiler IR, and Compiler Report layers",
+      "Added compiler IR with canonical adjacency list, node ordering, edge ordering, graph fingerprint, deterministic graph hash, canonical graph ID, valence map, charge map, components, cycles, and confidence ceiling",
+      "Added compiler-style semantic checks before downstream chemistry interpretation",
+      "Added confidence propagation so downstream graph confidence cannot exceed upstream compiler inputs",
+      "Added a Molecular Compiler debug panel showing tokens, primitives, AST metrics, semantic validation, canonical graph, IR, timing, and knowledge-engine gate state",
+      "Refactored scanner graph handoff so downstream chemistry engines consume the compiler canonical graph when semantic validation passes",
+      "Added compiler regression commands for tokenizer, primitives, AST, semantic validation, canonicalizer, compiler IR, and full compiler pipeline",
+    ],
+  },
+  {
+    version: "7.3.0",
+    date: "Previous",
     status: "released",
     title: "Graph Validation and Topology Reconstruction Engine",
     changes: [

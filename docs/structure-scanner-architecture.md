@@ -1,6 +1,6 @@
 # ARSHLAB Structure Scanner Architecture
 
-## v7.3.0 Graph Validation and Topology Reconstruction Engine
+## v8.0.0 Molecular Compiler Architecture
 
 The Structure Scanner remains fully deterministic, browser-side, local-only, and database-first.
 It does not call OpenRouter, LLMs, cloud OCR, Supabase functions, or external chemistry APIs.
@@ -21,6 +21,12 @@ Image
 -> Consensus Graph Solver
 -> Graph Validation Engine
 -> Topology Reconstruction
+-> Molecular Compiler
+   -> Visual Tokens
+   -> Chemical Primitives
+   -> Chemical AST
+   -> Semantic Validation
+   -> Canonical Compiler IR
 -> Ring Closure evidence
 -> Evidence Fusion
 -> Canonical Molecular Graph
@@ -32,9 +38,19 @@ Image
 -> User Interface
 ```
 
+## Molecular Compiler Design
+
+The v8 layer treats molecule recognition like a deterministic compiler pipeline. Pixels and graph geometry first become visual tokens: lines, double-lines, triple-lines, circles, atom labels, text-like marks, and other drawing tokens. Tokens then become chemical primitives such as atoms, single/double/triple bonds, aromatic hints, charges, lone pairs, fragments, and reaction arrows.
+
+The primitive builder produces a chemical AST that stores only connectivity: atom nodes, bond edges, connected components, cycles, branches, fragments, reaction participants, charge map, valence map, and confidence values. Semantic validation runs compiler-like checks for valence errors, duplicate atoms, duplicate bonds, self-edges, crossing bonds, impossible cycles, floating fragments, disconnected components, and unsupported charges.
+
+Only a semantic pass or pass-with-warnings can produce compiler IR. The IR contains a canonical graph, canonical adjacency list, stable node ordering, stable edge ordering, fingerprint, deterministic graph hash, canonical graph ID, valence map, charge map, cycles, components, and confidence ceiling. Downstream scanner chemistry now consumes this canonical IR graph instead of raw pixels or pre-validation topology.
+
+Confidence propagates downward through the compiler. Weak tokens can create weak primitives, which can create a weak AST and weak canonical graph, but no downstream stage may raise confidence above the ceiling established by its inputs.
+
 ## Chemistry Intelligence Design
 
-The v7 layer starts after the scanner selects and validates a consensus molecular graph. It treats that graph as the input to a chemistry knowledge engine rather than as the end of the recognition workflow. The engine canonicalizes graph topology, matches equivalent rotated, mirrored, or renumbered molecular graphs, then builds a compound intelligence object from local deterministic records.
+The v7/v8 intelligence layer starts after the scanner compiles a validated molecular graph into canonical compiler IR. It treats that canonical graph as the input to a chemistry knowledge engine rather than as the end of the recognition workflow. The engine canonicalizes graph topology, matches equivalent rotated, mirrored, or renumbered molecular graphs, then builds a compound intelligence object from local deterministic records.
 
 The intelligence object includes identity, graph matches, hierarchical functional groups, scaffold recognition, compound-family classification, chemical property summaries, spectroscopy links, known reactions, mechanism families, curriculum links, learning resources, safety notes, confidence channels, and an explainable "why ARSHLAB recognized this" trace.
 
@@ -107,6 +123,14 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 
 ## Key Files
 
+- `lib/molecular-compiler/compiler.ts`
+- `lib/molecular-compiler/visual-tokenizer.ts`
+- `lib/molecular-compiler/primitive-builder.ts`
+- `lib/molecular-compiler/chemical-ast.ts`
+- `lib/molecular-compiler/semantic-validator.ts`
+- `lib/molecular-compiler/canonicalizer.ts`
+- `lib/molecular-compiler/compiler-report.ts`
+- `lib/molecular-compiler/compiler-types.ts`
 - `lib/chemistry-intelligence/intelligence-engine.ts`
 - `lib/chemistry-intelligence/graph-matcher.ts`
 - `lib/chemistry-intelligence/reference-library.ts`
@@ -138,12 +162,14 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 - `components/chemistry/GlobalGraphOptimizerDebugPanel.tsx`
 - `components/chemistry/ConsensusGraphSolverDebugPanel.tsx`
 - `components/chemistry/GraphValidationPanel.tsx`
+- `components/chemistry/MolecularCompilerPanel.tsx`
 - `components/chemistry/ChemicalContradictionReport.tsx`
 - `components/chemistry/ChemistryIntelligencePanel.tsx`
 - `scripts/verify-contradiction-engine.cjs`
 - `scripts/verify-graph-validation.cjs`
+- `scripts/verify-molecular-compiler.cjs`
 - `scripts/verify-chemistry-intelligence.cjs`
 
 ## Safety
 
-All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, graph validation decisions, topology variants, graph fingerprints, canonical graph hashes, contradiction reports, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, graph validation traces, scene graphs, semantic region boxes, repair histories, contradiction traces, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.
+All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, graph validation decisions, topology variants, compiler tokens, chemical primitives, AST nodes, semantic validation traces, compiler IR, graph fingerprints, canonical graph hashes, contradiction reports, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, graph validation traces, compiler reports, scene graphs, semantic region boxes, repair histories, contradiction traces, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.

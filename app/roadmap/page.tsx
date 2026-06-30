@@ -77,6 +77,7 @@ const completed = [
   "Reference Compound Graph Library",
   "Chemical Contradiction and Candidate Elimination Engine",
   "Graph Validation and Topology Reconstruction Engine",
+  "Molecular Compiler Architecture",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -207,14 +208,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Graph Validation and Topology Reconstruction Engine
+                Molecular Compiler Architecture
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: visual chemistry interpretation only runs after the primitive molecular graph
-                passes deterministic edge, bridge, cycle, component, sanity, and topology checks. If the graph
-                is unreliable, ARSHLAB shows the reason and skips molecule interpretation instead of guessing.
+                Now available: ARSHLAB compiles visual structure evidence into tokens, chemical primitives,
+                a molecular AST, semantic validation, canonical graph IR, and then educational chemistry output.
+                Downstream chemistry uses the compiler IR instead of raw image-derived topology.
               </p>
             </CardContent>
           </Card>
@@ -226,7 +227,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v7.3.0 - Graph Validation and Topology Reconstruction Engine
+          ARSHLAB v8.0.0 - Molecular Compiler Architecture
         </motion.p>
       </div>
     </div>

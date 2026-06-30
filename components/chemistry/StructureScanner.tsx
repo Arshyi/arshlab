@@ -62,6 +62,7 @@ import { GlobalGraphOptimizerDebugPanel } from "./GlobalGraphOptimizerDebugPanel
 import { ConsensusGraphSolverDebugPanel } from "./ConsensusGraphSolverDebugPanel"
 import { ChemicalGraphValidatorDebugPanel } from "./ChemicalGraphValidatorDebugPanel"
 import { GraphValidationPanel } from "./GraphValidationPanel"
+import { MolecularCompilerPanel } from "./MolecularCompilerPanel"
 import { VisualOverlayDebugger } from "./VisualOverlayDebugger"
 import { CameraCapture } from "./CameraCapture"
 import { StructureIsolationDebugPanel } from "./StructureIsolationDebugPanel"
@@ -162,9 +163,13 @@ export function StructureScanner() {
   const stats = useMemo(() => getStructureScanStats(history), [history, ocrMetricsRevision])
   const graphValidation = visionAnalysis?.graphValidation ?? null
   const graphValidationAllowsChemistry = graphValidation ? graphValidation.candidateGateOpen : true
+  const compilerReport = visionAnalysis?.compilerReport ?? null
+  const compilerAllowsChemistry = compilerReport ? compilerReport.status !== "fail" && Boolean(compilerReport.ir) : true
   const chemistryIntelligence = useMemo(() => {
     if (visionAnalysis?.graphValidation && !visionAnalysis.graphValidation.candidateGateOpen) return null
-    const graph = visionAnalysis?.graphValidation.selectedGraph ??
+    if (visionAnalysis?.compilerReport && (!visionAnalysis.compilerReport.ir || visionAnalysis.compilerReport.status === "fail")) return null
+    const graph = visionAnalysis?.compilerReport.ir?.canonicalGraph ??
+      visionAnalysis?.graphValidation.selectedGraph ??
       visionAnalysis?.consensusGraphSolver.selectedGraph ??
       visionAnalysis?.molecularGraph
     if (!graph || !result?.bestMatch) return null
@@ -178,7 +183,9 @@ export function StructureScanner() {
   }, [ocrResult, result, visionAnalysis])
   const contradictionReport = useMemo(() => {
     if (visionAnalysis?.graphValidation && !visionAnalysis.graphValidation.candidateGateOpen) return null
-    const graph = visionAnalysis?.graphValidation.selectedGraph ??
+    if (visionAnalysis?.compilerReport && (!visionAnalysis.compilerReport.ir || visionAnalysis.compilerReport.status === "fail")) return null
+    const graph = visionAnalysis?.compilerReport.ir?.canonicalGraph ??
+      visionAnalysis?.graphValidation.selectedGraph ??
       visionAnalysis?.consensusGraphSolver.selectedGraph ??
       visionAnalysis?.molecularGraph
     if (!graph || !result?.bestMatch) return null
@@ -424,10 +431,12 @@ export function StructureScanner() {
 
     try {
       const parsed = nextOCRResult?.parsed
-      const validatedVisualAnalysis = nextVisionAnalysis?.graphValidation.candidateGateOpen
+      const validatedVisualAnalysis = nextVisionAnalysis?.graphValidation.candidateGateOpen &&
+        nextVisionAnalysis.compilerReport.status !== "fail" &&
+        nextVisionAnalysis.compilerReport.ir
         ? {
           ...nextVisionAnalysis,
-          molecularGraph: nextVisionAnalysis.graphValidation.selectedGraph ?? nextVisionAnalysis.molecularGraph,
+          molecularGraph: nextVisionAnalysis.compilerReport.ir.canonicalGraph,
         }
         : undefined
       const nextResult = scanStructure({
@@ -450,6 +459,7 @@ export function StructureScanner() {
         ocrNoisePenalty: parsed?.chemistryScores.noisePenalty,
         ocrFormulaCorrected: parsed?.detectedFormulaWasCorrected,
         visualAnalysis: validatedVisualAnalysis,
+        compilerIR: nextVisionAnalysis?.compilerReport.ir ?? undefined,
         manualHints: {
           moleculeName: moleculeName.trim() || undefined,
           formula: formula.trim() || undefined,
@@ -596,6 +606,8 @@ export function StructureScanner() {
           <ChemicalGraphValidatorDebugPanel analysis={visionAnalysis} />
 
           <GraphValidationPanel analysis={visionAnalysis} />
+
+          <MolecularCompilerPanel report={compilerReport} />
 
           <EvidenceFusionDebugPanel fusion={result?.evidenceFusion ?? null} />
 
@@ -818,6 +830,16 @@ export function StructureScanner() {
               <AlertTitle>Graph reconstruction unreliable</AlertTitle>
               <AlertDescription>
                 Chemistry interpretation from the visual graph was intentionally skipped. Add a formula/name hint or use a cleaner crop before relying on this scan.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {compilerReport && !compilerAllowsChemistry ? (
+            <Alert className="rounded-2xl border-red-500/30 bg-red-500/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Molecular compiler gate closed</AlertTitle>
+              <AlertDescription>
+                The visual graph did not compile into a semantic molecular IR, so downstream chemistry did not use image-derived graph evidence.
               </AlertDescription>
             </Alert>
           ) : null}

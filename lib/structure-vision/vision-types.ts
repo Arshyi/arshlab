@@ -3,6 +3,7 @@ import type { GlobalShapeReconstructionResult } from "./global-shape-reconstruct
 import type { GlobalGraphOptimizationResult } from "./global-graph-optimizer"
 import type { ConsensusGraphSolverResult } from "./consensus-graph-solver"
 import type { GraphValidationResult } from "./graph-validator"
+import type { CompilerReport } from "../molecular-compiler/compiler-types"
 import type { MolecularGraph } from "../vision/molecular-graph"
 
 export interface VisionPoint {
@@ -202,6 +203,7 @@ export interface StructureVisionAnalysis {
   graph: VisionGraphAnalysis
   molecularGraph: MolecularGraph
   graphValidation: GraphValidationResult
+  compilerReport: CompilerReport
   globalGraphOptimization: GlobalGraphOptimizationResult
   consensusGraphSolver: ConsensusGraphSolverResult
   chemicalGraphValidation: ChemicalGraphValidationResult

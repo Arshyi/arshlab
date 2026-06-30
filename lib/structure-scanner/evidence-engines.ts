@@ -41,8 +41,12 @@ function sameComposition(left: string | undefined, right: string): boolean {
   return Array.from(leftCounts).every(([element, count]) => rightCounts.get(element) === count)
 }
 
+function compilerGraph(input: StructureScanInput) {
+  return input.compilerIR?.canonicalGraph ?? input.visualAnalysis?.molecularGraph
+}
+
 function compatibleWithConfidentAtomGraph(record: StructureScannerRecord, input: StructureScanInput): boolean {
-  const graph = input.visualAnalysis?.molecularGraph
+  const graph = compilerGraph(input)
   if (!graph?.atomCentered || graph.nodes.length < 5 || graph.estimates.confidence < 65) return true
   const expected = formulaCounts(record.formula)
   const detected = new Map<string, number>()
@@ -123,11 +127,11 @@ function ringClosureAgreement(input: StructureScanInput): {
 } {
   const closure = input.visualAnalysis?.ringClosure
   const validation = input.visualAnalysis?.chemicalGraphValidation
-  const graphRing = input.visualAnalysis?.molecularGraph.rings.find((ring) => ring.size === 6)
+  const graphRing = compilerGraph(input)?.rings.find((ring) => ring.size === 6)
   const selected = closure?.candidates.find((candidate) => candidate.selected)
   const selectedNodeIds = validation?.selectedValidatedRing?.nodeIds ?? graphRing?.nodeIds ?? selected?.nodeIds ?? []
   const heteroAtomInSelectedRing = Boolean(selectedNodeIds.some((nodeId) => {
-    const graphNode = input.visualAnalysis?.molecularGraph.nodes.find((node) => node.id === nodeId)
+    const graphNode = compilerGraph(input)?.nodes.find((node) => node.id === nodeId)
     const label = graphNode?.inferredElement ?? input.visualAnalysis?.atomLabels[nodeId]?.label
     return Boolean(label && label !== "C" && label !== "H")
   }))
@@ -231,7 +235,7 @@ function atomLabelEngine(input: StructureScanInput): EvidenceEngineResult {
   if (!counts.size) {
     return engine("atom-label", "Atom Label Engine", "Uses chemistry glyphs and their approximate positions as element and atom-count evidence.", [], ["No stable atom glyphs were detected."])
   }
-  const graph = input.visualAnalysis?.molecularGraph
+  const graph = compilerGraph(input)
   const output = STRUCTURE_SCANNER_RECORDS.map((record) => {
     if (!compatibleWithConfidentAtomGraph(record, input)) return null
     const recordCounts = formulaCounts(record.formula)
@@ -267,7 +271,7 @@ function atomLabelEngine(input: StructureScanInput): EvidenceEngineResult {
 }
 
 function bondGeometryEngine(input: StructureScanInput): EvidenceEngineResult {
-  const graph = input.visualAnalysis?.molecularGraph
+  const graph = compilerGraph(input)
   if (!graph?.bonds.length) {
     return engine("bond-geometry", "Bond Geometry Engine", "Classifies single, double, triple, and parallel bond strokes.", [], ["No stable bond graph was reconstructed."])
   }
@@ -323,7 +327,7 @@ function ringClosureEngine(input: StructureScanInput): EvidenceEngineResult {
     candidate.doubleBondCue >= 55 &&
     !hasHeteroAtomLabel &&
     !candidate.nodeIds.some((nodeId) => {
-      const node = input.visualAnalysis?.molecularGraph.nodes.find((item) => item.id === nodeId)
+      const node = compilerGraph(input)?.nodes.find((item) => item.id === nodeId)
       return node && node.inferredElement !== "C"
     }),
   )
@@ -333,11 +337,11 @@ function ringClosureEngine(input: StructureScanInput): EvidenceEngineResult {
     input.visualAnalysis?.graph.aromaticCueScore ?? 0,
     visualAromaticRing?.aromaticCueScore ?? 0,
     visualAromaticRing?.doubleBondCue ?? 0,
-    input.visualAnalysis?.molecularGraph.aromatic ? 82 : 0,
+    compilerGraph(input)?.aromatic ? 82 : 0,
   )
   const aromatic = selected.memberCount === 6 &&
     globalAromaticSupport >= 55 &&
-    (selected.doubleBondCount >= 2 || ringClosureAgreement(input).aromaticAgreement || (input.visualAnalysis?.molecularGraph.estimates.doubleBonds ?? 0) >= 2 || Boolean(input.visualAnalysis?.molecularGraph.aromatic) || Boolean(visualAromaticRing))
+    (selected.doubleBondCount >= 2 || ringClosureAgreement(input).aromaticAgreement || (compilerGraph(input)?.estimates.doubleBonds ?? 0) >= 2 || Boolean(compilerGraph(input)?.aromatic) || Boolean(visualAromaticRing))
   const nearRing = selected.recovered || selected.closureGaps.length > 0
   const heteroAtomInRing = ringClosureAgreement(input).heteroAtomInSelectedRing
   const closureReason = `${selected.memberCount}-member ${nearRing ? "recovered near-ring" : "closed ring"}: closure ${selected.closureConfidence}%, regularity ${selected.regularity}%, line coverage ${selected.lineCoverage}%.`
@@ -401,7 +405,7 @@ function ringAromaticEngine(input: StructureScanInput): EvidenceEngineResult {
   const ringLocalDoubleBondSupport = Math.max(
     closureRing?.doubleBondCount ?? 0,
     closureAgreement.aromaticAgreement ? 2 : 0,
-    analysis?.molecularGraph.estimates.doubleBonds ?? 0,
+    compilerGraph(input)?.estimates.doubleBonds ?? 0,
     (visualRing?.benzeneLike && visualRing.doubleBondCue >= 55) ? 2 : 0,
   )
   const aromaticSupport = Boolean(
@@ -409,7 +413,7 @@ function ringAromaticEngine(input: StructureScanInput): EvidenceEngineResult {
     (closureAgreement.selectedSixRing && closureAgreement.aromaticAgreement && !closureAgreement.heteroAtomInSelectedRing && !hasHeteroAtomLabel) ||
     (visualRing?.benzeneLike && ringLocalDoubleBondSupport >= 2 && !closureAgreement.heteroAtomInSelectedRing && !hasHeteroAtomLabel) ||
     ((analysis?.graph.aromaticCueScore ?? 0) >= 50 && ringLocalDoubleBondSupport >= 2 && !closureAgreement.heteroAtomInSelectedRing && !hasHeteroAtomLabel) ||
-    ((analysis?.molecularGraph.estimates.doubleBonds ?? 0) >= 2 && !closureAgreement.heteroAtomInSelectedRing && !hasHeteroAtomLabel),
+    ((compilerGraph(input)?.estimates.doubleBonds ?? 0) >= 2 && !closureAgreement.heteroAtomInSelectedRing && !hasHeteroAtomLabel),
   )
   const nearRing = Boolean(visualRing?.nearRing || !graphRing?.closed)
   const output: EvidenceEngineCandidate[] = []
@@ -497,7 +501,7 @@ function globalShapeReconstructionEngine(input: StructureScanInput): EvidenceEng
 }
 
 function molecularGraphEngine(input: StructureScanInput): EvidenceEngineResult {
-  const graph = input.visualAnalysis?.molecularGraph
+  const graph = compilerGraph(input)
   if (!graph?.nodes.length || !graph.bonds.length) {
     return engine("molecular-graph", "Molecular Graph Engine", "Reconstructs and compares atom/bond topology against local compound signatures.", [], ["No valid molecular graph was available for comparison."])
   }

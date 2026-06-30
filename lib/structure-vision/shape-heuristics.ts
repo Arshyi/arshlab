@@ -21,6 +21,7 @@ import { optimizeMolecularGraphHypotheses } from "./global-graph-optimizer"
 import { reconstructGlobalShape } from "./global-shape-reconstruction"
 import { analyzeRingClosure, ringClosureCandidateToVisionRing } from "./ring-closure"
 import { validateGraphTopology } from "./graph-validator"
+import { compileMolecularInput } from "../molecular-compiler/compiler"
 
 const DEGREE_STEP = 5
 
@@ -1065,6 +1066,7 @@ export function analyzeDarkPixelMask(
   const molecularGraph = consensusGraphSolver.selectedGraph
   const graphValidation = validateGraphTopology(molecularGraph)
   const graphForFinalSummary = graphValidation.selectedGraph ?? molecularGraph
+  const compilerReport = compileMolecularInput({ graph: graphForFinalSummary, recognizedText })
   const molecularRingCandidates: VisionRingCandidate[] = graphForFinalSummary.rings.length
     ? graphForFinalSummary.rings.flatMap((ring) => {
       if (ring.size < 5 || ring.size > 8) return []
@@ -1200,6 +1202,7 @@ export function analyzeDarkPixelMask(
     graph: finalGraphSummary,
     molecularGraph,
     graphValidation,
+    compilerReport,
     globalGraphOptimization,
     consensusGraphSolver,
     chemicalGraphValidation,
