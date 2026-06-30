@@ -1,6 +1,6 @@
 # ARSHLAB Structure Scanner Architecture
 
-## v8.1.0 Molecular Compiler Optimization Pipeline
+## v8.2.0 Vision Reconstruction Pipeline
 
 The Structure Scanner remains fully deterministic, browser-side, local-only, and database-first.
 It does not call OpenRouter, LLMs, cloud OCR, Supabase functions, or external chemistry APIs.
@@ -15,6 +15,16 @@ Image
 -> OCR / Chemistry OCR
 -> Vision and line detection
 -> Global Shape Reconstruction
+-> Vision Reconstruction Pipeline
+   -> Stroke Segmentation
+   -> Line Merging
+   -> Endpoint Clustering
+   -> Junction Detection
+   -> Atom-Center Estimation
+   -> Bond Association
+   -> Broken-Stroke Repair
+   -> Crossing-Bond Filtering
+   -> Primitive Confidence Scoring
 -> Candidate Graph Generator
 -> Global Molecular Graph Optimizer
 -> Chemical Graph Validator
@@ -49,6 +59,14 @@ The primitive builder produces a chemical AST that stores only connectivity: ato
 Only a semantic pass or pass-with-warnings can produce compiler IR. The IR contains a canonical graph, canonical adjacency list, stable node ordering, stable edge ordering, fingerprint, deterministic graph hash, canonical graph ID, valence map, charge map, cycles, components, and confidence ceiling. Downstream scanner chemistry now consumes optimized compiler IR instead of raw pixels or pre-validation topology.
 
 Confidence propagates downward through the compiler. Weak tokens can create weak primitives, which can create a weak AST and weak canonical graph, but no downstream stage may raise confidence above the ceiling established by its inputs.
+
+## Vision Reconstruction Pipeline Design
+
+The v8.2 layer improves the primitive molecular graph before graph validation. Instead of sending raw line detections directly into graph construction, ARSHLAB now creates a deterministic reconstruction report: raw strokes, merged strokes, repaired strokes, endpoint clusters, junctions, estimated atom centers, associated primitive bonds, rejected crossing bonds, repaired bonds, and confidence histograms.
+
+The reconstruction pipeline is intentionally conservative. It can snap nearby endpoints, merge collinear fragmented strokes, bridge short gaps, associate strokes to nearest atom centers, estimate simple condensed-chain atom centers such as C-C-O from ethanol-like text, remove clear X-crossing bonds, and carry primitive confidence into the graph validator. It does not create new chemistry identities or change downstream chemistry engines.
+
+The Structure Scanner UI exposes this as the Vision Reconstruction Pipeline panel so students and developers can inspect raw strokes, merged strokes, detected junctions, atom centers, accepted bonds, rejected bonds, repaired bonds, primitive confidence scores, and the final primitive graph before validation.
 
 ## Optimization Pass Pipeline Design
 
@@ -143,6 +161,16 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 - `lib/molecular-compiler/canonicalizer.ts`
 - `lib/molecular-compiler/compiler-report.ts`
 - `lib/molecular-compiler/compiler-types.ts`
+- `lib/structure-vision/stroke-segmentation.ts`
+- `lib/structure-vision/line-merging.ts`
+- `lib/structure-vision/endpoint-clustering.ts`
+- `lib/structure-vision/junction-detector.ts`
+- `lib/structure-vision/atom-center-estimator.ts`
+- `lib/structure-vision/bond-association.ts`
+- `lib/structure-vision/broken-stroke-repair.ts`
+- `lib/structure-vision/crossing-bond-filter.ts`
+- `lib/structure-vision/primitive-confidence.ts`
+- `lib/structure-vision/vision-reconstruction-report.ts`
 - `lib/molecular-compiler/optimization-pass.ts`
 - `lib/molecular-compiler/pass-manager.ts`
 - `lib/molecular-compiler/pass-registry.ts`
@@ -181,6 +209,7 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 - `components/chemistry/GraphValidationPanel.tsx`
 - `components/chemistry/MolecularCompilerPanel.tsx`
 - `components/chemistry/CompilerOptimizerPanel.tsx`
+- `components/chemistry/VisionReconstructionPanel.tsx`
 - `components/chemistry/ChemicalContradictionReport.tsx`
 - `components/chemistry/ChemistryIntelligencePanel.tsx`
 - `scripts/verify-contradiction-engine.cjs`
@@ -190,4 +219,4 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 
 ## Safety
 
-All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, graph validation decisions, topology variants, compiler tokens, chemical primitives, AST nodes, semantic validation traces, compiler IR, optimization pass reports, rollback traces, graph fingerprints, canonical graph hashes, contradiction reports, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, graph validation traces, compiler reports, optimization reports, scene graphs, semantic region boxes, repair histories, contradiction traces, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.
+All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, vision reconstruction reports, endpoint clusters, junction estimates, atom-center estimates, primitive bond associations, primitive confidence histograms, graph hypotheses, optimizer moves, consensus repairs, graph validation decisions, topology variants, compiler tokens, chemical primitives, AST nodes, semantic validation traces, compiler IR, optimization pass reports, rollback traces, graph fingerprints, canonical graph hashes, contradiction reports, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, primitive graph traces, graph hypotheses, consensus graph histories, graph validation traces, compiler reports, optimization reports, scene graphs, semantic region boxes, repair histories, contradiction traces, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.

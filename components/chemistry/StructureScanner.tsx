@@ -56,6 +56,7 @@ import { StructureMatchCard } from "./StructureMatchCard"
 import { OCRDebugPanel } from "./OCRDebugPanel"
 import { StructurePreview } from "./StructurePreview"
 import { VisionDebugPanel } from "./VisionDebugPanel"
+import { VisionReconstructionPanel } from "./VisionReconstructionPanel"
 import { GlobalShapeReconstructionDebugPanel } from "./GlobalShapeReconstructionDebugPanel"
 import { MolecularGraphDebugPanel } from "./MolecularGraphDebugPanel"
 import { GlobalGraphOptimizerDebugPanel } from "./GlobalGraphOptimizerDebugPanel"
@@ -595,6 +596,8 @@ export function StructureScanner() {
           />
 
           <GlobalShapeReconstructionDebugPanel analysis={visionAnalysis} />
+
+          <VisionReconstructionPanel analysis={visionAnalysis} />
 
           <VisionDebugPanel analysis={visionAnalysis} error={visionError} />
 

@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "8.1.0",
+    version: "8.2.0",
     date: "Current",
+    status: "released",
+    title: "Vision Reconstruction Pipeline",
+    changes: [
+      "Added deterministic vision reconstruction modules before graph validation",
+      "Added stroke segmentation, line merging, endpoint clustering, junction detection, atom-center estimation, bond association, broken-stroke repair, crossing-bond filtering, and primitive confidence scoring",
+      "Added a cleaner primitive graph handoff before graph validation and the molecular compiler",
+      "Added primitive-level confidence channels for strokes, junctions, atoms, bonds, and repairs",
+      "Added a Vision Reconstruction debug panel showing strokes, atom centers, accepted bonds, rejected bonds, repairs, confidence histogram, and final primitive graph metrics",
+      "Added regression commands for stroke segmentation, junction detection, endpoint clustering, bond association, line merging, broken-stroke repair, primitive confidence, and the full vision reconstruction pipeline",
+    ],
+  },
+  {
+    version: "8.1.0",
+    date: "Previous",
     status: "released",
     title: "Molecular Compiler Optimization Pipeline",
     changes: [

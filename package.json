@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "8.1.0",
+  "version": "8.2.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -9,6 +9,14 @@
     "lint": "eslint .",
     "test:ocr": "node scripts/verify-ocr-parser.cjs",
     "test:vision": "node scripts/verify-structure-vision.cjs",
+    "test:stroke-segmentation": "node scripts/verify-vision-reconstruction.cjs stroke-segmentation",
+    "test:junction-detector": "node scripts/verify-vision-reconstruction.cjs junction-detector",
+    "test:endpoint-clustering": "node scripts/verify-vision-reconstruction.cjs endpoint-clustering",
+    "test:bond-association": "node scripts/verify-vision-reconstruction.cjs bond-association",
+    "test:line-merging": "node scripts/verify-vision-reconstruction.cjs line-merging",
+    "test:broken-stroke-repair": "node scripts/verify-vision-reconstruction.cjs broken-stroke-repair",
+    "test:vision-reconstruction": "node scripts/verify-vision-reconstruction.cjs vision-reconstruction",
+    "test:primitive-confidence": "node scripts/verify-vision-reconstruction.cjs primitive-confidence",
     "test:graph": "node scripts/verify-molecular-graph.cjs",
     "test:isolation": "node scripts/verify-structure-isolation.cjs",
     "test:chemistry-ocr": "node scripts/verify-chemistry-ocr.cjs",

@@ -22,6 +22,7 @@ import { reconstructGlobalShape } from "./global-shape-reconstruction"
 import { analyzeRingClosure, ringClosureCandidateToVisionRing } from "./ring-closure"
 import { validateGraphTopology } from "./graph-validator"
 import { compileMolecularInput } from "../molecular-compiler/compiler"
+import { buildVisionReconstructionReport } from "./vision-reconstruction-report"
 
 const DEGREE_STEP = 5
 
@@ -907,9 +908,16 @@ export function analyzeDarkPixelMask(
     imageWidth: mask.width,
     imageHeight: mask.height,
   })
-  const lineSegments = globalShapeReconstruction.reconstructedSegments.length
+  const shapeLineSegments = globalShapeReconstruction.reconstructedSegments.length
     ? globalShapeReconstruction.reconstructedSegments
     : originalLineSegments
+  const visionReconstruction = buildVisionReconstructionReport({
+    mask,
+    lineSegments: shapeLineSegments,
+    atomLabels,
+    recognizedText,
+  })
+  const lineSegments = shapeLineSegments
   const parallelBondPairs = detectParallelBondPairs(lineSegments, mask)
   const parallelLinePairs = parallelBondPairs.length
   const aromaticText = /benzene|aromatic|c6h6|phenyl|hexagon|ring/.test(
@@ -955,7 +963,21 @@ export function analyzeDarkPixelMask(
       }]
     })()
     : []
-    const graph = detectGraphRings(buildSegmentGraph(mask, lineSegments), parallelLinePairs, recognizedText)
+    const primitiveGraphSummary = visionReconstruction.primitiveGraph.nodes.length && visionReconstruction.primitiveGraph.edges.length
+      ? {
+        nodes: visionReconstruction.primitiveGraph.nodes,
+        edges: visionReconstruction.primitiveGraph.edges,
+        mergedEndpointCount: visionReconstruction.primitiveGraph.mergedEndpointCount,
+        endpointTolerance: visionReconstruction.primitiveGraph.endpointTolerance,
+        averageLineLength: visionReconstruction.primitiveGraph.averageLineLength,
+        cycleCandidates: [] as VisionRingCandidate[],
+        nearRingCandidates: [] as VisionRingCandidate[],
+        bestRingConfidence: 0,
+        aromaticCueScore: 0,
+        explanation: visionReconstruction.explanation,
+      }
+      : buildSegmentGraph(mask, lineSegments)
+    const graph = detectGraphRings(primitiveGraphSummary, parallelLinePairs, recognizedText)
   const ringClosure = analyzeRingClosure({
     graph,
     lineSegments,
@@ -1114,6 +1136,7 @@ export function analyzeDarkPixelMask(
   ])
   const supportedRawRingCandidates = validationRingCandidates.filter((candidate) => {
     if (!candidate.nodeIds.length) return (candidate.source === "pixel-loop" || candidate.source === "global-shape") && candidate.confidence >= 52
+    if (candidate.source === "graph-cycle" && candidate.confidence >= 52) return true
     return validatedRingKeys.has(canonicalCycle(candidate.nodeIds))
   })
   const selectedClosureRingCandidates = validationRingClosure.candidates
@@ -1196,6 +1219,7 @@ export function analyzeDarkPixelMask(
     atomLabels,
     lineSegments,
     globalShapeReconstruction,
+    visionReconstruction,
     closedLoops,
     ringCandidates: finalRingCandidates,
     ringClosure: validationRingClosure,

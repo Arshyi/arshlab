@@ -3,6 +3,7 @@ import type { GlobalShapeReconstructionResult } from "./global-shape-reconstruct
 import type { GlobalGraphOptimizationResult } from "./global-graph-optimizer"
 import type { ConsensusGraphSolverResult } from "./consensus-graph-solver"
 import type { GraphValidationResult } from "./graph-validator"
+import type { VisionReconstructionReport } from "./vision-reconstruction-report"
 import type { CompilerReport } from "../molecular-compiler/compiler-types"
 import type { MolecularGraph } from "../vision/molecular-graph"
 
@@ -197,6 +198,7 @@ export interface StructureVisionAnalysis {
   atomLabels: VisionAtomLabel[]
   lineSegments: VisionLineSegment[]
   globalShapeReconstruction: GlobalShapeReconstructionResult
+  visionReconstruction: VisionReconstructionReport
   closedLoops: VisionClosedLoop[]
   ringCandidates: VisionRingCandidate[]
   ringClosure: VisionRingClosureAnalysis

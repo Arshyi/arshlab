@@ -26,11 +26,11 @@ export default function StructureScannerPage() {
               </div>
             </div>
             <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-              ARSHLAB v8.1.0
+              ARSHLAB v8.2.0
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Upload a structure image or accept a single camera snapshot. ARSHLAB compiles visual marks into tokens, primitives, a molecular AST, semantic validation, canonical IR, deterministic optimization passes, and then chemistry intelligence.
+            Upload a structure image or accept a single camera snapshot. ARSHLAB reconstructs strokes into a cleaner primitive molecular graph, then compiles visual marks into tokens, primitives, a molecular AST, semantic validation, canonical IR, deterministic optimization passes, and chemistry intelligence.
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Molecular reconstruction and chemistry intelligence are educational estimates built from local scene segmentation, graph consensus, graph validation, topology reconstruction, the molecular compiler, canonical graph matching, a 100+ compound reference graph library, contradiction checks, functional-group rules, scaffold rules, and database records. Always verify inferred atoms, bond orders, and chemical conclusions.
@@ -41,12 +41,12 @@ export default function StructureScannerPage() {
           <ScannerFeature
             icon={Database}
             title="Scene Understanding"
-            description="Molecule regions, reaction arrows, conditions, text, borders, reflections, and human-object clutter are separated before graph reconstruction."
+            description="Molecule regions, reaction arrows, conditions, text, borders, reflections, and human-object clutter are separated before primitive graph reconstruction."
           />
           <ScannerFeature
             icon={Code2}
             title="Molecular Compiler"
-            description="Visual tokens become chemical primitives, an AST, semantic validation, canonical IR, and rollback-safe optimized IR before chemistry interpretation."
+            description="Cleaned primitive graphs become visual tokens, chemical primitives, an AST, semantic validation, canonical IR, and rollback-safe optimized IR before chemistry interpretation."
           />
           <ScannerFeature
             icon={ShieldCheck}

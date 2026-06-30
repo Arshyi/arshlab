@@ -79,6 +79,7 @@ const completed = [
   "Graph Validation and Topology Reconstruction Engine",
   "Molecular Compiler Architecture",
   "Molecular Compiler Optimization Pipeline",
+  "Vision Reconstruction Pipeline",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -209,14 +210,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Molecular Compiler Optimization Pipeline
+                Vision Reconstruction Pipeline
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: ARSHLAB compiles visual structure evidence into canonical graph IR, then runs
-                deterministic optimization passes with validation, rollback, confidence propagation, stable graph hashes,
-                and optimized IR handoff before educational chemistry output.
+                Now available: ARSHLAB reconstructs cleaner primitive molecular graphs from image strokes before graph
+                validation, using deterministic stroke segmentation, endpoint clustering, atom-center estimation,
+                bond association, broken-stroke repair, crossing rejection, and primitive confidence scoring.
               </p>
             </CardContent>
           </Card>
@@ -228,7 +229,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v8.1.0 - Molecular Compiler Optimization Pipeline
+          ARSHLAB v8.2.0 - Vision Reconstruction Pipeline
         </motion.p>
       </div>
     </div>
