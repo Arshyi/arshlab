@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "8.3.0",
+  "version": "8.4.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -59,7 +59,17 @@
     "test:bond-order": "node scripts/verify-interactive-learning.cjs bond-order",
     "test:orbital-renderer": "node scripts/verify-interactive-learning.cjs orbital-renderer",
     "test:orbital-animation": "node scripts/verify-interactive-learning.cjs orbital-animation",
-    "test:interactive-learning": "node scripts/verify-interactive-learning.cjs interactive-learning"
+    "test:interactive-learning": "node scripts/verify-interactive-learning.cjs interactive-learning",
+    "test:conjugation": "node scripts/verify-conjugation-learning.cjs conjugation",
+    "test:resonance": "node scripts/verify-conjugation-learning.cjs resonance",
+    "test:aromaticity": "node scripts/verify-conjugation-learning.cjs aromaticity",
+    "test:electron-counter": "node scripts/verify-conjugation-learning.cjs electron-counter",
+    "test:huckel": "node scripts/verify-conjugation-learning.cjs huckel",
+    "test:pi-system": "node scripts/verify-conjugation-learning.cjs pi-system",
+    "test:delocalization": "node scripts/verify-conjugation-learning.cjs delocalization",
+    "test:principal-conjugated-path": "node scripts/verify-conjugation-learning.cjs principal-conjugated-path",
+    "test:curved-arrows": "node scripts/verify-conjugation-learning.cjs curved-arrows",
+    "test:uvvis-learning": "node scripts/verify-conjugation-learning.cjs uvvis-learning"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

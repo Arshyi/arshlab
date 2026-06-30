@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "8.3.0",
+    version: "8.4.0",
     date: "Current",
+    status: "released",
+    title: "Conjugation, Resonance and Delocalization Learning Engine",
+    changes: [
+      "Added /interactive-learning/conjugation as a deterministic SVG learning engine for conjugation and resonance",
+      "Added conjugation detection for pi bonds, participating lone pairs, empty p orbitals, radicals, conjugation breaks, and principal conjugated pathways",
+      "Added a step-by-step algorithm explorer showing hybridization checks, p-orbital availability, adjacency, DFS traversal, electron counting, aromaticity, and HOMO-LUMO reasoning",
+      "Added delocalized electron counting, resonance-form explanations, curved-arrow tutor validation, Huckel aromaticity decisions, UV-Vis color learning, energy-gap animation, and practice mode",
+      "Added a real molecule teaching library covering benzene, fused aromatics, heteroaromatics, polyenes, carbonyl conjugation, resonance ions, and material fragments",
+      "Added regression commands for conjugation, resonance, aromaticity, electron counting, Huckel logic, pi systems, delocalization, principal pathways, curved arrows, and UV-Vis learning",
+    ],
+  },
+  {
+    version: "8.3.0",
+    date: "Previous",
     status: "released",
     title: "Interactive Molecular Orbital & Hybridization Learning Engine",
     changes: [

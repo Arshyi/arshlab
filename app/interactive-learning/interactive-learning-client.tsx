@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import {
+  ArrowRight,
   Atom,
   Brain,
   ChevronLeft,
@@ -113,6 +115,14 @@ export function InteractiveLearningClient() {
               Build molecular orbital diagrams, animate electron filling, compare HOMO and LUMO levels,
               rotate sigma and pi overlap, and study hybridization with deterministic programmatic diagrams.
             </p>
+            <div className="mt-5">
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href="/interactive-learning/conjugation">
+                  Open Conjugation Learning
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
           <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
             <CardContent className="grid gap-3 p-5 sm:grid-cols-2">

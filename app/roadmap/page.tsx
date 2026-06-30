@@ -81,6 +81,7 @@ const completed = [
   "Molecular Compiler Optimization Pipeline",
   "Vision Reconstruction Pipeline",
   "Interactive Molecular Orbital & Hybridization Learning Engine",
+  "Conjugation, Resonance and Delocalization Learning Engine",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -211,14 +212,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Interactive Molecular Orbital & Hybridization Learning Engine
+                Conjugation, Resonance and Delocalization Learning Engine
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: ARSHLAB renders molecular orbital diagrams, electron filling animation,
-                HOMO/LUMO highlighting, bond order, magnetism, hybridization, sigma/pi overlap,
-                lone pairs, and orbital quiz prompts as deterministic SVG learning tools.
+                Now available: ARSHLAB teaches conjugation with deterministic SVG graphs,
+                p-orbital tracing, principal pathway detection, pi electron counting,
+                resonance arrows, Huckel aromaticity, UV-Vis color reasoning, and practice mode.
               </p>
             </CardContent>
           </Card>
@@ -230,7 +231,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v8.3.0 - Interactive Molecular Orbital & Hybridization Learning Engine
+          ARSHLAB v8.4.0 - Conjugation, Resonance and Delocalization Learning Engine
         </motion.p>
       </div>
     </div>

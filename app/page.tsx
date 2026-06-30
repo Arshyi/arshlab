@@ -183,6 +183,12 @@ const features = [
     href: "/interactive-learning",
   },
   {
+    icon: Waves,
+    title: "Conjugation Learning Engine",
+    description: "Trace conjugated pathways, count delocalized electrons, explore resonance, apply Huckel's rule, and connect HOMO-LUMO gaps to color.",
+    href: "/interactive-learning/conjugation",
+  },
+  {
     icon: Layers,
     title: "Functional Groups",
     description: "Explore all 9 IB HL functional groups with properties, naming rules, and spectroscopy hints.",
