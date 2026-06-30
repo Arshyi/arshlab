@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "8.5.0",
+  "version": "9.0.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -47,7 +47,7 @@
     "test:scene-understanding": "node scripts/verify-scene-understanding.cjs",
     "test:chemistry-intelligence": "node scripts/verify-chemistry-intelligence.cjs chemistry-intelligence",
     "test:graph-matcher": "node scripts/verify-chemistry-intelligence.cjs graph-matcher",
-    "test:functional-groups": "node scripts/verify-chemistry-intelligence.cjs functional-groups",
+    "test:functional-groups": "node scripts/verify-chemistry-intelligence.cjs functional-groups && node scripts/verify-molecular-explorer.cjs functional-groups",
     "test:properties": "node scripts/verify-chemistry-intelligence.cjs properties",
     "test:knowledge-graph": "node scripts/verify-chemistry-intelligence.cjs knowledge-graph",
     "test:contradiction-engine": "node scripts/verify-contradiction-engine.cjs",
@@ -72,7 +72,16 @@
     "test:uvvis-learning": "node scripts/verify-conjugation-learning.cjs uvvis-learning",
     "test:scanner-learning-bridge": "node scripts/verify-scanner-learning-bridge.cjs scanner-learning-bridge",
     "test:interactive-learning-routing": "node scripts/verify-scanner-learning-bridge.cjs interactive-learning-routing",
-    "test:lesson-links": "node scripts/verify-scanner-learning-bridge.cjs lesson-links"
+    "test:lesson-links": "node scripts/verify-scanner-learning-bridge.cjs lesson-links",
+    "test:molecular-explorer": "node scripts/verify-molecular-explorer.cjs molecular-explorer",
+    "test:atom-inspector": "node scripts/verify-molecular-explorer.cjs atom-inspector",
+    "test:bond-inspector": "node scripts/verify-molecular-explorer.cjs bond-inspector",
+    "test:overlay-renderer": "node scripts/verify-molecular-explorer.cjs overlay-renderer",
+    "test:reasoning-tree": "node scripts/verify-molecular-explorer.cjs reasoning-tree",
+    "test:scanner-explorer-bridge": "node scripts/verify-molecular-explorer.cjs scanner-explorer-bridge",
+    "test:electron-explorer": "node scripts/verify-molecular-explorer.cjs electron-explorer",
+    "test:orbital-overlay": "node scripts/verify-molecular-explorer.cjs orbital-overlay",
+    "test:learning-cards": "node scripts/verify-molecular-explorer.cjs learning-cards"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

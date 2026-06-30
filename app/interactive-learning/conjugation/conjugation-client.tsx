@@ -113,7 +113,7 @@ export function ConjugationLearningClient({
         <section className="mb-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <Badge className="rounded-full">ARSHLAB v8.5.0</Badge>
+              <Badge className="rounded-full">ARSHLAB v9.0.0</Badge>
               <Badge variant="outline" className="rounded-full">SVG / Canvas math</Badge>
               <Badge variant="outline" className="rounded-full">No AI usage</Badge>
               <Badge variant="outline" className="rounded-full">Why mode included</Badge>

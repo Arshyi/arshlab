@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Atom, Award, Beaker, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ClipboardList, ListChecks, Waves, Network, ScanSearch } from "lucide-react"
+import { ArrowRightLeft, Atom, Award, Beaker, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ClipboardList, ListChecks, Waves, Network, ScanSearch, MousePointer2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -41,6 +41,7 @@ const LAB_LINKS = [
   { href: "/bonding-explorer", label: "Bonding Explorer" },
   { href: "/hybridization-builder", label: "Hybridization Builder" },
   { href: "/interactive-learning", label: "Interactive Learning" },
+  { href: "/interactive-learning/explorer", label: "Interactive Molecular Explorer" },
   { href: "/interactive-learning/conjugation", label: "Conjugation Learning" },
   { href: "/orbital-viewer", label: "Orbital Viewer" },
   { href: "/spectroscopy-explorer", label: "Spectroscopy Explorer" },
@@ -315,6 +316,13 @@ export default function ChemistryHubPage() {
             action="Scan and Learn"
           />
           <HubActionCard
+            icon={MousePointer2}
+            title="Interactive Molecular Explorer"
+            description="Click atoms and bonds to inspect hybridization, formal charge, sigma/pi bonding, lone pairs, aromaticity, HOMO/LUMO overlays, and deterministic reasoning trees."
+            href="/interactive-learning/explorer"
+            action="Open Explorer"
+          />
+          <HubActionCard
             icon={Network}
             title="Reaction Explorer"
             description="Explore a deterministic chemistry graph connecting compounds, functional groups, reactions, mechanisms, formulas, solvers, and practice."
@@ -437,6 +445,29 @@ export default function ChemistryHubPage() {
               className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
             >
               Take Diagnostic
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl mb-8 border-teal-500/20 bg-teal-500/5">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <MousePointer2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Interactive Molecular Explorer</h2>
+                <p className="text-sm text-muted-foreground">
+                  Inspect atoms, bonds, functional groups, electron domains, orbital overlays,
+                  HOMO/LUMO contributions, and reasoning trees from deterministic molecular graphs.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/interactive-learning/explorer"
+              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Open Explorer
             </Link>
           </CardContent>
         </Card>

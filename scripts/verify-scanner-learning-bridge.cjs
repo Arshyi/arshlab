@@ -75,7 +75,8 @@ function testInteractiveLearningRouting() {
 
 function testLessonLinks() {
   const cards = bridge.getLearningExplanationCards({ id: "benzene", name: "Benzene", formula: "C6H6", functionalGroups: ["arene"], aromatic: true, ringCount: 1 })
-  assert.equal(cards.length, 5)
+  assert.equal(cards.length, 6)
+  assert.ok(cards.some((card) => card.title === "Open the interactive molecular map" && card.href.includes("/interactive-learning/explorer")))
   assert.ok(cards.some((card) => card.title === "Why this molecule has sigma bonds"))
   assert.ok(cards.some((card) => card.title === "Where the pi electrons are"))
   assert.ok(cards.some((card) => card.title === "Why this is or is not aromatic" && card.href.includes("conjugation")))

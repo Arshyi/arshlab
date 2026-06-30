@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "8.5.0",
+    version: "9.0.0",
     date: "Current",
+    status: "released",
+    title: "Interactive Molecular Explorer",
+    changes: [
+      "Added /interactive-learning/explorer as a deterministic SVG molecular graph explorer",
+      "Added clickable atom and bond inspectors with element data, hybridization, formal charge, electron domains, sigma/pi components, lone pairs, aromaticity, HOMO/LUMO contribution, and confidence notes",
+      "Added overlay toggles for atom labels, bond order, sigma framework, pi framework, lone pairs, formal charges, hybridization, aromatic atoms, conjugated atoms, delocalized electrons, HOMO, LUMO, ring systems, functional groups, electron domains, and orbital orientation",
+      "Added functional group, electron, orbital, color legend, teaching card, and reasoning tree panels",
+      "Added scanner-to-explorer links so detected compounds can open directly in the interactive learning explorer",
+      "Added deterministic regression commands for molecular explorer routing, atom/bond inspectors, overlays, reasoning trees, scanner bridge links, electron explorer, orbital overlays, and learning cards",
+    ],
+  },
+  {
+    version: "8.5.0",
+    date: "Previous",
     status: "released",
     title: "Scanner-to-Learning Bridge and Interactive Learning Polish",
     changes: [

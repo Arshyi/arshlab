@@ -50,6 +50,7 @@ Image
 -> User Interface
 -> Scanner-to-Learning Bridge
 -> Interactive Learning Lessons
+-> Interactive Molecular Explorer
 ```
 
 ## Molecular Compiler Design
@@ -95,6 +96,14 @@ The v8.5 layer starts after scanner recognition and chemistry intelligence have 
 The bridge maps aromatic compounds such as benzene to conjugation and Huckel aromaticity, alcohols such as ethanol to hybridization and lone-pair lessons, alkenes/alkynes/carbonyls to sigma/pi bonding lessons, and supported diatomic molecules such as O2 and N2 to the molecular-orbital builder. These decisions are deterministic link-generation rules. They do not modify OCR, graph validation, the molecular compiler, evidence fusion, chemistry intelligence, database records, authentication, Supabase, middleware, or AI routes.
 
 The bridge also provides reusable explanation cards for sigma bonds, pi electrons, aromaticity, HOMO/LUMO reactivity, and sp/sp2/sp3 hybridization. The cards are short educational summaries that link into existing interactive SVG lessons rather than generated AI text.
+
+## Interactive Molecular Explorer
+
+The v9.0 layer adds `/interactive-learning/explorer` as an educational visualization consumer of deterministic molecular graph data. It does not modify OCR, vision reconstruction, scanner graph reconstruction, graph validation, the molecular compiler, candidate optimization, chemistry intelligence, AI routes, authentication, Supabase, middleware, or solver calculations.
+
+The explorer accepts a known compound id or a serialized graph query parameter, then renders an SVG-only learning surface with clickable atoms and bonds. Atom inspectors show element data, formal charge, hybridization, electron domains, geometry, sigma/pi/lone-pair counts, aromatic and conjugation flags, HOMO/LUMO contribution, electronegativity, confidence, and deterministic reasoning. Bond inspectors show bond order, sigma/pi components, rotatability, ring membership, delocalization, orbital overlap, and confidence.
+
+The visualization layer includes toggles for atom labels, bond order, sigma framework, pi framework, lone pairs, formal charges, hybridization, aromatic atoms, conjugated atoms, delocalized electrons, HOMO, LUMO, ring systems, functional groups, electron domains, and orbital orientation. These overlays are programmatic SVG primitives and use no images, canvas dependency, AI, or external APIs.
 
 ## Reference Graph Library
 

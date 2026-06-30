@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Calculator, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, ClipboardList, GraduationCap, Database, ListChecks, Gauge, Route, Network, ScanSearch } from "lucide-react"
+import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Calculator, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, ClipboardList, GraduationCap, Database, ListChecks, Gauge, Route, Network, ScanSearch, MousePointer2 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -193,6 +193,12 @@ const features = [
     title: "Scanner-to-Learning Bridge",
     description: "Move from a detected compound to deterministic teach-me-why lessons for orbitals, hybridization, sigma/pi bonding, lone pairs, and aromaticity.",
     href: "/structure-scanner",
+  },
+  {
+    icon: MousePointer2,
+    title: "Interactive Molecular Explorer",
+    description: "Click atoms and bonds to inspect hybridization, formal charge, sigma/pi bonding, lone pairs, aromaticity, HOMO/LUMO overlays, and deterministic reasoning.",
+    href: "/interactive-learning/explorer",
   },
   {
     icon: Layers,

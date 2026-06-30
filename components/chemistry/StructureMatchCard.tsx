@@ -6,6 +6,7 @@ import {
   FlaskConical,
   GraduationCap,
   Network,
+  MousePointer2,
   Route,
   Sigma,
   Target,
@@ -25,6 +26,7 @@ import {
 } from "@/lib/deep-links"
 import { spectroscopyExplorerHref } from "@/lib/spectroscopy/spectroscopy-engine"
 import { synthesisExplorerHref } from "@/lib/synthesis/pathfinder"
+import { molecularExplorerHref } from "@/lib/interactive-learning/molecular-explorer"
 import type { StructureScanMatch } from "@/lib/structure-scanner/scanner-types"
 
 interface StructureMatchCardProps {
@@ -134,6 +136,7 @@ export function StructureMatchCard({ match, primary = false }: StructureMatchCar
           <p className="text-sm font-medium">Knowledge Graph Links</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <ActionLink href={molecularVisualizerHref(visualizerId)} icon={Network} label="Open Molecular Visualizer" />
+            <ActionLink href={molecularExplorerHref({ compound: record.id })} icon={MousePointer2} label="Open Interactive Explorer" />
             <ActionLink href={reactionExplorerHref(undefined, record.name)} icon={Sigma} label="Open Reaction Explorer" />
             <ActionLink href={synthesisExplorerHref(record.id)} icon={Route} label="Explore Synthesis" />
             <ActionLink href={spectroscopyExplorerHref({ compound: record.id })} icon={Waves} label="View Spectra" />

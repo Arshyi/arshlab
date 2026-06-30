@@ -125,6 +125,14 @@ export function conjugationLearningHref(options: { compound?: string; focus?: "a
   return query ? `/interactive-learning/conjugation?${query}` : "/interactive-learning/conjugation"
 }
 
+export function molecularExplorerLearningHref(options: { compound?: string; graph?: string } = {}) {
+  const params = new URLSearchParams()
+  if (options.compound) params.set("compound", options.compound)
+  if (options.graph) params.set("graph", options.graph)
+  const query = params.toString()
+  return query ? `/interactive-learning/explorer?${query}` : "/interactive-learning/explorer"
+}
+
 export function getInteractiveExampleId(input: LearningBridgeInput): string {
   const normalized = normalizedInput(input)
   return (
@@ -236,8 +244,15 @@ export function getLearningExplanationCards(input: LearningBridgeInput): Learnin
   const sigmaPiHref = lessons.find((lesson) => lesson.kind === "sigma-pi")?.href ?? interactiveLearningHref({ topic: "sigma-pi", compound: getInteractiveExampleId(input) })
   const hybridHref = lessons.find((lesson) => lesson.kind === "lone-pairs" || lesson.kind === "hybridization")?.href ?? interactiveLearningHref({ topic: "hybridization", compound: getInteractiveExampleId(input) })
   const moHref = lessons.find((lesson) => lesson.kind === "mo")?.href ?? interactiveLearningHref({ topic: "mo", molecule: getMoMoleculeId(input) ?? "O2" })
+  const explorerHref = molecularExplorerLearningHref({ compound: normalized.id || normalized.name || getInteractiveExampleId(input) })
 
   return [
+    {
+      id: "molecular-explorer",
+      title: "Open the interactive molecular map",
+      body: "Click atoms and bonds to inspect hybridization, formal charge, electron domains, functional groups, and reasoning trees.",
+      href: explorerHref,
+    },
     {
       id: "sigma",
       title: "Why this molecule has sigma bonds",

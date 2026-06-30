@@ -9,6 +9,7 @@ import {
   bridgeInputFromScannerRecord,
   getLearningBridgeLessons,
   getLearningExplanationCards,
+  molecularExplorerLearningHref,
 } from "@/lib/interactive-learning/learning-bridge"
 import type { StructureScanMatch } from "@/lib/structure-scanner/scanner-types"
 
@@ -23,6 +24,7 @@ export function ScannerLearningBridge({ match, intelligence }: ScannerLearningBr
   const lessons = getLearningBridgeLessons(input)
   const cards = getLearningExplanationCards(input)
   const primaryLesson = lessons[0]
+  const explorerHref = molecularExplorerLearningHref({ compound: input.id ?? input.name ?? match.record.id })
 
   return (
     <Card className="rounded-2xl border-primary/20 bg-primary/5">
@@ -48,12 +50,20 @@ export function ScannerLearningBridge({ match, intelligence }: ScannerLearningBr
               <p className="text-sm font-semibold">{primaryLesson.title}</p>
               <p className="mt-1 text-sm text-muted-foreground">{primaryLesson.reason}</p>
             </div>
-            <Button asChild className="rounded-xl">
-              <Link href={primaryLesson.href}>
-                Start lesson
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild className="rounded-xl">
+                <Link href={primaryLesson.href}>
+                  Start lesson
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href={explorerHref}>
+                  Open Interactive Explorer
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <Badge variant="secondary" className="rounded-full">{primaryLesson.difficulty}</Badge>

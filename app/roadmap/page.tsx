@@ -83,6 +83,7 @@ const completed = [
   "Interactive Molecular Orbital & Hybridization Learning Engine",
   "Conjugation, Resonance and Delocalization Learning Engine",
   "Scanner-to-Learning Bridge and Interactive Learning Polish",
+  "Interactive Molecular Explorer",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -213,14 +214,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Scanner-to-Learning Bridge
+                Interactive Molecular Explorer
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: scanner results can open deterministic teach-me-why lessons for
-                molecular orbitals, hybridization, sigma/pi bonding, lone pairs, conjugation,
-                resonance, and aromaticity without changing recognition engines.
+                Now available: molecular graphs can open as an interactive SVG explorer with
+                clickable atom and bond inspectors, overlay toggles, functional-group panels,
+                HOMO/LUMO contribution highlights, and deterministic reasoning trees.
               </p>
             </CardContent>
           </Card>
@@ -232,7 +233,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v8.5.0 - Scanner-to-Learning Bridge and Interactive Learning Polish
+          ARSHLAB v9.0.0 - Interactive Molecular Explorer
         </motion.p>
       </div>
     </div>
