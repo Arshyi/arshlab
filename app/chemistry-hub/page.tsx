@@ -42,6 +42,7 @@ const LAB_LINKS = [
   { href: "/hybridization-builder", label: "Hybridization Builder" },
   { href: "/interactive-learning", label: "Interactive Learning" },
   { href: "/interactive-learning/explorer", label: "Interactive Molecular Explorer" },
+  { href: "/interactive-learning/mechanisms", label: "Reaction Mechanism Simulator" },
   { href: "/interactive-learning/conjugation", label: "Conjugation Learning" },
   { href: "/orbital-viewer", label: "Orbital Viewer" },
   { href: "/spectroscopy-explorer", label: "Spectroscopy Explorer" },
@@ -323,6 +324,13 @@ export default function ChemistryHubPage() {
             action="Open Explorer"
           />
           <HubActionCard
+            icon={FlaskConical}
+            title="Interactive Reaction Mechanism Simulator"
+            description="Animate elementary organic mechanisms with curved arrows, live bond updates, atom and electron tracking, energy diagrams, common mistakes, and practice mode."
+            href="/interactive-learning/mechanisms"
+            action="Open Simulator"
+          />
+          <HubActionCard
             icon={Network}
             title="Reaction Explorer"
             description="Explore a deterministic chemistry graph connecting compounds, functional groups, reactions, mechanisms, formulas, solvers, and practice."
@@ -468,6 +476,29 @@ export default function ChemistryHubPage() {
               className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
             >
               Open Explorer
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl mb-8 border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <FlaskConical className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Interactive Reaction Mechanism Simulator</h2>
+                <p className="text-sm text-muted-foreground">
+                  Step through deterministic reaction timelines with curved arrows, transition-state
+                  representations, live bond updates, atom/electron tracking, and validation practice.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/interactive-learning/mechanisms"
+              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Open Simulator
             </Link>
           </CardContent>
         </Card>

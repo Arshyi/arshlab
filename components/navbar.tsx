@@ -93,6 +93,7 @@ const chemistryToolItems = [
   { href: "/hybridization-builder", label: "Hybridization Builder", icon: Orbit },
   { href: "/interactive-learning", label: "Interactive Learning", icon: Orbit },
   { href: "/interactive-learning/explorer", label: "Molecular Explorer", icon: MousePointer2 },
+  { href: "/interactive-learning/mechanisms", label: "Mechanism Simulator", icon: FlaskConical },
   { href: "/interactive-learning/conjugation", label: "Conjugation Learning", icon: Waves },
   { href: "/functional-groups", label: "Functional Groups", icon: Layers },
   { href: "/spectroscopy-explorer", label: "Spectroscopy Explorer", icon: Waves },

@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "9.0.0",
+    version: "10.0.0",
     date: "Current",
+    status: "released",
+    title: "Interactive Reaction Mechanism Simulator",
+    changes: [
+      "Added /interactive-learning/mechanisms as a deterministic SVG reaction mechanism simulator",
+      "Added a /mechanisms shortcut route with reaction query support for sn2, sn1, e2, and benzene-bromination",
+      "Added reaction timelines with play, pause, step forward, step back, restart, and animation speed controls",
+      "Added programmatic curved arrows for lone-pair donation, bond formation, bond breaking, pi-bond movement, resonance movement, and electron shifts",
+      "Added live bond updates, atom tracking, electron tracking, reaction energy diagrams, reasoning panels, common mistakes, and practice-mode validation",
+      "Added scanner and molecular-explorer bridge links for supported mechanism recommendations",
+      "Added deterministic regression commands for mechanism engine, arrow engine, bond transitions, timelines, energy diagrams, practice mode, atom/electron tracking, learning cards, and scanner bridge logic",
+    ],
+  },
+  {
+    version: "9.0.0",
+    date: "Previous",
     status: "released",
     title: "Interactive Molecular Explorer",
     changes: [

@@ -201,6 +201,12 @@ const features = [
     href: "/interactive-learning/explorer",
   },
   {
+    icon: FlaskConical,
+    title: "Interactive Reaction Mechanism Simulator",
+    description: "Animate deterministic organic mechanisms with curved arrows, atom tracking, electron tracking, live bond updates, energy diagrams, and practice mode.",
+    href: "/interactive-learning/mechanisms",
+  },
+  {
     icon: Layers,
     title: "Functional Groups",
     description: "Explore all 9 IB HL functional groups with properties, naming rules, and spectroscopy hints.",

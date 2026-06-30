@@ -8,6 +8,7 @@ import {
   Brain,
   ChevronLeft,
   ChevronRight,
+  FlaskConical,
   MousePointer2,
   Pause,
   Play,
@@ -138,7 +139,7 @@ export function InteractiveLearningClient({
         <section className="mb-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <Badge className="rounded-full">ARSHLAB v9.0.0</Badge>
+              <Badge className="rounded-full">ARSHLAB v10.0.0</Badge>
               <Badge variant="outline" className="rounded-full">SVG / Canvas math</Badge>
               <Badge variant="outline" className="rounded-full">No AI usage</Badge>
             </div>
@@ -154,6 +155,12 @@ export function InteractiveLearningClient({
                 <Link href="/interactive-learning/explorer">
                   Open Molecular Explorer
                   <MousePointer2 className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href="/interactive-learning/mechanisms">
+                  Open Mechanism Simulator
+                  <FlaskConical className="h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild variant="outline" className="rounded-xl">
@@ -174,7 +181,7 @@ export function InteractiveLearningClient({
           </Card>
         </section>
 
-        <section className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <LessonCard
             title="Molecular Orbitals, HOMO/LUMO, Bond Order"
             difficulty="Intermediate"
@@ -206,6 +213,14 @@ export function InteractiveLearningClient({
             href={`/interactive-learning/explorer?compound=${exampleId}`}
             outcomes={["Click atoms and bonds", "Read reasoning trees", "Toggle electron overlays"]}
             description="Inspect molecular graphs directly: atom hybridization, bond order, lone pairs, functional groups, aromaticity, and HOMO/LUMO overlays."
+          />
+          <LessonCard
+            title="Reaction Mechanism Simulator"
+            difficulty="Intermediate"
+            time="10 min"
+            href="/interactive-learning/mechanisms?reaction=sn2"
+            outcomes={["Animate curved arrows", "Track atoms and electrons", "Practice arrow placement"]}
+            description="Step through deterministic mechanisms with reaction timelines, transition-state views, energy diagrams, live bond updates, and common mistakes."
           />
         </section>
 

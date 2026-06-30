@@ -51,6 +51,7 @@ Image
 -> Scanner-to-Learning Bridge
 -> Interactive Learning Lessons
 -> Interactive Molecular Explorer
+-> Interactive Reaction Mechanism Simulator
 ```
 
 ## Molecular Compiler Design
@@ -104,6 +105,14 @@ The v9.0 layer adds `/interactive-learning/explorer` as an educational visualiza
 The explorer accepts a known compound id or a serialized graph query parameter, then renders an SVG-only learning surface with clickable atoms and bonds. Atom inspectors show element data, formal charge, hybridization, electron domains, geometry, sigma/pi/lone-pair counts, aromatic and conjugation flags, HOMO/LUMO contribution, electronegativity, confidence, and deterministic reasoning. Bond inspectors show bond order, sigma/pi components, rotatability, ring membership, delocalization, orbital overlap, and confidence.
 
 The visualization layer includes toggles for atom labels, bond order, sigma framework, pi framework, lone pairs, formal charges, hybridization, aromatic atoms, conjugated atoms, delocalized electrons, HOMO, LUMO, ring systems, functional groups, electron domains, and orbital orientation. These overlays are programmatic SVG primitives and use no images, canvas dependency, AI, or external APIs.
+
+## Interactive Reaction Mechanism Simulator
+
+The v10.0 layer adds `/interactive-learning/mechanisms` and the `/mechanisms` shortcut route as deterministic educational consumers of local mechanism graph states. This simulator does not modify OCR, vision reconstruction, the scanner, compiler, graph validator, chemistry intelligence, AI routes, OpenRouter, authentication, Supabase, middleware, database internals, or solver calculations.
+
+Mechanism records contain deterministic atom IDs, bond IDs, graph states, curved-arrow records, energy points, reasoning text, common mistakes, and practice prompts. The UI renders these records as SVG timelines, curved arrows, transition-state representations, live bond updates, atom tracking, electron tracking, and energy diagrams. Practice mode hides arrows and validates the selected deterministic arrow set locally.
+
+Scanner and molecular-explorer bridge links may open the simulator when a supported compound has a known mechanism, but the simulator remains a post-recognition learning layer. It consumes selected compound ids and local graph-style records; it never changes recognition confidence or scanner interpretation.
 
 ## Reference Graph Library
 

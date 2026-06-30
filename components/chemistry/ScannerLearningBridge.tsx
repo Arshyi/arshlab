@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { CompoundIntelligence } from "@/lib/chemistry-intelligence/types"
+import { getMechanismBridgeHref } from "@/lib/interactive-learning/mechanisms"
 import {
   bridgeInputFromIntelligence,
   bridgeInputFromScannerRecord,
@@ -25,6 +26,7 @@ export function ScannerLearningBridge({ match, intelligence }: ScannerLearningBr
   const cards = getLearningExplanationCards(input)
   const primaryLesson = lessons[0]
   const explorerHref = molecularExplorerLearningHref({ compound: input.id ?? input.name ?? match.record.id })
+  const mechanismHref = getMechanismBridgeHref(input.id ?? match.record.id)
 
   return (
     <Card className="rounded-2xl border-primary/20 bg-primary/5">
@@ -60,6 +62,12 @@ export function ScannerLearningBridge({ match, intelligence }: ScannerLearningBr
               <Button asChild variant="outline" className="rounded-xl">
                 <Link href={explorerHref}>
                   Open Interactive Explorer
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href={mechanismHref}>
+                  Explore Possible Mechanisms
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

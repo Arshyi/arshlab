@@ -42,6 +42,7 @@ import {
   type ExplorerReasoningNode,
   type ExplorerSvgPrimitive,
 } from "@/lib/interactive-learning/molecular-explorer"
+import { getMechanismBridgeHref } from "@/lib/interactive-learning/mechanisms"
 
 interface MolecularExplorerClientProps {
   initialCompound?: string
@@ -147,7 +148,7 @@ export function MolecularExplorerClient({ initialCompound, initialGraph }: Molec
         <section className="mb-8 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
           <div>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <Badge className="rounded-full">ARSHLAB v9.0.0</Badge>
+              <Badge className="rounded-full">ARSHLAB v10.0.0</Badge>
               <Badge variant="outline" className="rounded-full">SVG only</Badge>
               <Badge variant="outline" className="rounded-full">Database mode = no AI usage</Badge>
               {molecule.source === "scanner-graph" && <Badge variant="outline" className="rounded-full">Scanner graph input</Badge>}
@@ -355,6 +356,12 @@ export function MolecularExplorerClient({ initialCompound, initialGraph }: Molec
                 <Button asChild variant="outline" className="w-full justify-between rounded-xl">
                   <Link href="/structure-scanner">
                     Open Structure Scanner
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-between rounded-xl">
+                  <Link href={getMechanismBridgeHref(molecule.id)}>
+                    Explore Possible Mechanisms
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
