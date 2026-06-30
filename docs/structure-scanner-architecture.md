@@ -1,6 +1,6 @@
 # ARSHLAB Structure Scanner Architecture
 
-## v8.0.0 Molecular Compiler Architecture
+## v8.1.0 Molecular Compiler Optimization Pipeline
 
 The Structure Scanner remains fully deterministic, browser-side, local-only, and database-first.
 It does not call OpenRouter, LLMs, cloud OCR, Supabase functions, or external chemistry APIs.
@@ -27,6 +27,8 @@ Image
    -> Chemical AST
    -> Semantic Validation
    -> Canonical Compiler IR
+   -> Optimization Pass Manager
+   -> Optimized Compiler IR
 -> Ring Closure evidence
 -> Evidence Fusion
 -> Canonical Molecular Graph
@@ -44,13 +46,23 @@ The v8 layer treats molecule recognition like a deterministic compiler pipeline.
 
 The primitive builder produces a chemical AST that stores only connectivity: atom nodes, bond edges, connected components, cycles, branches, fragments, reaction participants, charge map, valence map, and confidence values. Semantic validation runs compiler-like checks for valence errors, duplicate atoms, duplicate bonds, self-edges, crossing bonds, impossible cycles, floating fragments, disconnected components, and unsupported charges.
 
-Only a semantic pass or pass-with-warnings can produce compiler IR. The IR contains a canonical graph, canonical adjacency list, stable node ordering, stable edge ordering, fingerprint, deterministic graph hash, canonical graph ID, valence map, charge map, cycles, components, and confidence ceiling. Downstream scanner chemistry now consumes this canonical IR graph instead of raw pixels or pre-validation topology.
+Only a semantic pass or pass-with-warnings can produce compiler IR. The IR contains a canonical graph, canonical adjacency list, stable node ordering, stable edge ordering, fingerprint, deterministic graph hash, canonical graph ID, valence map, charge map, cycles, components, and confidence ceiling. Downstream scanner chemistry now consumes optimized compiler IR instead of raw pixels or pre-validation topology.
 
 Confidence propagates downward through the compiler. Weak tokens can create weak primitives, which can create a weak AST and weak canonical graph, but no downstream stage may raise confidence above the ceiling established by its inputs.
 
+## Optimization Pass Pipeline Design
+
+The v8.1 layer adds a compiler-style optimization pass manager after canonical compiler IR and before chemistry intelligence. Every optimization is an isolated `OptimizationPass` with an id, description, and deterministic `run(ir)` method. Passes return a proposed IR, metrics, warnings, errors, and semantic validation state.
+
+The pass manager executes registered passes in stable order, validates after each pass, records before/after graph hashes, measures timing, and rolls back any pass that lowers graph validity or fails semantic validation. This means new cleanup ideas can be added as small, testable passes without spreading scanner logic across OCR, graph reconstruction, evidence fusion, or chemistry intelligence.
+
+Initial passes include Dead Node Elimination, Dead Edge Elimination, Component Simplification, Ring Optimization, Bond Order Cleanup, Valence Cleanup, Confidence Propagation, and Canonical Ordering. These passes may remove unsupported noise, normalize deterministic ordering, and propagate uncertainty, but they are not allowed to hallucinate new rings or raise confidence above upstream compiler evidence.
+
+The optimizer produces an `OptimizationReport` with passes executed, successful passes, rolled-back passes, nodes removed, edges removed, valence fixes, confidence changes, graph hash before/after, optimization time, warnings, and errors. The scanner UI exposes this in the Compiler Optimizer debug panel.
+
 ## Chemistry Intelligence Design
 
-The v7/v8 intelligence layer starts after the scanner compiles a validated molecular graph into canonical compiler IR. It treats that canonical graph as the input to a chemistry knowledge engine rather than as the end of the recognition workflow. The engine canonicalizes graph topology, matches equivalent rotated, mirrored, or renumbered molecular graphs, then builds a compound intelligence object from local deterministic records.
+The v7/v8 intelligence layer starts after the scanner compiles and optimizes a validated molecular graph into compiler IR. It treats that optimized canonical graph as the input to a chemistry knowledge engine rather than as the end of the recognition workflow. The engine canonicalizes graph topology, matches equivalent rotated, mirrored, or renumbered molecular graphs, then builds a compound intelligence object from local deterministic records.
 
 The intelligence object includes identity, graph matches, hierarchical functional groups, scaffold recognition, compound-family classification, chemical property summaries, spectroscopy links, known reactions, mechanism families, curriculum links, learning resources, safety notes, confidence channels, and an explainable "why ARSHLAB recognized this" trace.
 
@@ -131,6 +143,11 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 - `lib/molecular-compiler/canonicalizer.ts`
 - `lib/molecular-compiler/compiler-report.ts`
 - `lib/molecular-compiler/compiler-types.ts`
+- `lib/molecular-compiler/optimization-pass.ts`
+- `lib/molecular-compiler/pass-manager.ts`
+- `lib/molecular-compiler/pass-registry.ts`
+- `lib/molecular-compiler/optimization-report.ts`
+- `lib/molecular-compiler/passes/`
 - `lib/chemistry-intelligence/intelligence-engine.ts`
 - `lib/chemistry-intelligence/graph-matcher.ts`
 - `lib/chemistry-intelligence/reference-library.ts`
@@ -163,6 +180,7 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 - `components/chemistry/ConsensusGraphSolverDebugPanel.tsx`
 - `components/chemistry/GraphValidationPanel.tsx`
 - `components/chemistry/MolecularCompilerPanel.tsx`
+- `components/chemistry/CompilerOptimizerPanel.tsx`
 - `components/chemistry/ChemicalContradictionReport.tsx`
 - `components/chemistry/ChemistryIntelligencePanel.tsx`
 - `scripts/verify-contradiction-engine.cjs`
@@ -172,4 +190,4 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 
 ## Safety
 
-All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, graph validation decisions, topology variants, compiler tokens, chemical primitives, AST nodes, semantic validation traces, compiler IR, graph fingerprints, canonical graph hashes, contradiction reports, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, graph validation traces, compiler reports, scene graphs, semantic region boxes, repair histories, contradiction traces, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.
+All image processing, scene graphs, semantic region labels, molecule crops, arrow detection, text-region separation, border/reflection/human suppression, shape reconstruction, graph hypotheses, optimizer moves, consensus repairs, graph validation decisions, topology variants, compiler tokens, chemical primitives, AST nodes, semantic validation traces, compiler IR, optimization pass reports, rollback traces, graph fingerprints, canonical graph hashes, contradiction reports, chemistry intelligence reasoning, knowledge graph links, debug panels, and overlay exports stay in the browser. Images, reconstructed strokes, polygon hypotheses, graph hypotheses, consensus graph histories, graph validation traces, compiler reports, optimization reports, scene graphs, semantic region boxes, repair histories, contradiction traces, and chemistry intelligence traces are not uploaded to ARSHLAB servers or stored permanently.

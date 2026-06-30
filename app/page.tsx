@@ -96,7 +96,7 @@ const features = [
     {
       icon: ScanSearch,
       title: "Molecular Structure Scanner",
-      description: "Upload or capture a private snapshot, compile visual marks into canonical molecular IR, then open chemistry intelligence and study links.",
+      description: "Upload or capture a private snapshot, compile visual marks into optimized molecular IR, then open chemistry intelligence and study links.",
       href: "/structure-scanner",
     },
   {

@@ -8,6 +8,7 @@ import type {
   SemanticValidationResult,
   VisualToken,
 } from "./compiler-types"
+import type { OptimizationReport } from "./optimization-report"
 
 function average(values: number[]): number {
   return values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length)
@@ -24,6 +25,7 @@ export function createCompilerReport({
   semanticValidation,
   canonical,
   ir,
+  optimizationReport,
   timings,
 }: {
   visualTokens: VisualToken[]
@@ -32,8 +34,10 @@ export function createCompilerReport({
   semanticValidation: SemanticValidationResult
   canonical: CanonicalGraphRepresentation | null
   ir: CompilerIR | null
+  optimizationReport: OptimizationReport | null
   timings: CompilerStageTiming[]
 }): CompilerReport {
+  const finalIr = optimizationReport?.irAfter ?? ir
   const tokenConfidence = Math.round(average(visualTokens.map((token) => token.confidence)))
   const primitiveConfidence = ceiling(tokenConfidence, average(chemicalPrimitives.map((primitive) => primitive.confidence)))
   const astConfidence = ceiling(primitiveConfidence, average([...ast.nodes.map((node) => node.confidence), ...ast.edges.map((edge) => edge.confidence)]))
@@ -42,7 +46,7 @@ export function createCompilerReport({
     : semanticValidation.status === "pass-with-warnings"
       ? ceiling(astConfidence, astConfidence - 12)
       : astConfidence
-  const canonicalConfidence = ir ? ceiling(semanticConfidence, ir.confidenceCeiling) : 0
+  const canonicalConfidence = finalIr ? ceiling(semanticConfidence, finalIr.confidenceCeiling) : 0
 
   return {
     status: semanticValidation.status,
@@ -51,7 +55,9 @@ export function createCompilerReport({
     ast,
     semanticValidation,
     canonical,
-    ir,
+    unoptimizedIr: ir,
+    ir: finalIr,
+    optimizationReport,
     timings,
     confidenceFlow: [
       { stage: "Visual Tokens", confidence: tokenConfidence, ceiling: tokenConfidence, reason: "Average confidence of visual marks." },
@@ -59,12 +65,13 @@ export function createCompilerReport({
       { stage: "Chemical AST", confidence: astConfidence, ceiling: primitiveConfidence, reason: "AST confidence cannot exceed primitive confidence." },
       { stage: "Semantic Validation", confidence: semanticConfidence, ceiling: astConfidence, reason: semanticValidation.status === "fail" ? "Semantic errors close the compiler gate." : "Semantic warnings reduce the confidence ceiling." },
       { stage: "Canonical Graph", confidence: canonicalConfidence, ceiling: semanticConfidence, reason: "Canonical graph confidence is bounded by validated AST confidence." },
+      { stage: "Optimized Compiler IR", confidence: finalIr?.confidenceCeiling ?? 0, ceiling: canonicalConfidence, reason: "Optimization passes may preserve or lower confidence, never raise it." },
     ],
-    knowledgeEngineInput: ir
+    knowledgeEngineInput: finalIr
       ? {
         available: true,
-        reason: "Semantic validation passed; downstream chemistry receives the canonical compiler IR graph.",
-        canonicalGraphId: ir.canonicalGraphId,
+        reason: "Semantic validation passed; downstream chemistry receives the optimized compiler IR graph.",
+        canonicalGraphId: finalIr.canonicalGraphId,
       }
       : {
         available: false,

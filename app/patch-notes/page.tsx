@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "8.0.0",
+    version: "8.1.0",
     date: "Current",
+    status: "released",
+    title: "Molecular Compiler Optimization Pipeline",
+    changes: [
+      "Added a deterministic Optimization Pass Manager after canonical compiler IR",
+      "Added plug-and-play optimization pass interfaces, registry, pass metrics, and rollback-safe execution",
+      "Added Dead Node Elimination, Dead Edge Elimination, Component Simplification, Ring Optimization, Bond Order Cleanup, Valence Cleanup, Confidence Propagation, and Canonical Ordering passes",
+      "Added validation after each optimization pass with automatic rollback when graph validity gets worse",
+      "Added optimized compiler IR handoff so downstream chemistry engines consume validated optimized IR",
+      "Added an Optimizer debug panel showing IR before/after, pass execution log, graph hashes, timing, warnings, errors, and rollbacks",
+      "Added optimizer regression commands for optimization, pass manager ordering, rollback behavior, and confidence propagation",
+    ],
+  },
+  {
+    version: "8.0.0",
+    date: "Previous",
     status: "released",
     title: "Molecular Compiler Architecture",
     changes: [

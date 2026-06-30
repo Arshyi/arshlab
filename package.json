@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -32,6 +32,10 @@
     "test:semantic": "node scripts/verify-molecular-compiler.cjs semantic",
     "test:canonicalizer": "node scripts/verify-molecular-compiler.cjs canonicalizer",
     "test:compiler-ir": "node scripts/verify-molecular-compiler.cjs compiler-ir",
+    "test:optimization": "node scripts/verify-molecular-compiler.cjs optimization",
+    "test:pass-manager": "node scripts/verify-molecular-compiler.cjs pass-manager",
+    "test:rollback": "node scripts/verify-molecular-compiler.cjs rollback",
+    "test:confidence": "node scripts/verify-molecular-compiler.cjs confidence",
     "test:scene-understanding": "node scripts/verify-scene-understanding.cjs",
     "test:chemistry-intelligence": "node scripts/verify-chemistry-intelligence.cjs chemistry-intelligence",
     "test:graph-matcher": "node scripts/verify-chemistry-intelligence.cjs graph-matcher",

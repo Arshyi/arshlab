@@ -78,6 +78,7 @@ const completed = [
   "Chemical Contradiction and Candidate Elimination Engine",
   "Graph Validation and Topology Reconstruction Engine",
   "Molecular Compiler Architecture",
+  "Molecular Compiler Optimization Pipeline",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -208,14 +209,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Molecular Compiler Architecture
+                Molecular Compiler Optimization Pipeline
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: ARSHLAB compiles visual structure evidence into tokens, chemical primitives,
-                a molecular AST, semantic validation, canonical graph IR, and then educational chemistry output.
-                Downstream chemistry uses the compiler IR instead of raw image-derived topology.
+                Now available: ARSHLAB compiles visual structure evidence into canonical graph IR, then runs
+                deterministic optimization passes with validation, rollback, confidence propagation, stable graph hashes,
+                and optimized IR handoff before educational chemistry output.
               </p>
             </CardContent>
           </Card>
@@ -227,7 +228,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v8.0.0 - Molecular Compiler Architecture
+          ARSHLAB v8.1.0 - Molecular Compiler Optimization Pipeline
         </motion.p>
       </div>
     </div>

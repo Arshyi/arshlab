@@ -1,5 +1,6 @@
 import type { MolecularGraph } from "../vision/molecular-graph"
 import type { StructureVisionAnalysis } from "../structure-vision/vision-types"
+import type { OptimizationReport } from "./optimization-report"
 
 export type CompilerStatus = "pass" | "pass-with-warnings" | "fail"
 
@@ -170,7 +171,9 @@ export interface CompilerReport {
   ast: ChemicalAst
   semanticValidation: SemanticValidationResult
   canonical: CanonicalGraphRepresentation | null
+  unoptimizedIr: CompilerIR | null
   ir: CompilerIR | null
+  optimizationReport: OptimizationReport | null
   timings: CompilerStageTiming[]
   confidenceFlow: Array<{ stage: string; confidence: number; ceiling: number; reason: string }>
   knowledgeEngineInput: {

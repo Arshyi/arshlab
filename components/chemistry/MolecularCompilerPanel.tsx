@@ -28,7 +28,7 @@ export function MolecularCompilerPanel({ report }: { report: CompilerReport | nu
           </span>
           <span>
             <span className="block font-semibold">Molecular Compiler</span>
-            <span className="block text-sm text-muted-foreground">Tokens to primitives to AST to canonical compiler IR</span>
+            <span className="block text-sm text-muted-foreground">Tokens to primitives to AST to optimized compiler IR</span>
           </span>
         </span>
         <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", open && "rotate-180")} />
@@ -74,6 +74,7 @@ export function MolecularCompilerPanel({ report }: { report: CompilerReport | nu
                 <Metric label="Components" value={report.ast.connectedComponents.length} />
                 <Metric label="Cycles" value={report.ast.cycles.length} />
                 <Metric label="Semantic issues" value={report.semanticValidation.issues.length} />
+                <Metric label="Optimization passes" value={report.optimizationReport?.passesExecuted ?? 0} />
                 <Metric label="Confidence ceiling" value={`${report.ir?.confidenceCeiling ?? 0}%`} />
               </div>
 
@@ -82,8 +83,8 @@ export function MolecularCompilerPanel({ report }: { report: CompilerReport | nu
                   <Braces className="h-4 w-4" />
                   Compiler pipeline
                 </h3>
-                <div className="mt-3 grid gap-2 md:grid-cols-5">
-                  {["Visual Tokens", "Chemical Primitives", "Chemical AST", "Semantic Validation", "Canonical IR"].map((stage, index) => (
+                <div className="mt-3 grid gap-2 md:grid-cols-3 xl:grid-cols-6">
+                  {["Visual Tokens", "Chemical Primitives", "Chemical AST", "Semantic Validation", "Canonical IR", "Optimized IR"].map((stage, index) => (
                     <div key={stage} className="rounded-lg border border-border bg-secondary/30 p-3">
                       <p className="text-xs text-muted-foreground">Stage {index + 1}</p>
                       <p className="mt-1 font-semibold">{stage}</p>

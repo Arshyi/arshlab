@@ -3,6 +3,7 @@ import { buildChemicalAst } from "./chemical-ast"
 import { createCompilerReport } from "./compiler-report"
 import type { CompilerReport, CompilerStageTiming, MolecularCompilerInput } from "./compiler-types"
 import { buildChemicalPrimitives } from "./primitive-builder"
+import { optimizeCompilerIR } from "./pass-manager"
 import { validateChemicalSemantics } from "./semantic-validator"
 import { tokenizeVisualInput } from "./visual-tokenizer"
 
@@ -43,6 +44,9 @@ export function compileMolecularInput(input: MolecularCompilerInput): CompilerRe
   const ir = canonical
     ? timed(timings, "Compiler IR", () => buildCompilerIR(ast, semanticValidation, canonical))
     : null
+  const optimizationReport = ir
+    ? timed(timings, "Optimization Pass Manager", () => optimizeCompilerIR(ir))
+    : null
 
   return createCompilerReport({
     visualTokens,
@@ -51,6 +55,7 @@ export function compileMolecularInput(input: MolecularCompilerInput): CompilerRe
     semanticValidation,
     canonical,
     ir,
+    optimizationReport,
     timings,
   })
 }

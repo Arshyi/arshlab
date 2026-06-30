@@ -63,6 +63,7 @@ import { ConsensusGraphSolverDebugPanel } from "./ConsensusGraphSolverDebugPanel
 import { ChemicalGraphValidatorDebugPanel } from "./ChemicalGraphValidatorDebugPanel"
 import { GraphValidationPanel } from "./GraphValidationPanel"
 import { MolecularCompilerPanel } from "./MolecularCompilerPanel"
+import { CompilerOptimizerPanel } from "./CompilerOptimizerPanel"
 import { VisualOverlayDebugger } from "./VisualOverlayDebugger"
 import { CameraCapture } from "./CameraCapture"
 import { StructureIsolationDebugPanel } from "./StructureIsolationDebugPanel"
@@ -608,6 +609,8 @@ export function StructureScanner() {
           <GraphValidationPanel analysis={visionAnalysis} />
 
           <MolecularCompilerPanel report={compilerReport} />
+
+          <CompilerOptimizerPanel report={compilerReport?.optimizationReport ?? null} />
 
           <EvidenceFusionDebugPanel fusion={result?.evidenceFusion ?? null} />
 

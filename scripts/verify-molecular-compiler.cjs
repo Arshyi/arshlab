@@ -21,6 +21,19 @@ const compile = spawnSync(process.execPath, [
   "lib/molecular-compiler/chemical-ast.ts",
   "lib/molecular-compiler/semantic-validator.ts",
   "lib/molecular-compiler/canonicalizer.ts",
+  "lib/molecular-compiler/optimization-pass.ts",
+  "lib/molecular-compiler/optimization-report.ts",
+  "lib/molecular-compiler/passes/pass-utils.ts",
+  "lib/molecular-compiler/passes/dead-node-elimination.ts",
+  "lib/molecular-compiler/passes/dead-edge-elimination.ts",
+  "lib/molecular-compiler/passes/component-simplification.ts",
+  "lib/molecular-compiler/passes/ring-optimization.ts",
+  "lib/molecular-compiler/passes/bond-order-cleanup.ts",
+  "lib/molecular-compiler/passes/valence-cleanup.ts",
+  "lib/molecular-compiler/passes/confidence-propagation.ts",
+  "lib/molecular-compiler/passes/canonical-ordering.ts",
+  "lib/molecular-compiler/pass-registry.ts",
+  "lib/molecular-compiler/pass-manager.ts",
   "lib/molecular-compiler/compiler-report.ts",
   "lib/molecular-compiler/compiler.ts",
   "--module", "commonjs",
@@ -42,6 +55,8 @@ const { buildChemicalAst } = require(path.join(outputDirectory, "molecular-compi
 const { validateChemicalSemantics } = require(path.join(outputDirectory, "molecular-compiler", "semantic-validator.js"))
 const { canonicalizeCompilerGraph, buildCompilerIR } = require(path.join(outputDirectory, "molecular-compiler", "canonicalizer.js"))
 const { compileMolecularInput } = require(path.join(outputDirectory, "molecular-compiler", "compiler.js"))
+const { optimizeCompilerIR } = require(path.join(outputDirectory, "molecular-compiler", "pass-manager.js"))
+const { listOptimizationPasses } = require(path.join(outputDirectory, "molecular-compiler", "pass-registry.js"))
 
 function node(id, x, y, element = "C", confidence = 92) {
   return { id, x, y, degree: 0, inferredElement: element, confidence, source: "atom-label", snappedSegmentIndexes: [] }
@@ -90,6 +105,14 @@ const hexagon = [
 const benzeneBonds = hexagon.map((_, index) => bond(index, index, (index + 1) % hexagon.length, index % 2 === 0 ? 2 : 1, 90))
 const benzeneRing = { id: 0, nodeIds: [0, 1, 2, 3, 4, 5], size: 6, confidence: 92, aromatic: true, closed: true, kind: "benzene-like" }
 const benzeneGraph = graph(hexagon, benzeneBonds, [benzeneRing], 91, "C6H6")
+
+function irFromGraph(inputGraph) {
+  const primitives = buildChemicalPrimitives(tokenizeVisualInput(null, inputGraph), inputGraph)
+  const ast = buildChemicalAst(primitives, inputGraph)
+  const validation = validateChemicalSemantics(ast)
+  const canonical = canonicalizeCompilerGraph(inputGraph)
+  return buildCompilerIR(ast, validation, canonical)
+}
 
 function tokenizerCheck() {
   const tokens = tokenizeVisualInput(null, benzeneGraph)
@@ -154,11 +177,86 @@ function compilerCheck() {
   const report = compileMolecularInput({ graph: benzeneGraph })
   assert.equal(report.status, "pass", "compiler passes valid benzene graph")
   assert.ok(report.ir, "compiler emits IR")
+  assert.ok(report.unoptimizedIr, "compiler preserves the pre-optimization IR")
+  assert.ok(report.optimizationReport, "compiler emits an optimization report")
+  assert.equal(report.optimizationReport.passesExecuted, listOptimizationPasses().length, "all registered optimization passes execute")
   assert.equal(report.knowledgeEngineInput.available, true, "knowledge engine input is available after semantic pass")
   assert.ok(report.confidenceFlow.every((entry, index, list) => index === 0 || entry.confidence <= list[index - 1].confidence), "confidence never increases downstream")
   const empty = compileMolecularInput({ graph: graph([], [], [], 0, "Unavailable") })
   assert.equal(empty.status, "fail", "compiler fails empty graph")
   assert.equal(empty.knowledgeEngineInput.available, false, "knowledge engine gate closes on failure")
+}
+
+function optimizationCheck() {
+  const dirtyNodes = [...hexagon, node(6, 230, 230, "C", 42)]
+  const dirtyBonds = [
+    ...benzeneBonds,
+    bond(6, 0, 2, 1, 31, true),
+  ]
+  const dirtyGraph = graph(dirtyNodes, dirtyBonds, [benzeneRing], 74, "C6H6")
+  const report = optimizeCompilerIR(irFromGraph(dirtyGraph))
+  assert.equal(report.passesExecuted, listOptimizationPasses().length, "optimizer executes every registered pass")
+  assert.ok(report.irAfter.canonicalGraph.nodes.length < report.irBefore.canonicalGraph.nodes.length, "dead nodes are eliminated")
+  assert.ok(report.irAfter.canonicalGraph.bonds.length < report.irBefore.canonicalGraph.bonds.length, "dead or duplicate edges are eliminated")
+  assert.ok(report.passes.some((pass) => pass.passId === "dead-node-elimination" && pass.status === "success"), "dead-node pass succeeds")
+  assert.ok(report.passes.some((pass) => pass.passId === "dead-edge-elimination" && pass.status === "success"), "dead-edge pass succeeds")
+  assert.ok(report.graphHashAfter !== report.graphHashBefore, "cleanup produces a new deterministic graph hash")
+}
+
+function passManagerCheck() {
+  const ids = listOptimizationPasses().map((pass) => pass.id)
+  assert.deepEqual(ids, [
+    "dead-node-elimination",
+    "dead-edge-elimination",
+    "component-simplification",
+    "ring-optimization",
+    "bond-order-cleanup",
+    "valence-cleanup",
+    "confidence-propagation",
+    "canonical-ordering",
+  ], "pass registry exposes deterministic default ordering")
+  const report = optimizeCompilerIR(irFromGraph(benzeneGraph))
+  assert.equal(report.passes.length, ids.length, "manager records one execution per pass")
+  assert.equal(report.rolledBackPasses, 0, "clean benzene does not require rollback")
+  assert.ok(report.totalTimeMs >= 0, "manager records total optimization time")
+}
+
+function rollbackCheck() {
+  const badPass = {
+    id: "destructive-test-pass",
+    description: "Attempts to erase the graph so rollback can be verified.",
+    run(ir) {
+      return {
+        ir: { ...ir, nodes: [], edges: [], components: [], cycles: [], canonicalGraph: graph([], [], [], 0, "Unavailable") },
+        changed: true,
+        valid: false,
+        metrics: { nodesRemoved: ir.nodes.length, edgesRemoved: ir.edges.length },
+        warnings: [],
+        errors: ["Synthetic destructive pass failed validation."],
+      }
+    },
+  }
+  const original = irFromGraph(benzeneGraph)
+  const report = optimizeCompilerIR(original, [badPass])
+  assert.equal(report.rolledBackPasses, 1, "invalid pass is rolled back")
+  assert.equal(report.irAfter.hash, original.hash, "rollback preserves original graph hash")
+  assert.equal(report.passes[0].status, "rolled-back", "execution log marks rollback")
+}
+
+function confidenceCheck() {
+  const highConfidenceGraph = graph(
+    hexagon.map((item) => ({ ...item, confidence: 97 })),
+    benzeneBonds.map((item) => ({ ...item, confidence: 96 })),
+    [{ ...benzeneRing, confidence: 96 }],
+    96,
+    "C6H6",
+  )
+  const original = { ...irFromGraph(highConfidenceGraph), confidenceCeiling: 61 }
+  const report = optimizeCompilerIR(original)
+  assert.ok(report.irAfter.confidenceCeiling <= original.confidenceCeiling, "optimized IR cannot exceed the original confidence ceiling")
+  assert.ok(report.irAfter.canonicalGraph.estimates.confidence <= original.confidenceCeiling, "graph confidence is capped by compiler ceiling")
+  assert.ok(report.irAfter.canonicalGraph.nodes.every((item) => item.confidence <= original.confidenceCeiling), "node confidence is capped")
+  assert.ok(report.irAfter.canonicalGraph.bonds.every((item) => item.confidence <= original.confidenceCeiling), "bond confidence is capped")
 }
 
 const runners = {
@@ -169,6 +267,10 @@ const runners = {
   canonicalizer: canonicalizerCheck,
   "compiler-ir": irCheck,
   compiler: compilerCheck,
+  optimization: optimizationCheck,
+  "pass-manager": passManagerCheck,
+  rollback: rollbackCheck,
+  confidence: confidenceCheck,
 }
 
 if (!runners[mode]) {
