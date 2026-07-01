@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "12.1.0",
+    version: "13.0.0",
     date: "Current",
+    status: "released",
+    title: "Learning Path, Progress and Mastery System",
+    changes: [
+      "Added /learning-paths as a deterministic learning-path hub for General Chemistry I, Organic Chemistry I, Organic Chemistry II, Analytical Chemistry, Spectroscopy, Laboratory Skills, Molecular Orbital Theory, and Reaction Mechanisms",
+      "Added local mastery, progress, prerequisite, recommendation, and lesson-sequencing engines under lib/learning-paths",
+      "Added lesson cards with prerequisite locks, status controls, quiz checkpoints, recommended next lessons, review prompts, and module bridges",
+      "Connected learning paths to scanner concepts, Knowledge Graph focus links, virtual labs, mechanisms, spectroscopy, formulas, solvers, practice, and exams",
+      "Added Learning Paths cards to the homepage, Chemistry Hub, navbar Tools menu, Knowledge Graph, and Learning Dashboard",
+      "Added deterministic verification scripts for learning paths, mastery, recommendations, progress, curriculum, dashboard summary, and lesson sequencing",
+      "Kept OCR, scanner core, vision reconstruction, molecular compiler, graph validator, consensus solver, chemistry intelligence, AI/OpenRouter, Supabase/auth, middleware, existing database internals, and solver calculations untouched",
+    ],
+  },
+  {
+    version: "12.1.0",
+    date: "Previous",
     status: "released",
     title: "Virtual Lab Polish and Platform Bridges",
     changes: [

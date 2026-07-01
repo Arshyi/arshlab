@@ -33,6 +33,7 @@ const LAB_LINKS = [
   { href: "/question-engine", label: "Question Engine" },
   { href: "/exam-engine", label: "Exam Engine" },
   { href: "/curriculum", label: "Curriculum Engine" },
+  { href: "/learning-paths", label: "Learning Paths" },
   { href: "/learning-dashboard", label: "Learning Dashboard" },
   { href: "/study-plan", label: "Study Plan" },
   { href: "/diagnostic", label: "Diagnostic Assessment" },
@@ -271,6 +272,13 @@ export default function ChemistryHubPage() {
         </Card>
 
         <div className="mb-8 grid gap-4 lg:grid-cols-2">
+          <HubActionCard
+            icon={BookOpenCheck}
+            title="Learning Paths"
+            description="Follow structured chemistry tracks that connect scanner results, Knowledge Graph nodes, virtual labs, mechanisms, spectroscopy, quizzes, and mastery checkpoints."
+            href="/learning-paths"
+            action="Open Paths"
+          />
           <HubActionCard
             icon={BookOpenCheck}
             title="Formula Sheet"

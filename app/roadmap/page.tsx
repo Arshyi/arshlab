@@ -93,6 +93,7 @@ const completed = [
   "Real-World Scanner Benchmark Harness",
   "Virtual Chemistry Laboratory",
   "Virtual Lab Polish and Platform Bridges",
+  "Learning Path, Progress and Mastery System",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -223,14 +224,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Virtual Lab Polish and Platform Bridges
+                Learning Path, Progress and Mastery System
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: scanner, Knowledge Graph, and mechanism simulator bridges into
-                deterministic virtual experiments, plus clearer unsupported-compound states,
-                mobile-friendly controls, sticky progress, and copy/print lab reports.
+                Now available: structured chemistry learning paths across General Chemistry,
+                Organic Chemistry, spectroscopy, lab skills, molecular orbitals, and mechanisms,
+                with local mastery, prerequisites, recommendations, checkpoints, and module bridges.
               </p>
             </CardContent>
           </Card>
@@ -242,7 +243,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v12.1.0 - Virtual Lab Polish and Platform Bridges
+          ARSHLAB v13.0.0 - Learning Path, Progress and Mastery System
         </motion.p>
       </div>
     </div>

@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "12.1.0",
+  "version": "13.0.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -127,7 +127,14 @@
     "test:virtual-lab-bridges": "node scripts/verify-virtual-lab.cjs virtual-lab-bridges",
     "test:virtual-lab-print-report": "node scripts/verify-virtual-lab.cjs virtual-lab-print-report",
     "test:virtual-lab-mobile-smoke": "node scripts/verify-virtual-lab.cjs virtual-lab-mobile-smoke",
-    "test:virtual-lab-empty-states": "node scripts/verify-virtual-lab.cjs virtual-lab-empty-states"
+    "test:virtual-lab-empty-states": "node scripts/verify-virtual-lab.cjs virtual-lab-empty-states",
+    "test:learning-paths": "node scripts/verify-learning-paths.cjs learning-paths",
+    "test:mastery": "node scripts/verify-learning-paths.cjs mastery",
+    "test:recommendations": "node scripts/verify-learning-paths.cjs recommendations",
+    "test:progress": "node scripts/verify-learning-paths.cjs progress",
+    "test:curriculum": "node scripts/verify-learning-paths.cjs curriculum",
+    "test:learning-dashboard": "node scripts/verify-learning-paths.cjs learning-dashboard",
+    "test:lesson-sequencer": "node scripts/verify-learning-paths.cjs lesson-sequencer"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

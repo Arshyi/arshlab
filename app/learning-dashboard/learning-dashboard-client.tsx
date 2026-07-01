@@ -64,6 +64,13 @@ import {
 import { calculateStudySnapshot } from "@/lib/study-engine/study-engine"
 import { readStudyProgress, type StudyProgressState } from "@/lib/study-engine/study-progress"
 import {
+  calculateLearningMastery,
+  generateLearningPathRecommendations,
+  readLearningPathProgress,
+  summarizeLearningPathProgress,
+  type LearningPathProgressState,
+} from "@/lib/learning-paths"
+import {
   getStructureScanStats,
   readStructureScanHistory,
 } from "@/lib/structure-scanner/scanner-utils"
@@ -90,6 +97,10 @@ export function LearningDashboardClient() {
   const [roadmapStats, setRoadmapStats] = useState<CurriculumRoadmapProgressSummary[]>([])
   const [roadmapProgress, setRoadmapProgress] = useState<CurriculumRoadmapProgressState>({ topics: {} })
   const [studyProgress, setStudyProgress] = useState<StudyProgressState>({ events: [] })
+  const [learningPathProgress, setLearningPathProgress] = useState<LearningPathProgressState>({
+    lessons: {},
+    activities: [],
+  })
   const [scannerStats, setScannerStats] = useState<StructureScanStats>(getStructureScanStats([]))
   const [synthesisStats, setSynthesisStats] = useState<SynthesisExplorerStats>(getSynthesisExplorerStats([]))
   const [loading, setLoading] = useState(true)
@@ -124,6 +135,7 @@ export function LearningDashboardClient() {
       setRoadmapProgress(nextRoadmapProgress)
       setRoadmapStats(getAllCurriculumRoadmapProgressSummaries(nextRoadmapProgress))
       setStudyProgress(readStudyProgress())
+      setLearningPathProgress(readLearningPathProgress())
       setScannerStats(getStructureScanStats(readStructureScanHistory()))
       setSynthesisStats(getSynthesisExplorerStats(readSynthesisHistory()))
     }
@@ -144,6 +156,18 @@ export function LearningDashboardClient() {
         curriculumProgress: roadmapProgress,
       }),
     [entries, formulaStats, roadmapProgress, studyProgress.events],
+  )
+  const learningPathSummary = useMemo(
+    () => summarizeLearningPathProgress(learningPathProgress),
+    [learningPathProgress],
+  )
+  const learningPathMastery = useMemo(
+    () => calculateLearningMastery(learningPathProgress),
+    [learningPathProgress],
+  )
+  const learningPathRecommendations = useMemo(
+    () => generateLearningPathRecommendations(learningPathProgress),
+    [learningPathProgress],
   )
 
   useEffect(() => {
@@ -280,7 +304,9 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v11.0.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, structure scanning, chemistry intelligence, interactive molecular exploration, mechanism simulation, and the new Interactive Chemistry Knowledge Graph.
+            ARSHLAB v13.0.0 adds structured Learning Paths that connect diagnostics, curriculum roadmaps,
+            practice, recovery, exams, formula views, solver mastery, mechanisms, spectroscopy, lab skills,
+            structure scanning, Knowledge Graph nodes, and virtual experiments into guided study progress.
           </p>
         </motion.div>
 
@@ -372,6 +398,34 @@ export function LearningDashboardClient() {
                       <Link href={studySnapshot.recommendation.href}>{studySnapshot.recommendation.action}</Link>
                     </Button>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6 rounded-2xl border-teal-500/20 bg-teal-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Route className="h-5 w-5" />
+                  Learning Paths
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
+                <div className="grid gap-3 sm:grid-cols-4">
+                  <MiniStat label="Path Completion" value={`${learningPathSummary.overallCompletion}%`} />
+                  <MiniStat label="Lessons Complete" value={`${learningPathSummary.completedLessons}/${learningPathSummary.totalLessons}`} />
+                  <MiniStat label="Mastery Level" value={learningPathMastery.overallLevel} />
+                  <MiniStat label="Quiz Average" value={`${learningPathMastery.quizAverage}%`} />
+                </div>
+                <div className="rounded-xl border border-border bg-background/80 p-4">
+                  <p className="font-semibold">Recommended path action</p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {learningPathRecommendations.nextLesson.reason}
+                  </p>
+                  <Button asChild className="mt-3 w-full rounded-xl">
+                    <Link href={learningPathRecommendations.nextLesson.href}>
+                      {learningPathRecommendations.nextLesson.title}
+                    </Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>

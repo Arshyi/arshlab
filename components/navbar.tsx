@@ -86,6 +86,7 @@ const chemistryToolItems = [
   { href: "/question-engine", label: "Question Engine", icon: ListChecks },
   { href: "/exam-engine", label: "Exam Engine", icon: FileQuestion },
   { href: "/curriculum", label: "Curriculum Engine", icon: GraduationCap },
+  { href: "/learning-paths", label: "Learning Paths", icon: BookOpenCheck },
   { href: "/learning-dashboard", label: "Learning Dashboard", icon: Gauge },
   { href: "/study-plan", label: "Study Plan", icon: Route },
   { href: "/diagnostic", label: "Diagnostic", icon: ClipboardCheck },

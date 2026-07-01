@@ -147,7 +147,7 @@ export function KnowledgeGraphClient({
         <section className="mb-8 grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-center">
           <div>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <Badge className="rounded-full">ARSHLAB v11.1.0</Badge>
+              <Badge className="rounded-full">ARSHLAB v13.0.0 bridge</Badge>
               <Badge variant="outline" className="rounded-full">Interactive SVG graph</Badge>
               <Badge variant="outline" className="rounded-full">Database mode = no AI usage</Badge>
             </div>
@@ -167,6 +167,12 @@ export function KnowledgeGraphClient({
                 <Link href="/interactive-learning">
                   Open Interactive Learning
                   <BookOpenCheck className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href="/learning-paths">
+                  Open Learning Paths
+                  <GraduationCap className="h-4 w-4" />
                 </Link>
               </Button>
             </div>
@@ -508,6 +514,12 @@ function NodeDetail({ node }: { node: ChemistryKnowledgeNode | null }) {
           ))}
         </div>
         <div className="grid gap-2">
+          <Button asChild variant="outline" className="h-auto justify-between rounded-xl px-3 py-3 text-left">
+            <Link href={`/learning-paths?focus=${encodeURIComponent(node.id)}`}>
+              <span className="min-w-0 truncate">Place in Learning Path</span>
+              <ArrowRight className="h-4 w-4 shrink-0" />
+            </Link>
+          </Button>
           {node.actions.map((action) => (
             <Button key={`${node.id}-${action.href}-${action.label}`} asChild variant="outline" className="h-auto justify-between rounded-xl px-3 py-3 text-left">
               <Link href={action.href}>

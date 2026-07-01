@@ -76,6 +76,12 @@ const features = [
     href: "/curriculum",
   },
   {
+    icon: BookOpenCheck,
+    title: "Learning Paths",
+    description: "Follow structured chemistry tracks that connect scanner results, explorers, Knowledge Graph nodes, virtual labs, mechanisms, spectroscopy, and quizzes.",
+    href: "/learning-paths",
+  },
+  {
     icon: Gauge,
     title: "Learning Dashboard",
     description: "See overall mastery, exam readiness, curriculum progress, streaks, weak areas, and recommended next actions.",
