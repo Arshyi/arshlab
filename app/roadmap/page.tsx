@@ -94,6 +94,7 @@ const completed = [
   "Virtual Chemistry Laboratory",
   "Virtual Lab Polish and Platform Bridges",
   "Learning Path, Progress and Mastery System",
+  "Public Launch Auth and Optional Creator Support",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -224,14 +225,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Learning Path, Progress and Mastery System
+                Public Launch Auth and Optional Creator Support
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: structured chemistry learning paths across General Chemistry,
-                Organic Chemistry, spectroscopy, lab skills, molecular orbitals, and mechanisms,
-                with local mastery, prerequisites, recommendations, checkpoints, and module bridges.
+                Now available: clearer ARSHLAB sign-in/sign-up routes, Supabase callback
+                fallback states, public launch auth setup documentation, and an optional
+                creator-support page that never unlocks extra features or advantages.
               </p>
             </CardContent>
           </Card>
@@ -243,7 +244,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v13.0.0 - Learning Path, Progress and Mastery System
+          ARSHLAB v13.1.0 - Public Launch Auth and Optional Creator Support
         </motion.p>
       </div>
     </div>

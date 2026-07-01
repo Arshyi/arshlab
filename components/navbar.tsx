@@ -127,7 +127,7 @@ export function Navbar() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
   const reduceMotion = useReducedMotion()
-  const accountItem = { href: "/account", label: "Account", icon: User }
+  const accountItem = { href: "/auth/sign-in", label: "Sign in / Account", icon: User }
   const mobileNavItems = userEmail
     ? [...primaryNavItems, ...chemistryToolItems, ...secondaryNavItems]
     : [...primaryNavItems, ...chemistryToolItems, ...secondaryNavItems, accountItem]
@@ -226,10 +226,10 @@ export function Navbar() {
               />
             ) : (
               <Link
-                href="/account"
+                href="/auth/sign-in"
                 className={cn(
                   "flex min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
-                  isActivePath("/account")
+                  isActivePath("/account") || isActivePath("/auth")
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}

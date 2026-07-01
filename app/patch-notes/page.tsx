@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "13.0.0",
+    version: "13.1.0",
     date: "Current",
+    status: "released",
+    title: "Public Launch Auth and Optional Creator Support",
+    changes: [
+      "Added clear public auth routes for /auth/sign-in, /auth/sign-up, and /auth/callback while keeping /account as the account dashboard",
+      "Updated account copy so users understand they are creating an ARSHLAB account, not Supabase dashboard or project access",
+      "Switched sign-up email redirects to the ARSHLAB auth callback and added environment-based app URL helpers for callback redirects",
+      "Added user-facing callback states for confirmed email, pending confirmation, expired links, wrong redirect callbacks, missing config, and callback exchange failures",
+      "Added /support as an optional creator-support page with no popups, no nags, no stored payment data, and no paid feature advantages",
+      "Updated privacy, terms, footer link, public launch docs, roadmap, and version metadata",
+      "Kept scanner, compiler, OCR, chemistry engines, solver calculations, and core learning logic untouched",
+    ],
+  },
+  {
+    version: "13.0.0",
+    date: "Previous",
     status: "released",
     title: "Learning Path, Progress and Mastery System",
     changes: [

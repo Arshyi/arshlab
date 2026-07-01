@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { getClientAuthCallbackUrl } from "@/lib/auth/app-url"
 import { createClient } from "@/lib/supabase/client"
 import { getUserHistory } from "@/lib/supabase/history"
 
@@ -32,8 +33,9 @@ export interface AccountUser {
 
 type AuthMode = "login" | "signup" | "logout" | null
 type MessageKind = "success" | "error" | "info"
+export type AuthPanel = "login" | "signup"
 
-interface AuthMessage {
+export interface AuthMessage {
   kind: MessageKind
   title: string
   body: string
@@ -42,6 +44,11 @@ interface AuthMessage {
 interface AccountAuthClientProps {
   initialUser: AccountUser | null
   isConfigured: boolean
+  initialPanel?: AuthPanel
+  initialMessage?: AuthMessage | null
+  title?: string
+  subtitle?: string
+  description?: string
 }
 
 interface HistoryStats {
@@ -71,18 +78,16 @@ function formatDate(value: string | null): string {
   }).format(new Date(value))
 }
 
-function getRedirectUrl() {
-  if (typeof window === "undefined") return undefined
-  return `${window.location.origin}/account`
-}
-
 function formatAuthError(message: string): string {
   const normalized = message.toLowerCase()
   if (normalized.includes("invalid login") || normalized.includes("invalid credentials")) {
     return "That email and password did not match an account. Check your details and try again."
   }
   if (normalized.includes("email not confirmed")) {
-    return "Please confirm your email address before signing in."
+    return "Please confirm your email address before signing in. Check your inbox for the ARSHLAB confirmation link."
+  }
+  if (normalized.includes("expired") || normalized.includes("invalid token")) {
+    return "That confirmation link has expired or is no longer valid. Request a new sign-up or sign-in link from ARSHLAB."
   }
   if (normalized.includes("password")) {
     return message
@@ -90,7 +95,15 @@ function formatAuthError(message: string): string {
   return message || "Authentication could not be completed. Please try again."
 }
 
-export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClientProps) {
+export function AccountAuthClient({
+  initialUser,
+  isConfigured,
+  initialPanel = "signup",
+  initialMessage = null,
+  title = "Account",
+  subtitle = "ARSHLAB account",
+  description = "Create or sign in to an ARSHLAB account. Supabase Auth securely handles email/password sessions behind the scenes.",
+}: AccountAuthClientProps) {
   const router = useRouter()
   const [user, setUser] = useState<AccountUser | null>(initialUser)
   const [loginEmail, setLoginEmail] = useState("")
@@ -98,7 +111,7 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
   const [signupEmail, setSignupEmail] = useState("")
   const [signupPassword, setSignupPassword] = useState("")
   const [loading, setLoading] = useState<AuthMode>(null)
-  const [message, setMessage] = useState<AuthMessage | null>(null)
+  const [message, setMessage] = useState<AuthMessage | null>(initialMessage)
   const [historyStats, setHistoryStats] = useState<HistoryStats>({
     loading: false,
     molecules: 0,
@@ -176,7 +189,7 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
       email: signupEmail,
       password: signupPassword,
       options: {
-        emailRedirectTo: getRedirectUrl(),
+        emailRedirectTo: getClientAuthCallbackUrl(),
       },
     })
 
@@ -196,7 +209,7 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
       setMessage({
         kind: "success",
         title: "Account created",
-        body: "You are signed in. Permanent saved history is now enabled.",
+        body: "You are signed in to ARSHLAB. Permanent saved history is now enabled.",
       })
       router.replace("/account")
       router.refresh()
@@ -206,7 +219,7 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
     setMessage({
       kind: "success",
       title: "Check your email to confirm your account.",
-      body: "Supabase may require email confirmation before you can sign in.",
+      body: "If email confirmation is enabled, use the ARSHLAB confirmation link in your inbox to finish account setup.",
     })
     router.replace("/account")
   }
@@ -281,13 +294,13 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Account
+                {title}
               </h1>
-              <p className="text-muted-foreground">Supabase Authentication Alpha</p>
+              <p className="text-muted-foreground">{subtitle}</p>
             </div>
           </div>
           <p className="max-w-2xl text-lg text-muted-foreground">
-            Email/password accounts are live. Permanent saved history is now enabled.
+            {description}
           </p>
         </motion.div>
 
@@ -334,6 +347,7 @@ export function AccountAuthClient({ initialUser, isConfigured }: AccountAuthClie
             onSignupPasswordChange={setSignupPassword}
             onLogin={handleLogin}
             onSignUp={handleSignUp}
+            initialPanel={initialPanel}
           />
         )}
       </div>
@@ -354,6 +368,7 @@ function SignedOutPanel({
   onSignupPasswordChange,
   onLogin,
   onSignUp,
+  initialPanel,
 }: {
   isConfigured: boolean
   loginEmail: string
@@ -367,39 +382,56 @@ function SignedOutPanel({
   onSignupPasswordChange: (value: string) => void
   onLogin: (event: FormEvent<HTMLFormElement>) => void
   onSignUp: (event: FormEvent<HTMLFormElement>) => void
+  initialPanel: AuthPanel
 }) {
+  const loginForm = (
+    <AuthFormCard
+      title="Sign in to ARSHLAB"
+      description="Log in with an existing ARSHLAB account. Sessions persist across refreshes."
+      icon={LogIn}
+      submitLabel={loading === "login" ? "Signing in..." : "Log in"}
+      email={loginEmail}
+      password={loginPassword}
+      disabled={!isConfigured || loading !== null}
+      onEmailChange={onLoginEmailChange}
+      onPasswordChange={onLoginPasswordChange}
+      onSubmit={onLogin}
+    />
+  )
+  const signupForm = (
+    <AuthFormCard
+      title="Create your ARSHLAB account"
+      description="Use email and password to create an ARSHLAB account. This does not create Supabase dashboard or project access."
+      icon={User}
+      submitLabel={loading === "signup" ? "Creating account..." : "Sign up"}
+      email={signupEmail}
+      password={signupPassword}
+      disabled={!isConfigured || loading !== null}
+      onEmailChange={onSignupEmailChange}
+      onPasswordChange={onSignupPasswordChange}
+      onSubmit={onSignUp}
+    />
+  )
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <AuthFormCard
-        title="Create your account"
-        description="Use email and password. If email confirmation is enabled, Supabase will send a confirmation link."
-        icon={User}
-        submitLabel={loading === "signup" ? "Creating account..." : "Sign up"}
-        email={signupEmail}
-        password={signupPassword}
-        disabled={!isConfigured || loading !== null}
-        onEmailChange={onSignupEmailChange}
-        onPasswordChange={onSignupPasswordChange}
-        onSubmit={onSignUp}
-      />
-      <AuthFormCard
-        title="Sign in"
-        description="Log in with an existing ARSHLAB account. Sessions persist across refreshes."
-        icon={LogIn}
-        submitLabel={loading === "login" ? "Signing in..." : "Log in"}
-        email={loginEmail}
-        password={loginPassword}
-        disabled={!isConfigured || loading !== null}
-        onEmailChange={onLoginEmailChange}
-        onPasswordChange={onLoginPasswordChange}
-        onSubmit={onLogin}
-      />
+      {initialPanel === "login" ? (
+        <>
+          {loginForm}
+          {signupForm}
+        </>
+      ) : (
+        <>
+          {signupForm}
+          {loginForm}
+        </>
+      )}
 
       <Card className="rounded-2xl border-dashed lg:col-span-2">
         <CardContent className="grid gap-4 p-5 sm:grid-cols-3">
           <AuthNote icon={Atom} title="Chemistry stays open" text="All current ARSHLAB tools remain usable without auth." />
           <AuthNote icon={History} title="Saved history" text="Sign in to save molecule and reaction history permanently." />
-          <AuthNote icon={ShieldCheck} title="Safe key usage" text="Only the Supabase publishable key is used in the browser." />
+          <AuthNote icon={ShieldCheck} title="ARSHLAB account only" text="Signing up creates an ARSHLAB user account, not Supabase dashboard access." />
         </CardContent>
       </Card>
     </div>
@@ -481,6 +513,7 @@ function SignedInPanel({
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>Email/password sign up, login, logout, and persisted sessions are enabled.</p>
+          <p>Accounts are for ARSHLAB users only. They do not grant Supabase project access, dashboard access, or administrative privileges.</p>
           <p>No service role key is used in the browser. Saved history rows are scoped to your authenticated user.</p>
         </CardContent>
       </Card>

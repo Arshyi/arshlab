@@ -197,9 +197,9 @@ function testPlatformSmoke() {
   const roadmap = read("app/roadmap/page.tsx")
   const graph = read("app/knowledge-graph/knowledge-graph-client.tsx")
 
-  assert.equal(packageJson.version, "11.1.0")
-  assert.ok(patchNotes.includes('version: "11.1.0"'), "patch notes should include v11.1.0")
-  assert.ok(roadmap.includes("Platform Quality and Navigation Hardening"), "roadmap should mention v11.1.0")
+  assert.equal(packageJson.version, "13.1.0")
+  assert.ok(patchNotes.includes('version: "13.1.0"'), "patch notes should include v13.1.0")
+  assert.ok(roadmap.includes("Public Launch Auth and Optional Creator Support"), "roadmap should mention v13.1.0")
   assert.ok(graph.includes("MAX_RENDERED_NODES"), "knowledge graph should include render safeguard")
 
   for (const route of requiredRoutes) {

@@ -17,6 +17,9 @@ export function SiteFooter() {
           <Link href="/patch-notes" className="font-medium text-foreground hover:underline">
             Patch Notes
           </Link>
+          <Link href="/support" className="font-medium text-foreground hover:underline">
+            Support
+          </Link>
           <Link href="/privacy" className="font-medium text-foreground hover:underline">
             Privacy Policy
           </Link>

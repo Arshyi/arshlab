@@ -48,7 +48,11 @@ const sections = [
   },
   {
     title: "Third-Party Services",
-    body: "Third-party services may include Supabase for authentication and Vercel for hosting, analytics, deployment, and infrastructure.",
+    body: "Third-party services may include Supabase for authentication, Vercel for hosting, analytics, deployment, and infrastructure, and an optional third-party payment provider if a user chooses to support the creator. ARSHLAB does not store payment card, bank, PayPal, or payment-provider account details in the app.",
+  },
+  {
+    title: "Optional Creator Support",
+    body: "Creator support is optional and does not unlock extra features, priority access, grades, tutoring, or advantages. If a support link is configured, users leave ARSHLAB to complete any payment with the third-party provider.",
   },
   {
     title: "Educational Content",

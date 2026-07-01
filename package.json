@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "13.0.0",
+  "version": "13.1.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -134,7 +134,9 @@
     "test:progress": "node scripts/verify-learning-paths.cjs progress",
     "test:curriculum": "node scripts/verify-learning-paths.cjs curriculum",
     "test:learning-dashboard": "node scripts/verify-learning-paths.cjs learning-dashboard",
-    "test:lesson-sequencer": "node scripts/verify-learning-paths.cjs lesson-sequencer"
+    "test:lesson-sequencer": "node scripts/verify-learning-paths.cjs lesson-sequencer",
+    "test:auth-routes": "node scripts/verify-public-launch.cjs auth-routes",
+    "test:support-page": "node scripts/verify-public-launch.cjs support-page"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
