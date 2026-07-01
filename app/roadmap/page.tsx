@@ -86,6 +86,7 @@ const completed = [
   "Interactive Molecular Explorer",
   "Interactive Reaction Mechanism Simulator",
   "Interactive Chemistry Knowledge Graph",
+  "Platform Quality and Navigation Hardening",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -216,14 +217,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Interactive Chemistry Knowledge Graph
+                Platform Quality and Navigation Hardening
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: a deterministic SVG chemistry map connects compounds, functional groups,
-                mechanisms, spectroscopy, orbitals, formulas, lab techniques, practice topics, and
-                curriculum paths into one searchable learning graph.
+                Now available: route-link checks, navigation smoke tests, query fallback verification,
+                accessibility affordance checks, reduced-motion nav polish, Knowledge Graph fallbacks,
+                footer cleanup, and version consistency across the platform.
               </p>
             </CardContent>
           </Card>
@@ -235,7 +236,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v11.0.0 - Interactive Chemistry Knowledge Graph
+          ARSHLAB v11.1.0 - Platform Quality and Navigation Hardening
         </motion.p>
       </div>
     </div>

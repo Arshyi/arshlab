@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "11.0.0",
+  "version": "11.1.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -56,6 +56,11 @@
     "test:graph-navigation": "node scripts/verify-knowledge-graph.cjs graph-navigation",
     "test:scanner-knowledge-bridge": "node scripts/verify-knowledge-graph.cjs scanner-knowledge-bridge",
     "test:mechanism-knowledge-bridge": "node scripts/verify-knowledge-graph.cjs mechanism-knowledge-bridge",
+    "test:route-links": "node scripts/verify-platform-quality.cjs route-links",
+    "test:navigation": "node scripts/verify-platform-quality.cjs navigation",
+    "test:accessibility-smoke": "node scripts/verify-platform-quality.cjs accessibility-smoke",
+    "test:query-param-fallbacks": "node scripts/verify-platform-quality.cjs query-param-fallbacks",
+    "test:platform-smoke": "node scripts/verify-platform-quality.cjs platform-smoke",
     "test:contradiction-engine": "node scripts/verify-contradiction-engine.cjs",
     "test:mo-builder": "node scripts/verify-interactive-learning.cjs mo-builder",
     "test:hybridization": "node scripts/verify-interactive-learning.cjs hybridization",

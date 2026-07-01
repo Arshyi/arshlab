@@ -130,6 +130,12 @@ const features = [
     href: "/knowledge-graph",
   },
   {
+    icon: Gauge,
+    title: "Platform Quality & Navigation",
+    description: "ARSHLAB v11.1 hardens route links, mobile navigation, graph fallbacks, accessibility affordances, and platform-wide smoke checks.",
+    href: "/patch-notes",
+  },
+  {
     icon: ArrowRightLeft,
     title: "Reaction Engine",
     description: "Browse 100+ deterministic reaction records for prediction, classification, balancing, and mastery tracking.",

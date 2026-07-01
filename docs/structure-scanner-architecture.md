@@ -183,6 +183,8 @@ The graph connects recognized compounds to functional groups, reactions, mechani
 
 Scanner results can open `/knowledge-graph?focus=compound:<id>`, and mechanism pages can open `/knowledge-graph?focus=mechanism:<id>`. The graph then highlights neighbors and links students into existing ARSHLAB modules without making an AI request or changing recognition confidence.
 
+The v11.1 quality pass adds platform-level route-link, navigation, accessibility, query fallback, and smoke checks around this graph layer. It also adds a skip-to-content link, reduced-motion mobile navigation handling, clearer footer links, graph no-result states, invalid-focus messaging, and graph render caps. These are product hardening changes only; they do not modify recognition, compiler, AI, auth, middleware, solver, or chemistry database internals.
+
 ## Key Files
 
 - `lib/molecular-compiler/compiler.ts`

@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "11.0.0",
+    version: "11.1.0",
     date: "Current",
+    status: "released",
+    title: "Platform Quality and Navigation Hardening",
+    changes: [
+      "Added a platform smoke verification suite for route links, navbar coverage, accessibility affordances, query-parameter fallbacks, and major route presence",
+      "Improved Knowledge Graph empty states, invalid-focus fallbacks, search no-result messaging, keyboard labels, pan controls, and graph render safeguards",
+      "Added a skip-to-content link, reduced-motion handling for the mobile navbar, and clearer footer navigation to Chemistry Hub, Roadmap, Patch Notes, Privacy, and Terms",
+      "Audited homepage, Chemistry Hub, Interactive Learning, scanner, molecular explorer, mechanism simulator, and Knowledge Graph bridge navigation",
+      "Updated roadmap, homepage, Chemistry Hub, patch notes, docs, and version metadata for v11.1.0",
+      "Kept AI/OpenRouter, Supabase/auth, middleware, scanner core, compiler, OCR, solver calculations, and database internals untouched",
+    ],
+  },
+  {
+    version: "11.0.0",
+    date: "Previous",
     status: "released",
     title: "Interactive Chemistry Knowledge Graph",
     changes: [

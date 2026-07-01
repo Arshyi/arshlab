@@ -44,7 +44,7 @@ import {
   MousePointer2,
 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
@@ -121,6 +121,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
+  const reduceMotion = useReducedMotion()
   const accountItem = { href: "/account", label: "Account", icon: User }
   const mobileNavItems = userEmail
     ? [...primaryNavItems, ...chemistryToolItems, ...secondaryNavItems]
@@ -250,9 +251,9 @@ export function Navbar() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, height: "auto" }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
             className="xl:hidden border-t border-border bg-background"
           >
             <div className="max-h-[calc(100vh-4rem)] space-y-1 overflow-y-auto px-4 py-4">
@@ -342,6 +343,7 @@ function NavDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
+        aria-label={`${label} navigation menu`}
         className={cn(
           "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
           active

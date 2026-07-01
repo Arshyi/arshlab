@@ -8,6 +8,15 @@ export function SiteFooter() {
     <footer className="border-t border-border/50 bg-background/90">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-muted-foreground sm:px-6 lg:px-8">
         <div className="flex flex-wrap gap-4">
+          <Link href="/chemistry-hub" className="font-medium text-foreground hover:underline">
+            Chemistry Hub
+          </Link>
+          <Link href="/roadmap" className="font-medium text-foreground hover:underline">
+            Roadmap
+          </Link>
+          <Link href="/patch-notes" className="font-medium text-foreground hover:underline">
+            Patch Notes
+          </Link>
           <Link href="/privacy" className="font-medium text-foreground hover:underline">
             Privacy Policy
           </Link>

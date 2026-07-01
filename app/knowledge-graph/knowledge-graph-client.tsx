@@ -50,6 +50,9 @@ const difficulties: Array<ChemistryKnowledgeDifficulty | "All"> = [
   "Graduate",
 ]
 
+const MAX_RENDERED_NODES = 140
+const MAX_RENDERED_EDGES = 280
+
 function safeCurriculum(value: string | undefined): ChemistryKnowledgeCurriculum | "All" {
   return curricula.some((item) => item === value) ? (value as ChemistryKnowledgeCurriculum | "All") : "All"
 }
@@ -64,10 +67,12 @@ export function KnowledgeGraphClient({
   initialCurriculum,
   initialDifficulty,
 }: KnowledgeGraphClientProps) {
+  const resolvedInitialFocus = resolveKnowledgeNodeId(initialFocus)
+  const invalidInitialFocus = Boolean(initialFocus && !resolvedInitialFocus)
   const [query, setQuery] = useState(initialQuery ?? "")
   const [curriculum, setCurriculum] = useState<ChemistryKnowledgeCurriculum | "All">(safeCurriculum(initialCurriculum))
   const [difficulty, setDifficulty] = useState<ChemistryKnowledgeDifficulty | "All">(safeDifficulty(initialDifficulty))
-  const [selectedId, setSelectedId] = useState<string | undefined>(resolveKnowledgeNodeId(initialFocus))
+  const [selectedId, setSelectedId] = useState<string | undefined>(resolvedInitialFocus)
   const [expanded, setExpanded] = useState(true)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
@@ -104,9 +109,26 @@ export function KnowledgeGraphClient({
     return highlightedIds
   }, [expanded, highlightedIds, selectedId, visibleNodeIds])
 
-  const renderedEdges = graph.edges.filter((edge) => renderedNodeIds.has(edge.from) && renderedNodeIds.has(edge.to))
+  const renderedEdges = useMemo(
+    () => graph.edges.filter((edge) => renderedNodeIds.has(edge.from) && renderedNodeIds.has(edge.to)),
+    [graph.edges, renderedNodeIds],
+  )
+  const graphPerformanceLimited =
+    renderedNodeIds.size > MAX_RENDERED_NODES || renderedEdges.length > MAX_RENDERED_EDGES
+  const visibleRenderedNodeIds = useMemo(() => {
+    if (!graphPerformanceLimited) return renderedNodeIds
+    return new Set([...renderedNodeIds].slice(0, MAX_RENDERED_NODES))
+  }, [graphPerformanceLimited, renderedNodeIds])
+  const visibleRenderedEdges = useMemo(
+    () =>
+      renderedEdges
+        .filter((edge) => visibleRenderedNodeIds.has(edge.from) && visibleRenderedNodeIds.has(edge.to))
+        .slice(0, MAX_RENDERED_EDGES),
+    [renderedEdges, visibleRenderedNodeIds],
+  )
   const selectedPath = selectedId ? findShortestEducationalPath(selectedId, "concept:aromaticity") : []
   const aromaticPath = getAromaticityLearningPath()
+  const noSearchResults = query.trim().length > 0 && searchResults.length === 0
 
   function focusNode(node: ChemistryKnowledgeNode) {
     setSelectedId(node.id)
@@ -125,7 +147,7 @@ export function KnowledgeGraphClient({
         <section className="mb-8 grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-center">
           <div>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <Badge className="rounded-full">ARSHLAB v11.0.0</Badge>
+              <Badge className="rounded-full">ARSHLAB v11.1.0</Badge>
               <Badge variant="outline" className="rounded-full">Interactive SVG graph</Badge>
               <Badge variant="outline" className="rounded-full">Database mode = no AI usage</Badge>
             </div>
@@ -175,11 +197,12 @@ export function KnowledgeGraphClient({
                 className="h-11 rounded-xl"
               />
               {searchResults.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2" aria-label="Knowledge graph search results">
                   {searchResults.map((result) => (
                     <button
                       key={result.id}
                       type="button"
+                      aria-label={`Focus ${result.label} in the knowledge graph`}
                       onClick={() => focusNode(result)}
                       className={cn(
                         "rounded-full border px-3 py-1 text-xs transition-colors",
@@ -189,6 +212,11 @@ export function KnowledgeGraphClient({
                       {result.label}
                     </button>
                   ))}
+                </div>
+              )}
+              {noSearchResults && (
+                <div className="mt-3 rounded-xl border border-dashed border-border bg-secondary/20 p-3 text-sm text-muted-foreground" role="status">
+                  No graph node matched this search. Try a compound, mechanism, formula, functional group, or spectroscopy clue.
                 </div>
               )}
             </CardContent>
@@ -230,6 +258,32 @@ export function KnowledgeGraphClient({
             </CardContent>
           </Card>
         </section>
+
+        {(invalidInitialFocus || graphPerformanceLimited || graph.nodes.length === 0) && (
+          <section className="mb-6" aria-live="polite">
+            {invalidInitialFocus && (
+              <Card className="rounded-2xl border-amber-500/30 bg-amber-500/10">
+                <CardContent className="p-4 text-sm text-muted-foreground">
+                  That graph focus link did not match a known node, so ARSHLAB opened the default knowledge map instead.
+                </CardContent>
+              </Card>
+            )}
+            {graphPerformanceLimited && (
+              <Card className="mt-3 rounded-2xl border-teal-500/20 bg-teal-500/5">
+                <CardContent className="p-4 text-sm text-muted-foreground">
+                  Large graph safeguard active: ARSHLAB is rendering the first {MAX_RENDERED_NODES} nodes and {MAX_RENDERED_EDGES} edges. Use search or curriculum mode to narrow the view.
+                </CardContent>
+              </Card>
+            )}
+            {graph.nodes.length === 0 && (
+              <Card className="mt-3 rounded-2xl border-dashed">
+                <CardContent className="p-4 text-sm text-muted-foreground">
+                  No graph nodes match the selected filters. Reset curriculum mode or difficulty to All.
+                </CardContent>
+              </Card>
+            )}
+          </section>
+        )}
 
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
           <Card className="overflow-hidden rounded-2xl">
@@ -277,13 +331,13 @@ export function KnowledgeGraphClient({
                   viewBox={`0 0 ${graph.layout.bounds.width} ${graph.layout.bounds.height}`}
                 >
                   <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
-                    {renderedEdges.map((edge, index) => {
+                    {visibleRenderedEdges.map((edge, index) => {
                       const from = graph.layout.nodes.find((node) => node.id === edge.from)
                       const to = graph.layout.nodes.find((node) => node.id === edge.to)
                       if (!from || !to) return null
                       return <GraphEdge key={edge.id} edge={edge} from={from} to={to} index={index} active={Boolean(selectedId && (edge.from === selectedId || edge.to === selectedId))} />
                     })}
-                    {graph.layout.nodes.filter((node) => renderedNodeIds.has(node.id)).map((node) => (
+                    {graph.layout.nodes.filter((node) => visibleRenderedNodeIds.has(node.id)).map((node) => (
                       <GraphNode
                         key={node.id}
                         node={node}
@@ -311,7 +365,7 @@ export function KnowledgeGraphClient({
               <CardTitle className="text-lg">Mobile graph list</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
-              {graph.nodes.map((node) => (
+              {graph.nodes.length > 0 ? graph.nodes.map((node) => (
                 <button
                   key={node.id}
                   type="button"
@@ -321,7 +375,11 @@ export function KnowledgeGraphClient({
                   <p className="font-medium">{node.label}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{node.subtitle ?? node.type}</p>
                 </button>
-              ))}
+              )) : (
+                <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  No nodes match the selected graph filters.
+                </p>
+              )}
             </CardContent>
           </Card>
         </section>

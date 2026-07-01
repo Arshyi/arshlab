@@ -346,6 +346,13 @@ export default function ChemistryHubPage() {
             action="Open Knowledge Graph"
           />
           <HubActionCard
+            icon={Gauge}
+            title="Platform Quality & Navigation"
+            description="Review v11.1 hardening for route links, mobile navigation, graph fallbacks, accessibility labels, and platform smoke checks."
+            href="/patch-notes"
+            action="View v11.1 Notes"
+          />
+          <HubActionCard
             icon={Network}
             title="Visual Reaction Pathways"
             description="Follow alkane-to-ester, benzene functionalization, and ethene-to-ester pathways with molecule cards."
