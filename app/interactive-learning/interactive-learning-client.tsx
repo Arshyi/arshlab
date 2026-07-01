@@ -188,7 +188,7 @@ export function InteractiveLearningClient({
           </Card>
         </section>
 
-        <section className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <section className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <LessonCard
             title="Molecular Orbitals, HOMO/LUMO, Bond Order"
             difficulty="Intermediate"
@@ -228,6 +228,14 @@ export function InteractiveLearningClient({
             href="/interactive-learning/mechanisms?reaction=sn2"
             outcomes={["Animate curved arrows", "Track atoms and electrons", "Practice arrow placement"]}
             description="Step through deterministic mechanisms with reaction timelines, transition-state views, energy diagrams, live bond updates, and common mistakes."
+          />
+          <LessonCard
+            title="Virtual Chemistry Laboratory"
+            difficulty="Intermediate"
+            time="12 min"
+            href="/virtual-lab"
+            outcomes={["Run guided experiments", "Interpret observations", "Connect spectra to products"]}
+            description="Move from molecular reasoning into deterministic lab practice with SVG glassware, safety, observations, spectra, notebooking, and assessment."
           />
         </section>
 

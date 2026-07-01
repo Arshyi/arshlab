@@ -18,6 +18,7 @@ const LAB_LINKS = [
   { href: "/formula-sheet", label: "Formula Sheet" },
   { href: "/chemistry-solver", label: "Chemistry Solver" },
   { href: "/chemistry-database", label: "Chemistry Database" },
+  { href: "/virtual-lab", label: "Virtual Chemistry Laboratory" },
   { href: "/structure-scanner", label: "Structure Scanner" },
   { href: "/scanner-benchmarks", label: "Scanner Benchmarks" },
   { href: "/real-world-benchmarks", label: "Real-World Scanner Benchmarks" },
@@ -283,6 +284,13 @@ export default function ChemistryHubPage() {
             description="Solve molarity, dilution, percent yield, empirical formula, gas law, calorimetry, pH, and stoichiometry problems step by step."
             href="/chemistry-solver"
             action="Open Solver"
+          />
+          <HubActionCard
+            icon={FlaskConical}
+            title="Virtual Chemistry Laboratory"
+            description="Practice deterministic undergraduate experiments with SVG glassware, guided/free lab modes, observations, spectra, safety, notebooking, and assessment."
+            href="/virtual-lab"
+            action="Enter Lab"
           />
             <HubActionCard
               icon={ScanSearch}

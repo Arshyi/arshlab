@@ -71,6 +71,7 @@ const chemistryToolItems = [
   { href: "/formula-sheet", label: "Formula Sheet", icon: BookOpenCheck },
   { href: "/chemistry-solver", label: "Chemistry Solver", icon: Calculator },
   { href: "/chemistry-database", label: "Chemistry Database", icon: Database },
+  { href: "/virtual-lab", label: "Virtual Lab", icon: FlaskConical },
   { href: "/structure-scanner", label: "Structure Scanner", icon: ScanSearch },
   { href: "/scanner-benchmarks", label: "Scanner Benchmarks", icon: BarChart3 },
   { href: "/real-world-benchmarks", label: "Real-World Benchmarks", icon: Camera },

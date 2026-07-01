@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "11.5.0",
+    version: "12.0.0",
     date: "Current",
+    status: "released",
+    title: "Virtual Chemistry Laboratory",
+    changes: [
+      "Added /virtual-lab as a deterministic undergraduate chemistry laboratory simulation layer",
+      "Added Guided Lab Mode and Free Lab Mode for step-by-step teaching or consequence-based independent practice",
+      "Added SVG-rendered glassware and equipment including beakers, flasks, separatory funnels, burettes, condensers, hot plates, pH meters, and spectrometers",
+      "Added deterministic experiment engines for lab actions, observations, measurements, safety, spectroscopy, notebooking, assessment, yield, purity, and reaction progress",
+      "Seeded starter experiments for esterification, alkene bromine testing, aspirin recrystallization, caffeine spectroscopy, and ammonia pH observations, with an initial compound coverage list of 15 lab-relevant molecules",
+      "Added virtual lab regression tests for glassware, spectroscopy, lab techniques, reaction lab flow, notebooking, safety, observations, measurement engine, experiment library, and routing",
+      "Kept OCR, vision reconstruction, scanner, molecular compiler, graph validator, consensus solver, chemistry intelligence, Knowledge Graph internals, AI/OpenRouter, Supabase/auth, middleware, existing database internals, and solver calculations untouched",
+    ],
+  },
+  {
+    version: "11.5.0",
+    date: "Previous",
     status: "released",
     title: "Real-World Scanner Benchmark Harness",
     changes: [

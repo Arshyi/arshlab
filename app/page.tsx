@@ -94,6 +94,12 @@ const features = [
     href: "/chemistry-database",
   },
   {
+    icon: FlaskConical,
+    title: "Virtual Chemistry Laboratory",
+    description: "Run deterministic guided or free-mode undergraduate lab simulations with SVG glassware, spectra, observations, safety, and notebooking.",
+    href: "/virtual-lab",
+  },
+  {
     icon: ScanSearch,
     title: "Molecular Structure Scanner",
     description: "Upload or capture a private snapshot, reconstruct a cleaner primitive graph, compile it into optimized molecular IR, then open chemistry intelligence and study links.",

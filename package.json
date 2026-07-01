@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "11.5.0",
+  "version": "12.0.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -112,7 +112,18 @@
     "test:benchmark-comparison": "node scripts/run-real-world-benchmarks.cjs comparison",
     "test:failure-classification": "node scripts/run-real-world-benchmarks.cjs failure-classification",
     "test:benchmark-export": "node scripts/run-real-world-benchmarks.cjs export",
-    "benchmark:real-world": "node scripts/run-real-world-benchmarks.cjs benchmark"
+    "benchmark:real-world": "node scripts/run-real-world-benchmarks.cjs benchmark",
+    "test:virtual-lab": "node scripts/verify-virtual-lab.cjs virtual-lab",
+    "test:glassware": "node scripts/verify-virtual-lab.cjs glassware",
+    "test:spectroscopy": "node scripts/verify-virtual-lab.cjs spectroscopy",
+    "test:lab-techniques": "node scripts/verify-virtual-lab.cjs lab-techniques",
+    "test:reaction-lab": "node scripts/verify-virtual-lab.cjs reaction-lab",
+    "test:lab-notebook": "node scripts/verify-virtual-lab.cjs lab-notebook",
+    "test:safety": "node scripts/verify-virtual-lab.cjs safety",
+    "test:observations": "node scripts/verify-virtual-lab.cjs observations",
+    "test:measurement-engine": "node scripts/verify-virtual-lab.cjs measurement-engine",
+    "test:experiment-library": "node scripts/verify-virtual-lab.cjs experiment-library",
+    "test:virtual-lab-routing": "node scripts/verify-virtual-lab.cjs virtual-lab-routing"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
