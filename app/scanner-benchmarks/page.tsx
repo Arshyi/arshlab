@@ -10,7 +10,7 @@ function formatPercent(value: number): string {
 export default function ScannerBenchmarksPage() {
   const report = runScannerBenchmark()
   const failures = report.results.filter((result) => !result.top1Correct)
-  const coverageGaps = report.results.filter((result) => result.fixture.notes.includes("Coverage-gap"))
+  const formerGapTargets = report.results.filter((result) => ["pyridine", "naphthalene"].includes(result.fixture.compoundId))
   const metricCards = [
     { label: "Fixtures", value: report.summary.fixtureCount, detail: "Controlled synthetic scanner cases", icon: ScanSearch },
     { label: "Top-1 Accuracy", value: formatPercent(report.summary.top1Accuracy), detail: "Expected compound ranked first", icon: CheckCircle2 },
@@ -29,7 +29,7 @@ export default function ScannerBenchmarksPage() {
               <BarChart3 className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-primary">ARSHLAB v11.2.0</p>
+              <p className="text-sm font-medium text-primary">ARSHLAB v11.3.0</p>
               <h1 className="text-3xl font-bold tracking-tight">Structure Scanner Benchmarks</h1>
               <p className="text-muted-foreground">
                 Deterministic local scoreboard for controlled scanner fixtures, formula,
@@ -84,12 +84,12 @@ export default function ScannerBenchmarksPage() {
 
           <Card className="rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-base">Known Coverage Gaps</CardTitle>
+              <CardTitle className="text-base">v11.3 Coverage Expansion</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <p>
-                Pyridine and naphthalene are included on purpose: they are benchmark targets that are not yet seeded
-                as scanner records, so they currently report as coverage gaps.
+                Pyridine and naphthalene were the two v11.2 benchmark gaps. They are now seeded scanner targets
+                with aromatic heterocycle and fused aromatic scaffold metadata.
               </p>
             </CardContent>
           </Card>
@@ -192,11 +192,6 @@ export default function ScannerBenchmarksPage() {
                     <div key={failure.fixture.id} className="rounded-xl border border-border p-3">
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <p className="font-medium">{failure.fixture.expectedName}</p>
-                        {failure.fixture.notes.includes("Coverage-gap") && (
-                          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
-                            Known coverage gap
-                          </span>
-                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">{failure.fixture.notes}</p>
                       <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
@@ -217,20 +212,20 @@ export default function ScannerBenchmarksPage() {
 
             <Card className="rounded-2xl">
               <CardHeader>
-                <CardTitle>Seeded vs Gap Targets</CardTitle>
+                <CardTitle>Former Gap Targets</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <p className="text-muted-foreground">
-                  Passing fixtures represent scanner targets already present in ARSHLAB&apos;s local scanner records.
-                  Gap fixtures are deliberately kept in the suite so future database expansion has a visible target.
+                  These fixtures remain in the suite because they used to fail in v11.2. Passing them protects
+                  the new heteroaromatic and fused aromatic coverage from future regressions.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {coverageGaps.map((gap) => (
+                  {formerGapTargets.map((gap) => (
                     <span
                       key={gap.fixture.id}
-                      className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
+                      className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-300"
                     >
-                      {gap.fixture.expectedName}
+                      {gap.fixture.expectedName}: {gap.top1Correct ? "Passing" : "Check"}
                     </span>
                   ))}
                 </div>

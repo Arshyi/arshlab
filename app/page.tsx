@@ -102,7 +102,7 @@ const features = [
   {
     icon: BarChart3,
     title: "Structure Scanner Benchmark Suite",
-    description: "Measure scanner recognition with deterministic fixtures, top-1/top-3 accuracy, chemistry metrics, runtime, and JSON reports.",
+    description: "Measure scanner recognition with deterministic fixtures; v11.3 closes the pyridine and naphthalene coverage gaps.",
     href: "/scanner-benchmarks",
   },
   {

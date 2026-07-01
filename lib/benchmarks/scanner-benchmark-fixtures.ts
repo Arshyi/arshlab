@@ -264,7 +264,7 @@ export const SCANNER_BENCHMARK_FIXTURES: ScannerBenchmarkFixture[] = [
     }),
   },
   {
-    id: "pyridine-clean-gap",
+    id: "pyridine-clean",
     compoundId: "pyridine",
     expectedName: "Pyridine",
     expectedFormula: "C5H5N",
@@ -274,7 +274,7 @@ export const SCANNER_BENCHMARK_FIXTURES: ScannerBenchmarkFixture[] = [
     expectedAtomCounts: { C: 5, H: 5, N: 1 },
     expectedBondCounts: { single: 0, double: 3, triple: 0, aromatic: 6 },
     difficulty: "clean",
-    notes: "Coverage-gap fixture: requested benchmark compound not yet seeded in scanner records.",
+    notes: "v11.3 coverage fixture: heteroaromatic six-member ring with one nitrogen.",
     input: fixtureInput({
       id: "pyridine",
       name: "Pyridine",
@@ -285,7 +285,7 @@ export const SCANNER_BENCHMARK_FIXTURES: ScannerBenchmarkFixture[] = [
     }),
   },
   {
-    id: "naphthalene-camera-gap",
+    id: "naphthalene-camera",
     compoundId: "naphthalene",
     expectedName: "Naphthalene",
     expectedFormula: "C10H8",
@@ -295,7 +295,7 @@ export const SCANNER_BENCHMARK_FIXTURES: ScannerBenchmarkFixture[] = [
     expectedAtomCounts: { C: 10, H: 8 },
     expectedBondCounts: { single: 1, double: 5, triple: 0, aromatic: 10 },
     difficulty: "camera",
-    notes: "Coverage-gap fixture: fused aromatic target not yet seeded in scanner records.",
+    notes: "v11.3 coverage fixture: fused bicyclic aromatic scaffold.",
     input: fixtureInput({
       id: "naphthalene",
       name: "Naphthalene",

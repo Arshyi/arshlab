@@ -187,6 +187,8 @@ The v11.1 quality pass adds platform-level route-link, navigation, accessibility
 
 The v11.2 benchmark suite adds a deterministic local scoreboard around the scanner without changing recognition logic. Controlled synthetic fixtures run through `scanStructure()` and produce top-1/top-3 accuracy, formula, functional-group, ring, aromaticity, atom-count, confidence, runtime, false-positive, and failure-reason metrics. This suite is a regression and coverage tool, not a universal claim about every real-world chemistry image. The CLI writes JSON to `.next/benchmark-reports/scanner-benchmark-report.json`, while `/scanner-benchmarks` renders the same benchmark report for quick inspection.
 
+The v11.3 coverage expansion closes the two v11.2 benchmark gaps by exposing existing pyridine and naphthalene reference-graph intelligence through scanner-facing records and Knowledge Graph nodes. Pyridine is tracked as a C5H5N six-member heteroaromatic ring with one nitrogen whose lone pair is outside the aromatic sextet. Naphthalene is tracked as a C10H8 fused bicyclic aromatic scaffold with 10 pi electrons. This is a reference/metadata expansion only; scanner reconstruction, compiler architecture, AI/OpenRouter, Supabase/auth, middleware, solver calculations, and vision pipelines remain unchanged.
+
 ## Key Files
 
 - `lib/benchmarks/scanner-benchmark-types.ts`

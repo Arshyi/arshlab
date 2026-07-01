@@ -147,7 +147,7 @@ export function runScannerBenchmark(
 
   const summary = summarizeScannerBenchmark(results)
   return {
-    version: "11.2.0",
+    version: "11.3.0",
     generatedAt: new Date().toISOString(),
     summary,
     results,

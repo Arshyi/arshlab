@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "11.2.0",
+    version: "11.3.0",
     date: "Current",
+    status: "released",
+    title: "Scanner Coverage Expansion - Pyridine and Naphthalene",
+    changes: [
+      "Added scanner-facing reference records for pyridine as a six-member aromatic heterocycle with one nitrogen atom and a C5H5N formula",
+      "Added scanner-facing reference records for naphthalene as a fused bicyclic aromatic hydrocarbon with a C10H8 formula",
+      "Connected pyridine and naphthalene into the Knowledge Graph with aromaticity, conjugation, molecular explorer, and practice links",
+      "Updated scanner benchmark fixtures so pyridine and naphthalene are former v11.2 gaps that now must pass top-1 matching",
+      "Added contradiction regression checks so benzene rejects nitrogen-containing pyridine graphs and does not match fused naphthalene topology",
+      "Kept AI/OpenRouter, Supabase/auth, middleware, solver calculations, scanner architecture, compiler architecture, and vision reconstruction untouched",
+    ],
+  },
+  {
+    version: "11.2.0",
+    date: "Previous",
     status: "released",
     title: "Structure Scanner Benchmark Suite",
     changes: [

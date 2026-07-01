@@ -69,7 +69,7 @@ export interface ScannerBenchmarkSummary {
 }
 
 export interface ScannerBenchmarkReport {
-  version: "11.2.0"
+  version: "11.3.0"
   generatedAt: string
   summary: ScannerBenchmarkSummary
   results: ScannerBenchmarkFixtureResult[]

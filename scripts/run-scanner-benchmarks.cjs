@@ -50,19 +50,23 @@ console.log(formatScannerBenchmarkTable(report))
 if (mode === "test") {
   assert.equal(SCANNER_BENCHMARK_FIXTURE_COUNT, 13, "expected 13 scanner benchmark fixtures")
   assert.equal(report.summary.fixtureCount, 13, "expected report to include all fixtures")
-  assert.ok(report.summary.top1Accuracy >= 75, `top-1 accuracy too low: ${report.summary.top1Accuracy}%`)
+  assert.ok(report.summary.top1Accuracy > 84.6, `top-1 accuracy should improve beyond v11.2's 84.6%: ${report.summary.top1Accuracy}%`)
   assert.ok(report.summary.top3Accuracy >= report.summary.top1Accuracy, "top-3 accuracy should be at least top-1 accuracy")
   assert.ok(Number.isFinite(report.summary.averageConfidence), "average confidence should be numeric")
   assert.ok(Number.isFinite(report.summary.averageRuntimeMs), "average runtime should be numeric")
-  for (const id of ["benzene-clean", "ethanol-clean", "acetone-clean", "pyridine-clean-gap", "naphthalene-camera-gap"]) {
+  for (const id of ["benzene-clean", "ethanol-clean", "acetone-clean", "pyridine-clean", "naphthalene-camera"]) {
     assert.ok(report.results.some((result) => result.fixture.id === id), `${id} fixture should exist`)
   }
   const benzene = report.results.find((result) => result.fixture.id === "benzene-clean")
   assert.equal(benzene.topCandidateId, "benzene", "benzene fixture should rank benzene first")
   const ethanol = report.results.find((result) => result.fixture.id === "ethanol-clean")
   assert.equal(ethanol.topCandidateId, "ethanol", "ethanol fixture should rank ethanol first")
-  const coverageGaps = report.results.filter((result) => result.fixture.notes.includes("Coverage-gap"))
-  assert.equal(coverageGaps.length, 2, "expected two explicit scanner coverage-gap fixtures")
+  const pyridine = report.results.find((result) => result.fixture.id === "pyridine-clean")
+  assert.equal(pyridine.topCandidateId, "pyridine", "pyridine fixture should rank pyridine first")
+  const naphthalene = report.results.find((result) => result.fixture.id === "naphthalene-camera")
+  assert.equal(naphthalene.topCandidateId, "naphthalene", "naphthalene fixture should rank naphthalene first")
+  const failedTop1 = report.results.filter((result) => !result.top1Correct).map((result) => result.fixture.id)
+  assert.deepEqual(failedTop1, [], "expected every scanner benchmark fixture to pass top-1 matching")
   console.log("\nScanner benchmark assertions passed.")
 } else {
   const reportDirectory = path.join(root, ".next", "benchmark-reports")

@@ -90,6 +90,16 @@ assertPassed(benzeneReport, "benzene")
 assertEliminated(benzeneReport, "ethanol", /O atom|Ring count|aromatic/i)
 assertEliminated(benzeneReport, "acetone", /O atom|Carbon count|carbonyl/i)
 
+const pyridineReport = reportFor(getReference("pyridine"), "pyridine")
+assertPassed(pyridineReport, "pyridine")
+assertEliminated(pyridineReport, "benzene", /N atom|Carbon count/i)
+assertEliminated(pyridineReport, "aniline", /Carbon count|Ring count|Nitrogen/i)
+
+const naphthaleneReport = reportFor(getReference("naphthalene"), "naphthalene")
+assertPassed(naphthaleneReport, "naphthalene")
+assertEliminated(naphthaleneReport, "benzene", /Carbon count|Ring count|Double-bond/i)
+assertEliminated(naphthaleneReport, "phenol", /O atom|Carbon count|Ring count/i)
+
 const cyclohexaneReport = reportFor(getReference("cyclohexane"), "cyclohexane")
 assertPassed(cyclohexaneReport, "cyclohexane")
 assertEliminated(cyclohexaneReport, "benzene", /aromatic|Double-bond/i)
