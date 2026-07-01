@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   FlaskConical,
   MousePointer2,
+  Network,
   Pause,
   Play,
   RotateCcw,
@@ -44,6 +45,7 @@ import {
   type MechanismStep,
   type ReactionMechanism,
 } from "@/lib/interactive-learning/mechanisms"
+import { mechanismKnowledgeGraphHref } from "@/lib/knowledge-graph/knowledge-engine"
 
 interface MechanismSimulatorClientProps {
   initialReaction?: string
@@ -388,6 +390,12 @@ export function MechanismSimulatorClient({ initialReaction, initialCompound }: M
                   <Link href="/interactive-learning/explorer">
                     Open Molecular Explorer
                     <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-between rounded-xl">
+                  <Link href={mechanismKnowledgeGraphHref(mechanism.id)}>
+                    Open Knowledge Graph
+                    <Network className="h-4 w-4" />
                   </Link>
                 </Button>
               </CardContent>

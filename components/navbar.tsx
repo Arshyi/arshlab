@@ -75,6 +75,7 @@ const chemistryToolItems = [
   { href: "/synthesis-explorer", label: "Synthesis Explorer", icon: Route },
   { href: "/molecular-visualizer", label: "Molecular Visualizer", icon: Network },
   { href: "/reaction-explorer", label: "Reaction Explorer", icon: Network },
+  { href: "/knowledge-graph", label: "Knowledge Graph", icon: Network },
   { href: "/mechanism-trainer", label: "Mechanism Trainer", icon: FlaskConical },
   { href: "/reaction-database", label: "Reaction Database", icon: ArrowRightLeft },
   { href: "/reaction-database?query=reagent", label: "Reaction Conditions", icon: Beaker },

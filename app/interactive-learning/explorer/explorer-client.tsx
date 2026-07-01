@@ -8,6 +8,7 @@ import {
   BookOpenCheck,
   Eye,
   MousePointer2,
+  Network,
   RotateCcw,
   ScanSearch,
   Sparkles,
@@ -43,6 +44,7 @@ import {
   type ExplorerSvgPrimitive,
 } from "@/lib/interactive-learning/molecular-explorer"
 import { getMechanismBridgeHref } from "@/lib/interactive-learning/mechanisms"
+import { scannerKnowledgeGraphHref } from "@/lib/knowledge-graph/knowledge-engine"
 
 interface MolecularExplorerClientProps {
   initialCompound?: string
@@ -363,6 +365,12 @@ export function MolecularExplorerClient({ initialCompound, initialGraph }: Molec
                   <Link href={getMechanismBridgeHref(molecule.id)}>
                     Explore Possible Mechanisms
                     <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-between rounded-xl">
+                  <Link href={scannerKnowledgeGraphHref(molecule.id)}>
+                    Open Knowledge Graph
+                    <Network className="h-4 w-4" />
                   </Link>
                 </Button>
               </CardContent>

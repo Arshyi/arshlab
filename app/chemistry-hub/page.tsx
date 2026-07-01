@@ -23,6 +23,7 @@ const LAB_LINKS = [
   { href: "/synthesis-explorer", label: "Synthesis Explorer" },
   { href: "/molecular-visualizer", label: "Molecular Visualizer" },
   { href: "/reaction-explorer", label: "Reaction Explorer" },
+  { href: "/knowledge-graph", label: "Knowledge Graph" },
   { href: "/mechanism-trainer", label: "Mechanism Trainer" },
   { href: "/reaction-database", label: "Reaction Database" },
   { href: "/reaction-database?query=reagent", label: "Reaction Conditions" },
@@ -336,6 +337,13 @@ export default function ChemistryHubPage() {
             description="Explore a deterministic chemistry graph connecting compounds, functional groups, reactions, mechanisms, formulas, solvers, and practice."
             href="/reaction-explorer"
             action="Open Explorer"
+          />
+          <HubActionCard
+            icon={Network}
+            title="Interactive Chemistry Knowledge Graph"
+            description="Navigate the whole ARSHLAB learning map across compounds, spectroscopy, mechanisms, orbitals, formulas, lab techniques, curriculum, and practice."
+            href="/knowledge-graph"
+            action="Open Knowledge Graph"
           />
           <HubActionCard
             icon={Network}

@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "10.0.0",
+    version: "11.0.0",
     date: "Current",
+    status: "released",
+    title: "Interactive Chemistry Knowledge Graph",
+    changes: [
+      "Added /knowledge-graph as a deterministic SVG chemistry map across compounds, reactions, mechanisms, spectroscopy, orbitals, formulas, lab techniques, curriculum topics, and practice",
+      "Added knowledge graph node, edge, search, layout, curriculum-filter, and engine modules under lib/knowledge-graph",
+      "Added search autofocus, curriculum mode, difficulty filtering, collapse/expand behavior, neighbor highlighting, selected-node detail panels, graph statistics, and shortest educational paths",
+      "Added scanner, molecular explorer, and mechanism simulator bridge links that open the graph centered on the relevant compound or mechanism",
+      "Added deterministic regression commands for knowledge graph data, layout, search, curriculum filtering, graph navigation, scanner bridge links, and mechanism bridge links",
+      "Kept OCR, compiler, scanner reconstruction, AI routes, OpenRouter, Supabase, auth, middleware, solver calculations, and database internals untouched",
+    ],
+  },
+  {
+    version: "10.0.0",
+    date: "Previous",
     status: "released",
     title: "Interactive Reaction Mechanism Simulator",
     changes: [

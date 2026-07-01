@@ -177,7 +177,11 @@ The selected graph exposes calibrated visual, graph, chemical, database, OCR, an
 
 ## Knowledge Graph Design
 
-The chemistry intelligence graph connects a recognized compound to functional groups, scaffolds, reactions, mechanisms, spectroscopy, curriculum topics, lab skills, practice, exams, synthesis, and molecule visualization. These links are deterministic deep links into existing ARSHLAB modules, so a scanner result can become a study pathway without making an AI request.
+The v11.0 layer adds `/knowledge-graph` as an interactive deterministic chemistry map. It is a navigation and learning layer, not a scanner, compiler, OCR, AI, Supabase, middleware, or solver change.
+
+The graph connects recognized compounds to functional groups, reactions, mechanisms, spectroscopy signals, orbitals, HOMO/LUMO concepts, hybridization, conjugation, aromaticity, formulas, lab techniques, practice, exams, curriculum topics, synthesis, and molecule visualization. Search, curriculum filtering, difficulty filtering, shortest educational paths, and scanner/mechanism bridge URLs are all computed from local records in `lib/knowledge-graph`.
+
+Scanner results can open `/knowledge-graph?focus=compound:<id>`, and mechanism pages can open `/knowledge-graph?focus=mechanism:<id>`. The graph then highlights neighbors and links students into existing ARSHLAB modules without making an AI request or changing recognition confidence.
 
 ## Key Files
 
@@ -215,6 +219,13 @@ The chemistry intelligence graph connects a recognized compound to functional gr
 - `lib/chemistry-intelligence/functional-group-engine.ts`
 - `lib/chemistry-intelligence/chemistry-intelligence-graph.ts`
 - `lib/chemistry-intelligence/types.ts`
+- `lib/knowledge-graph/knowledge-node.ts`
+- `lib/knowledge-graph/knowledge-edge.ts`
+- `lib/knowledge-graph/knowledge-graph.ts`
+- `lib/knowledge-graph/knowledge-engine.ts`
+- `lib/knowledge-graph/knowledge-search.ts`
+- `lib/knowledge-graph/graph-layout.ts`
+- `lib/knowledge-graph/curriculum-engine.ts`
 - `lib/structure-vision/candidate-graph-generator.ts`
 - `lib/structure-vision/scene-understanding.ts`
 - `lib/structure-vision/scene-graph.ts`

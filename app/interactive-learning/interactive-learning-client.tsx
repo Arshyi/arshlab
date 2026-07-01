@@ -10,6 +10,7 @@ import {
   ChevronRight,
   FlaskConical,
   MousePointer2,
+  Network,
   Pause,
   Play,
   RotateCcw,
@@ -167,6 +168,12 @@ export function InteractiveLearningClient({
                 <Link href="/interactive-learning/conjugation">
                   Open Conjugation Learning
                   <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href="/knowledge-graph">
+                  Open Knowledge Graph
+                  <Network className="h-4 w-4" />
                 </Link>
               </Button>
             </div>

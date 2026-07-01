@@ -124,6 +124,12 @@ const features = [
     href: "/reaction-explorer",
   },
   {
+    icon: Network,
+    title: "Interactive Chemistry Knowledge Graph",
+    description: "Search and navigate the whole ARSHLAB chemistry map: compounds, mechanisms, orbitals, spectra, formulas, lab skills, curriculum, and practice.",
+    href: "/knowledge-graph",
+  },
+  {
     icon: ArrowRightLeft,
     title: "Reaction Engine",
     description: "Browse 100+ deterministic reaction records for prediction, classification, balancing, and mastery tracking.",

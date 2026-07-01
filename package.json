@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "10.0.0",
+  "version": "11.0.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -49,7 +49,13 @@
     "test:graph-matcher": "node scripts/verify-chemistry-intelligence.cjs graph-matcher",
     "test:functional-groups": "node scripts/verify-chemistry-intelligence.cjs functional-groups && node scripts/verify-molecular-explorer.cjs functional-groups",
     "test:properties": "node scripts/verify-chemistry-intelligence.cjs properties",
-    "test:knowledge-graph": "node scripts/verify-chemistry-intelligence.cjs knowledge-graph",
+    "test:knowledge-graph": "node scripts/verify-knowledge-graph.cjs knowledge-graph",
+    "test:graph-layout": "node scripts/verify-knowledge-graph.cjs graph-layout",
+    "test:knowledge-search": "node scripts/verify-knowledge-graph.cjs knowledge-search",
+    "test:curriculum-engine": "node scripts/verify-knowledge-graph.cjs curriculum-engine",
+    "test:graph-navigation": "node scripts/verify-knowledge-graph.cjs graph-navigation",
+    "test:scanner-knowledge-bridge": "node scripts/verify-knowledge-graph.cjs scanner-knowledge-bridge",
+    "test:mechanism-knowledge-bridge": "node scripts/verify-knowledge-graph.cjs mechanism-knowledge-bridge",
     "test:contradiction-engine": "node scripts/verify-contradiction-engine.cjs",
     "test:mo-builder": "node scripts/verify-interactive-learning.cjs mo-builder",
     "test:hybridization": "node scripts/verify-interactive-learning.cjs hybridization",

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, Brain, Clock, GraduationCap, Sparkles } from "lucide-react"
+import { ArrowRight, Brain, Clock, GraduationCap, Network, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +12,7 @@ import {
   getLearningExplanationCards,
   molecularExplorerLearningHref,
 } from "@/lib/interactive-learning/learning-bridge"
+import { scannerKnowledgeGraphHref } from "@/lib/knowledge-graph/knowledge-engine"
 import type { StructureScanMatch } from "@/lib/structure-scanner/scanner-types"
 
 interface ScannerLearningBridgeProps {
@@ -27,6 +28,7 @@ export function ScannerLearningBridge({ match, intelligence }: ScannerLearningBr
   const primaryLesson = lessons[0]
   const explorerHref = molecularExplorerLearningHref({ compound: input.id ?? input.name ?? match.record.id })
   const mechanismHref = getMechanismBridgeHref(input.id ?? match.record.id)
+  const graphHref = scannerKnowledgeGraphHref(input.id ?? match.record.id)
 
   return (
     <Card className="rounded-2xl border-primary/20 bg-primary/5">
@@ -69,6 +71,12 @@ export function ScannerLearningBridge({ match, intelligence }: ScannerLearningBr
                 <Link href={mechanismHref}>
                   Explore Possible Mechanisms
                   <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href={graphHref}>
+                  Open Knowledge Graph
+                  <Network className="h-4 w-4" />
                 </Link>
               </Button>
             </div>

@@ -280,7 +280,7 @@ export function LearningDashboardClient() {
             </Badge>
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            ARSHLAB v7.2.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, scene-understood structure scanning, consensus graph solving, canonical graph matching, a 100+ compound reference graph library, chemical contradiction elimination, chemistry intelligence, functional-group hierarchy, scaffold recognition, local property estimates, spectroscopy links, reaction links, synthesis links, and visual debugging, plus Synthesis Explorer and the Reaction Explorer knowledge graph.
+            ARSHLAB v11.0.0 connects diagnostics, curriculum roadmaps, practice, recovery, study, exams, formula views, solver mastery, mechanism mastery, reaction conditions mastery, spectroscopy mastery, lab skills mastery, adaptive study mode, structure scanning, chemistry intelligence, interactive molecular exploration, mechanism simulation, and the new Interactive Chemistry Knowledge Graph.
           </p>
         </motion.div>
 
@@ -452,6 +452,26 @@ export function LearningDashboardClient() {
                 body="Recommendations rank recent misses, low topic mastery, diagnostic weaknesses, weak curriculum units, and exam-readiness gaps. If there is no saved data yet, ARSHLAB shows a starter path instead of pretending it knows your weaknesses."
               />
             </div>
+
+            <Card className="mb-6 rounded-2xl border-teal-500/20 bg-teal-500/5">
+              <CardContent className="grid gap-4 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                    <Network className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold">Interactive Chemistry Knowledge Graph</h2>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      Use the graph as ARSHLAB&apos;s navigation system for compounds, mechanisms,
+                      spectra, formulas, lab techniques, curriculum topics, and practice.
+                    </p>
+                  </div>
+                </div>
+                <Button asChild className="rounded-xl">
+                  <Link href="/knowledge-graph">Open Knowledge Graph</Link>
+                </Button>
+              </CardContent>
+            </Card>
 
             <Card className="mb-6 rounded-2xl border-teal-500/20 bg-teal-500/5">
               <CardContent className="grid gap-4 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
