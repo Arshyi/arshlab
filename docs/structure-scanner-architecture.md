@@ -191,13 +191,22 @@ The v11.3 coverage expansion closes the two v11.2 benchmark gaps by exposing exi
 
 The v11.4 benchmark expansion broadens the controlled scanner scoreboard from 13 to 26 fixtures. New coverage includes propanone, ethanoic acid, ethyl ethanoate, toluene, nitrobenzene, benzoic acid, cyclohexene, acetylene, glycine, alanine, glucose, aspirin, and caffeine, grouped into hydrocarbons, alcohols, aromatics, carbonyls, carboxylic acids, esters/amides, amino acids, sugars, and heterocycles. The benchmark runner now protects the original v11.3 baseline while allowing new expanded-suite failures to be reported honestly as benchmark gaps. This release updates fixture data, benchmark reporting, scanner-facing records for missing known compounds, and documentation only; it does not change scanner recognition engines, OCR internals, compiler architecture, AI/OpenRouter, Supabase/auth, middleware, solver calculations, or vision reconstruction.
 
+The v11.5 real-world benchmark harness extends evaluation from controlled synthetic fixtures to local image datasets under `benchmarks/real-world`. Each sample is described by a manifest with expected formula, functional groups, ring count, aromaticity, difficulty, tags, notes, and optional deterministic scanner-export input. The harness computes top-1/top-3 accuracy, chemistry metrics, category breakdowns, runtime/confidence histograms, failure causes, baseline deltas, and timestamped run history, then exports JSON, CSV, and Markdown reports. This is evaluation infrastructure only: it does not change OCR algorithms, vision reconstruction, scanner recognition engines, the compiler, chemistry intelligence, AI/OpenRouter, Supabase/auth, middleware, or solver calculations.
+
 ## Key Files
 
 - `lib/benchmarks/scanner-benchmark-types.ts`
 - `lib/benchmarks/scanner-benchmark-fixtures.ts`
 - `lib/benchmarks/scanner-benchmark-runner.ts`
+- `lib/benchmarks/real-world-benchmark-types.ts`
+- `lib/benchmarks/real-world-benchmark-runner.ts`
+- `lib/benchmarks/real-world-manifest.ts`
+- `lib/benchmarks/real-world-metrics.ts`
+- `lib/benchmarks/image-loader.ts`
 - `scripts/run-scanner-benchmarks.cjs`
+- `scripts/run-real-world-benchmarks.cjs`
 - `app/scanner-benchmarks/page.tsx`
+- `app/real-world-benchmarks/page.tsx`
 - `lib/molecular-compiler/compiler.ts`
 - `lib/molecular-compiler/visual-tokenizer.ts`
 - `lib/molecular-compiler/primitive-builder.ts`

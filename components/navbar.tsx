@@ -42,6 +42,7 @@ import {
   Network,
   ScanSearch,
   MousePointer2,
+  Camera,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
@@ -72,6 +73,7 @@ const chemistryToolItems = [
   { href: "/chemistry-database", label: "Chemistry Database", icon: Database },
   { href: "/structure-scanner", label: "Structure Scanner", icon: ScanSearch },
   { href: "/scanner-benchmarks", label: "Scanner Benchmarks", icon: BarChart3 },
+  { href: "/real-world-benchmarks", label: "Real-World Benchmarks", icon: Camera },
   { href: "/lab-explorer", label: "Lab Explorer", icon: ClipboardList },
   { href: "/synthesis-explorer", label: "Synthesis Explorer", icon: Route },
   { href: "/molecular-visualizer", label: "Molecular Visualizer", icon: Network },

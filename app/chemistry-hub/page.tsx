@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Atom, Award, Beaker, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ClipboardList, ListChecks, Waves, Network, ScanSearch, MousePointer2, BarChart3 } from "lucide-react"
+import { ArrowRightLeft, Atom, Award, Beaker, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ClipboardList, ListChecks, Waves, Network, ScanSearch, MousePointer2, BarChart3, Camera } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -20,6 +20,7 @@ const LAB_LINKS = [
   { href: "/chemistry-database", label: "Chemistry Database" },
   { href: "/structure-scanner", label: "Structure Scanner" },
   { href: "/scanner-benchmarks", label: "Scanner Benchmarks" },
+  { href: "/real-world-benchmarks", label: "Real-World Scanner Benchmarks" },
   { href: "/lab-explorer", label: "Lab Explorer" },
   { href: "/synthesis-explorer", label: "Synthesis Explorer" },
   { href: "/molecular-visualizer", label: "Molecular Visualizer" },
@@ -296,6 +297,13 @@ export default function ChemistryHubPage() {
             description="Run the expanded 26-fixture local benchmark suite and inspect per-family scanner coverage gaps."
             href="/scanner-benchmarks"
             action="View Benchmarks"
+          />
+          <HubActionCard
+            icon={Camera}
+            title="Real-World Scanner Benchmarks"
+            description="Evaluate messy local image datasets with category metrics, failure causes, baseline comparison, and timestamped trend reports."
+            href="/real-world-benchmarks"
+            action="Open Harness"
           />
           <HubActionCard
             icon={ClipboardList}

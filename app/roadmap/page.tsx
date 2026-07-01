@@ -90,6 +90,7 @@ const completed = [
   "Structure Scanner Benchmark Suite",
   "Scanner Coverage Expansion - Pyridine and Naphthalene",
   "Scanner Benchmark Expansion",
+  "Real-World Scanner Benchmark Harness",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -220,14 +221,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Scanner Benchmark Expansion
+                Real-World Scanner Benchmark Harness
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: a broader scanner benchmark suite covering hydrocarbons, aromatics,
-                carbonyls, acids, esters, amino acids, sugars, and heterocycles. New failures are
-                reported as benchmark gaps so future scanner improvements can be measured objectively.
+                Now available: a local real-world image benchmark harness with manifest loading,
+                per-category metrics, failure classification, baseline comparison, JSON/CSV/Markdown
+                exports, and timestamped run history for scanner progress tracking.
               </p>
             </CardContent>
           </Card>
@@ -239,7 +240,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v11.4.0 - Scanner Benchmark Expansion
+          ARSHLAB v11.5.0 - Real-World Scanner Benchmark Harness
         </motion.p>
       </div>
     </div>

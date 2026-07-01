@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Calculator, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, ClipboardList, GraduationCap, Database, ListChecks, Gauge, Route, Network, ScanSearch, MousePointer2, BarChart3 } from "lucide-react"
+import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Calculator, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, ClipboardList, GraduationCap, Database, ListChecks, Gauge, Route, Network, ScanSearch, MousePointer2, BarChart3, Camera } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -104,6 +104,12 @@ const features = [
     title: "Structure Scanner Benchmark Suite",
     description: "Measure scanner recognition with 26 deterministic fixtures across hydrocarbons, aromatics, carbonyls, acids, amino acids, sugars, and heterocycles.",
     href: "/scanner-benchmarks",
+  },
+  {
+    icon: Camera,
+    title: "Real-World Scanner Benchmarks",
+    description: "Evaluate messy local image datasets with category metrics, failure causes, baseline comparison, and timestamped trend reports.",
+    href: "/real-world-benchmarks",
   },
   {
     icon: ClipboardList,

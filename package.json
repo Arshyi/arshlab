@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "11.4.0",
+  "version": "11.5.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -104,7 +104,15 @@
     "test:mechanism-learning": "node scripts/verify-mechanism-simulator.cjs mechanism-learning",
     "test:scanner-mechanism-bridge": "node scripts/verify-mechanism-simulator.cjs scanner-mechanism-bridge",
     "test:scanner-benchmark": "node scripts/run-scanner-benchmarks.cjs test",
-    "benchmark:scanner": "node scripts/run-scanner-benchmarks.cjs benchmark"
+    "benchmark:scanner": "node scripts/run-scanner-benchmarks.cjs benchmark",
+    "test:real-world-benchmark": "node scripts/run-real-world-benchmarks.cjs test",
+    "test:benchmark-loader": "node scripts/run-real-world-benchmarks.cjs loader",
+    "test:benchmark-manifest": "node scripts/run-real-world-benchmarks.cjs manifest",
+    "test:benchmark-report": "node scripts/run-real-world-benchmarks.cjs report",
+    "test:benchmark-comparison": "node scripts/run-real-world-benchmarks.cjs comparison",
+    "test:failure-classification": "node scripts/run-real-world-benchmarks.cjs failure-classification",
+    "test:benchmark-export": "node scripts/run-real-world-benchmarks.cjs export",
+    "benchmark:real-world": "node scripts/run-real-world-benchmarks.cjs benchmark"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

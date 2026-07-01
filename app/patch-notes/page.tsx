@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "11.4.0",
+    version: "11.5.0",
     date: "Current",
+    status: "released",
+    title: "Real-World Scanner Benchmark Harness",
+    changes: [
+      "Added a local real-world scanner benchmark harness for image datasets under benchmarks/real-world",
+      "Added manifest parsing, image loading, real-world metric aggregation, failure classification, baseline comparison, and timestamped run history",
+      "Added JSON, CSV, and Markdown benchmark report exports",
+      "Added /real-world-benchmarks with overall accuracy cards, per-category coverage, failure explorer, comparison mode, export notes, and dataset setup guidance",
+      "Added npm verification scripts for real-world benchmark loading, manifests, reports, comparisons, failure classification, and exports",
+      "Kept AI/OpenRouter, Supabase/auth, middleware, OCR algorithms, vision reconstruction, scanner recognition engines, compiler, chemistry intelligence, and solver calculations untouched",
+    ],
+  },
+  {
+    version: "11.4.0",
+    date: "Previous",
     status: "released",
     title: "Scanner Benchmark Expansion",
     changes: [
