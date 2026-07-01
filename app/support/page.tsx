@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 function getSupportUrl(): string | null {
-  const value = process.env.ARSHLAB_SUPPORT_URL ?? process.env.NEXT_PUBLIC_ARSHLAB_SUPPORT_URL
+  const value = process.env.NEXT_PUBLIC_SUPPORT_URL
   if (!value) return null
   try {
     const url = new URL(value)
@@ -44,16 +44,16 @@ export default function SupportPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             <p className="text-lg leading-relaxed text-muted-foreground">
-              ARSHLAB is free to use. Creator support is optional and does not unlock extra features,
-              priority access, grades, tutoring, or advantages.
+              Support is optional. Donations help cover hosting, development time, and maintenance.
+              Donations do not unlock extra features, priority support, private services, or account benefits.
             </p>
 
             <Alert className="rounded-2xl bg-background/80">
               <ShieldCheck className="h-4 w-4" />
               <AlertTitle>No in-app payment data</AlertTitle>
               <AlertDescription>
-                ARSHLAB does not store payment details. If creator support is configured, the support
-                button opens a third-party payment provider outside ARSHLAB.
+                Payments are handled by a third-party provider. ARSHLAB does not process or store
+                card, PayPal, bank, or payment-provider account details.
               </AlertDescription>
             </Alert>
 
@@ -61,14 +61,14 @@ export default function SupportPage() {
               {supportUrl ? (
                 <Button asChild className="rounded-xl">
                   <a href={supportUrl} target="_blank" rel="noopener noreferrer">
-                    Open optional support link
+                    Support via PayPal
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </Button>
               ) : (
-                <Button disabled className="rounded-xl">
-                  Support link not configured
-                </Button>
+                <p className="rounded-xl border border-dashed border-border bg-background/80 px-4 py-3 text-sm text-muted-foreground">
+                  Support link is not configured yet.
+                </p>
               )}
               <Button asChild variant="outline" className="rounded-xl">
                 <Link href="/chemistry-hub">Keep learning</Link>

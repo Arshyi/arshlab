@@ -95,6 +95,7 @@ const completed = [
   "Virtual Lab Polish and Platform Bridges",
   "Learning Path, Progress and Mastery System",
   "Public Launch Auth and Optional Creator Support",
+  "Optional Creator Support Link",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -225,14 +226,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Public Launch Auth and Optional Creator Support
+                Optional Creator Support Link
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: clearer ARSHLAB sign-in/sign-up routes, Supabase callback
-                fallback states, public launch auth setup documentation, and an optional
-                creator-support page that never unlocks extra features or advantages.
+                Now available: a simple PayPal support link powered by NEXT_PUBLIC_SUPPORT_URL,
+                with clear optional-donation copy, missing-env fallback, legal wording, and no
+                prompts inside scanner or learning workflows.
               </p>
             </CardContent>
           </Card>
@@ -244,7 +245,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v13.1.0 - Public Launch Auth and Optional Creator Support
+          ARSHLAB v13.2.0 - Optional Creator Support Link
         </motion.p>
       </div>
     </div>

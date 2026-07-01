@@ -18,8 +18,23 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "13.1.0",
+    version: "13.2.0",
     date: "Current",
+    status: "released",
+    title: "Optional Creator Support Link",
+    changes: [
+      "Updated /support to use NEXT_PUBLIC_SUPPORT_URL for the optional external PayPal support link",
+      "Added clear copy that donations help cover hosting, development time, and maintenance but do not unlock extra features, priority support, private services, or account benefits",
+      "Added a Support via PayPal button only when the support URL is configured",
+      "Added a calm missing-env fallback that says the support link is not configured yet",
+      "Updated privacy, terms, public launch docs, roadmap, and version metadata for voluntary third-party payments",
+      "Expanded support-page verification to check configured and missing-env states, footer link presence, and absence of donation nags in scanner/learning workflows",
+      "Kept Supabase schema, auth, middleware, scanner/OCR/compiler, chemistry engines, AI/OpenRouter routes, solver calculations, and database internals untouched",
+    ],
+  },
+  {
+    version: "13.1.0",
+    date: "Previous",
     status: "released",
     title: "Public Launch Auth and Optional Creator Support",
     changes: [

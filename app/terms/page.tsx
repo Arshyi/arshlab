@@ -24,7 +24,7 @@ const sections = [
   },
   {
     title: "Optional Creator Support",
-    body: "ARSHLAB is free to use. Creator support is optional and does not unlock extra features, priority access, grades, tutoring, or advantages. Any optional support payment is handled by a third-party provider, and ARSHLAB does not store in-app payment data.",
+    body: "ARSHLAB is free to use. Donations are voluntary and do not provide extra services, account privileges, premium access, priority support, private tutoring, grades, or advantages. Any optional support payment is handled by a third-party provider, and ARSHLAB does not process or store card or payment details.",
   },
   {
     title: "No Professional Advice",

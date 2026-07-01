@@ -1,6 +1,6 @@
 # ARSHLAB Public Launch Auth And Support Notes
 
-ARSHLAB v13.1.0 polishes public account entry points and adds optional creator support. This release does not change scanner engines, OCR, molecular compiler internals, chemistry engines, middleware, Supabase schema, or solver calculations.
+ARSHLAB v13.2.0 polishes public account entry points and adds an optional PayPal creator-support link. This release does not change scanner engines, OCR, molecular compiler internals, chemistry engines, middleware, Supabase schema, or solver calculations.
 
 ## Environment Variables
 
@@ -18,8 +18,7 @@ App URL redirects use:
 
 Creator support uses:
 
-- `ARSHLAB_SUPPORT_URL`
-- `NEXT_PUBLIC_ARSHLAB_SUPPORT_URL` as an optional fallback
+- `NEXT_PUBLIC_SUPPORT_URL`
 
 Do not store service-role keys in frontend variables.
 
@@ -66,7 +65,7 @@ ARSHLAB support is intentionally non-intrusive:
 - No nags
 - No premium feature unlocks
 - No priority access
-- No grades, tutoring, or advantage claims
+- No private services, grades, tutoring, account benefits, or advantage claims
 - No in-app stored payment data
 
-The `/support` page opens the configured third-party provider only if a support URL exists.
+The `/support` page opens the configured third-party provider only if `NEXT_PUBLIC_SUPPORT_URL` exists. If the variable is missing, the page calmly says the support link is not configured yet. Donations help cover hosting, development time, and maintenance, but do not provide extra services or account privileges.

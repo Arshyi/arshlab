@@ -52,7 +52,7 @@ const sections = [
   },
   {
     title: "Optional Creator Support",
-    body: "Creator support is optional and does not unlock extra features, priority access, grades, tutoring, or advantages. If a support link is configured, users leave ARSHLAB to complete any payment with the third-party provider.",
+    body: "Donations are voluntary and do not provide extra services, account privileges, premium access, priority support, private tutoring, grades, or advantages. Payments are handled by a third-party provider, and ARSHLAB does not process or store card, PayPal, bank, or payment-provider account details.",
   },
   {
     title: "Educational Content",

@@ -13,6 +13,21 @@ function exists(relativePath) {
   return existsSync(path.join(root, relativePath))
 }
 
+function assertNoDonationNag(relativePath) {
+  const source = read(relativePath)
+  const forbidden = [
+    "NEXT_PUBLIC_SUPPORT_URL",
+    "Support via PayPal",
+    "Donations help cover",
+    "Creator support",
+    "donation prompt",
+    "donate now",
+  ]
+  for (const phrase of forbidden) {
+    assert.ok(!source.toLowerCase().includes(phrase.toLowerCase()), `${relativePath} should not include donation prompt copy: ${phrase}`)
+  }
+}
+
 function testAuthRoutes() {
   assert.ok(exists("app/auth/sign-in/page.tsx"), "/auth/sign-in page should exist")
   assert.ok(exists("app/auth/sign-up/page.tsx"), "/auth/sign-up page should exist")
@@ -60,20 +75,35 @@ function testSupportPage() {
   const docs = read("docs/public-launch-auth-support.md")
 
   assert.ok(
-    support.includes("ARSHLAB is free to use. Creator support is optional and does not unlock extra features"),
+    support.includes("Support is optional. Donations help cover hosting, development time, and maintenance."),
     "support page should include required optional-support language",
   )
-  assert.ok(support.includes("priority access, grades, tutoring, or advantages"), "support page should reject paid advantages")
-  assert.ok(support.includes("ARSHLAB_SUPPORT_URL"), "support URL should come from an environment variable")
-  assert.ok(support.includes("NEXT_PUBLIC_ARSHLAB_SUPPORT_URL"), "support page should allow public support URL fallback")
-  assert.ok(support.includes("does not store payment details"), "support page should state no in-app payment storage")
+  assert.ok(support.includes("Donations do not unlock extra features, priority support, private services, or account benefits."), "support page should reject paid advantages")
+  assert.ok(support.includes("NEXT_PUBLIC_SUPPORT_URL"), "support URL should come from the requested environment variable")
+  assert.ok(support.includes("Support via PayPal"), "support page should render PayPal button copy when env var exists")
+  assert.ok(support.includes("Support link is not configured yet."), "support page should render calm missing-env fallback")
+  assert.ok(support.includes("does not process or store"), "support page should state no in-app payment processing/storage")
   assert.ok(footer.includes("/support"), "footer should include subtle support link")
   assert.ok(privacy.includes("optional third-party payment provider"), "privacy should mention third-party payment provider")
-  assert.ok(privacy.includes("does not store payment card"), "privacy should mention no payment details stored")
-  assert.ok(terms.includes("Creator support is optional"), "terms should mention optional creator support")
-  assert.ok(terms.includes("does not unlock extra features"), "terms should mention no extra features")
+  assert.ok(privacy.includes("ARSHLAB does not process or store"), "privacy should mention no payment details stored")
+  assert.ok(privacy.includes("Donations are voluntary"), "privacy should mention voluntary donations")
+  assert.ok(terms.includes("Donations are voluntary"), "terms should mention voluntary donations")
+  assert.ok(terms.includes("do not provide extra services"), "terms should mention no extra services")
   assert.ok(docs.includes("No popups"), "docs should state support is non-intrusive")
   assert.ok(docs.includes("No in-app stored payment data"), "docs should mention no stored payment data")
+  assert.ok(docs.includes("NEXT_PUBLIC_SUPPORT_URL"), "docs should mention support URL environment variable")
+
+  for (const file of [
+    "app/structure-scanner/page.tsx",
+    "app/learning-dashboard/learning-dashboard-client.tsx",
+    "app/learning-paths/learning-path-client.tsx",
+    "app/interactive-learning/page.tsx",
+    "app/interactive-learning/explorer/page.tsx",
+    "app/interactive-learning/conjugation/page.tsx",
+    "app/interactive-learning/mechanisms/page.tsx",
+  ]) {
+    if (exists(file)) assertNoDonationNag(file)
+  }
 }
 
 const tests = {
