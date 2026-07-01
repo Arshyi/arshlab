@@ -185,7 +185,7 @@ Scanner results can open `/knowledge-graph?focus=compound:<id>`, and mechanism p
 
 The v11.1 quality pass adds platform-level route-link, navigation, accessibility, query fallback, and smoke checks around this graph layer. It also adds a skip-to-content link, reduced-motion mobile navigation handling, clearer footer links, graph no-result states, invalid-focus messaging, and graph render caps. These are product hardening changes only; they do not modify recognition, compiler, AI, auth, middleware, solver, or chemistry database internals.
 
-The v11.2 benchmark suite adds a deterministic local scoreboard around the scanner without changing recognition logic. Synthetic fixtures run through `scanStructure()` and produce top-1/top-3 accuracy, formula, functional-group, ring, aromaticity, atom-count, confidence, runtime, false-positive, and failure-reason metrics. The CLI writes JSON to `.next/benchmark-reports/scanner-benchmark-report.json`, while `/scanner-benchmarks` renders the same benchmark report for quick inspection.
+The v11.2 benchmark suite adds a deterministic local scoreboard around the scanner without changing recognition logic. Controlled synthetic fixtures run through `scanStructure()` and produce top-1/top-3 accuracy, formula, functional-group, ring, aromaticity, atom-count, confidence, runtime, false-positive, and failure-reason metrics. This suite is a regression and coverage tool, not a universal claim about every real-world chemistry image. The CLI writes JSON to `.next/benchmark-reports/scanner-benchmark-report.json`, while `/scanner-benchmarks` renders the same benchmark report for quick inspection.
 
 ## Key Files
 

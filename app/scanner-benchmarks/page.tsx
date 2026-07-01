@@ -10,8 +10,9 @@ function formatPercent(value: number): string {
 export default function ScannerBenchmarksPage() {
   const report = runScannerBenchmark()
   const failures = report.results.filter((result) => !result.top1Correct)
+  const coverageGaps = report.results.filter((result) => result.fixture.notes.includes("Coverage-gap"))
   const metricCards = [
-    { label: "Fixtures", value: report.summary.fixtureCount, detail: "Synthetic local scanner cases", icon: ScanSearch },
+    { label: "Fixtures", value: report.summary.fixtureCount, detail: "Controlled synthetic scanner cases", icon: ScanSearch },
     { label: "Top-1 Accuracy", value: formatPercent(report.summary.top1Accuracy), detail: "Expected compound ranked first", icon: CheckCircle2 },
     { label: "Top-3 Accuracy", value: formatPercent(report.summary.top3Accuracy), detail: "Expected compound in first three", icon: BarChart3 },
     { label: "Avg Confidence", value: formatPercent(report.summary.averageConfidence), detail: "Mean top-candidate confidence", icon: Gauge },
@@ -31,8 +32,8 @@ export default function ScannerBenchmarksPage() {
               <p className="text-sm font-medium text-primary">ARSHLAB v11.2.0</p>
               <h1 className="text-3xl font-bold tracking-tight">Structure Scanner Benchmarks</h1>
               <p className="text-muted-foreground">
-                Deterministic local scoreboard for scanner recognition, formula, functional-group,
-                ring, aromaticity, atom-count, confidence, and runtime metrics.
+                Deterministic local scoreboard for controlled scanner fixtures, formula,
+                functional-group, ring, aromaticity, atom-count, confidence, and runtime metrics.
               </p>
             </div>
           </div>
@@ -46,7 +47,52 @@ export default function ScannerBenchmarksPage() {
             <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
               JSON via npm run benchmark:scanner
             </span>
+            <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+              Controlled suite, not a universal recognition claim
+            </span>
           </div>
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-3">
+          <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+            <CardHeader>
+              <CardTitle className="text-base">How To Read This</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                Top-1 accuracy means the expected molecule is the scanner&apos;s first-ranked match.
+              </p>
+              <p>
+                Top-3 accuracy means the expected molecule appears anywhere in the first three ranked matches.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-base">Fixture Scope</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                These are deterministic benchmark fixtures designed to catch regressions and coverage gaps.
+              </p>
+              <p>
+                They do not claim ARSHLAB can identify every real-world chemistry photo or handwritten structure.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-base">Known Coverage Gaps</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                Pyridine and naphthalene are included on purpose: they are benchmark targets that are not yet seeded
+                as scanner records, so they currently report as coverage gaps.
+              </p>
+            </CardContent>
+          </Card>
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -144,16 +190,50 @@ export default function ScannerBenchmarksPage() {
                 ) : (
                   failures.map((failure) => (
                     <div key={failure.fixture.id} className="rounded-xl border border-border p-3">
-                      <p className="font-medium">{failure.fixture.expectedName}</p>
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <p className="font-medium">{failure.fixture.expectedName}</p>
+                        {failure.fixture.notes.includes("Coverage-gap") && (
+                          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                            Known coverage gap
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">{failure.fixture.notes}</p>
                       <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
                         {failure.validationFailureReasons.slice(0, 3).map((reason) => (
                           <li key={reason}>{reason}</li>
                         ))}
                       </ul>
+                      {failure.topCandidates.length > 0 && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Top candidates: {failure.topCandidates.map((candidate) => candidate.name).join(", ")}
+                        </p>
+                      )}
                     </div>
                   ))
                 )}
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl">
+              <CardHeader>
+                <CardTitle>Seeded vs Gap Targets</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <p className="text-muted-foreground">
+                  Passing fixtures represent scanner targets already present in ARSHLAB&apos;s local scanner records.
+                  Gap fixtures are deliberately kept in the suite so future database expansion has a visible target.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {coverageGaps.map((gap) => (
+                    <span
+                      key={gap.fixture.id}
+                      className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
+                    >
+                      {gap.fixture.expectedName}
+                    </span>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
