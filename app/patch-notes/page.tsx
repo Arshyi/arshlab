@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "11.1.0",
+    version: "11.2.0",
     date: "Current",
+    status: "released",
+    title: "Structure Scanner Benchmark Suite",
+    changes: [
+      "Added deterministic local scanner benchmark fixtures for benzene, cyclohexane, cyclohexene, ethanol, methanol, ethene, ethyne, acetone, acetic acid, phenol, aniline, pyridine, and naphthalene",
+      "Added top-1, top-3, formula, functional-group, ring-count, aromaticity, atom-count, confidence, runtime, false-ring, false-aromatic, and failure-reason metrics",
+      "Added npm scripts for scanner benchmark assertions and JSON benchmark report generation",
+      "Added a Scanner Benchmarks report page with summary cards, per-fixture results, metric coverage, and current failure notes",
+      "Updated homepage, Chemistry Hub, Tools menu, Roadmap, docs, and version metadata for v11.2.0",
+      "Kept AI/OpenRouter, Supabase/auth, middleware, solver calculations, database internals, and scanner recognition engines untouched",
+    ],
+  },
+  {
+    version: "11.1.0",
+    date: "Previous",
     status: "released",
     title: "Platform Quality and Navigation Hardening",
     changes: [

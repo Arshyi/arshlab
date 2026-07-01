@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRightLeft, Atom, Award, Beaker, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ClipboardList, ListChecks, Waves, Network, ScanSearch, MousePointer2 } from "lucide-react"
+import { ArrowRightLeft, Atom, Award, Beaker, BookOpen, BookOpenCheck, Bot, Calculator, Database, FlaskConical, Gauge, Search, GraduationCap, Orbit, Route, Sparkles, FileQuestion, Target, ClipboardCheck, ClipboardList, ListChecks, Waves, Network, ScanSearch, MousePointer2, BarChart3 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
@@ -19,6 +19,7 @@ const LAB_LINKS = [
   { href: "/chemistry-solver", label: "Chemistry Solver" },
   { href: "/chemistry-database", label: "Chemistry Database" },
   { href: "/structure-scanner", label: "Structure Scanner" },
+  { href: "/scanner-benchmarks", label: "Scanner Benchmarks" },
   { href: "/lab-explorer", label: "Lab Explorer" },
   { href: "/synthesis-explorer", label: "Synthesis Explorer" },
   { href: "/molecular-visualizer", label: "Molecular Visualizer" },
@@ -284,11 +285,18 @@ export default function ChemistryHubPage() {
           />
             <HubActionCard
               icon={ScanSearch}
-              title="Molecular Structure Scanner"
-              description="Upload or capture a local structure snapshot, reconstruct a cleaner primitive molecular graph, compile it into rollback-safe optimized IR, then inspect functional groups, scaffolds, properties, spectra, reactions, and study links."
-              href="/structure-scanner"
-              action="Open Scanner"
-            />
+            title="Molecular Structure Scanner"
+            description="Upload or capture a local structure snapshot, reconstruct a cleaner primitive molecular graph, compile it into rollback-safe optimized IR, then inspect functional groups, scaffolds, properties, spectra, reactions, and study links."
+            href="/structure-scanner"
+            action="Open Scanner"
+          />
+          <HubActionCard
+            icon={BarChart3}
+            title="Structure Scanner Benchmarks"
+            description="Run deterministic local benchmark fixtures for top-1/top-3 accuracy, formula, functional groups, rings, aromaticity, atom counts, confidence, and runtime."
+            href="/scanner-benchmarks"
+            action="View Benchmarks"
+          />
           <HubActionCard
             icon={ClipboardList}
             title="Lab Explorer"

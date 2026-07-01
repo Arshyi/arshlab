@@ -87,6 +87,7 @@ const completed = [
   "Interactive Reaction Mechanism Simulator",
   "Interactive Chemistry Knowledge Graph",
   "Platform Quality and Navigation Hardening",
+  "Structure Scanner Benchmark Suite",
   "Synthesis Pathway Explorer",
   "Reaction Conditions Engine",
   "Spectroscopy Explorer",
@@ -217,14 +218,14 @@ export default function RoadmapPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
                   <ClipboardList className="h-4 w-4" />
                 </div>
-                Platform Quality and Navigation Hardening
+                Structure Scanner Benchmark Suite
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Now available: route-link checks, navigation smoke tests, query fallback verification,
-                accessibility affordance checks, reduced-motion nav polish, Knowledge Graph fallbacks,
-                footer cleanup, and version consistency across the platform.
+                Now available: deterministic scanner fixtures, top-1/top-3 recognition metrics,
+                formula and functional-group checks, ring/aromaticity metrics, runtime measurements,
+                failure reasons, console output, and JSON benchmark reports.
               </p>
             </CardContent>
           </Card>
@@ -236,7 +237,7 @@ export default function RoadmapPage() {
           transition={{ delay: 0.3 }}
           className="text-center text-xs text-muted-foreground mt-8"
         >
-          ARSHLAB v11.1.0 - Platform Quality and Navigation Hardening
+          ARSHLAB v11.2.0 - Structure Scanner Benchmark Suite
         </motion.p>
       </div>
     </div>

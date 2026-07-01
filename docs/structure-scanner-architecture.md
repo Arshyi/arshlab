@@ -185,8 +185,15 @@ Scanner results can open `/knowledge-graph?focus=compound:<id>`, and mechanism p
 
 The v11.1 quality pass adds platform-level route-link, navigation, accessibility, query fallback, and smoke checks around this graph layer. It also adds a skip-to-content link, reduced-motion mobile navigation handling, clearer footer links, graph no-result states, invalid-focus messaging, and graph render caps. These are product hardening changes only; they do not modify recognition, compiler, AI, auth, middleware, solver, or chemistry database internals.
 
+The v11.2 benchmark suite adds a deterministic local scoreboard around the scanner without changing recognition logic. Synthetic fixtures run through `scanStructure()` and produce top-1/top-3 accuracy, formula, functional-group, ring, aromaticity, atom-count, confidence, runtime, false-positive, and failure-reason metrics. The CLI writes JSON to `.next/benchmark-reports/scanner-benchmark-report.json`, while `/scanner-benchmarks` renders the same benchmark report for quick inspection.
+
 ## Key Files
 
+- `lib/benchmarks/scanner-benchmark-types.ts`
+- `lib/benchmarks/scanner-benchmark-fixtures.ts`
+- `lib/benchmarks/scanner-benchmark-runner.ts`
+- `scripts/run-scanner-benchmarks.cjs`
+- `app/scanner-benchmarks/page.tsx`
 - `lib/molecular-compiler/compiler.ts`
 - `lib/molecular-compiler/visual-tokenizer.ts`
 - `lib/molecular-compiler/primitive-builder.ts`

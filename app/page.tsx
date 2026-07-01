@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Calculator, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, ClipboardList, GraduationCap, Database, ListChecks, Gauge, Route, Network, ScanSearch, MousePointer2 } from "lucide-react"
+import { ArrowRight, ArrowRightLeft, Atom, FlaskConical, Zap, Eye, Sparkles, BookOpen, BookOpenCheck, Beaker, Calculator, Layers, Radio, FileText, PlayCircle, Map, User, Waves, Orbit, FileQuestion, Target, ClipboardCheck, ClipboardList, GraduationCap, Database, ListChecks, Gauge, Route, Network, ScanSearch, MousePointer2, BarChart3 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -93,12 +93,18 @@ const features = [
     description: "Browse ARSHLAB's local chemistry knowledge core for compounds, ions, functional groups, and reaction templates.",
     href: "/chemistry-database",
   },
-    {
-      icon: ScanSearch,
-      title: "Molecular Structure Scanner",
-      description: "Upload or capture a private snapshot, reconstruct a cleaner primitive graph, compile it into optimized molecular IR, then open chemistry intelligence and study links.",
-      href: "/structure-scanner",
-    },
+  {
+    icon: ScanSearch,
+    title: "Molecular Structure Scanner",
+    description: "Upload or capture a private snapshot, reconstruct a cleaner primitive graph, compile it into optimized molecular IR, then open chemistry intelligence and study links.",
+    href: "/structure-scanner",
+  },
+  {
+    icon: BarChart3,
+    title: "Structure Scanner Benchmark Suite",
+    description: "Measure scanner recognition with deterministic fixtures, top-1/top-3 accuracy, chemistry metrics, runtime, and JSON reports.",
+    href: "/scanner-benchmarks",
+  },
   {
     icon: ClipboardList,
     title: "Lab Explorer",

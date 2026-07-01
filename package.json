@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "11.1.0",
+  "version": "11.2.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -102,7 +102,9 @@
     "test:atom-tracking": "node scripts/verify-mechanism-simulator.cjs atom-tracking",
     "test:electron-tracking": "node scripts/verify-mechanism-simulator.cjs electron-tracking",
     "test:mechanism-learning": "node scripts/verify-mechanism-simulator.cjs mechanism-learning",
-    "test:scanner-mechanism-bridge": "node scripts/verify-mechanism-simulator.cjs scanner-mechanism-bridge"
+    "test:scanner-mechanism-bridge": "node scripts/verify-mechanism-simulator.cjs scanner-mechanism-bridge",
+    "test:scanner-benchmark": "node scripts/run-scanner-benchmarks.cjs test",
+    "benchmark:scanner": "node scripts/run-scanner-benchmarks.cjs benchmark"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
