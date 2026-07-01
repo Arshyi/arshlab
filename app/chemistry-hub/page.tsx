@@ -293,7 +293,7 @@ export default function ChemistryHubPage() {
           <HubActionCard
             icon={BarChart3}
             title="Structure Scanner Benchmarks"
-            description="Run deterministic local benchmark fixtures and verify the v11.3 pyridine/naphthalene coverage expansion stays green."
+            description="Run the expanded 26-fixture local benchmark suite and inspect per-family scanner coverage gaps."
             href="/scanner-benchmarks"
             action="View Benchmarks"
           />

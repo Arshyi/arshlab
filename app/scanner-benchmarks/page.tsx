@@ -9,8 +9,25 @@ function formatPercent(value: number): string {
 
 export default function ScannerBenchmarksPage() {
   const report = runScannerBenchmark()
+  const v113BaselineFixtureIds = new Set([
+    "benzene-clean",
+    "cyclohexane-camera",
+    "cyclohexene-handwritten",
+    "ethanol-clean",
+    "methanol-low-light",
+    "ethene-clean",
+    "ethyne-perspective",
+    "acetone-clean",
+    "acetic-acid-clutter",
+    "phenol-handwritten",
+    "aniline-perspective",
+    "pyridine-clean",
+    "naphthalene-camera",
+  ])
   const failures = report.results.filter((result) => !result.top1Correct)
   const formerGapTargets = report.results.filter((result) => ["pyridine", "naphthalene"].includes(result.fixture.compoundId))
+  const expandedTargets = report.results.filter((result) => !v113BaselineFixtureIds.has(result.fixture.id))
+  const familySummaries = Object.entries(report.summary.coverageFamilies)
   const metricCards = [
     { label: "Fixtures", value: report.summary.fixtureCount, detail: "Controlled synthetic scanner cases", icon: ScanSearch },
     { label: "Top-1 Accuracy", value: formatPercent(report.summary.top1Accuracy), detail: "Expected compound ranked first", icon: CheckCircle2 },
@@ -29,11 +46,11 @@ export default function ScannerBenchmarksPage() {
               <BarChart3 className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-primary">ARSHLAB v11.3.0</p>
+              <p className="text-sm font-medium text-primary">ARSHLAB v11.4.0</p>
               <h1 className="text-3xl font-bold tracking-tight">Structure Scanner Benchmarks</h1>
               <p className="text-muted-foreground">
-                Deterministic local scoreboard for controlled scanner fixtures, formula,
-                functional-group, ring, aromaticity, atom-count, confidence, and runtime metrics.
+                Deterministic local scoreboard for controlled scanner fixtures across hydrocarbons,
+                aromatics, carbonyls, acids, esters, amino acids, sugars, and heterocycles.
               </p>
             </div>
           </div>
@@ -84,12 +101,12 @@ export default function ScannerBenchmarksPage() {
 
           <Card className="rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-base">v11.3 Coverage Expansion</CardTitle>
+              <CardTitle className="text-base">v11.4 Benchmark Expansion</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <p>
-                Pyridine and naphthalene were the two v11.2 benchmark gaps. They are now seeded scanner targets
-                with aromatic heterocycle and fused aromatic scaffold metadata.
+                The suite now adds broader controlled fixtures for substituted aromatics, esters, amino acids,
+                sugars, and heterocycles. New failures are reported as benchmark gaps instead of hidden.
               </p>
             </CardContent>
           </Card>
@@ -182,6 +199,30 @@ export default function ScannerBenchmarksPage() {
 
             <Card className="rounded-2xl">
               <CardHeader>
+                <CardTitle>Coverage Families</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                {familySummaries.map(([family, summary]) => (
+                  <div key={family}>
+                    <div className="mb-1 flex items-center justify-between gap-3">
+                      <span className="capitalize text-muted-foreground">{family}</span>
+                      <span className="font-medium">
+                        {formatPercent(summary.top1Accuracy)} top-1 · {summary.fixtureCount} fixtures
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-secondary">
+                      <div
+                        className="h-2 rounded-full bg-primary"
+                        style={{ width: `${Math.max(0, Math.min(100, summary.top1Accuracy))}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl">
+              <CardHeader>
                 <CardTitle>Current Failures</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
@@ -192,6 +233,9 @@ export default function ScannerBenchmarksPage() {
                     <div key={failure.fixture.id} className="rounded-xl border border-border p-3">
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <p className="font-medium">{failure.fixture.expectedName}</p>
+                        <span className="rounded-full bg-amber-500/10 px-2 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                          {v113BaselineFixtureIds.has(failure.fixture.id) ? "Baseline regression" : "New benchmark gap"}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground">{failure.fixture.notes}</p>
                       <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
@@ -212,23 +256,31 @@ export default function ScannerBenchmarksPage() {
 
             <Card className="rounded-2xl">
               <CardHeader>
-                <CardTitle>Former Gap Targets</CardTitle>
+                <CardTitle>v11.4 Expanded Targets</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <p className="text-muted-foreground">
-                  These fixtures remain in the suite because they used to fail in v11.2. Passing them protects
-                  the new heteroaromatic and fused aromatic coverage from future regressions.
+                  These fixtures extend the original 13-case suite. They are intentionally allowed to reveal
+                  new coverage gaps so future scanner work has a scoreboard.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {formerGapTargets.map((gap) => (
+                  {expandedTargets.map((gap) => (
                     <span
                       key={gap.fixture.id}
-                      className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-300"
+                      className={
+                        gap.top1Correct
+                          ? "rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-300"
+                          : "rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
+                      }
                     >
                       {gap.fixture.expectedName}: {gap.top1Correct ? "Passing" : "Check"}
                     </span>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Pyridine and naphthalene remain tracked separately as former v11.2 gaps:{" "}
+                  {formerGapTargets.map((gap) => `${gap.fixture.expectedName} ${gap.top1Correct ? "passing" : "check"}`).join(", ")}.
+                </p>
               </CardContent>
             </Card>
 

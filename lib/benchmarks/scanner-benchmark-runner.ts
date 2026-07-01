@@ -3,6 +3,7 @@ import type { StructureScannerRecord } from "../structure-scanner/scanner-types"
 import { SCANNER_BENCHMARK_FIXTURES } from "./scanner-benchmark-fixtures"
 import type {
   ScannerBenchmarkFixture,
+  ScannerBenchmarkFamilySummary,
   ScannerBenchmarkFixtureResult,
   ScannerBenchmarkReport,
   ScannerBenchmarkSummary,
@@ -56,6 +57,7 @@ function containsAllGroups(record: StructureScannerRecord | null, expectedGroups
 function inferRingCount(record: StructureScannerRecord | null): number {
   if (!record) return 0
   if (record.id === "naphthalene") return 2
+  if (record.id === "caffeine") return 2
   const haystack = [
     record.id,
     record.name,
@@ -147,10 +149,22 @@ export function runScannerBenchmark(
 
   const summary = summarizeScannerBenchmark(results)
   return {
-    version: "11.3.0",
+    version: "11.4.0",
     generatedAt: new Date().toISOString(),
     summary,
     results,
+  }
+}
+
+function summarizeFamily(results: ScannerBenchmarkFixtureResult[]): ScannerBenchmarkFamilySummary {
+  const fixtureCount = results.length
+  return {
+    fixtureCount,
+    top1Accuracy: percent(results.filter((result) => result.top1Correct).length, fixtureCount),
+    top3Accuracy: percent(results.filter((result) => result.top3Correct).length, fixtureCount),
+    formulaAccuracy: percent(results.filter((result) => result.formulaCorrect).length, fixtureCount),
+    functionalGroupAccuracy: percent(results.filter((result) => result.functionalGroupsCorrect).length, fixtureCount),
+    averageConfidence: average(results.map((result) => result.confidence)),
   }
 }
 
@@ -162,6 +176,16 @@ export function summarizeScannerBenchmark(results: ScannerBenchmarkFixtureResult
       validationFailureReasons[reason] = (validationFailureReasons[reason] ?? 0) + 1
     }
   }
+  const familyBuckets = new Map<string, ScannerBenchmarkFixtureResult[]>()
+  for (const result of results) {
+    const family = result.fixture.coverageFamily
+    familyBuckets.set(family, [...(familyBuckets.get(family) ?? []), result])
+  }
+  const coverageFamilies = Object.fromEntries(
+    Array.from(familyBuckets)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([family, familyResults]) => [family, summarizeFamily(familyResults)]),
+  )
 
   return {
     fixtureCount,
@@ -178,12 +202,14 @@ export function summarizeScannerBenchmark(results: ScannerBenchmarkFixtureResult
     averageRuntimeMs: average(results.map((result) => result.runtimeMs)),
     failedCompilationRate: percent(results.filter((result) => result.failedCompilation).length, fixtureCount),
     validationFailureReasons,
+    coverageFamilies,
   }
 }
 
 export function formatScannerBenchmarkTable(report: ScannerBenchmarkReport): string {
   const rows = report.results.map((result) => ({
     fixture: result.fixture.id,
+    family: result.fixture.coverageFamily,
     expected: result.fixture.expectedName,
     top: result.topCandidateName ?? "No match",
     confidence: `${result.confidence}%`,

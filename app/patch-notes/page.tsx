@@ -18,8 +18,22 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "11.3.0",
+    version: "11.4.0",
     date: "Current",
+    status: "released",
+    title: "Scanner Benchmark Expansion",
+    changes: [
+      "Expanded the Structure Scanner benchmark suite from 13 to 26 controlled fixtures",
+      "Added coverage for propanone, ethanoic acid, ethyl ethanoate, toluene, nitrobenzene, benzoic acid, cyclohexene, acetylene, glycine, alanine, glucose, aspirin, and caffeine",
+      "Added benchmark coverage-family reporting for hydrocarbons, alcohols, aromatics, carbonyls, carboxylic acids, esters/amides, amino acids, sugars, and heterocycles",
+      "Updated the Scanner Benchmarks page to label any expanded-suite failures as new benchmark gaps while keeping the original v11.3 baseline protected",
+      "Added scanner-facing reference records for alanine and caffeine and aligned carbonyl-bearing scanner records for benchmark display consistency",
+      "Kept AI/OpenRouter, Supabase/auth, middleware, solver calculations, OCR internals, scanner core architecture, compiler architecture, and vision reconstruction untouched",
+    ],
+  },
+  {
+    version: "11.3.0",
+    date: "Previous",
     status: "released",
     title: "Scanner Coverage Expansion - Pyridine and Naphthalene",
     changes: [

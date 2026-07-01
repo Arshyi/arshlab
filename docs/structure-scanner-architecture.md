@@ -189,6 +189,8 @@ The v11.2 benchmark suite adds a deterministic local scoreboard around the scann
 
 The v11.3 coverage expansion closes the two v11.2 benchmark gaps by exposing existing pyridine and naphthalene reference-graph intelligence through scanner-facing records and Knowledge Graph nodes. Pyridine is tracked as a C5H5N six-member heteroaromatic ring with one nitrogen whose lone pair is outside the aromatic sextet. Naphthalene is tracked as a C10H8 fused bicyclic aromatic scaffold with 10 pi electrons. This is a reference/metadata expansion only; scanner reconstruction, compiler architecture, AI/OpenRouter, Supabase/auth, middleware, solver calculations, and vision pipelines remain unchanged.
 
+The v11.4 benchmark expansion broadens the controlled scanner scoreboard from 13 to 26 fixtures. New coverage includes propanone, ethanoic acid, ethyl ethanoate, toluene, nitrobenzene, benzoic acid, cyclohexene, acetylene, glycine, alanine, glucose, aspirin, and caffeine, grouped into hydrocarbons, alcohols, aromatics, carbonyls, carboxylic acids, esters/amides, amino acids, sugars, and heterocycles. The benchmark runner now protects the original v11.3 baseline while allowing new expanded-suite failures to be reported honestly as benchmark gaps. This release updates fixture data, benchmark reporting, scanner-facing records for missing known compounds, and documentation only; it does not change scanner recognition engines, OCR internals, compiler architecture, AI/OpenRouter, Supabase/auth, middleware, solver calculations, or vision reconstruction.
+
 ## Key Files
 
 - `lib/benchmarks/scanner-benchmark-types.ts`

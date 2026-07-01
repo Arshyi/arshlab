@@ -102,7 +102,7 @@ const features = [
   {
     icon: BarChart3,
     title: "Structure Scanner Benchmark Suite",
-    description: "Measure scanner recognition with deterministic fixtures; v11.3 closes the pyridine and naphthalene coverage gaps.",
+    description: "Measure scanner recognition with 26 deterministic fixtures across hydrocarbons, aromatics, carbonyls, acids, amino acids, sugars, and heterocycles.",
     href: "/scanner-benchmarks",
   },
   {

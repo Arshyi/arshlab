@@ -8,6 +8,17 @@ export type ScannerBenchmarkDifficulty =
   | "low-light"
   | "perspective"
 
+export type ScannerBenchmarkCoverageFamily =
+  | "hydrocarbons"
+  | "alcohols"
+  | "aromatics"
+  | "carbonyls"
+  | "carboxylic acids"
+  | "esters/amides"
+  | "amino acids"
+  | "sugars"
+  | "heterocycles"
+
 export interface ScannerBenchmarkBondCounts {
   single: number
   double: number
@@ -26,6 +37,7 @@ export interface ScannerBenchmarkFixture {
   expectedAtomCounts: Record<string, number>
   expectedBondCounts: ScannerBenchmarkBondCounts
   difficulty: ScannerBenchmarkDifficulty
+  coverageFamily: ScannerBenchmarkCoverageFamily
   notes: string
   input: StructureScanInput
 }
@@ -66,10 +78,20 @@ export interface ScannerBenchmarkSummary {
   averageRuntimeMs: number
   failedCompilationRate: number
   validationFailureReasons: Record<string, number>
+  coverageFamilies: Record<string, ScannerBenchmarkFamilySummary>
+}
+
+export interface ScannerBenchmarkFamilySummary {
+  fixtureCount: number
+  top1Accuracy: number
+  top3Accuracy: number
+  formulaAccuracy: number
+  functionalGroupAccuracy: number
+  averageConfidence: number
 }
 
 export interface ScannerBenchmarkReport {
-  version: "11.3.0"
+  version: "11.4.0"
   generatedAt: string
   summary: ScannerBenchmarkSummary
   results: ScannerBenchmarkFixtureResult[]
