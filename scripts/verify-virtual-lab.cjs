@@ -21,6 +21,7 @@ const compile = spawnSync(process.execPath, [
   "lib/virtual-lab/observation-engine.ts",
   "lib/virtual-lab/measurement-engine.ts",
   "lib/virtual-lab/safety-engine.ts",
+  "lib/virtual-lab/lab-bridges.ts",
   "lib/virtual-lab/index.ts",
   "--module", "commonjs",
   "--target", "es2020",
@@ -95,7 +96,9 @@ function testLabNotebook() {
   const report = lab.buildPrintableLabReport(experiment, state)
   assert.ok(state.notebook.length >= 1)
   assert.match(report, /Virtual Lab Report/)
-  assert.match(report, /Procedure and Observations/)
+  for (const section of ["Objective", "Method", "Observations", "Spectra", "Results", "Safety", "Conclusion"]) {
+    assert.match(report, new RegExp(`## ${section}`), `report should include ${section}`)
+  }
 }
 
 function testSafety() {
@@ -127,6 +130,57 @@ function testVirtualLabRouting() {
   assert.ok(lab.virtualLabMetrics().coveredCompounds >= 15)
 }
 
+function testVirtualLabBridges() {
+  const ethanolBridge = lab.getVirtualLabBridgeForCompound("ethanol")
+  assert.ok(ethanolBridge)
+  assert.match(ethanolBridge.href, /\/virtual-lab\?/)
+  assert.match(ethanolBridge.href, /compound=ethanol/)
+  assert.equal(lab.hasVirtualLabCoverageForCompound("cyclohexene"), true)
+  assert.equal(lab.hasVirtualLabCoverageForCompound("unsupported-compound"), false)
+  assert.match(lab.virtualLabHrefForMechanism("esterification"), /esterification-ethyl-acetate/)
+  assert.match(lab.virtualLabHrefForReaction("rxn-organic-ethene-bromine"), /cyclohexene-bromine-test/)
+  assert.match(lab.virtualLabHrefForTechnique("recrystallization"), /aspirin-recrystallization/)
+  const metrics = lab.virtualLabBridgeMetrics()
+  assert.ok(metrics.compoundBridges >= 10)
+  assert.ok(metrics.mechanismBridges >= 2)
+}
+
+function testVirtualLabPrintReport() {
+  const experiment = firstExperiment()
+  let state = lab.createExperimentState(experiment, "guided")
+  for (const action of ["weigh", "add-reagent", "heat"]) {
+    state = lab.applyLabAction(experiment, state, action)
+  }
+  const report = lab.buildPrintableLabReport(experiment, state)
+  assert.match(report, /## Objective/)
+  assert.match(report, /## Method/)
+  assert.match(report, /## Observations/)
+  assert.match(report, /## Spectra/)
+  assert.match(report, /## Results/)
+  assert.match(report, /## Safety/)
+  assert.match(report, /## Conclusion/)
+  assert.match(report, /Yield:/)
+  assert.match(report, /Technique score:/)
+}
+
+function testVirtualLabMobileSmoke() {
+  for (const experiment of lab.listVirtualLabExperiments()) {
+    const groups = lab.virtualLabControlGroups(experiment)
+    assert.ok(groups.length >= 1, `${experiment.id} should expose compact control groups`)
+    assert.equal(
+      new Set(groups.flatMap((group) => group.actions)).size,
+      new Set(experiment.steps.map((step) => step.action)).size,
+      `${experiment.id} should include each action once across control groups`,
+    )
+  }
+}
+
+function testVirtualLabEmptyStates() {
+  assert.match(lab.unsupportedVirtualLabMessage("pyridine"), /No guided virtual experiment/)
+  assert.match(lab.unsupportedVirtualLabMessage(null), /Choose a compound or experiment/)
+  assert.equal(lab.getVirtualLabBridgeForCompound("pyridine"), null)
+}
+
 function testVirtualLab() {
   testExperimentLibrary()
   testGlassware()
@@ -138,6 +192,10 @@ function testVirtualLab() {
   testObservations()
   testMeasurementEngine()
   testVirtualLabRouting()
+  testVirtualLabBridges()
+  testVirtualLabPrintReport()
+  testVirtualLabMobileSmoke()
+  testVirtualLabEmptyStates()
 }
 
 const tests = {
@@ -152,6 +210,10 @@ const tests = {
   "measurement-engine": testMeasurementEngine,
   "experiment-library": testExperimentLibrary,
   "virtual-lab-routing": testVirtualLabRouting,
+  "virtual-lab-bridges": testVirtualLabBridges,
+  "virtual-lab-print-report": testVirtualLabPrintReport,
+  "virtual-lab-mobile-smoke": testVirtualLabMobileSmoke,
+  "virtual-lab-empty-states": testVirtualLabEmptyStates,
 }
 
 if (!tests[mode]) throw new Error(`Unknown virtual lab verification mode: ${mode}`)

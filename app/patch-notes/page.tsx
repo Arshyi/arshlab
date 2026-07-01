@@ -18,8 +18,25 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
-    version: "12.0.0",
+    version: "12.1.0",
     date: "Current",
+    status: "released",
+    title: "Virtual Lab Polish and Platform Bridges",
+    changes: [
+      "Added scanner result bridges that show Open Virtual Lab only when the detected compound has deterministic lab coverage",
+      "Added Knowledge Graph and mechanism simulator bridges into supported virtual experiments",
+      "Improved Virtual Lab empty states for unsupported compound deep links",
+      "Clarified Guided Lab Mode versus Free Lab Mode and improved mobile-friendly free-action controls",
+      "Added a sticky current-step/progress card and more accessible labels for lab controls",
+      "Polished Lab Notebook output with objective, method, observations, spectra, results, safety, and conclusion sections",
+      "Added copy-to-clipboard and print report actions for deterministic lab reports",
+      "Added virtual lab bridge, print-report, mobile-smoke, and empty-state verification scripts",
+      "Kept OCR, scanner core, compiler, graph validator, consensus solver, AI/OpenRouter, Supabase/auth, middleware, database internals, and solver calculations untouched",
+    ],
+  },
+  {
+    version: "12.0.0",
+    date: "Previous",
     status: "released",
     title: "Virtual Chemistry Laboratory",
     changes: [

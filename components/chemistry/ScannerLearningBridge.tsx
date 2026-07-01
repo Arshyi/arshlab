@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, Brain, Clock, GraduationCap, Network, Sparkles } from "lucide-react"
+import { ArrowRight, Brain, Clock, FlaskConical, GraduationCap, Network, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,6 +14,7 @@ import {
 } from "@/lib/interactive-learning/learning-bridge"
 import { scannerKnowledgeGraphHref } from "@/lib/knowledge-graph/knowledge-engine"
 import type { StructureScanMatch } from "@/lib/structure-scanner/scanner-types"
+import { getVirtualLabBridgeForCompound } from "@/lib/virtual-lab"
 
 interface ScannerLearningBridgeProps {
   match: StructureScanMatch
@@ -29,6 +30,7 @@ export function ScannerLearningBridge({ match, intelligence }: ScannerLearningBr
   const explorerHref = molecularExplorerLearningHref({ compound: input.id ?? input.name ?? match.record.id })
   const mechanismHref = getMechanismBridgeHref(input.id ?? match.record.id)
   const graphHref = scannerKnowledgeGraphHref(input.id ?? match.record.id)
+  const labBridge = getVirtualLabBridgeForCompound(input.id ?? match.record.id)
 
   return (
     <Card className="rounded-2xl border-primary/20 bg-primary/5">
@@ -79,6 +81,14 @@ export function ScannerLearningBridge({ match, intelligence }: ScannerLearningBr
                   <Network className="h-4 w-4" />
                 </Link>
               </Button>
+              {labBridge && (
+                <Button asChild variant="outline" className="rounded-xl">
+                  <Link href={labBridge.href}>
+                    Open Virtual Lab
+                    <FlaskConical className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">

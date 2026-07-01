@@ -1,6 +1,6 @@
 {
   "name": "my-project",
-  "version": "12.0.0",
+  "version": "12.1.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/next-dev.cjs",
@@ -123,7 +123,11 @@
     "test:observations": "node scripts/verify-virtual-lab.cjs observations",
     "test:measurement-engine": "node scripts/verify-virtual-lab.cjs measurement-engine",
     "test:experiment-library": "node scripts/verify-virtual-lab.cjs experiment-library",
-    "test:virtual-lab-routing": "node scripts/verify-virtual-lab.cjs virtual-lab-routing"
+    "test:virtual-lab-routing": "node scripts/verify-virtual-lab.cjs virtual-lab-routing",
+    "test:virtual-lab-bridges": "node scripts/verify-virtual-lab.cjs virtual-lab-bridges",
+    "test:virtual-lab-print-report": "node scripts/verify-virtual-lab.cjs virtual-lab-print-report",
+    "test:virtual-lab-mobile-smoke": "node scripts/verify-virtual-lab.cjs virtual-lab-mobile-smoke",
+    "test:virtual-lab-empty-states": "node scripts/verify-virtual-lab.cjs virtual-lab-empty-states"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

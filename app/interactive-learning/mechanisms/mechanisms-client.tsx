@@ -46,6 +46,7 @@ import {
   type ReactionMechanism,
 } from "@/lib/interactive-learning/mechanisms"
 import { mechanismKnowledgeGraphHref } from "@/lib/knowledge-graph/knowledge-engine"
+import { getVirtualLabBridgeForMechanism } from "@/lib/virtual-lab"
 
 interface MechanismSimulatorClientProps {
   initialReaction?: string
@@ -97,6 +98,7 @@ export function MechanismSimulatorClient({ initialReaction, initialCompound }: M
   const practiceEvaluation = practicePrompt && chosenChoice
     ? evaluatePracticePrompt(mechanism, practicePrompt.id, chosenChoice.arrowIds)
     : null
+  const labBridge = getVirtualLabBridgeForMechanism(mechanism.id)
 
   useEffect(() => {
     const resolved = getMechanismByReaction(initialReaction)
@@ -398,6 +400,14 @@ export function MechanismSimulatorClient({ initialReaction, initialCompound }: M
                     <Network className="h-4 w-4" />
                   </Link>
                 </Button>
+                {labBridge && (
+                  <Button asChild variant="outline" className="w-full justify-between rounded-xl">
+                    <Link href={labBridge.href}>
+                      Run in Virtual Lab
+                      <FlaskConical className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </aside>

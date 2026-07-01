@@ -18,6 +18,11 @@ import {
   getReactionConditionForMechanism,
   getReactionConditions,
 } from "@/lib/reaction-conditions/reaction-conditions"
+import {
+  getVirtualLabBridgeForCompound,
+  getVirtualLabBridgeForMechanism,
+  getVirtualLabBridgeForReaction,
+} from "@/lib/virtual-lab"
 import type {
   KnowledgeGraphCurriculum,
   KnowledgeGraphEdge,
@@ -325,6 +330,14 @@ function NodeDetail({ node }: { node: KnowledgeGraphNode | undefined }) {
       : node.type === "mechanism"
         ? getReactionConditionForMechanism(node.id.replace(/^mechanism:/, ""))
         : undefined
+  const labBridge =
+    node.type === "compound"
+      ? getVirtualLabBridgeForCompound(node.id)
+      : node.type === "reaction"
+        ? getVirtualLabBridgeForReaction(node.id)
+        : node.type === "mechanism"
+          ? getVirtualLabBridgeForMechanism(node.id)
+          : null
 
   return (
     <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
@@ -370,6 +383,14 @@ function NodeDetail({ node }: { node: KnowledgeGraphNode | undefined }) {
             <Button asChild className="justify-between rounded-xl">
               <Link href={synthesisExplorerHref(node.id)}>
                 Find Pathway From Here
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
+          {labBridge && (
+            <Button asChild className="justify-between rounded-xl">
+              <Link href={labBridge.href}>
+                Open Virtual Lab
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

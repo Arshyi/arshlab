@@ -3,7 +3,18 @@
 import { useMemo, useState } from "react"
 import type { ElementType, ReactNode } from "react"
 import Link from "next/link"
-import { Beaker, BookOpenCheck, CheckCircle2, Clock, Download, FlaskConical, Gauge, ShieldAlert, Sparkles } from "lucide-react"
+import { useReducedMotion } from "framer-motion"
+import {
+  AlertCircle,
+  Beaker,
+  BookOpenCheck,
+  Clipboard,
+  Clock,
+  Download,
+  FlaskConical,
+  Gauge,
+  Printer,
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,7 +31,9 @@ import {
   reactionProgressLabel,
   safetyChecklist,
   scoreAssessment,
+  unsupportedVirtualLabMessage,
   virtualLabMetrics,
+  virtualLabControlGroups,
   type ExperimentRunState,
   type LabActionId,
   type SpectralPeak,
@@ -58,6 +71,7 @@ function pickInitialExperiment(initialExperiment?: string, initialCompound?: str
 export function VirtualLabClient({ initialExperiment, initialCompound, initialMode }: VirtualLabClientProps) {
   const experiments = listVirtualLabExperiments()
   const metrics = virtualLabMetrics()
+  const reduceMotion = useReducedMotion()
   const [selectedId, setSelectedId] = useState(pickInitialExperiment(initialExperiment, initialCompound).id)
   const [category, setCategory] = useState<string>("All")
   const [mode, setMode] = useState<VirtualLabMode>(initialMode === "free" ? "free" : "guided")
@@ -65,9 +79,13 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
   const [state, setState] = useState<ExperimentRunState>(() => createExperimentState(selected, mode))
   const [activePeak, setActivePeak] = useState<SpectralPeak | null>(selected.spectra[0] ?? null)
   const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle")
 
   const filtered = experiments.filter((experiment) => category === "All" || experiment.category === category)
   const report = useMemo(() => buildPrintableLabReport(selected, state), [selected, state])
+  const controlGroups = useMemo(() => virtualLabControlGroups(selected), [selected])
+  const unsupportedCompound =
+    initialCompound && experimentsForCompound(initialCompound).length === 0 ? initialCompound : null
   const theoryScore = scoreAssessment(selected, answers)
   const nextStep = selected.steps[state.currentStepIndex]
   const completed = state.currentStepIndex >= selected.steps.length
@@ -78,6 +96,19 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
     setState(createExperimentState(experiment, mode))
     setAnswers({})
     setActivePeak(experiment.spectra[0] ?? null)
+  }
+
+  async function copyReport() {
+    try {
+      await navigator.clipboard.writeText(report)
+      setCopyStatus("copied")
+    } catch {
+      setCopyStatus("failed")
+    }
+  }
+
+  function printReport() {
+    window.print()
   }
 
   function changeMode(nextMode: VirtualLabMode) {
@@ -98,11 +129,11 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
               <FlaskConical className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-primary">ARSHLAB v12.0.0</p>
+              <p className="text-sm font-medium text-primary">ARSHLAB v12.1.0</p>
               <h1 className="text-3xl font-bold tracking-tight">Virtual Chemistry Laboratory</h1>
               <p className="text-muted-foreground">
                 Deterministic undergraduate lab simulations with SVG glassware, guided and free lab modes,
-                spectroscopy, observations, safety, notebooking, and assessment.
+                spectroscopy, observations, safety, notebooking, bridges, and printable reports.
               </p>
             </div>
           </div>
@@ -111,6 +142,7 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
             <Badge>No AI</Badge>
             <Badge>No external APIs</Badge>
             <Badge>Educational simulation</Badge>
+            {reduceMotion && <Badge>Reduced motion</Badge>}
           </div>
         </section>
 
@@ -120,6 +152,23 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
           <MetricCard icon={Gauge} label="Spectral Peaks" value={metrics.spectra} detail="Interactive assignments" />
           <MetricCard icon={BookOpenCheck} label="Assessments" value={metrics.assessments} detail="Prediction and theory checks" />
         </section>
+
+        {unsupportedCompound && (
+          <Card className="rounded-2xl border-amber-500/30 bg-amber-500/5">
+            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                <div>
+                  <p className="font-semibold">No direct lab experiment for this compound yet</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{unsupportedVirtualLabMessage(unsupportedCompound)}</p>
+                </div>
+              </div>
+              <Button asChild variant="outline" className="w-full rounded-xl sm:w-auto">
+                <Link href={`/knowledge-graph?focus=compound:${unsupportedCompound}`}>Open Knowledge Graph</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <section className="grid gap-6 lg:grid-cols-[330px_1fr]">
           <aside className="space-y-4">
@@ -133,6 +182,7 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
                     <button
                       key={item}
                       type="button"
+                      aria-label={`Filter virtual lab experiments by ${item}`}
                       onClick={() => setCategory(item)}
                       className={
                         category === item
@@ -149,6 +199,7 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
                     <button
                       key={experiment.id}
                       type="button"
+                      aria-label={`Open ${experiment.title}`}
                       onClick={() => selectExperiment(experiment.id)}
                       className={
                         selected.id === experiment.id
@@ -157,8 +208,8 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
                       }
                     >
                       <p className="font-medium">{experiment.title}</p>
-                      <p className="text-xs text-muted-foreground">{experiment.category} · {experiment.difficulty}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{experiment.estimatedMinutes} min · {experiment.concepts.slice(0, 2).join(", ")}</p>
+                      <p className="text-xs text-muted-foreground">{experiment.category} - {experiment.difficulty}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{experiment.estimatedMinutes} min - {experiment.concepts.slice(0, 2).join(", ")}</p>
                     </button>
                   ))}
                 </div>
@@ -169,12 +220,25 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
               <CardContent className="space-y-3 p-5 text-sm">
                 <p className="font-semibold">Mode</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant={mode === "guided" ? "default" : "outline"} onClick={() => changeMode("guided")}>Guided</Button>
-                  <Button variant={mode === "free" ? "default" : "outline"} onClick={() => changeMode("free")}>Free Lab</Button>
+                  <Button
+                    variant={mode === "guided" ? "default" : "outline"}
+                    onClick={() => changeMode("guided")}
+                    aria-label="Use guided virtual lab mode"
+                  >
+                    Guided
+                  </Button>
+                  <Button
+                    variant={mode === "free" ? "default" : "outline"}
+                    onClick={() => changeMode("free")}
+                    aria-label="Use free virtual lab mode"
+                  >
+                    Free Lab
+                  </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Guided Lab Mode walks through the procedure and blocks impossible actions. Free Lab Mode lets mistakes affect yield and purity.
-                </p>
+                <div className="grid gap-2 text-xs text-muted-foreground">
+                  <p><span className="font-semibold text-foreground">Guided:</span> follow the procedure one step at a time with unsafe or impossible actions blocked.</p>
+                  <p><span className="font-semibold text-foreground">Free Lab:</span> choose actions out of order and let mistakes affect yield, purity, and warnings.</p>
+                </div>
               </CardContent>
             </Card>
           </aside>
@@ -241,6 +305,7 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
                             size="sm"
                             disabled={mode === "guided" ? !isCurrent || done : done}
                             onClick={() => runAction(step.action)}
+                            aria-label={`${done ? "Completed" : "Run"} ${step.title}`}
                           >
                             {done ? "Done" : step.action}
                           </Button>
@@ -251,11 +316,24 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
                   {mode === "free" && (
                     <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
                       <p className="text-sm font-medium">Free Lab Actions</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {Array.from(new Set(selected.steps.map((step) => step.action))).map((action) => (
-                          <Button key={action} size="sm" variant="outline" onClick={() => runAction(action)}>
-                            {action}
-                          </Button>
+                      <div className="mt-3 grid gap-3">
+                        {controlGroups.map((group) => (
+                          <div key={group.id} className="rounded-lg border border-border bg-background/70 p-3">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{group.label}</p>
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                              {group.actions.map((action) => (
+                                <Button
+                                  key={action}
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => runAction(action)}
+                                  aria-label={`Run free lab action ${action}`}
+                                >
+                                  {action}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -268,7 +346,15 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
                 </CardContent>
               </Card>
 
-              <div className="space-y-6">
+              <div className="space-y-6 xl:sticky xl:top-20 xl:self-start">
+                <CurrentStepCard
+                  completed={completed}
+                  nextStep={nextStep}
+                  currentStepIndex={state.currentStepIndex}
+                  totalSteps={selected.steps.length}
+                  mode={mode}
+                  progress={reactionProgressLabel(state)}
+                />
                 <Card className="rounded-2xl">
                   <CardHeader>
                     <CardTitle>Observations</CardTitle>
@@ -313,6 +399,7 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
                             <button
                               key={peak.id}
                               type="button"
+                              aria-label={`Inspect ${technique} peak ${peak.position}`}
                               onMouseEnter={() => setActivePeak(peak)}
                               onFocus={() => setActivePeak(peak)}
                               onClick={() => setActivePeak(peak)}
@@ -355,6 +442,7 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
                             <button
                               key={choice}
                               type="button"
+                              aria-label={`Choose assessment answer ${choice}`}
                               onClick={() => setAnswers((current) => ({ ...current, [question.id]: choice }))}
                               className={`rounded-lg border px-3 py-2 text-left text-sm ${chosen ? (correct ? "border-green-500 bg-green-500/10" : "border-amber-500 bg-amber-500/10") : "border-border hover:bg-secondary"}`}
                             >
@@ -383,17 +471,27 @@ export function VirtualLabClient({ initialExperiment, initialCompound, initialMo
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <pre className="max-h-72 overflow-auto rounded-xl bg-secondary p-4 text-xs whitespace-pre-wrap">{report}</pre>
+                <div className="flex flex-wrap gap-2 print:hidden">
+                  <Button type="button" variant="outline" className="rounded-xl" onClick={copyReport}>
+                    <Clipboard className="h-4 w-4" />
+                    {copyStatus === "copied" ? "Copied" : copyStatus === "failed" ? "Copy failed" : "Copy summary"}
+                  </Button>
+                  <Button type="button" className="rounded-xl" onClick={printReport}>
+                    <Printer className="h-4 w-4" />
+                    Print report
+                  </Button>
+                </div>
+                <pre id="lab-report-printable" className="max-h-72 overflow-auto rounded-xl bg-secondary p-4 text-xs whitespace-pre-wrap print:max-h-none print:overflow-visible print:bg-white print:text-black">{report}</pre>
                 <div className="flex flex-wrap gap-2">
-                  <Link href={`/knowledge-graph?focus=compound:${selected.compoundId}`} className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-secondary">
-                    Open Knowledge Graph
-                  </Link>
-                  <Link href={`/interactive-learning/explorer?compound=${selected.compoundId}`} className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-secondary">
-                    Open Molecular Explorer
-                  </Link>
-                  <Link href={`/practice-generator?topic=${encodeURIComponent(selected.concepts[0] ?? "lab techniques")}`} className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-secondary">
-                    Practice This
-                  </Link>
+                  <Button asChild variant="outline" className="rounded-xl">
+                    <Link href={`/knowledge-graph?focus=compound:${selected.compoundId}`}>Open Knowledge Graph</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="rounded-xl">
+                    <Link href={`/interactive-learning/explorer?compound=${selected.compoundId}`}>Open Molecular Explorer</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="rounded-xl">
+                    <Link href={`/practice-generator?topic=${encodeURIComponent(selected.concepts[0] ?? "lab techniques")}`}>Practice This</Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -465,6 +563,50 @@ function ProgressCard({ label, value }: { label: string; value: string }) {
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="font-medium">{value}</p>
     </div>
+  )
+}
+
+function CurrentStepCard({
+  completed,
+  nextStep,
+  currentStepIndex,
+  totalSteps,
+  mode,
+  progress,
+}: {
+  completed: boolean
+  nextStep: VirtualLabExperiment["steps"][number] | undefined
+  currentStepIndex: number
+  totalSteps: number
+  mode: VirtualLabMode
+  progress: string
+}) {
+  return (
+    <Card className="rounded-2xl border-teal-500/20 bg-teal-500/5">
+      <CardContent className="space-y-3 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Current progress</p>
+            <p className="mt-1 font-semibold">{completed ? "Experiment complete" : nextStep?.title ?? "Ready to begin"}</p>
+          </div>
+          <Badge>{mode === "guided" ? "Guided" : "Free Lab"}</Badge>
+        </div>
+        <div className="h-2 rounded-full bg-background">
+          <div
+            className="h-2 rounded-full bg-primary"
+            style={{ width: `${Math.min(100, Math.round((Math.min(currentStepIndex, totalSteps) / Math.max(1, totalSteps)) * 100))}%` }}
+          />
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {completed
+            ? "All required procedure steps have been completed."
+            : nextStep
+              ? `Next: ${nextStep.instruction}`
+              : "Select an experiment or run the first action."}
+        </p>
+        <p className="text-xs text-muted-foreground">Reaction state: {progress}</p>
+      </CardContent>
+    </Card>
   )
 }
 

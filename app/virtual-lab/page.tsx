@@ -4,7 +4,7 @@ import { VirtualLabClient } from "./virtual-lab-client"
 export const metadata: Metadata = {
   title: "Virtual Chemistry Laboratory | ARSHLAB",
   description:
-    "Deterministic virtual undergraduate chemistry lab with SVG glassware, guided and free lab modes, observations, spectra, safety, lab notebook, and assessment.",
+    "Deterministic virtual undergraduate chemistry lab with SVG glassware, guided and free lab modes, scanner and graph bridges, observations, spectra, safety, notebooking, and printable reports.",
 }
 
 interface VirtualLabPageProps {

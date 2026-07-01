@@ -77,20 +77,50 @@ export function scoreAssessment(experiment: VirtualLabExperiment, answers: Recor
 }
 
 export function buildPrintableLabReport(experiment: VirtualLabExperiment, state: ExperimentRunState): string {
+  const observations = state.notebook.length
+    ? state.notebook.map((entry, index) =>
+        `${index + 1}. ${entry.title}: ${entry.observation}`,
+      )
+    : ["No actions have been recorded yet. Run the experiment to collect deterministic observations."]
+  const measurements = state.measurements.length
+    ? state.measurements.map((measurement) =>
+        `- ${measurement.label}: ${measurement.value} ${measurement.unit} (uncertainty ±${measurement.uncertainty})`,
+      )
+    : ["- No measurements recorded yet."]
+  const spectra = experiment.spectra.length
+    ? experiment.spectra.map((peak) => `- ${peak.technique} ${peak.position}: ${peak.assignment}`)
+    : ["- No spectra are linked to this experiment."]
+  const safety = experiment.safety.hazards.length
+    ? experiment.safety.hazards.map((hazard) => `- ${hazard}`)
+    : ["- Standard lab PPE and careful handling are still required."]
   const lines = [
     `# ARSHLAB Virtual Lab Report: ${experiment.title}`,
     "",
+    "## Objective",
+    `Investigate ${experiment.expectedProduct.toLowerCase()} using deterministic ARSHLAB lab steps connected to ${experiment.concepts.join(", ")}.`,
+    "",
+    "## Method",
+    ...experiment.steps.map((step, index) => `${index + 1}. ${step.instruction} (${step.title})`),
+    "",
+    "## Observations",
+    ...observations,
+    "",
+    "## Spectra",
+    ...spectra,
+    "",
+    "## Results",
     `Mode: ${state.mode}`,
     `Yield: ${state.yieldPercent}%`,
     `Purity: ${state.purityPercent}%`,
+    `Completion: ${state.completionScore}%`,
+    `Technique score: ${state.techniqueScore}%`,
+    ...measurements,
     "",
-    "## Procedure and Observations",
-    ...state.notebook.map((entry, index) =>
-      `${index + 1}. ${entry.title}: ${entry.procedure} Observation: ${entry.observation}`,
-    ),
+    "## Safety",
+    ...safety,
     "",
     "## Conclusion",
-    `The deterministic simulation completed ${state.completionScore}% of the procedure with a technique score of ${state.techniqueScore}%.`,
+    `The deterministic simulation completed ${state.completionScore}% of the procedure with a technique score of ${state.techniqueScore}%. The expected outcome is ${experiment.expectedProduct}.`,
   ]
   return lines.join("\n")
 }

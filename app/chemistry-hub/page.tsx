@@ -288,7 +288,7 @@ export default function ChemistryHubPage() {
           <HubActionCard
             icon={FlaskConical}
             title="Virtual Chemistry Laboratory"
-            description="Practice deterministic undergraduate experiments with SVG glassware, guided/free lab modes, observations, spectra, safety, notebooking, and assessment."
+            description="Practice deterministic experiments with SVG glassware, guided/free lab modes, scanner and graph bridges, observations, spectra, safety, notebooking, and print reports."
             href="/virtual-lab"
             action="Enter Lab"
           />

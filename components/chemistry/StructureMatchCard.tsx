@@ -30,6 +30,7 @@ import { molecularExplorerHref } from "@/lib/interactive-learning/molecular-expl
 import { getMechanismBridgeHref } from "@/lib/interactive-learning/mechanisms"
 import { scannerKnowledgeGraphHref } from "@/lib/knowledge-graph/knowledge-engine"
 import type { StructureScanMatch } from "@/lib/structure-scanner/scanner-types"
+import { getVirtualLabBridgeForCompound } from "@/lib/virtual-lab"
 
 interface StructureMatchCardProps {
   match: StructureScanMatch
@@ -50,6 +51,7 @@ export function StructureMatchCard({ match, primary = false }: StructureMatchCar
   const curriculumLinks =
     record.recommendedCurriculumTopics ??
     (record.curriculumTopicId ? [{ id: record.curriculumTopicId, label: "Recommended curriculum topic" }] : [])
+  const labBridge = getVirtualLabBridgeForCompound(record.id)
 
   return (
     <Card className={primary ? "rounded-2xl border-teal-500/30 bg-teal-500/5" : "rounded-2xl"}>
@@ -140,6 +142,7 @@ export function StructureMatchCard({ match, primary = false }: StructureMatchCar
             <ActionLink href={molecularVisualizerHref(visualizerId)} icon={Network} label="Open Molecular Visualizer" />
             <ActionLink href={molecularExplorerHref({ compound: record.id })} icon={MousePointer2} label="Open Interactive Explorer" />
             <ActionLink href={scannerKnowledgeGraphHref(record.id)} icon={Network} label="Open Knowledge Graph" />
+            {labBridge && <ActionLink href={labBridge.href} icon={FlaskConical} label="Open Virtual Lab" />}
             <ActionLink href={getMechanismBridgeHref(record.id)} icon={FlaskConical} label="Explore Possible Mechanisms" />
             <ActionLink href={reactionExplorerHref(undefined, record.name)} icon={Sigma} label="Open Reaction Explorer" />
             <ActionLink href={synthesisExplorerHref(record.id)} icon={Route} label="Explore Synthesis" />

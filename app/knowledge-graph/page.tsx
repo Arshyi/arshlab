@@ -4,7 +4,7 @@ import { KnowledgeGraphClient } from "./knowledge-graph-client"
 export const metadata: Metadata = {
   title: "Interactive Chemistry Knowledge Graph | ARSHLAB",
   description:
-    "Explore deterministic connections between ARSHLAB compounds, reactions, mechanisms, spectroscopy, orbitals, formulas, lab techniques, practice, and curriculum topics.",
+    "Explore deterministic connections between ARSHLAB compounds, reactions, mechanisms, virtual lab experiments, spectroscopy, orbitals, formulas, practice, and curriculum topics.",
 }
 
 interface KnowledgeGraphPageProps {

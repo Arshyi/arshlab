@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { getMechanismMetrics, listMechanisms } from "@/lib/chemistry/mechanisms"
 import { resolveMechanismDeepLink } from "@/lib/deep-links"
 import { getReactionConditionForMechanism } from "@/lib/reaction-conditions/reaction-conditions"
+import { getVirtualLabBridgeForMechanism } from "@/lib/virtual-lab"
 import { cn } from "@/lib/utils"
 
 function normalize(value: string): string {
@@ -63,6 +64,7 @@ export default function MechanismTrainerPage() {
 
   const selected = mechanisms.find((mechanism) => mechanism.id === selectedId) ?? filteredMechanisms[0] ?? mechanisms[0]
   const selectedCondition = selected ? getReactionConditionForMechanism(selected.id) : undefined
+  const labBridge = selected ? getVirtualLabBridgeForMechanism(selected.id) : null
 
   useEffect(() => {
     document.getElementById("mechanism-viewer")?.scrollIntoView({ block: "start" })
@@ -214,6 +216,16 @@ export default function MechanismTrainerPage() {
                       <ContextTile label="Expected products" value={selectedCondition.expectedProducts.join(" + ")} />
                       <ContextTile label="Typical exam clues" value={selectedCondition.typicalExamClues.join(" | ")} />
                     </CardContent>
+                    {labBridge && (
+                      <CardContent className="pt-0">
+                        <Button asChild className="w-full justify-between rounded-xl sm:w-auto">
+                          <Link href={labBridge.href}>
+                            Run in Virtual Lab
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    )}
                   </Card>
                 )}
 

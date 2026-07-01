@@ -96,7 +96,7 @@ const features = [
   {
     icon: FlaskConical,
     title: "Virtual Chemistry Laboratory",
-    description: "Run deterministic guided or free-mode undergraduate lab simulations with SVG glassware, spectra, observations, safety, and notebooking.",
+    description: "Run deterministic guided or free-mode lab simulations, then jump in from scanner results, mechanisms, and the Knowledge Graph with printable notebook reports.",
     href: "/virtual-lab",
   },
   {
